@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "target": "es2020",
+    "module": "commonjs",
+    "inlineSourceMap": true,
+    "composite": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "incremental": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "typeRoots": ["types", "../../types", "../../node_modules/@types"]
+  },
+  "include": ["./typechain-types", "./src"]
+}
