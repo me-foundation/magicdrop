@@ -38,9 +38,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     goerli: {
-      url:
-        process.env.GOERLI_URL ||
-        'https://eth-goerli.g.alchemy.com/v2/BEZDQ5_tnBzef79wuWRQWjK4gqPlhXqK',
+      url: process.env.GOERLI_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
