@@ -13,7 +13,7 @@ on:
       - '**.md'
 
 jobs:
-  run-tests:
+  unit_test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,3 +32,12 @@ jobs:
           curl -Os https://uploader.codecov.io/latest/linux/codecov; \
           chmod +x codecov; \
           ./codecov;
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: crytic/slither-action@35510b34cfdfb137d9816d27378ee8c217f1fa1c
+        with:
+          fail-on: low
+          slither-version: d8e526e53ff690bd24c260042117efab5ce9c271
+          slither-args: "--exclude-dependencies"

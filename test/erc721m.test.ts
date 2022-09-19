@@ -24,15 +24,15 @@ describe('ERC721M', function () {
 
   it('Contract can be paused/unpaused', async () => {
     // starts paused
-    expect(await contract.isPaused()).to.be.true;
+    expect(await contract.getMintable()).to.be.false;
 
     // unpause
-    await contract.setPaused(false);
-    expect(await contract.isPaused()).to.be.false;
+    await contract.setMintable(true);
+    expect(await contract.getMintable()).to.be.true;
 
     // can pause again
-    await contract.setPaused(true);
-    expect(await contract.isPaused()).to.be.true;
+    await contract.setMintable(false);
+    expect(await contract.getMintable()).to.be.false;
   });
 
   it('withdraws balance by owner', async () => {
@@ -127,7 +127,7 @@ describe('ERC721M', function () {
       );
 
       await expect(setStages).to.be.revertedWith(
-        'Invalid array length',
+        'InvalidStageArgsLength',
       );
     });
 
@@ -205,7 +205,7 @@ describe('ERC721M', function () {
         /* maxStageSupply= */ 15,
       );
 
-      await expect(updateStage).to.be.revertedWith('Stage does not exist');
+      await expect(updateStage).to.be.revertedWith('InvalidStage');
     });
 
     it('gets stage info', async () => {
@@ -235,7 +235,7 @@ describe('ERC721M', function () {
       );
 
       const getStageInfo = contract.getStageInfo(1);
-      await expect(getStageInfo).to.be.revertedWith('Stage does not exist');
+      await expect(getStageInfo).to.be.revertedWith('InvalidStage');
     });
 
     it('can set active stage', async () => {
@@ -256,12 +256,12 @@ describe('ERC721M', function () {
       expect(await contract.getActiveStage()).to.equal(1);
 
       const setActiveStage = contract.setActiveStage(2);
-      await expect(setActiveStage).to.be.revertedWith('Invalid stage');
+      await expect(setActiveStage).to.be.revertedWith('InvalidStage');
     });
   });
 
   describe('Minting', function () {
-    it('revert if contract is paused', async () => {
+    it('revert if contract is not mintable', async () => {
       await contract.setStages(
         [ethers.utils.parseEther('0.5')],
         [10],
@@ -273,7 +273,7 @@ describe('ERC721M', function () {
         value: ethers.utils.parseEther('0.5'),
       });
 
-      await expect(mint).to.be.revertedWith('Contract is paused');
+      await expect(mint).to.be.revertedWith('NotMintable');
     });
 
     it('revert if incorrect (less) amount sent', async () => {
@@ -283,13 +283,13 @@ describe('ERC721M', function () {
         [ethers.utils.hexZeroPad('0x', 32)],
         [5],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       const mint = contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('2.499'),
       });
 
-      await expect(mint).to.be.revertedWith('Incorrect amount sent');
+      await expect(mint).to.be.revertedWith('NotEnoughValue');
     });
 
     it('can set max mintable supply', async () => {
@@ -305,13 +305,13 @@ describe('ERC721M', function () {
         [ethers.utils.hexZeroPad('0x', 32), ethers.utils.hexZeroPad('0x', 32)],
         [5, 10],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       // Mint 100 tokens (1 over MaxMintableSupply)
       const mint = contract.mint(100, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('2.5'),
       });
-      await expect(mint).to.be.revertedWith('No supply left');
+      await expect(mint).to.be.revertedWith('NoSupplyLeft');
     });
 
     it('mint with unlimited stage limit', async () => {
@@ -322,19 +322,19 @@ describe('ERC721M', function () {
         [0],
       );
       await contract.setMaxMintableSupply(999);
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       // Mint 100 tokens - wallet limit
       await contract.mint(100, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('50'),
       });
 
-      // Mint one more shoudl fail
+      // Mint one more should fail
       const mint = contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('0.5'),
       });
 
-      await expect(mint).to.be.revertedWith('Exceeds wallet limit');
+      await expect(mint).to.be.revertedWith('WalletStageLimitExceeded');
     });
 
     it('mint with unlimited wallet limit', async () => {
@@ -345,7 +345,7 @@ describe('ERC721M', function () {
         [100],
       );
       await contract.setMaxMintableSupply(999);
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       // Mint 100 tokens - stage limit
       await contract.mint(100, [ethers.utils.hexZeroPad('0x', 32)], {
@@ -357,7 +357,7 @@ describe('ERC721M', function () {
         value: ethers.utils.parseEther('0.5'),
       });
 
-      await expect(mint).to.be.revertedWith('Stage supply exceeded');
+      await expect(mint).to.be.revertedWith('StageSupplyExceeded');
     });
 
     it('enforces stage supply', async () => {
@@ -367,7 +367,7 @@ describe('ERC721M', function () {
         [ethers.utils.hexZeroPad('0x', 32), ethers.utils.hexZeroPad('0x', 32)],
         [5, 10],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       // Mint 5 tokens
       await contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
@@ -386,7 +386,7 @@ describe('ERC721M', function () {
         value: ethers.utils.parseEther('2.5'),
       });
 
-      await expect(mint).to.be.revertedWith('Stage supply exceeded');
+      await expect(mint).to.be.revertedWith('StageSupplyExceeded');
 
       await contract.setActiveStage(1);
 
@@ -403,7 +403,7 @@ describe('ERC721M', function () {
         contract.mint(3, [ethers.utils.hexZeroPad('0x', 32)], {
           value: ethers.utils.parseEther('1.8'),
         }),
-        /Stage supply exceeded/,
+        /StageSupplyExceeded/,
         "Minting more than the stage's supply should fail",
       );
 
@@ -449,7 +449,7 @@ describe('ERC721M', function () {
         [root],
         [5],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       // Mint 1 token with valid proof
       await contract.mint(1, proof, {
@@ -468,13 +468,13 @@ describe('ERC721M', function () {
         [root],
         [5],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       // Mint 1 token with invalid proof
       const mint = contract.mint(1, proof, {
         value: ethers.utils.parseEther('0.5'),
       });
-      await expect(mint).to.be.revertedWith('Invalid Merkle proof');
+      await expect(mint).to.be.revertedWith('InvalidProof');
     });
 
     it('mints by owner', async () => {
@@ -484,7 +484,7 @@ describe('ERC721M', function () {
         [ethers.utils.hexZeroPad('0x', 32)],
         [1],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       const [owner, address1] = await ethers.getSigners();
 
@@ -517,10 +517,10 @@ describe('ERC721M', function () {
         [ethers.utils.hexZeroPad('0x', 32), ethers.utils.hexZeroPad('0x', 32)],
         [5, 10],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       await expect(contract.tokenURI(0)).to.be.revertedWith(
-        'Invalid tokenId',
+        'URIQueryForNonexistentToken',
       );
     });
 
@@ -531,7 +531,7 @@ describe('ERC721M', function () {
         [ethers.utils.hexZeroPad('0x', 32), ethers.utils.hexZeroPad('0x', 32)],
         [5, 10],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       await contract.mint(2, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('2.5'),
@@ -541,7 +541,7 @@ describe('ERC721M', function () {
       expect(await contract.tokenURI(1)).to.equal('');
 
       await expect(contract.tokenURI(2)).to.be.revertedWith(
-        'Invalid tokenId',
+        'URIQueryForNonexistentToken',
       );
     });
 
@@ -554,7 +554,7 @@ describe('ERC721M', function () {
       );
 
       await contract.setBaseURI('base_uri_');
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       await contract.mint(2, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('2.5'),
@@ -564,7 +564,7 @@ describe('ERC721M', function () {
       expect(await contract.tokenURI(1)).to.equal('base_uri_1');
 
       await expect(contract.tokenURI(2)).to.be.revertedWith(
-        'Invalid tokenId',
+        'URIQueryForNonexistentToken',
       );
     });
   });
@@ -574,7 +574,7 @@ describe('ERC721M', function () {
       const ERC721M = await ethers.getContractFactory('ERC721M');
       await expect(
         ERC721M.deploy('Test', 'TEST', 100, 1001),
-      ).to.be.revertedWith('globalWalletLimit overflow');
+      ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
 
     it('sets global wallet limit', async () => {
@@ -582,7 +582,7 @@ describe('ERC721M', function () {
       expect((await contract.getGlobalWalletLimit()).toNumber()).to.equal(2);
 
       await expect(contract.setGlobalWalletLimit(101)).to.be.revertedWith(
-        'globalWalletLimit overflow',
+        'GlobalWalletLimitOverflow',
       );
     });
 
@@ -596,7 +596,7 @@ describe('ERC721M', function () {
         [ethers.utils.hexZeroPad('0x', 32)],
         [100],
       );
-      await contract.setPaused(false);
+      await contract.setMintable(true);
 
       await contract.mint(2, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('0.2'),
@@ -606,7 +606,7 @@ describe('ERC721M', function () {
         contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
           value: ethers.utils.parseEther('0.1'),
         }),
-      ).to.be.revertedWith('Global wallet limit exceeded');
+      ).to.be.revertedWith('WalletGlobalLimitExceeded');
     });
   });
 });
