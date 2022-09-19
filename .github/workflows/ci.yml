@@ -39,5 +39,5 @@ jobs:
       - uses: crytic/slither-action@v0.1.1
         with:
           fail-on: low
-          slither-version: d8e526e53ff690bd24c260042117efab5ce9c271
+          slither-version: dev
           slither-args: "--exclude-dependencies"
