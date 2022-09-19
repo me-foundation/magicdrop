@@ -10,7 +10,7 @@ import 'solidity-coverage';
 
 import { setActiveStage } from './scripts/setActiveStage';
 import { setStages } from './scripts/setStages';
-import { setPaused } from './scripts/setPaused';
+import { setMintable } from './scripts/setMintable';
 import { deploy } from './scripts/deploy';
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
@@ -62,10 +62,10 @@ task('setActiveStage', 'Set active stage for ERC721M')
   .addParam('stage', 'stage index to set to active')
   .setAction(setActiveStage);
 
-task('setPaused', 'Set paused state for ERC721M')
+task('setMintable', 'Set mintable state for ERC721M')
   .addParam('contract', 'contract address')
-  .addParam('paused', 'paused state', 'true', types.boolean)
-  .setAction(setPaused);
+  .addParam('mintable', 'mintable state', 'true', types.boolean)
+  .setAction(setMintable);
 
 task('deploy', 'Deploy ERC721M')
   .addParam('name', 'name')
