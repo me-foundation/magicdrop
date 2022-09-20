@@ -14,12 +14,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
     string private _tokenURISuffix;
+    bool private _baseURIImmutable;
 
     MintStageInfo[] private _mintStages;
 
     // Need this because struct cannot have nested mapping
-    mapping(uint256 => mapping(address => uint32)) private _stageMintedCounts;
-    mapping(uint256 => uint256) private _stageMintedSupply;
+    mapping(uint256 => mapping(address => uint32))
+        private _stageMintedCountsPerWallet;
+    mapping(uint256 => uint256) private _stageMintedCounts;
 
     constructor(
         string memory collectionName,
@@ -106,6 +108,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         external
         onlyOwner
     {
+        if (maxMintableSupply > _maxMintableSupply) {
+            revert CannotIncreaseMaxMintableSupply();
+        }
         _maxMintableSupply = maxMintableSupply;
         emit SetMaxMintableSupply(maxMintableSupply);
     }
@@ -150,8 +155,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         if (index >= _mintStages.length) {
             revert("InvalidStage");
         }
-        uint32 walletMinted = _stageMintedCounts[index][msg.sender];
-        uint256 stageMinted = _stageMintedSupply[index];
+        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
+        uint256 stageMinted = _stageMintedCounts[index];
         return (_mintStages[index], walletMinted, stageMinted);
     }
 
@@ -186,7 +191,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
-            if (_stageMintedSupply[_activeStage] + qty > stage.maxStageSupply)
+            if (_stageMintedCounts[_activeStage] + qty > stage.maxStageSupply)
                 revert StageSupplyExceeded();
         }
 
@@ -199,7 +204,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         // Check wallet limit for stage if applicable, limit == 0 means no limit enforced
         if (stage.walletLimit > 0) {
             if (
-                _stageMintedCounts[_activeStage][msg.sender] + qty >
+                _stageMintedCountsPerWallet[_activeStage][msg.sender] + qty >
                 stage.walletLimit
             ) revert WalletStageLimitExceeded();
         }
@@ -214,23 +219,33 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
             ) revert InvalidProof();
         }
 
-        _stageMintedCounts[_activeStage][msg.sender] += qty;
-        _stageMintedSupply[_activeStage] += qty;
+        _stageMintedCountsPerWallet[_activeStage][msg.sender] += qty;
+        _stageMintedCounts[_activeStage] += qty;
         _safeMint(msg.sender, qty);
     }
 
-    function ownerMint(uint32 qty, address to) external onlyOwner {
-        _stageMintedCounts[_activeStage][to] += qty;
+    function ownerMint(uint32 qty, address to)
+        external
+        onlyOwner
+        hasSupply(qty)
+    {
         _safeMint(to, qty);
     }
 
     function withdraw() external onlyOwner {
-        payable(msg.sender).transfer(address(this).balance);
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        if (!success) revert WithdrawFailed();
     }
 
     function setBaseURI(string memory baseURI) external onlyOwner {
+        if (_baseURIImmutable) revert FrozenBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
+    }
+
+    function freezeBaseURI() external onlyOwner {
+        _baseURIImmutable = true;
+        emit PermanentBaseURI(_currentBaseURI);
     }
 
     function getTokenURISuffix() external view returns (string memory) {
@@ -252,7 +267,13 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         string memory baseURI = _currentBaseURI;
         return
             bytes(baseURI).length != 0
-                ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix))
+                ? string(
+                    abi.encodePacked(
+                        baseURI,
+                        _toString(tokenId),
+                        _tokenURISuffix
+                    )
+                )
                 : "";
     }
 }

@@ -12,6 +12,9 @@ interface IERC721M {
     error StageSupplyExceeded();
     error NotEnoughValue();
     error InvalidStageArgsLength();
+    error WithdrawFailed();
+    error CannotIncreaseMaxMintableSupply();
+    error FrozenBaseURI();
 
     struct MintStageInfo {
         uint256 price;
@@ -33,4 +36,5 @@ interface IERC721M {
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
+    event PermanentBaseURI(string baseURI);
 }
