@@ -14,7 +14,7 @@ describe('ERC721M', function () {
 
   beforeEach(async () => {
     const ERC721M = await ethers.getContractFactory('ERC721M');
-    const erc721M = await ERC721M.deploy('Test', 'TEST', 100, 0);
+    const erc721M = await ERC721M.deploy('Test', 'TEST', '', 100, 0);
     await erc721M.deployed();
     contract = erc721M;
 
@@ -126,9 +126,7 @@ describe('ERC721M', function () {
         [5], // Missing maxStageSupplies for the second stage
       );
 
-      await expect(setStages).to.be.revertedWith(
-        'InvalidStageArgsLength',
-      );
+      await expect(setStages).to.be.revertedWith('InvalidStageArgsLength');
     });
 
     it('can update stage', async () => {
@@ -582,7 +580,7 @@ describe('ERC721M', function () {
     it('validates global wallet limit in constructor', async () => {
       const ERC721M = await ethers.getContractFactory('ERC721M');
       await expect(
-        ERC721M.deploy('Test', 'TEST', 100, 1001),
+        ERC721M.deploy('Test', 'TEST', '', 100, 1001),
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
 
@@ -616,6 +614,32 @@ describe('ERC721M', function () {
           value: ethers.utils.parseEther('0.1'),
         }),
       ).to.be.revertedWith('WalletGlobalLimitExceeded');
+    });
+  });
+
+  describe('Token URI suffix', () => {
+    it('can set tokenURI suffix', async () => {
+      await contract.setMintable(true);
+      await contract.setTokenURISuffix('.json');
+      await contract.setBaseURI(
+        'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4/',
+      );
+
+      await contract.setStages(
+        [ethers.utils.parseEther('0.1')],
+        [0],
+        [ethers.utils.hexZeroPad('0x', 32)],
+        [0],
+      );
+
+      await contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('0.1'),
+      });
+
+      const tokenUri = await contract.tokenURI(0);
+      expect(tokenUri).to.equal(
+        'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4/0.json',
+      );
     });
   });
 });
