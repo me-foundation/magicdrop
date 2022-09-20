@@ -8,6 +8,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 export interface IDeployParams {
   name: string;
   symbol: string;
+  tokenURISuffix: string;
   maxsupply: string;
   globalwalletlimit: string;
 }
@@ -20,6 +21,7 @@ export const deploy = async (
   const erc721M = await ERC721M.deploy(
     args.name,
     args.symbol,
+    args.tokenURISuffix,
     hre.ethers.BigNumber.from(args.maxsupply),
     hre.ethers.BigNumber.from(args.globalwalletlimit),
   );

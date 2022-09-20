@@ -13,6 +13,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     uint256 private _activeStage;
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
+    string private _tokenURISuffix;
 
     MintStageInfo[] private _mintStages;
 
@@ -23,6 +24,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
+        string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit
     ) ERC721A(collectionName, collectionSymbol) {
@@ -32,6 +34,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         _mintable = false;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
+        _tokenURISuffix = tokenURISuffix;
     }
 
     modifier canMint() {
@@ -230,6 +233,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         emit SetBaseURI(baseURI);
     }
 
+    function getTokenURISuffix() external view returns (string memory) {
+        return _tokenURISuffix;
+    }
+
+    function setTokenURISuffix(string memory suffix) external onlyOwner {
+        _tokenURISuffix = suffix;
+    }
+
     function tokenURI(uint256 tokenId)
         public
         view
@@ -241,7 +252,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         string memory baseURI = _currentBaseURI;
         return
             bytes(baseURI).length != 0
-                ? string(abi.encodePacked(baseURI, _toString(tokenId)))
+                ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix))
                 : "";
     }
 }
