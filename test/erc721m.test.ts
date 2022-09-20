@@ -625,6 +625,9 @@ describe('ERC721M', function () {
         'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4/',
       );
 
+      const suffix = await contract.getTokenURISuffix();
+      expect(suffix).to.equal('.json');
+
       await contract.setStages(
         [ethers.utils.parseEther('0.1')],
         [0],
