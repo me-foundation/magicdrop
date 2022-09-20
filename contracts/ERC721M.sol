@@ -51,9 +51,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         uint256[] memory maxStageSupplies
     ) external onlyOwner {
         // check all arrays are the same length
-        if (prices.length != walletLimits.length) revert InvalidStageArgsLength();
-        if (prices.length != merkleRoots.length) revert InvalidStageArgsLength();
-        if (maxStageSupplies.length != merkleRoots.length) revert InvalidStageArgsLength();
+        if (prices.length != walletLimits.length)
+            revert InvalidStageArgsLength();
+        if (prices.length != merkleRoots.length)
+            revert InvalidStageArgsLength();
+        if (maxStageSupplies.length != merkleRoots.length)
+            revert InvalidStageArgsLength();
 
         uint256 originalSize = _mintStages.length;
         for (uint256 i = 0; i < originalSize; i++) {
@@ -171,7 +174,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         canMint
         hasSupply(qty)
     {
+        if (_activeStage >= _mintStages.length) revert InvalidStage();
+
         MintStageInfo memory stage = _mintStages[_activeStage];
+
         // Check value
         if (msg.value < stage.price * qty) revert NotEnoughValue();
 

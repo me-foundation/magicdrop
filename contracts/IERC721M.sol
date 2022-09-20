@@ -28,7 +28,7 @@ interface IERC721M {
         uint256 maxStageSupply
     );
 
-    event SetMintable(bool paused);
+    event SetMintable(bool mintable);
     event SetMaxMintableSupply(uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
     event SetActiveStage(uint256 activeStage);

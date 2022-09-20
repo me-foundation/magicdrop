@@ -276,6 +276,15 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('NotMintable');
     });
 
+    it('revert if contract without stages', async () => {
+      await contract.setMintable(true);
+      const mint = contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('0.5'),
+      });
+
+      await expect(mint).to.be.revertedWith('InvalidStage');
+    });
+
     it('revert if incorrect (less) amount sent', async () => {
       await contract.setStages(
         [ethers.utils.parseEther('0.5')],
