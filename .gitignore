@@ -11,3 +11,4 @@ artifacts
 .turbo
 .vscode
 dist
+.DS_Store

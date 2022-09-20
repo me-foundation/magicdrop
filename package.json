@@ -1,12 +1,14 @@
 {
   "name": "@magiceden-oss/erc721m",
-  "version": "0.0.2-rc2",
+  "version": "0.0.2-rc3",
   "description": "erc721m contract for Solidity",
   "files": [
     "/contracts/**/*.sol",
     "/build/contracts/*.json",
-    "!/contracts/mocks/**/*"
+    "!/contracts/mocks/**/*",
+    "/dist/**/*"
   ],
+  "main": "dist/src/index.js",
   "scripts": {
     "node": "hardhat node",
     "build": "npm run build:contracts && npm run build:typescript",
