@@ -1,3 +1,4 @@
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
@@ -11,15 +12,18 @@ chai.use(chaiAsPromised);
 describe('ERC721M', function () {
   let contract: ERC721M;
   let readonlyContract: ERC721M;
+  let owner: SignerWithAddress;
+  let readonly: SignerWithAddress;
+
 
   beforeEach(async () => {
     const ERC721M = await ethers.getContractFactory('ERC721M');
-    const erc721M = await ERC721M.deploy('Test', 'TEST', '', 100, 0);
+    const erc721M = await ERC721M.deploy('Test', 'TEST', '', 1000, 0);
     await erc721M.deployed();
-    contract = erc721M;
 
-    const [, address1] = await ethers.getSigners();
-    readonlyContract = erc721M.connect(address1);
+    [owner, readonly] = await ethers.getSigners();
+    contract = erc721M.connect(owner);
+    readonlyContract = erc721M.connect(readonly);
   });
 
   it('Contract can be paused/unpaused', async () => {
@@ -30,9 +34,12 @@ describe('ERC721M', function () {
     await contract.setMintable(true);
     expect(await contract.getMintable()).to.be.true;
 
-    // can pause again
-    await contract.setMintable(false);
+    // we should assert that the correct event is emitted
+    await expect(contract.setMintable(false)).to.emit(contract, 'SetMintable').withArgs(false);
     expect(await contract.getMintable()).to.be.false;
+
+    // readonlyContract should not be able to setMintable
+    await expect(readonlyContract.setMintable(true)).to.be.revertedWith('Ownable');
   });
 
   it('withdraws balance by owner', async () => {
@@ -47,12 +54,30 @@ describe('ERC721M', function () {
 
     await contract.withdraw();
 
+    // TODO: fix the 'Provider not found' error here
+    // await expect(contract.withdraw()).to.changeEtherBalance(owner.address, 100);
+
     expect(
       (await contract.provider.getBalance(contract.address)).toNumber(),
     ).to.equal(0);
+
+    // readonlyContract should not be able to withdraw
+    await expect(readonlyContract.withdraw()).to.be.revertedWith('Ownable');
   });
 
   describe('Stages', function () {
+    it('cannot set stages with readonly address', async () => {
+      expect(readonlyContract.setStages(
+        [ethers.utils.parseEther('0.5'), ethers.utils.parseEther('0.6')],
+        [3, 4],
+        [
+          ethers.utils.hexZeroPad('0x1', 32),
+          ethers.utils.hexZeroPad('0x2', 32),
+        ],
+        [5, 10],
+      )).to.be.revertedWith('Ownable');
+    });
+
     it('can set / reset stages', async () => {
       await contract.setStages(
         [ethers.utils.parseEther('0.5'), ethers.utils.parseEther('0.6')],
@@ -116,7 +141,7 @@ describe('ERC721M', function () {
     });
 
     it('sets stages reverts for invalid input', async () => {
-      const setStages = contract.setStages(
+      let setStages = contract.setStages(
         [ethers.utils.parseEther('0.5'), ethers.utils.parseEther('0.6')],
         [3, 4],
         [
@@ -124,6 +149,29 @@ describe('ERC721M', function () {
           ethers.utils.hexZeroPad('0x2', 32),
         ],
         [5], // Missing maxStageSupplies for the second stage
+      );
+
+      await expect(setStages).to.be.revertedWith('InvalidStageArgsLength');
+
+      setStages = contract.setStages(
+        [ethers.utils.parseEther('0.6')],
+        [3, 4],
+        [
+          ethers.utils.hexZeroPad('0x1', 32),
+          ethers.utils.hexZeroPad('0x2', 32),
+        ],
+        [0, 5], // Missing maxStageSupplies for the second stage
+      );
+
+      await expect(setStages).to.be.revertedWith('InvalidStageArgsLength');
+
+      setStages = contract.setStages(
+        [ethers.utils.parseEther('0.6'), ethers.utils.parseEther('0.6')],
+        [3, 4],
+        [
+          ethers.utils.hexZeroPad('0x1', 32),
+        ],
+        [0, 5], // Missing maxStageSupplies for the second stage
       );
 
       await expect(setStages).to.be.revertedWith('InvalidStageArgsLength');
@@ -157,12 +205,18 @@ describe('ERC721M', function () {
       expect(walletMintedCount).to.equal(0);
 
       // Update first stage
-      await contract.updateStage(
+      await expect(contract.updateStage(
         /* _index= */ 0,
         /* price= */ ethers.utils.parseEther('0.1'),
         /* walletLimit= */ 13,
         /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
         /* maxStageSupply= */ 15,
+      )).to.emit(contract, 'UpdateStage').withArgs(
+        0,
+        ethers.utils.parseEther('0.1'),
+        13,
+        ethers.utils.hexZeroPad('0x9', 32),
+        15,
       );
 
       expect(await contract.getNumberStages()).to.equal(2);
@@ -232,7 +286,7 @@ describe('ERC721M', function () {
         [5],
       );
 
-      const getStageInfo = contract.getStageInfo(1);
+      const getStageInfo = readonlyContract.getStageInfo(1);
       await expect(getStageInfo).to.be.revertedWith('InvalidStage');
     });
 
@@ -255,6 +309,9 @@ describe('ERC721M', function () {
 
       const setActiveStage = contract.setActiveStage(2);
       await expect(setActiveStage).to.be.revertedWith('InvalidStage');
+
+      // readonlyContract should not be able to set active stage
+      await expect(readonlyContract.setActiveStage(2)).to.be.revertedWith('Ownable');
     });
   });
 
@@ -267,10 +324,16 @@ describe('ERC721M', function () {
         [5],
       );
 
-      const mint = contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+      // not mintable by owner
+      let mint = contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('0.5'),
       });
+      await expect(mint).to.be.revertedWith('NotMintable');
 
+      // not mintable by readonly address
+      mint = readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('0.5'),
+      });
       await expect(mint).to.be.revertedWith('NotMintable');
     });
 
@@ -292,16 +355,35 @@ describe('ERC721M', function () {
       );
       await contract.setMintable(true);
 
-      const mint = contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
+      let mint;
+      mint = contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('2.499'),
       });
+      await expect(mint).to.be.revertedWith('NotEnoughValue');
 
+      mint = contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('0.499999'),
+      });
       await expect(mint).to.be.revertedWith('NotEnoughValue');
     });
 
     it('can set max mintable supply', async () => {
       await contract.setMaxMintableSupply(99);
       expect(await contract.getMaxMintableSupply()).to.equal(99);
+
+      // can set the mintable supply again with the same value
+      await contract.setMaxMintableSupply(99);
+      expect(await contract.getMaxMintableSupply()).to.equal(99);
+
+      // can set the mintable supply again with the lower value
+      await contract.setMaxMintableSupply(98);
+      expect(await contract.getMaxMintableSupply()).to.equal(98);
+
+      // can not set the mintable supply with higher value
+      await expect(contract.setMaxMintableSupply(100)).to.be.rejectedWith('CannotIncreaseMaxMintableSupply');
+
+      // readonlyContract should not be able to set max mintable supply
+      await expect(readonlyContract.setMaxMintableSupply(99)).to.be.revertedWith('Ownable');
     });
 
     it('enforces max mintable supply', async () => {
@@ -359,12 +441,32 @@ describe('ERC721M', function () {
         value: ethers.utils.parseEther('50'),
       });
 
-      // Mint one more shoudl fail
+      // Mint one more should fail
       const mint = contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('0.5'),
       });
 
       await expect(mint).to.be.revertedWith('StageSupplyExceeded');
+    });
+
+    it('mint with free stage', async () => {
+      await contract.setStages(
+        [ethers.utils.parseEther('0')],
+        [0],
+        [ethers.utils.hexZeroPad('0x', 32)],
+        [100],
+      );
+      await contract.setMintable(true);
+
+      // Mint 100 tokens - stage limit
+      await readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('0'),
+      });
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await readonlyContract.getStageInfo(0);
+      expect(stageInfo.maxStageSupply.toNumber()).to.equal(100);
+      expect(walletMintedCount).to.equal(1);
+      expect(stagedMintedCount.toNumber()).to.equal(1);
     });
 
     it('enforces stage supply', async () => {
@@ -377,9 +479,9 @@ describe('ERC721M', function () {
       await contract.setMintable(true);
 
       // Mint 5 tokens
-      await contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
+      await expect(contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('2.5'),
-      });
+      })).to.emit(contract, 'Transfer');
 
       let [stageInfo, walletMintedCount, stagedMintedCount] =
         await contract.getStageInfo(0);
@@ -388,11 +490,16 @@ describe('ERC721M', function () {
       expect(walletMintedCount).to.equal(5);
       expect(stagedMintedCount.toNumber()).to.equal(5);
 
+      // Mint another 1 should fail since the stage limit has been reached.
+      let mint = contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('0.5'),
+      });
+      await expect(mint).to.be.revertedWith('StageSupplyExceeded');
+
       // Mint another 5 should fail since the stage limit has been reached.
-      const mint = contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
+      mint = contract.mint(5, [ethers.utils.hexZeroPad('0x', 32)], {
         value: ethers.utils.parseEther('2.5'),
       });
-
       await expect(mint).to.be.revertedWith('StageSupplyExceeded');
 
       await contract.setActiveStage(1);
@@ -439,9 +546,7 @@ describe('ERC721M', function () {
       const accounts = (await ethers.getSigners()).map((signer) =>
         getAddress(signer.address),
       );
-      const signerAddress = getAddress(
-        await ethers.provider.getSigner().getAddress(),
-      );
+      const signerAddress = await ethers.provider.getSigner().getAddress();
 
       const merkleTree = new MerkleTree(accounts, keccak256, {
         sortPairs: true,
@@ -464,6 +569,11 @@ describe('ERC721M', function () {
       });
       const totalMinted = await contract.totalMintedByAddress(signerAddress);
       expect(totalMinted.toNumber()).to.equal(1);
+
+      // Mint 1 token with someone's else proof should be reverted
+      await expect(readonlyContract.mint(1, proof, {
+        value: ethers.utils.parseEther('0.5'),
+      })).to.be.rejectedWith('InvalidProof');
     });
 
     it('reverts on invalid Merkle proof', async () => {
@@ -499,7 +609,7 @@ describe('ERC721M', function () {
 
       const [, walletMintedCount, stagedMintedCount] =
         await contract.getStageInfo(0);
-      expect(walletMintedCount).to.equal(5);
+      expect(walletMintedCount).to.equal(0);
       expect(stagedMintedCount.toNumber()).to.equal(0);
       const ownerBalance = await contract.balanceOf(owner.address);
       expect(ownerBalance.toNumber()).to.equal(5);
@@ -508,24 +618,28 @@ describe('ERC721M', function () {
       const [, address1Minted] = await readonlyContract.getStageInfo(0, {
         from: address1.address,
       });
-      expect(address1Minted).to.equal(5);
+      expect(address1Minted).to.equal(0);
+
       const address1Balance = await contract.balanceOf(address1.address);
       expect(address1Balance.toNumber()).to.equal(5);
 
       expect((await contract.totalSupply()).toNumber()).to.equal(10);
     });
+
+    it('mints by owner - invalid cases', async () => {
+      await contract.setStages(
+        [ethers.utils.parseEther('0.5')],
+        [1],
+        [ethers.utils.hexZeroPad('0x', 32)],
+        [1],
+      );
+      await contract.setMintable(true);
+      await expect(contract.ownerMint(1001, readonly.address)).to.be.revertedWith('NoSupplyLeft');
+    });
   });
 
   describe('Token URI', function () {
     it('Reverts for nonexistent token', async () => {
-      await contract.setStages(
-        [ethers.utils.parseEther('0.5'), ethers.utils.parseEther('0.6')],
-        [10, 10],
-        [ethers.utils.hexZeroPad('0x', 32), ethers.utils.hexZeroPad('0x', 32)],
-        [5, 10],
-      );
-      await contract.setMintable(true);
-
       await expect(contract.tokenURI(0)).to.be.revertedWith(
         'URIQueryForNonexistentToken',
       );
@@ -574,6 +688,34 @@ describe('ERC721M', function () {
         'URIQueryForNonexistentToken',
       );
     });
+
+    it('Returns should not be able to set baseURI once frozen', async () => {
+      await contract.setStages(
+        [ethers.utils.parseEther('0.5'), ethers.utils.parseEther('0.6')],
+        [10, 10],
+        [ethers.utils.hexZeroPad('0x', 32), ethers.utils.hexZeroPad('0x', 32)],
+        [5, 10],
+      );
+
+      await contract.setBaseURI('base_uri_');
+      await contract.setMintable(true);
+
+      await contract.mint(2, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('2.5'),
+      });
+
+      expect(await contract.tokenURI(0)).to.equal('base_uri_0');
+      expect(await contract.tokenURI(1)).to.equal('base_uri_1');
+
+      await contract.setBaseURI('base_uri_again_');
+      expect(await contract.tokenURI(0)).to.equal('base_uri_again_0');
+
+      // readonlyContract should not be able to set baseURI
+      await expect(readonlyContract.setBaseURI('something_else_')).to.be.revertedWith('Ownable');
+
+      await expect(contract.setPermanentBaseURI()).to.emit(contract, 'PermanentBaseURI');
+      await expect(contract.setBaseURI('base_uri_again_again_')).to.be.revertedWith('CannotUpdatePermanentBaseURI');
+    });
   });
 
   describe('Global wallet limit', function () {
@@ -588,7 +730,7 @@ describe('ERC721M', function () {
       await contract.setGlobalWalletLimit(2);
       expect((await contract.getGlobalWalletLimit()).toNumber()).to.equal(2);
 
-      await expect(contract.setGlobalWalletLimit(101)).to.be.revertedWith(
+      await expect(contract.setGlobalWalletLimit(1001)).to.be.revertedWith(
         'GlobalWalletLimitOverflow',
       );
     });
