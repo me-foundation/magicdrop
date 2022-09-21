@@ -690,11 +690,11 @@ describe('ERC721M', function () {
       await contract.setBaseURI('base_uri_again_');
       expect(await contract.tokenURI(0)).to.equal('base_uri_again_0');
 
-      // readonlyContract should not be able to set active stage
+      // readonlyContract should not be able to set baseURI
       await expect(readonlyContract.setBaseURI('something_else_')).to.be.revertedWith('Ownable');
 
-      await expect(contract.freezeBaseURI()).to.emit(contract, 'PermanentBaseURI');
-      await expect(contract.setBaseURI('base_uri_again_again_')).to.be.revertedWith('FrozenBaseURI');
+      await expect(contract.setPermanentBaseURI()).to.emit(contract, 'PermanentBaseURI');
+      await expect(contract.setBaseURI('base_uri_again_again_')).to.be.revertedWith('CannotUpdatePermanentBaseURI');
     });
   });
 

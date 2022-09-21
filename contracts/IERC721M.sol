@@ -14,7 +14,7 @@ interface IERC721M {
     error InvalidStageArgsLength();
     error WithdrawFailed();
     error CannotIncreaseMaxMintableSupply();
-    error FrozenBaseURI();
+    error CannotUpdatePermanentBaseURI();
 
     struct MintStageInfo {
         uint256 price;

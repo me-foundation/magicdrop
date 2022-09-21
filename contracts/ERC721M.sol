@@ -14,7 +14,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
     string private _tokenURISuffix;
-    bool private _baseURIImmutable;
+    bool private _baseURIPermanent;
 
     MintStageInfo[] private _mintStages;
 
@@ -238,13 +238,13 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     }
 
     function setBaseURI(string memory baseURI) external onlyOwner {
-        if (_baseURIImmutable) revert FrozenBaseURI();
+        if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
     }
 
-    function freezeBaseURI() external onlyOwner {
-        _baseURIImmutable = true;
+    function setPermanentBaseURI() external onlyOwner {
+        _baseURIPermanent = true;
         emit PermanentBaseURI(_currentBaseURI);
     }
 
