@@ -449,6 +449,26 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('StageSupplyExceeded');
     });
 
+    it('mint with free stage', async () => {
+      await contract.setStages(
+        [ethers.utils.parseEther('0')],
+        [0],
+        [ethers.utils.hexZeroPad('0x', 32)],
+        [100],
+      );
+      await contract.setMintable(true);
+
+      // Mint 100 tokens - stage limit
+      await readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], {
+        value: ethers.utils.parseEther('0'),
+      });
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await readonlyContract.getStageInfo(0);
+      expect(stageInfo.maxStageSupply.toNumber()).to.equal(100);
+      expect(walletMintedCount).to.equal(1);
+      expect(stagedMintedCount.toNumber()).to.equal(1);
+    });
+
     it('enforces stage supply', async () => {
       await contract.setStages(
         [ethers.utils.parseEther('0.5'), ethers.utils.parseEther('0.6')],
