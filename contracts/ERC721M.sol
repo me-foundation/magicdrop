@@ -243,7 +243,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         emit SetBaseURI(baseURI);
     }
 
-    function setPermanentBaseURI() external onlyOwner {
+    function setBaseURIPermanent() external onlyOwner {
         _baseURIPermanent = true;
         emit PermanentBaseURI(_currentBaseURI);
     }
