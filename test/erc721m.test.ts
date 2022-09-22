@@ -713,7 +713,7 @@ describe('ERC721M', function () {
       // readonlyContract should not be able to set baseURI
       await expect(readonlyContract.setBaseURI('something_else_')).to.be.revertedWith('Ownable');
 
-      await expect(contract.setPermanentBaseURI()).to.emit(contract, 'PermanentBaseURI');
+      await expect(contract.setBaseURIPermanent()).to.emit(contract, 'PermanentBaseURI');
       await expect(contract.setBaseURI('base_uri_again_again_')).to.be.revertedWith('CannotUpdatePermanentBaseURI');
     });
   });
