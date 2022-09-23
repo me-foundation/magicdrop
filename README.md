@@ -35,7 +35,7 @@ The composability of the stages is generic enough to enable flexible and complic
 - Non-incresing Max Total Supply Support
 - Per-stage WL Merkle Tree
 - Per-stage Max Supply
-- Per-stage Per-wallet Limit
+- Global and Per-stage Limit
 - Native TypeScript and Typechain-Types Support
 
 ## Installation
