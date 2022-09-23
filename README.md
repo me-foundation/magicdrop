@@ -6,10 +6,10 @@ ERC721M is a EVM minting protocol that enables the multi stage minting, per stag
 
 We'd like to introduce the standard of "minting stages". At each stage, the creators can define the following properties:
 
-- uint256 price
-- uint32 walletLimit
-- bytes32 merkleRoot
-- uint256 maxStageSupply
+- per-stage price
+- per-stage walletLimit
+- per-stage merkleRoot
+- per-stage maxStageSupply
 
 The composability of the stages is generic enough to enable flexible and complicated EVM minting contracts.
 
