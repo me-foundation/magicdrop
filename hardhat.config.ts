@@ -71,6 +71,7 @@ task('deploy', 'Deploy ERC721M')
   .addParam('name', 'name')
   .addParam('symbol', 'symbol')
   .addParam('maxsupply', 'max supply')
+  .addParam('tokenurisuffix', 'token uri suffix', '.json')
   .addParam('globalwalletlimit', 'global wallet limit')
   .setAction(deploy);
 
