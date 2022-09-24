@@ -12,8 +12,9 @@ import { setActiveStage } from './scripts/setActiveStage';
 import { setStages } from './scripts/setStages';
 import { setMintable } from './scripts/setMintable';
 import { deploy } from './scripts/deploy';
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
+import { setBaseURI } from './scripts/setBaseURI';
+import { mint } from './scripts/mint';
+import { ownerMint } from './scripts/ownerMint';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -74,5 +75,21 @@ task('deploy', 'Deploy ERC721M')
   .addParam('tokenurisuffix', 'token uri suffix', '.json')
   .addParam('globalwalletlimit', 'global wallet limit')
   .setAction(deploy);
+
+task('setBaseURI', 'Set the base uri')
+  .addParam('uri', 'uri')
+  .addParam('contract', 'contract address')
+  .setAction(setBaseURI);
+
+task('mint', 'Mint token(s)')
+  .addParam('contract', 'contract address')
+  .addParam('qty', 'quantity to mint', '1')
+  .setAction(mint);
+
+task('ownerMint', 'Mint token(s) as owner')
+  .addParam('contract', 'contract address')
+  .addParam('qty', 'quantity to mint', '1')
+  .addOptionalParam('to', 'recipient address')
+  .setAction(ownerMint);
 
 export default config;
