@@ -7,7 +7,9 @@
     "wrangler": "2.0.23"
   },
   "dependencies": {
-    "ethers": "^5.7.1",
+    "@ethersproject/wallet": "^5.7.0",
+    "@ethersproject/solidity": "^5.7.0",
+    "@ethersproject/bytes": "^5.7.0",
     "itty-router": "^2.6.5"
   },
   "private": true,
