@@ -1,14 +1,16 @@
-import { ethers } from 'ethers';
+import { Wallet } from '@ethersproject/wallet';
+import { keccak256 } from '@ethersproject/solidity';
+import { arrayify } from '@ethersproject/bytes';
 import { Router, Request as IRequest } from 'itty-router';
 import { dd } from './datadog';
 import { ICollectionRequest, ICosignRequest } from './types';
 
 const router = Router();
 
-let _cosigner: ethers.Wallet | undefined;
+let _cosigner: Wallet | undefined;
 const getCosigner = () => {
   if (_cosigner) return _cosigner;
-  _cosigner = new ethers.Wallet(COSIGN_PRIVATE_KEY);
+  _cosigner = new Wallet(COSIGN_PRIVATE_KEY);
   return _cosigner;
 };
 
@@ -107,7 +109,7 @@ router.post(
     }
 
     const cosigner = getCosigner();
-    const digest = ethers.utils.solidityKeccak256(
+    const digest = keccak256(
       ['address', 'address', 'uint32', 'address', 'uint256'],
       [
         payload.collectionContract.toLowerCase(),
@@ -117,7 +119,7 @@ router.post(
         timestamp,
       ],
     );
-    const sig = await cosigner.signMessage(ethers.utils.arrayify(digest));
+    const sig = await cosigner.signMessage(arrayify(digest));
     dd(event, { message: 'Cosign_Request', payload, sig, timestamp }, 'info');
     return new Response(
       JSON.stringify({ sig, timestamp, cosigner: cosigner.address }),
