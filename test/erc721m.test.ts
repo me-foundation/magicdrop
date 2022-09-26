@@ -860,13 +860,20 @@ describe('ERC721M', function () {
 
   describe('Cosign', () => {
     it('can deploy with 0x0 cosign', async () => {
-      const [owner] = await ethers.getSigners();
+      const [owner, cosigner] = await ethers.getSigners();
       const ERC721M = await ethers.getContractFactory('ERC721M');
       const erc721M = await ERC721M.deploy('Test', 'TEST', '', 1000, 0, ethers.constants.AddressZero);
       await erc721M.deployed();
       const ownerConn = erc721M.connect(owner);
       expect(await ownerConn.getCosigner()).to.eq(ethers.constants.AddressZero);
       expect(ownerConn.getCosignDigest(owner.address, 1, 0)).to.be.revertedWith('CosignerNotSet');
+
+      // we can set the cosigner
+      await ownerConn.setCosigner(cosigner.address);
+      expect(await ownerConn.getCosigner()).to.eq(cosigner.address);
+
+      // readonly contract can't set cosigner
+      await expect(readonlyContract.setCosigner(cosigner.address)).to.be.revertedWith('Ownable');
     });
 
     it('can deploy with cosign', async () => {
