@@ -1,3 +1,4 @@
-name = "cosign-server"
+name = "erc721m-cosign-server"
 main = "src/index.ts"
 compatibility_date = "2022-09-26"
+node_compat = true
