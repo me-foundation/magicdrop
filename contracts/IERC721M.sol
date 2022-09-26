@@ -15,6 +15,8 @@ interface IERC721M {
     error WithdrawFailed();
     error CannotIncreaseMaxMintableSupply();
     error CannotUpdatePermanentBaseURI();
+    error InvalidCosignSignature();
+    error CosignerNotSet();
 
     struct MintStageInfo {
         uint256 price;
@@ -31,6 +33,7 @@ interface IERC721M {
         uint256 maxStageSupply
     );
 
+    event SetCosigner(address cosigner);
     event SetMintable(bool mintable);
     event SetMaxMintableSupply(uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
