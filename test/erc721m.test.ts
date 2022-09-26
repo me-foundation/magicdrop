@@ -664,6 +664,34 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('InvalidProof');
     });
 
+    it('crossmint reverts on non-Crossmint sender', async () => {
+      const accounts = (await ethers.getSigners()).map((signer) =>
+        getAddress(signer.address),
+      );
+      const [_, recipient] = await ethers.getSigners();
+
+      const merkleTree = new MerkleTree(accounts, keccak256, {
+        sortPairs: true,
+        hashLeaves: true,
+      });
+      const root = merkleTree.getHexRoot();
+      const proof = merkleTree.getHexProof(keccak256(recipient.address));
+
+      await contract.setStages(
+        [ethers.utils.parseEther('0.5')],
+        [10],
+        [root],
+        [7],
+      );
+      await contract.setMintable(true);
+
+      const crossMint = contract.crossMint(7, recipient.address, proof, 0, '0x00', {
+        value: ethers.utils.parseEther('3.5'),
+      });
+
+      await expect(crossMint).to.be.revertedWith('CrossmintOnly');
+    });
+
     it('mints by owner', async () => {
       await contract.setStages(
         [ethers.utils.parseEther('0.5')],
