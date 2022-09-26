@@ -15,7 +15,7 @@ export const mint = async (
   const activeStage = await contract.getActiveStage();
   const [stageInfo] = await contract.getStageInfo(activeStage);
   const qty = ethers.BigNumber.from(args.quantity ?? 1);
-  const tx = await contract.mint(qty, [ethers.utils.hexZeroPad('0x', 32)], {
+  const tx = await contract.mint(qty, [], 0, '0x', {
     value: stageInfo.price.mul(qty),
   });
   console.log(`Submitted tx ${tx.hash}`);

@@ -11,6 +11,7 @@ export interface IDeployParams {
   tokenurisuffix: string;
   maxsupply: string;
   globalwalletlimit: string;
+  cosigner?: string;
 }
 
 export const deploy = async (
@@ -25,6 +26,7 @@ export const deploy = async (
     args.tokenurisuffix,
     hre.ethers.BigNumber.from(args.maxsupply),
     hre.ethers.BigNumber.from(args.globalwalletlimit),
+    args.cosigner ?? hre.ethers.constants.AddressZero,
   );
 
   await erc721M.deployed();

@@ -15,6 +15,7 @@ import { deploy } from './scripts/deploy';
 import { setBaseURI } from './scripts/setBaseURI';
 import { mint } from './scripts/mint';
 import { ownerMint } from './scripts/ownerMint';
+import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -74,6 +75,11 @@ task('deploy', 'Deploy ERC721M')
   .addParam('maxsupply', 'max supply')
   .addParam('tokenurisuffix', 'token uri suffix', '.json')
   .addParam('globalwalletlimit', 'global wallet limit')
+  .addOptionalParam(
+    'cosigner',
+    'cosigner address (0x00...000 if not using cosign)',
+    '0x0000000000000000000000000000000000000000',
+  )
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')
@@ -91,5 +97,10 @@ task('ownerMint', 'Mint token(s) as owner')
   .addParam('qty', 'quantity to mint', '1')
   .addOptionalParam('to', 'recipient address')
   .setAction(ownerMint);
+
+task('setGlobalWalletLimit', 'Set the global wallet limit')
+  .addParam('contract', 'contract address')
+  .addParam('limit', 'global wallet limit (0 for no global limit)')
+  .setAction(setGlobalWalletLimit);
 
 export default config;
