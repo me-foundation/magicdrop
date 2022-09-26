@@ -7,7 +7,6 @@
     "wrangler": "2.0.23"
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^3.16.0",
     "ethers": "^5.7.1",
     "itty-router": "^2.6.5"
   },
