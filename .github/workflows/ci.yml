@@ -24,6 +24,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
+      - run: cd cosign-server && npm ci
       - run: npm run build
       - run: npm run lint
       - name: Run Coverage and Upload to CodeCov
