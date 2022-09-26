@@ -3,11 +3,15 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "hardhat/console.sol";
 import "./IERC721M.sol";
 
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
+    using ECDSA for bytes32;
+
     bool private _mintable;
     string private _currentBaseURI;
     uint256 private _activeStage;
@@ -15,6 +19,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     uint256 private _globalWalletLimit;
     string private _tokenURISuffix;
     bool private _baseURIPermanent;
+    address private _cosigner;
 
     MintStageInfo[] private _mintStages;
 
@@ -28,7 +33,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         string memory collectionSymbol,
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
-        uint256 globalWalletLimit
+        uint256 globalWalletLimit,
+        address cosigner
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -37,6 +43,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
+        _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
     }
 
     modifier canMint() {
@@ -49,11 +56,19 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         _;
     }
 
+    function getCosigner() external view returns (address) {
+        return _cosigner;
+    }
+
+    function setCosigner(address cosigner) external onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
+    }
     function setStages(
-        uint256[] memory prices,
-        uint32[] memory walletLimits,
-        bytes32[] memory merkleRoots,
-        uint256[] memory maxStageSupplies
+        uint256[] calldata prices,
+        uint32[] calldata walletLimits,
+        bytes32[] calldata merkleRoots,
+        uint256[] calldata maxStageSupplies
     ) external onlyOwner {
         // check all arrays are the same length
         if (prices.length != walletLimits.length)
@@ -176,13 +191,17 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         emit UpdateStage(index, price, walletLimit, merkleRoot, maxStageSupply);
     }
 
-    function mint(uint32 qty, bytes32[] calldata proof)
-        external
-        payable
-        canMint
-        hasSupply(qty)
-    {
+    function mint(
+        uint32 qty,
+        bytes32[] calldata proof,
+        uint256 timestamp,
+        bytes calldata signature
+    ) external payable canMint hasSupply(qty) {
         if (_activeStage >= _mintStages.length) revert InvalidStage();
+
+        if (_cosigner != address(0)) {
+            assertValidCosign(msg.sender, qty, timestamp, signature);
+        }
 
         MintStageInfo memory stage = _mintStages[_activeStage];
 
@@ -237,7 +256,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         if (!success) revert WithdrawFailed();
     }
 
-    function setBaseURI(string memory baseURI) external onlyOwner {
+    function setBaseURI(string calldata baseURI) external onlyOwner {
         if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
@@ -252,7 +271,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         return _tokenURISuffix;
     }
 
-    function setTokenURISuffix(string memory suffix) external onlyOwner {
+    function setTokenURISuffix(string calldata suffix) external onlyOwner {
         _tokenURISuffix = suffix;
     }
 
@@ -275,5 +294,38 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
                     )
                 )
                 : "";
+    }
+
+    function getCosignDigest(
+        address minter,
+        uint32 qty,
+        uint256 timestamp
+    ) public view returns (bytes32) {
+        if (_cosigner == address(0)) revert CosignerNotSet();
+        return
+            keccak256(
+                abi.encodePacked(
+                    address(this),
+                    minter,
+                    qty,
+                    _cosigner,
+                    timestamp
+                )
+            ).toEthSignedMessageHash();
+    }
+
+    function assertValidCosign(
+        address minter,
+        uint32 qty,
+        uint256 timestamp,
+        bytes memory signature
+    ) public view {
+        if (
+            !SignatureChecker.isValidSignatureNow(
+                _cosigner,
+                getCosignDigest(minter, qty, timestamp),
+                signature
+            )
+        ) revert InvalidCosignSignature();
     }
 }
