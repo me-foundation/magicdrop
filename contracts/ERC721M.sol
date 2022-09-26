@@ -64,6 +64,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         _cosigner = cosigner;
         emit SetCosigner(cosigner);
     }
+
     function setStages(
         uint256[] calldata prices,
         uint32[] calldata walletLimits,
