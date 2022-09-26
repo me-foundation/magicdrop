@@ -515,28 +515,28 @@ describe('ERC721M', function () {
       const sig = await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
 
       // invalid because of unexpected timestamp
-      expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp + 1, sig, {
+      await expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp + 1, sig, {
         value: ethers.utils.parseEther('0'),
-      })).to.be.revertedWith('InvalidSignature');
+      })).to.be.revertedWith('InvalidCosignSignature');
 
       // invalid because of unexptected sig
-      expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, sig + '_invalid_bytes', {
+      await expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, sig + '00', {
         value: ethers.utils.parseEther('0'),
-      })).to.be.revertedWith('InvalidSignature');
-      expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, '0', {
+      })).to.be.revertedWith('InvalidCosignSignature');
+      await expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, '0x00', {
         value: ethers.utils.parseEther('0'),
-      })).to.be.revertedWith('InvalidSignature');
-      expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, '0x00', {
+      })).to.be.revertedWith('InvalidCosignSignature');
+      await expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, '0', {
         value: ethers.utils.parseEther('0'),
-      })).to.be.revertedWith('InvalidSignature');
-      expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, '', {
+      })).to.be.rejectedWith('invalid arrayify');
+      await expect(readonlyContract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, '', {
         value: ethers.utils.parseEther('0'),
-      })).to.be.revertedWith('InvalidSignature');
+      })).to.be.rejectedWith('invalid arrayify');
 
-      // invalid because of unexpected minter
-      expect(contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, sig, {
+      // invalid because of unawait expected minter
+      await expect(contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, sig, {
         value: ethers.utils.parseEther('0'),
-      })).to.be.revertedWith('InvalidSignature');
+      })).to.be.revertedWith('InvalidCosignSignature');
     });
 
     it('enforces stage supply', async () => {
@@ -884,10 +884,10 @@ describe('ERC721M', function () {
         [erc721M.address, minter.address, 1, cosigner.address, timestamp],
       );
       const sig = await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
-      expect(minterConn.assertValidCosign(minter.address, 1, timestamp, sig)).to.not.be.reverted;
+      await expect(minterConn.assertValidCosign(minter.address, 1, timestamp, sig)).to.not.be.reverted;
 
       const invalidSig = sig + '00';
-      expect(minterConn.assertValidCosign(minter.address, 1, timestamp, invalidSig)).to.be.revertedWith('InvalidCosign');
+      await expect(minterConn.assertValidCosign(minter.address, 1, timestamp, invalidSig)).to.be.revertedWith('InvalidCosignSignature');
     });
   });
 });
