@@ -664,6 +664,106 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('InvalidProof');
     });
 
+    it('crossmint', async () => {
+      const crossmintAddressStr = "0xdAb1a1854214684acE522439684a145E62505233";
+      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const erc721M = await ERC721M.deploy('Test', 'TEST', '', 1000, 0, ethers.constants.AddressZero);
+      await erc721M.deployed();
+
+      [owner, readonly] = await ethers.getSigners();
+      const ownerConn = erc721M.connect(owner);
+      
+      await ownerConn.setStages(
+        [ethers.utils.parseEther('0.5')],
+        [0],
+        [ethers.utils.hexZeroPad('0x', 32)],
+        [100],
+      );
+      await ownerConn.setMintable(true);
+      await ownerConn.setCrossmintAddress(crossmintAddressStr);
+
+      expect(await ownerConn.getCrossmintAddress()).to.equal(crossmintAddressStr);
+
+      // Impersonate Crossmint wallet
+      const crossmintSigner = await ethers.getImpersonatedSigner(crossmintAddressStr);
+      const crossmintAddress = await crossmintSigner.getAddress();
+
+      // Send some wei to impersonated account
+      await ethers.provider.send('hardhat_setBalance', [
+        crossmintAddress,
+        '0xFFFFFFFFFFFFFFFF',
+      ]);
+
+      const crossMintConn = erc721M.connect(crossmintSigner);
+
+      await crossMintConn.crossmint(1, readonly.address, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
+        value: ethers.utils.parseEther('0.5'),
+      });
+
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await ownerConn.getStageInfo(0);
+      expect(stageInfo.maxStageSupply.toNumber()).to.equal(100);
+      expect(walletMintedCount).to.equal(0);
+      expect(stagedMintedCount.toNumber()).to.equal(1);
+    });
+
+    it('crossmint reverts if crossmint address not set', async () => {
+      const accounts = (await ethers.getSigners()).map((signer) =>
+        getAddress(signer.address),
+      );
+      const [_, recipient] = await ethers.getSigners();
+
+      const merkleTree = new MerkleTree(accounts, keccak256, {
+        sortPairs: true,
+        hashLeaves: true,
+      });
+      const root = merkleTree.getHexRoot();
+      const proof = merkleTree.getHexProof(keccak256(recipient.address));
+
+      await contract.setStages(
+        [ethers.utils.parseEther('0.5')],
+        [10],
+        [root],
+        [7],
+      );
+      await contract.setMintable(true);
+
+      const crossmint = contract.crossmint(7, recipient.address, proof, 0, '0x00', {
+        value: ethers.utils.parseEther('3.5'),
+      });
+
+      await expect(crossmint).to.be.revertedWith('CrossmintAddressNotSet');
+    });
+
+    it('crossmint reverts on non-Crossmint sender', async () => {
+      const accounts = (await ethers.getSigners()).map((signer) =>
+        getAddress(signer.address),
+      );
+      const [_, recipient] = await ethers.getSigners();
+
+      const merkleTree = new MerkleTree(accounts, keccak256, {
+        sortPairs: true,
+        hashLeaves: true,
+      });
+      const root = merkleTree.getHexRoot();
+      const proof = merkleTree.getHexProof(keccak256(recipient.address));
+
+      await contract.setStages(
+        [ethers.utils.parseEther('0.5')],
+        [10],
+        [root],
+        [7],
+      );
+      await contract.setMintable(true);
+      await contract.setCrossmintAddress('0xdAb1a1854214684acE522439684a145E62505233');
+
+      const crossmint = contract.crossmint(7, recipient.address, proof, 0, '0x00', {
+        value: ethers.utils.parseEther('3.5'),
+      });
+
+      await expect(crossmint).to.be.revertedWith('CrossmintOnly');
+    });
+
     it('mints by owner', async () => {
       await contract.setStages(
         [ethers.utils.parseEther('0.5')],

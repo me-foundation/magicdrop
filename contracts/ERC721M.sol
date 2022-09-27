@@ -20,6 +20,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     string private _tokenURISuffix;
     bool private _baseURIPermanent;
     address private _cosigner;
+    address private _crossmintAddress;
 
     MintStageInfo[] private _mintStages;
 
@@ -63,6 +64,15 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     function setCosigner(address cosigner) external onlyOwner {
         _cosigner = cosigner;
         emit SetCosigner(cosigner);
+    }
+
+    function getCrossmintAddress() external view returns (address) {
+        return _crossmintAddress;
+    }
+
+    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
+        _crossmintAddress = crossmintAddress;
+        emit SetCrossmintAddress(crossmintAddress);
     }
 
     function setStages(
@@ -197,7 +207,32 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         bytes32[] calldata proof,
         uint256 timestamp,
         bytes calldata signature
-    ) external payable canMint hasSupply(qty) {
+    ) external payable {
+        _mintInternal(qty, msg.sender, proof, timestamp, signature);
+    }
+
+    function crossmint(
+        uint32 qty,
+        address to,
+        bytes32[] calldata proof,
+        uint256 timestamp,
+        bytes calldata signature
+    ) external payable {
+        if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
+
+        // Check the caller is Crossmint
+        if (msg.sender != _crossmintAddress) revert CrossmintOnly();
+
+        _mintInternal(qty, to, proof, timestamp, signature);
+    }
+
+    function _mintInternal(
+        uint32 qty,
+        address to,
+        bytes32[] calldata proof,
+        uint256 timestamp,
+        bytes calldata signature
+    ) internal canMint hasSupply(qty) {
         if (_activeStage >= _mintStages.length) revert InvalidStage();
 
         if (_cosigner != address(0)) {
@@ -217,14 +252,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
 
         // Check global wallet limit if applicable
         if (_globalWalletLimit > 0) {
-            if (_numberMinted(msg.sender) + qty > _globalWalletLimit)
+            if (_numberMinted(to) + qty > _globalWalletLimit)
                 revert WalletGlobalLimitExceeded();
         }
 
         // Check wallet limit for stage if applicable, limit == 0 means no limit enforced
         if (stage.walletLimit > 0) {
             if (
-                _stageMintedCountsPerWallet[_activeStage][msg.sender] + qty >
+                _stageMintedCountsPerWallet[_activeStage][to] + qty >
                 stage.walletLimit
             ) revert WalletStageLimitExceeded();
         }
@@ -234,14 +269,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
             if (
                 MerkleProof.processProof(
                     proof,
-                    keccak256(abi.encodePacked(msg.sender))
+                    keccak256(abi.encodePacked(to))
                 ) != stage.merkleRoot
             ) revert InvalidProof();
         }
 
-        _stageMintedCountsPerWallet[_activeStage][msg.sender] += qty;
+        _stageMintedCountsPerWallet[_activeStage][to] += qty;
         _stageMintedCounts[_activeStage] += qty;
-        _safeMint(msg.sender, qty);
+        _safeMint(to, qty);
     }
 
     function ownerMint(uint32 qty, address to)

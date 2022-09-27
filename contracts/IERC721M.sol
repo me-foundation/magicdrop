@@ -2,21 +2,23 @@
 pragma solidity ^0.8.4;
 
 interface IERC721M {
-    error GlobalWalletLimitOverflow();
-    error NotMintable();
-    error NoSupplyLeft();
-    error InvalidStage();
-    error InvalidProof();
-    error WalletStageLimitExceeded();
-    error WalletGlobalLimitExceeded();
-    error StageSupplyExceeded();
-    error NotEnoughValue();
-    error InvalidStageArgsLength();
-    error WithdrawFailed();
     error CannotIncreaseMaxMintableSupply();
     error CannotUpdatePermanentBaseURI();
-    error InvalidCosignSignature();
     error CosignerNotSet();
+    error CrossmintAddressNotSet();
+    error CrossmintOnly();
+    error GlobalWalletLimitOverflow();
+    error InvalidCosignSignature();
+    error InvalidProof();
+    error InvalidStage();
+    error InvalidStageArgsLength();
+    error NoSupplyLeft();
+    error NotEnoughValue();
+    error NotMintable();
+    error StageSupplyExceeded();
+    error WalletGlobalLimitExceeded();
+    error WalletStageLimitExceeded();
+    error WithdrawFailed();
 
     struct MintStageInfo {
         uint256 price;
@@ -34,6 +36,7 @@ interface IERC721M {
     );
 
     event SetCosigner(address cosigner);
+    event SetCrossmintAddress(address crossmintAddress);
     event SetMintable(bool mintable);
     event SetMaxMintableSupply(uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
