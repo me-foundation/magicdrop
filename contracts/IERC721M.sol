@@ -15,6 +15,7 @@ interface IERC721M {
     error NoSupplyLeft();
     error NotEnoughValue();
     error NotMintable();
+    error Mintable();
     error StageSupplyExceeded();
     error WalletGlobalLimitExceeded();
     error WalletStageLimitExceeded();
@@ -43,4 +44,5 @@ interface IERC721M {
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
     event PermanentBaseURI(string baseURI);
+    event Withdraw(uint256 value);
 }

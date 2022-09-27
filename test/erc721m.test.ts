@@ -52,7 +52,7 @@ describe('ERC721M', function () {
       (await contract.provider.getBalance(contract.address)).toNumber(),
     ).to.equal(100);
 
-    await contract.withdraw();
+    await expect(contract.withdraw()).to.emit(contract, 'Withdraw');
 
     // TODO: fix the 'Provider not found' error here
     // await expect(contract.withdraw()).to.changeEtherBalance(owner.address, 100);
@@ -672,7 +672,7 @@ describe('ERC721M', function () {
 
       [owner, readonly] = await ethers.getSigners();
       const ownerConn = erc721M.connect(owner);
-      
+
       await ownerConn.setStages(
         [ethers.utils.parseEther('0.5')],
         [0],

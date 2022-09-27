@@ -52,6 +52,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         _;
     }
 
+    modifier cannotMint() {
+        if (_mintable) revert Mintable();
+        _;
+    }
+
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
         _;
@@ -126,7 +131,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         return _mintStages.length;
     }
 
-    function getMaxMintableSupply() external view returns (uint256) {
+    function getMaxMintableSupply() public view returns (uint256) {
         return _maxMintableSupply;
     }
 
@@ -288,8 +293,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     }
 
     function withdraw() external onlyOwner {
-        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        uint256 value = address(this).balance;
+        (bool success, ) = msg.sender.call{value: value}("");
         if (!success) revert WithdrawFailed();
+        emit Withdraw(value);
     }
 
     function setBaseURI(string calldata baseURI) external onlyOwner {
