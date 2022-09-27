@@ -9,6 +9,7 @@ import { HardhatUserConfig, task, types } from 'hardhat/config';
 import 'solidity-coverage';
 
 import { setActiveStage } from './scripts/setActiveStage';
+import { setCrossmintAddress } from './scripts/setCrossmintAddress';
 import { setStages } from './scripts/setStages';
 import { setMintable } from './scripts/setMintable';
 import { deploy } from './scripts/deploy';
@@ -80,6 +81,11 @@ task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')
   .addParam('contract', 'contract address')
   .setAction(setBaseURI);
+
+task('setCrossmintAddress', 'Set crossmint address')
+  .addParam('contract', 'contract address')
+  .addParam('crossmintAddress', 'new crossmint address')
+  .setAction(setCrossmintAddress);
 
 task('mint', 'Mint token(s)')
   .addParam('contract', 'contract address')

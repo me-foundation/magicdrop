@@ -12,9 +12,6 @@ import "./IERC721M.sol";
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     using ECDSA for bytes32;
 
-    address private constant CROSSMINT_ADDRESS =
-        0xdAb1a1854214684acE522439684a145E62505233;
-
     bool private _mintable;
     string private _currentBaseURI;
     uint256 private _activeStage;
@@ -23,6 +20,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     string private _tokenURISuffix;
     bool private _baseURIPermanent;
     address private _cosigner;
+    address private _crossmintAddress;
 
     MintStageInfo[] private _mintStages;
 
@@ -66,6 +64,15 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     function setCosigner(address cosigner) external onlyOwner {
         _cosigner = cosigner;
         emit SetCosigner(cosigner);
+    }
+
+    function getCrossmintAddress() external view returns (address) {
+        return _crossmintAddress;
+    }
+
+    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
+        _crossmintAddress = crossmintAddress;
+        emit SetCrossmintAddress(crossmintAddress);
     }
 
     function setStages(
@@ -204,15 +211,17 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
     }
 
-    function crossMint(
+    function crossmint(
         uint32 qty,
         address to,
         bytes32[] calldata proof,
         uint256 timestamp,
         bytes calldata signature
     ) external payable {
+        if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
+
         // Check the caller is Crossmint
-        if (msg.sender != CROSSMINT_ADDRESS) revert CrossmintOnly();
+        if (msg.sender != _crossmintAddress) revert CrossmintOnly();
 
         _mintInternal(qty, to, proof, timestamp, signature);
     }
