@@ -2,15 +2,17 @@
 pragma solidity ^0.8.4;
 
 interface IBucketAuction {
-    error BucketAuctionNotActive();
-    error BucketAuctionActive();
-    error PriceHasBeenSet();
-    error LowerThanMinBidAmount();
-    error UserAlreadyClaimed();
-    error TransferFailed();
     error AlreadySentTokensToUser();
-    error PriceNotSet();
+    error BucketAuctionActive();
+    error BucketAuctionNotActive();
     error CannotSendMoreThanUserPurchased();
+    error CannotSetPriceIfClaimable();
+    error LowerThanMinBidAmount();
+    error NotClaimable();
+    error PriceHasBeenSet();
+    error PriceNotSet();
+    error TransferFailed();
+    error UserAlreadyClaimed();
 
     struct User {
         uint216 contribution; // cumulative sum of ETH bids
@@ -26,4 +28,5 @@ interface IBucketAuction {
     );
     event SetMinimumContribution(uint256 minimumContributionInWei);
     event SetPrice(uint256 price);
+    event SetClaimable(bool claimable);
 }

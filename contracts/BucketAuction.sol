@@ -12,6 +12,7 @@ import "./IBucketAuction.sol";
 import "./ERC721M.sol";
 
 contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
+    bool private _claimable;
     uint256 private _minimumContributionInWei;
     uint256 private _price;
     bool private _auctionActive;
@@ -35,7 +36,13 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
             cosigner
         )
     {
+        _claimable = false;
         _minimumContributionInWei = minimumContributionInWei;
+    }
+
+    modifier isClaimable() {
+        if (!_claimable) revert NotClaimable();
+        _;
     }
 
     modifier isAuctionActive() {
@@ -62,6 +69,15 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
 
     function getUserData(address user) external view returns (User memory) {
         return _userData[user];
+    }
+
+    function getClaimable() external view returns (bool) {
+        return _claimable;
+    }
+
+    function setClaimable(bool b) external onlyOwner {
+        _claimable = b;
+        emit SetClaimable(b);
     }
 
     /**
@@ -116,6 +132,8 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
         onlyOwner
         cannotMint
     {
+        if (_claimable) revert CannotSetPriceIfClaimable();
+
         _price = priceInWei;
         emit SetPrice(priceInWei);
     }
@@ -240,7 +258,7 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
         _sendTokensAndRefund(to);
     }
 
-    function claimTokensAndRefund() public nonReentrant {
+    function claimTokensAndRefund() public isClaimable nonReentrant {
         _sendTokensAndRefund(msg.sender);
     }
 

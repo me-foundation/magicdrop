@@ -118,6 +118,11 @@ describe('BucketAuction', function () {
     // and then we prepare to close the auction and settle the price and refund
     await ownerConn.setAuctionActive(false);
     await ownerConn.setPrice(80);
+
+    expect(await ownerConn.getClaimable()).to.be.false;
+    await ownerConn.setClaimable(true);
+    expect(await ownerConn.getClaimable()).to.be.true;
+
     await expect(readonlyConn.claimTokensAndRefund()).to.emit(readonlyConn, 'Transfer');
     const userData = await readonlyConn.getUserData(readonly.address);
     expect(userData.contribution).to.eq(100);
