@@ -52,8 +52,6 @@ describe('ERC721M', function () {
       (await contract.provider.getBalance(contract.address)).toNumber(),
     ).to.equal(100);
 
-    await expect(contract.withdraw()).to.emit(contract, 'Withdraw');
-
     await expect(() =>
       contract.withdraw(),
     ).to.changeEtherBalances([contract, owner], [-100, 100]);
