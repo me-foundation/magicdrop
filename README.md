@@ -13,7 +13,7 @@ We'd like to introduce the standard of "minting stages". At each stage, the crea
 
 The composability of the stages is generic enough to enable flexible and complicated EVM minting contracts.
 
-![](https://bafkreidwnpgkavfiamg23b6l5ze3r5qjtrn3p5x3rhecunmhw2nhdrkxri.ipfs.nftstorage.link/)
+![](https://bafkreid7sfgi5tycdvbdtobl3mqnwjlrlawdgioaj6vxvtcmmda74doh7q.ipfs.nftstorage.link/)
 
 
 ## Build status
@@ -78,11 +78,12 @@ We are targeting 100% lines coverage.
 ![](https://bafkreic3dyzp5i2fi7co2fekkbgmyxgv342irjy5zfiuhvjqic6fuu53ju.ipfs.nftstorage.link/)
 
 ## Security
-- TODO
+- [ERC721M Kudelski Security Audit](./docs/AUDIT-PUBLIC-RELEASE-MagicEden-ERC721M1.pdf)
+- Hacker One Bounty Program, please contact https://magiceden.io/.well-known/security.txt
 
 ## Used By
 
-- [Azra Games](https://twitter.com/AzraGames)
+- [Magic Eden Launchpad](https://magiceden.io/launchpad/about)
 
 ## License
 
