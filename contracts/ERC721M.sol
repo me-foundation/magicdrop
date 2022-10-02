@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
-import "hardhat/console.sol";
 import "./IERC721M.sol";
 
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
@@ -80,40 +79,31 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         emit SetCrossmintAddress(crossmintAddress);
     }
 
-    function setStages(
-        uint256[] calldata prices,
-        uint32[] calldata walletLimits,
-        bytes32[] calldata merkleRoots,
-        uint256[] calldata maxStageSupplies
-    ) external onlyOwner {
-        // check all arrays are the same length
-        if (prices.length != walletLimits.length)
-            revert InvalidStageArgsLength();
-        if (prices.length != merkleRoots.length)
-            revert InvalidStageArgsLength();
-        if (maxStageSupplies.length != merkleRoots.length)
-            revert InvalidStageArgsLength();
-
+    function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         uint256 originalSize = _mintStages.length;
         for (uint256 i = 0; i < originalSize; i++) {
             _mintStages.pop();
         }
 
-        for (uint256 i = 0; i < prices.length; i++) {
+        for (uint256 i = 0; i < newStages.length; i++) {
             _mintStages.push(
                 MintStageInfo({
-                    price: prices[i],
-                    walletLimit: walletLimits[i],
-                    merkleRoot: merkleRoots[i],
-                    maxStageSupply: maxStageSupplies[i]
+                    price: newStages[i].price,
+                    walletLimit: newStages[i].walletLimit,
+                    merkleRoot: newStages[i].merkleRoot,
+                    maxStageSupply: newStages[i].maxStageSupply,
+                    startTimeUnixSeconds: newStages[i].startTimeUnixSeconds,
+                    endTimeUnixSeconds: newStages[i].endTimeUnixSeconds
                 })
             );
             emit UpdateStage(
                 i,
-                prices[i],
-                walletLimits[i],
-                merkleRoots[i],
-                maxStageSupplies[i]
+                newStages[i].price,
+                newStages[i].walletLimit,
+                newStages[i].merkleRoot,
+                newStages[i].maxStageSupply,
+                newStages[i].startTimeUnixSeconds,
+                newStages[i].endTimeUnixSeconds
             );
         }
     }
@@ -196,15 +186,27 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         uint256 price,
         uint32 walletLimit,
         bytes32 merkleRoot,
-        uint256 maxStageSupply
+        uint256 maxStageSupply,
+        uint64 startTimeUnixSeconds,
+        uint64 endTimeUnixSeconds
     ) external onlyOwner {
         if (index >= _mintStages.length) revert InvalidStage();
         _mintStages[index].price = price;
         _mintStages[index].walletLimit = walletLimit;
         _mintStages[index].merkleRoot = merkleRoot;
         _mintStages[index].maxStageSupply = maxStageSupply;
+        _mintStages[index].startTimeUnixSeconds = startTimeUnixSeconds;
+        _mintStages[index].endTimeUnixSeconds = endTimeUnixSeconds;
 
-        emit UpdateStage(index, price, walletLimit, merkleRoot, maxStageSupply);
+        emit UpdateStage(
+            index,
+            price,
+            walletLimit,
+            merkleRoot,
+            maxStageSupply,
+            startTimeUnixSeconds,
+            endTimeUnixSeconds
+        );
     }
 
     function mint(
@@ -240,11 +242,13 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     ) internal canMint hasSupply(qty) {
         if (_activeStage >= _mintStages.length) revert InvalidStage();
 
+        MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
+            stage = _mintStages[getActiveStageFromTimestamp(timestamp)];
+        } else {
+            stage = _mintStages[_activeStage];
         }
-
-        MintStageInfo memory stage = _mintStages[_activeStage];
 
         // Check value
         if (msg.value < stage.price * qty) revert NotEnoughValue();
@@ -370,5 +374,21 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
                 signature
             )
         ) revert InvalidCosignSignature();
+    }
+
+    function getActiveStageFromTimestamp(uint256 timestamp)
+        public
+        view
+        returns (uint256)
+    {
+        for (uint256 i = 0; i < _mintStages.length; i++) {
+            if (
+                timestamp >= _mintStages[i].startTimeUnixSeconds &&
+                timestamp < _mintStages[i].endTimeUnixSeconds
+            ) {
+                return i;
+            }
+        }
+        revert InvalidStage();
     }
 }

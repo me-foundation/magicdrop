@@ -26,6 +26,8 @@ interface IERC721M {
         uint32 walletLimit; // 0 for unlimited
         bytes32 merkleRoot; // 0x0 for no presale enforced
         uint256 maxStageSupply; // 0 for unlimited
+        uint64 startTimeUnixSeconds;
+        uint64 endTimeUnixSeconds;
     }
 
     event UpdateStage(
@@ -33,7 +35,9 @@ interface IERC721M {
         uint256 price,
         uint32 walletLimit,
         bytes32 merkleRoot,
-        uint256 maxStageSupply
+        uint256 maxStageSupply,
+        uint64 startTimeUnixSeconds,
+        uint64 endTimeUnixSeconds
     );
 
     event SetCosigner(address cosigner);
