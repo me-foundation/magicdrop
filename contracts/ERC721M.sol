@@ -11,6 +11,8 @@ import "./IERC721M.sol";
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
     using ECDSA for bytes32;
 
+    uint64 public constant MIN_STAGE_INTERVAL_SECONDS = 60;
+
     bool private _mintable;
     string private _currentBaseURI;
     uint256 private _activeStage;
@@ -86,6 +88,19 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         }
 
         for (uint256 i = 0; i < newStages.length; i++) {
+            if (i >= 1) {
+                if (
+                    newStages[i].startTimeUnixSeconds <
+                    newStages[i - 1].endTimeUnixSeconds +
+                        MIN_STAGE_INTERVAL_SECONDS
+                ) {
+                    revert InsufficientStageTimeGap();
+                }
+            }
+            _assertValidStartAndEndTimestamp(
+                newStages[i].startTimeUnixSeconds,
+                newStages[i].endTimeUnixSeconds
+            );
             _mintStages.push(
                 MintStageInfo({
                     price: newStages[i].price,
@@ -191,6 +206,19 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         uint64 endTimeUnixSeconds
     ) external onlyOwner {
         if (index >= _mintStages.length) revert InvalidStage();
+        if (index >= 1) {
+            if (
+                startTimeUnixSeconds <
+                _mintStages[index - 1].endTimeUnixSeconds +
+                    MIN_STAGE_INTERVAL_SECONDS
+            ) {
+                revert InsufficientStageTimeGap();
+            }
+        }
+        _assertValidStartAndEndTimestamp(
+            startTimeUnixSeconds,
+            endTimeUnixSeconds
+        );
         _mintStages[index].price = price;
         _mintStages[index].walletLimit = walletLimit;
         _mintStages[index].merkleRoot = merkleRoot;
@@ -245,6 +273,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
+            _assertValidTimestamp(timestamp);
             stage = _mintStages[getActiveStageFromTimestamp(timestamp)];
         } else {
             stage = _mintStages[_activeStage];
@@ -390,5 +419,17 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
             }
         }
         revert InvalidStage();
+    }
+
+    function _assertValidTimestamp(uint256 timestamp) internal view {
+        if (timestamp < block.timestamp - MIN_STAGE_INTERVAL_SECONDS)
+            revert TimestampExpired();
+    }
+
+    function _assertValidStartAndEndTimestamp(uint256 start, uint256 end)
+        internal
+        pure
+    {
+        if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 }

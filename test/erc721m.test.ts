@@ -77,7 +77,7 @@ describe('ERC721M', function () {
 
   describe('Stages', function () {
     it('cannot set stages with readonly address', async () => {
-      expect(
+      await expect(
         readonlyContract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
@@ -85,18 +85,41 @@ describe('ERC721M', function () {
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
             startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1,
           },
           {
             price: ethers.utils.parseEther('0.6'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
-            startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 0,
+            startTimeUnixSeconds: 61,
+            endTimeUnixSeconds: 62,
           },
         ]),
       ).to.be.revertedWith('Ownable');
+    });
+
+    it('cannot set stages with insufficient gap', async () => {
+      await expect(
+        contract.setStages([
+          {
+            price: ethers.utils.parseEther('0.5'),
+            walletLimit: 3,
+            merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+            maxStageSupply: 5,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1,
+          },
+          {
+            price: ethers.utils.parseEther('0.6'),
+            walletLimit: 4,
+            merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
+            maxStageSupply: 10,
+            startTimeUnixSeconds: 60,
+            endTimeUnixSeconds: 62,
+          },
+        ]),
+      ).to.be.revertedWith('InsufficientStageTimeGap');
     });
 
     it('can set / reset stages', async () => {
@@ -107,15 +130,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
 
@@ -143,7 +166,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x3', 32),
           maxStageSupply: 0,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
 
@@ -163,15 +186,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x3', 32),
           maxStageSupply: 0,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.7'),
           walletLimit: 5,
           merkleRoot: ethers.utils.hexZeroPad('0x4', 32),
           maxStageSupply: 5,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
       expect(await contract.getNumberStages()).to.equal(2);
@@ -191,15 +214,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
 
@@ -228,7 +251,7 @@ describe('ERC721M', function () {
           /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
           /* maxStageSupply= */ 15,
           /* startTimeUnixSeconds= */ 0,
-          /* endTimeUnixSeconds= */ 0,
+          /* endTimeUnixSeconds= */ 1,
         ),
       )
         .to.emit(contract, 'UpdateStage')
@@ -239,7 +262,7 @@ describe('ERC721M', function () {
           ethers.utils.hexZeroPad('0x9', 32),
           15,
           0,
-          0,
+          1,
         );
 
       expect(await contract.getNumberStages()).to.equal(2);
@@ -268,15 +291,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
 
@@ -294,6 +317,40 @@ describe('ERC721M', function () {
       await expect(updateStage).to.be.revertedWith('InvalidStage');
     });
 
+    it('cannot update stage to insufficient stage gap', async () => {
+      await contract.setStages([
+        {
+          price: ethers.utils.parseEther('0.5'),
+          walletLimit: 3,
+          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+          maxStageSupply: 5,
+          startTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
+        },
+        {
+          price: ethers.utils.parseEther('0.6'),
+          walletLimit: 4,
+          merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
+          maxStageSupply: 10,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
+        },
+      ]);
+
+      // Set stage 1 to only be 59 seconds from stage 2
+      const updateStage = contract.updateStage(
+        /* _index= */ 1,
+        /* price= */ ethers.utils.parseEther('0.1'),
+        /* walletLimit= */ 13,
+        /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
+        /* maxStageSupply= */ 15,
+        /* startTimeUnixSeconds= */ 0,
+        /* endTimeUnixSeconds= */ 2,
+      );
+
+      await expect(updateStage).to.be.revertedWith('InsufficientStageTimeGap');
+    });
+
     it('gets stage info', async () => {
       await contract.setStages([
         {
@@ -302,7 +359,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
 
@@ -324,7 +381,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
 
@@ -340,15 +397,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
 
@@ -377,7 +434,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
 
@@ -429,7 +486,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -478,15 +535,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
       await contract.setMintable(true);
@@ -512,7 +569,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 0,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMaxMintableSupply(999);
@@ -545,7 +602,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMaxMintableSupply(999);
@@ -578,7 +635,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -649,7 +706,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 100,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -733,7 +790,10 @@ describe('ERC721M', function () {
 
     it('mint with cosign - timestamp out of stage', async () => {
       const [_owner, minter, cosigner] = await ethers.getSigners();
-      const stageStart = Math.floor(new Date().getTime() / 1000);
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      const stageStart = block.timestamp;
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
@@ -786,6 +846,51 @@ describe('ERC721M', function () {
       ).to.be.revertedWith('InvalidStage');
     });
 
+    it('mint with cosign - expired signature', async () => {
+      const [_owner, minter, cosigner] = await ethers.getSigners();
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      const stageStart = block.timestamp;
+      await contract.setStages([
+        {
+          price: ethers.utils.parseEther('0'),
+          walletLimit: 0,
+          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+          maxStageSupply: 100,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1000,
+        },
+      ]);
+      await contract.setMintable(true);
+      await contract.setCosigner(cosigner.address);
+
+      const timestamp = stageStart;
+      const digestFromJs = ethers.utils.solidityKeccak256(
+        ['address', 'address', 'uint32', 'address', 'uint256'],
+        [contract.address, minter.address, 1, cosigner.address, timestamp],
+      );
+      const sig = await cosigner.signMessage(
+        ethers.utils.arrayify(digestFromJs),
+      );
+
+      // fast forward 2 minutes
+      await ethers.provider.send('evm_increaseTime', [120]);
+      await ethers.provider.send('evm_mine', []);
+
+      await expect(
+        readonlyContract.mint(
+          1,
+          [ethers.utils.hexZeroPad('0x', 32)],
+          timestamp,
+          sig,
+          {
+            value: ethers.utils.parseEther('0'),
+          },
+        ),
+      ).to.be.revertedWith('TimestampExpired');
+    });
+
     it('enforces stage supply', async () => {
       await contract.setStages([
         {
@@ -794,15 +899,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
       await contract.setMintable(true);
@@ -899,7 +1004,7 @@ describe('ERC721M', function () {
           merkleRoot: root,
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -929,7 +1034,7 @@ describe('ERC721M', function () {
           merkleRoot: root,
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -964,7 +1069,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 100,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await ownerConn.setMintable(true);
@@ -1026,7 +1131,7 @@ describe('ERC721M', function () {
           merkleRoot: root,
           maxStageSupply: 7,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -1065,7 +1170,7 @@ describe('ERC721M', function () {
           merkleRoot: root,
           maxStageSupply: 7,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -1095,7 +1200,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 1,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -1131,7 +1236,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 1,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -1156,15 +1261,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
       await contract.setMintable(true);
@@ -1189,15 +1294,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
 
@@ -1224,15 +1329,15 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
         {
           price: ethers.utils.parseEther('0.6'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
         },
       ]);
 
@@ -1299,7 +1404,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
       await contract.setMintable(true);
@@ -1308,7 +1413,7 @@ describe('ERC721M', function () {
         value: ethers.utils.parseEther('0.2'),
       });
 
-      expect(
+      await expect(
         contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
           value: ethers.utils.parseEther('0.1'),
         }),
@@ -1334,7 +1439,7 @@ describe('ERC721M', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 0,
           startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
         },
       ]);
 
@@ -1364,9 +1469,9 @@ describe('ERC721M', function () {
       await erc721M.deployed();
       const ownerConn = erc721M.connect(owner);
       expect(await ownerConn.getCosigner()).to.eq(ethers.constants.AddressZero);
-      expect(ownerConn.getCosignDigest(owner.address, 1, 0)).to.be.revertedWith(
-        'CosignerNotSet',
-      );
+      await expect(
+        ownerConn.getCosignDigest(owner.address, 1, 0),
+      ).to.be.revertedWith('CosignerNotSet');
 
       // we can set the cosigner
       await ownerConn.setCosigner(cosigner.address);
