@@ -223,6 +223,17 @@ describe('BucketAuction', function () {
       expect(balance).to.eq(0);
     });
 
+    it('user without bidding claimTokensAndRefund', async () => {
+      await ownerConn.setPrice(80);
+      await ownerConn.setClaimable(true);
+
+      await expect(readonlyConn.claimTokensAndRefund()).to.not.emit(readonlyConn, 'Transfer');
+      const userData = await readonlyConn.getUserData(readonly.address);
+      expect(userData.contribution).to.eq(0);
+      expect(userData.tokensClaimed).to.eq(0);
+      expect(userData.refundClaimed).to.eq(true);
+    });
+
     it('Reverts if price not set', async () => {
       await ownerConn.setAuctionActive(true);
 
