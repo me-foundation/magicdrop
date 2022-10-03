@@ -175,6 +175,7 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
      * @param a address to query.
      */
     function amountPurchased(address a) public view returns (uint256) {
+        if (_price == 0) revert PriceNotSet();
         return _userData[a].contribution / _price;
     }
 
@@ -184,6 +185,7 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
      * @param a address to query.
      */
     function refundAmount(address a) public view returns (uint256) {
+        if (_price == 0) revert PriceNotSet();
         return _userData[a].contribution % _price;
     }
 
@@ -218,7 +220,7 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
      */
     function sendRefund(address to) public onlyOwner {
         uint256 price = _price; // storage to memory
-        require(price != 0, "Price has not been set");
+        if (price == 0) revert PriceNotSet();
 
         User storage user = _userData[to]; // get user data
         if (user.refundClaimed) revert UserAlreadyClaimed();
@@ -264,7 +266,7 @@ contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
 
     function _sendTokensAndRefund(address to) internal {
         uint256 price = _price;
-        require(price != 0, "Price has not been set");
+        if (price == 0) revert PriceNotSet();
 
         User storage user = _userData[to]; // get user data
         uint256 userContribution = user.contribution;
