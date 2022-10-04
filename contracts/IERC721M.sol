@@ -8,15 +8,18 @@ interface IERC721M {
     error CrossmintAddressNotSet();
     error CrossmintOnly();
     error GlobalWalletLimitOverflow();
+    error InsufficientStageTimeGap();
     error InvalidCosignSignature();
     error InvalidProof();
     error InvalidStage();
     error InvalidStageArgsLength();
+    error InvalidStartAndEndTimestamp();
     error NoSupplyLeft();
     error NotEnoughValue();
     error NotMintable();
     error Mintable();
     error StageSupplyExceeded();
+    error TimestampExpired();
     error WalletGlobalLimitExceeded();
     error WalletStageLimitExceeded();
     error WithdrawFailed();
@@ -26,6 +29,8 @@ interface IERC721M {
         uint32 walletLimit; // 0 for unlimited
         bytes32 merkleRoot; // 0x0 for no presale enforced
         uint256 maxStageSupply; // 0 for unlimited
+        uint256 startTimeUnixSeconds;
+        uint256 endTimeUnixSeconds;
     }
 
     event UpdateStage(
@@ -33,7 +38,9 @@ interface IERC721M {
         uint256 price,
         uint32 walletLimit,
         bytes32 merkleRoot,
-        uint256 maxStageSupply
+        uint256 maxStageSupply,
+        uint256 startTimeUnixSeconds,
+        uint256 endTimeUnixSeconds
     );
 
     event SetCosigner(address cosigner);
