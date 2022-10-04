@@ -110,7 +110,7 @@ router.post(
 
     const cosigner = getCosigner();
     const digest = keccak256(
-      ['address', 'address', 'uint32', 'address', 'uint256'],
+      ['address', 'address', 'uint32', 'address', 'uint64'],
       [
         payload.collectionContract.toLowerCase(),
         payload.minter,

@@ -9,6 +9,8 @@ export interface ISetStagesParams {
 
 interface StageConfig {
   price: string;
+  startDate: number;
+  endDate: number;
   walletLimit?: number;
   maxSupply?: number;
   whitelistPath?: string;
@@ -22,11 +24,6 @@ export const setStages = async (
   const stagesConfig = JSON.parse(
     fs.readFileSync(args.stages, 'utf-8'),
   ) as StageConfig[];
-  const prices = stagesConfig.map((stage) =>
-    ethers.BigNumber.from(ethers.utils.parseEther(stage.price)),
-  );
-  const walletLimits = stagesConfig.map((stage) => stage.walletLimit ?? 0);
-  const maxSupplies = stagesConfig.map((stage) => stage.maxSupply ?? 0);
   const ERC721M = await ethers.getContractFactory('ERC721M');
   const contract = ERC721M.attach(args.contract);
   const merkleRoots = await Promise.all(
@@ -49,11 +46,15 @@ export const setStages = async (
     }),
   );
   const tx = await contract.setStages(
-    prices,
-    walletLimits,
-    merkleRoots,
-    maxSupplies,
-    { gasLimit: 300_000 },
+    stagesConfig.map((s, i) => ({
+      price: ethers.utils.parseEther(s.price),
+      maxStageSupply: s.maxSupply ?? 0,
+      walletLimit: s.walletLimit ?? 0,
+      merkleRoot: merkleRoots[i],
+      startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
+      endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
+    })),
+    { gasLimit: 500_000 },
   );
   console.log(`Submitted tx ${tx.hash}`);
 
