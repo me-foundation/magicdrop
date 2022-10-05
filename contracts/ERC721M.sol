@@ -64,7 +64,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _;
     }
 
-    function getCosigner() external view returns (address) {
+    function getCosigner() external view override returns (address) {
         return _cosigner;
     }
 
@@ -73,7 +73,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetCosigner(cosigner);
     }
 
-    function getCrossmintAddress() external view returns (address) {
+    function getCrossmintAddress() external view override returns (address) {
         return _crossmintAddress;
     }
 
@@ -124,7 +124,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         }
     }
 
-    function getMintable() external view returns (bool) {
+    function getMintable() external view override returns (bool) {
         return _mintable;
     }
 
@@ -133,11 +133,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetMintable(mintable);
     }
 
-    function getNumberStages() external view returns (uint256) {
+    function getNumberStages() external view override returns (uint256) {
         return _mintStages.length;
     }
 
-    function getMaxMintableSupply() public view returns (uint256) {
+    function getMaxMintableSupply() external view override returns (uint256) {
         return _maxMintableSupply;
     }
 
@@ -152,7 +152,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetMaxMintableSupply(maxMintableSupply);
     }
 
-    function getGlobalWalletLimit() external view returns (uint256) {
+    function getGlobalWalletLimit() external view override returns (uint256) {
         return _globalWalletLimit;
     }
 
@@ -166,7 +166,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
-    function getActiveStage() external view returns (uint256) {
+    function getActiveStage() external view override returns (uint256) {
         return _activeStage;
     }
 
@@ -176,13 +176,19 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetActiveStage(activeStage);
     }
 
-    function totalMintedByAddress(address a) external view returns (uint256) {
+    function totalMintedByAddress(address a)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _numberMinted(a);
     }
 
     function getStageInfo(uint256 index)
         external
         view
+        override
         returns (
             MintStageInfo memory,
             uint32,
@@ -344,7 +350,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit PermanentBaseURI(_currentBaseURI);
     }
 
-    function getTokenURISuffix() external view returns (string memory) {
+    function getTokenURISuffix()
+        external
+        view
+        override
+        returns (string memory)
+    {
         return _tokenURISuffix;
     }
 
@@ -355,7 +366,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function tokenURI(uint256 tokenId)
         public
         view
-        override
+        override(ERC721A, IERC721A)
         returns (string memory)
     {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
@@ -396,7 +407,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint32 qty,
         uint256 timestamp,
         bytes memory signature
-    ) public view {
+    ) public view override {
         if (
             !SignatureChecker.isValidSignatureNow(
                 _cosigner,
@@ -406,9 +417,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         ) revert InvalidCosignSignature();
     }
 
-    function getActiveStageFromTimestamp(uint256 timestamp)
+    function getActiveStageFromTimestamp(uint64 timestamp)
         public
         view
+        override
         returns (uint256)
     {
         for (uint256 i = 0; i < _mintStages.length; i++) {
