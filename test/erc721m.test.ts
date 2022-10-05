@@ -3,7 +3,7 @@ import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
-import { ERC721M } from '../typechain-types';
+import { ERC721M, TestReentrantExploit__factory } from '../typechain-types';
 
 const { keccak256, getAddress } = ethers.utils;
 
@@ -501,6 +501,33 @@ describe('ERC721M', function () {
         value: ethers.utils.parseEther('0.499999'),
       });
       await expect(mint).to.be.revertedWith('NotEnoughValue');
+    });
+
+    it('revert on reentrancy', async () => {
+      const reentrancyFactory = await ethers.getContractFactory(
+        'TestReentrantExploit',
+      );
+      const reentrancyExploiter = await reentrancyFactory.deploy(
+        contract.address,
+      );
+      await reentrancyExploiter.deployed();
+      await contract.setStages([
+        {
+          price: ethers.utils.parseEther('0.1'),
+          walletLimit: 0,
+          merkleRoot: ethers.utils.hexZeroPad('0x', 32),
+          maxStageSupply: 0,
+          startTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 100000,
+        },
+      ]);
+      await contract.setMintable(true);
+
+      await expect(
+        reentrancyExploiter.exploit(1, [], 0, '0x', {
+          value: ethers.utils.parseEther('0.2'),
+        }),
+      ).to.be.revertedWith('ReentrancyGuard: reentrant call');
     });
 
     it('can set max mintable supply', async () => {
