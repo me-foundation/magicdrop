@@ -387,7 +387,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function getCosignDigest(
         address minter,
         uint32 qty,
-        uint256 timestamp
+        uint64 timestamp
     ) public view returns (bytes32) {
         if (_cosigner == address(0)) revert CosignerNotSet();
         return
@@ -405,7 +405,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function assertValidCosign(
         address minter,
         uint32 qty,
-        uint256 timestamp,
+        uint64 timestamp,
         bytes memory signature
     ) public view override {
         if (

@@ -675,7 +675,7 @@ describe('ERC721M', function () {
 
       const timestamp = stageStart + 500;
       const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint256'],
+        ['address', 'address', 'uint32', 'address', 'uint64'],
         [contract.address, minter.address, 1, cosigner.address, timestamp],
       );
       const sig = await cosigner.signMessage(
@@ -714,7 +714,7 @@ describe('ERC721M', function () {
 
       const timestamp = Math.floor(new Date().getTime() / 1000);
       const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint256'],
+        ['address', 'address', 'uint32', 'address', 'uint64'],
         [contract.address, minter.address, 1, cosigner.address, timestamp],
       );
       const sig = await cosigner.signMessage(
@@ -809,7 +809,7 @@ describe('ERC721M', function () {
 
       const earlyTimestamp = stageStart - 1;
       let digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint256'],
+        ['address', 'address', 'uint32', 'address', 'uint64'],
         [contract.address, minter.address, 1, cosigner.address, earlyTimestamp],
       );
       let sig = await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
@@ -828,7 +828,7 @@ describe('ERC721M', function () {
 
       const lateTimestamp = stageStart + 1001;
       digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint256'],
+        ['address', 'address', 'uint32', 'address', 'uint64'],
         [contract.address, minter.address, 1, cosigner.address, lateTimestamp],
       );
       sig = await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
@@ -867,7 +867,7 @@ describe('ERC721M', function () {
 
       const timestamp = stageStart;
       const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint256'],
+        ['address', 'address', 'uint32', 'address', 'uint64'],
         [contract.address, minter.address, 1, cosigner.address, timestamp],
       );
       const sig = await cosigner.signMessage(
@@ -1501,7 +1501,7 @@ describe('ERC721M', function () {
 
       const timestamp = Math.floor(new Date().getTime() / 1000);
       const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint256'],
+        ['address', 'address', 'uint32', 'address', 'uint64'],
         [erc721M.address, minter.address, 1, cosigner.address, timestamp],
       );
       const sig = await cosigner.signMessage(

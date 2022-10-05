@@ -90,7 +90,7 @@ interface IERC721M is IERC721AQueryable {
     function assertValidCosign(
         address minter,
         uint32 qty,
-        uint256 timestamp,
+        uint64 timestamp,
         bytes memory signature
     ) external view;
 }
