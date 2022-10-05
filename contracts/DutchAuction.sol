@@ -83,6 +83,11 @@ contract DutchAuction is IDutchAuction, ERC721M, ReentrancyGuard {
         uint256 amount;
         bool roundUp = config.roundUp;
 
+        // Return startAmountInWei if auction not started
+        if (block.timestamp <= config.startTime) return config.startAmountInWei;
+        // Return endAmountInWei if auction ended
+        if (block.timestamp >= config.endTime) return config.endAmountInWei;
+
         if (config.startAmountInWei != config.endAmountInWei) {
             // Declare variables to derive in the subsequent unchecked scope.
             uint256 duration;

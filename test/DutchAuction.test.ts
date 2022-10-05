@@ -326,6 +326,24 @@ describe('DutchAuction', function () {
         roundUp: false,
         expectedPrice: 100,
       },
+      {
+        name: 'before auction starts',
+        startAmountInWei: 1,
+        endAmountInWei: 99,
+        startTimeOffst: 1000,
+        endTimeOffset: 2000,
+        roundUp: false,
+        expectedPrice: 1,
+      },
+      {
+        name: 'after auction ends',
+        startAmountInWei: 1,
+        endAmountInWei: 99,
+        startTimeOffst: -2000,
+        endTimeOffset: -1000,
+        roundUp: true,
+        expectedPrice: 99,
+      },
     ];
 
     runs.forEach((run) => {
