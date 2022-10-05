@@ -30,7 +30,7 @@ const cryptoTimingSafeEqualStr = (
   return false;
 };
 
-router.get('/', () => new Response('ERC721M Cosign Server'));
+router.get('/', () => new Response('ERC721M Cosign Server v0.0.2'));
 router.post(
   '/collections',
   async (request: Request & IRequest, event: FetchEvent) => {
