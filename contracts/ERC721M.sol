@@ -199,10 +199,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     function updateStage(
         uint256 index,
-        uint256 price,
+        uint80 price,
         uint32 walletLimit,
         bytes32 merkleRoot,
-        uint256 maxStageSupply,
+        uint24 maxStageSupply,
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds
     ) external onlyOwner {
@@ -241,7 +241,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function mint(
         uint32 qty,
         bytes32[] calldata proof,
-        uint256 timestamp,
+        uint64 timestamp,
         bytes calldata signature
     ) external payable nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
@@ -251,7 +251,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint32 qty,
         address to,
         bytes32[] calldata proof,
-        uint256 timestamp,
+        uint64 timestamp,
         bytes calldata signature
     ) external payable nonReentrant {
         if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
@@ -266,7 +266,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint32 qty,
         address to,
         bytes32[] calldata proof,
-        uint256 timestamp,
+        uint64 timestamp,
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
         if (_activeStage >= _mintStages.length) revert InvalidStage();
@@ -422,12 +422,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         revert InvalidStage();
     }
 
-    function _assertValidTimestamp(uint256 timestamp) internal view {
+    function _assertValidTimestamp(uint64 timestamp) internal view {
         if (timestamp < block.timestamp - MIN_STAGE_INTERVAL_SECONDS)
             revert TimestampExpired();
     }
 
-    function _assertValidStartAndEndTimestamp(uint256 start, uint256 end)
+    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end)
         internal
         pure
     {

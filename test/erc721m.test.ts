@@ -147,14 +147,14 @@ describe('ERC721M', function () {
       let [stageInfo, walletMintedCount] = await contract.getStageInfo(0);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.5'));
       expect(stageInfo.walletLimit).to.equal(3);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(5);
+      expect(stageInfo.maxStageSupply).to.equal(5);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x1', 32));
       expect(walletMintedCount).to.equal(0);
 
       [stageInfo, walletMintedCount] = await contract.getStageInfo(1);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.6'));
       expect(stageInfo.walletLimit).to.equal(4);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(10);
+      expect(stageInfo.maxStageSupply).to.equal(10);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x2', 32));
       expect(walletMintedCount).to.equal(0);
 
@@ -174,7 +174,7 @@ describe('ERC721M', function () {
       [stageInfo, walletMintedCount] = await contract.getStageInfo(0);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.6'));
       expect(stageInfo.walletLimit).to.equal(4);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(0);
+      expect(stageInfo.maxStageSupply).to.equal(0);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x3', 32));
       expect(walletMintedCount).to.equal(0);
 
@@ -201,7 +201,7 @@ describe('ERC721M', function () {
       [stageInfo, walletMintedCount] = await contract.getStageInfo(1);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.7'));
       expect(stageInfo.walletLimit).to.equal(5);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(5);
+      expect(stageInfo.maxStageSupply).to.equal(5);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x4', 32));
       expect(walletMintedCount).to.equal(0);
     });
@@ -231,14 +231,14 @@ describe('ERC721M', function () {
       let [stageInfo, walletMintedCount] = await contract.getStageInfo(0);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.5'));
       expect(stageInfo.walletLimit).to.equal(3);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(5);
+      expect(stageInfo.maxStageSupply).to.equal(5);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x1', 32));
       expect(walletMintedCount).to.equal(0);
 
       [stageInfo, walletMintedCount] = await contract.getStageInfo(1);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.6'));
       expect(stageInfo.walletLimit).to.equal(4);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(10);
+      expect(stageInfo.maxStageSupply).to.equal(10);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x2', 32));
       expect(walletMintedCount).to.equal(0);
 
@@ -270,7 +270,7 @@ describe('ERC721M', function () {
       [stageInfo, walletMintedCount] = await contract.getStageInfo(0);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.1'));
       expect(stageInfo.walletLimit).to.equal(13);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(15);
+      expect(stageInfo.maxStageSupply).to.equal(15);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x9', 32));
       expect(walletMintedCount).to.equal(0);
 
@@ -278,7 +278,7 @@ describe('ERC721M', function () {
       [stageInfo, walletMintedCount] = await contract.getStageInfo(1);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.6'));
       expect(stageInfo.walletLimit).to.equal(4);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(10);
+      expect(stageInfo.maxStageSupply).to.equal(10);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x2', 32));
       expect(walletMintedCount).to.equal(0);
     });
@@ -368,7 +368,7 @@ describe('ERC721M', function () {
       const [stageInfo, walletMintedCount] = await contract.getStageInfo(0);
       expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.5'));
       expect(stageInfo.walletLimit).to.equal(3);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(5);
+      expect(stageInfo.maxStageSupply).to.equal(5);
       expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x1', 32));
       expect(walletMintedCount).to.equal(0);
     });
@@ -652,7 +652,7 @@ describe('ERC721M', function () {
       );
       const [stageInfo, walletMintedCount, stagedMintedCount] =
         await readonlyContract.getStageInfo(0);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(100);
+      expect(stageInfo.maxStageSupply).to.equal(100);
       expect(walletMintedCount).to.equal(1);
       expect(stagedMintedCount.toNumber()).to.equal(1);
     });
@@ -692,7 +692,7 @@ describe('ERC721M', function () {
       );
       const [stageInfo, walletMintedCount, stagedMintedCount] =
         await readonlyContract.getStageInfo(0);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(100);
+      expect(stageInfo.maxStageSupply).to.equal(100);
       expect(walletMintedCount).to.equal(1);
       expect(stagedMintedCount.toNumber()).to.equal(1);
     });
@@ -922,7 +922,7 @@ describe('ERC721M', function () {
       let [stageInfo, walletMintedCount, stagedMintedCount] =
         await contract.getStageInfo(0);
 
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(5);
+      expect(stageInfo.maxStageSupply).to.equal(5);
       expect(walletMintedCount).to.equal(5);
       expect(stagedMintedCount.toNumber()).to.equal(5);
 
@@ -951,7 +951,7 @@ describe('ERC721M', function () {
       });
       [stageInfo, walletMintedCount, stagedMintedCount] =
         await contract.getStageInfo(1);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(10);
+      expect(stageInfo.maxStageSupply).to.equal(10);
       expect(walletMintedCount).to.equal(8);
       expect(stagedMintedCount.toNumber()).to.equal(8);
 
@@ -1106,7 +1106,7 @@ describe('ERC721M', function () {
 
       const [stageInfo, walletMintedCount, stagedMintedCount] =
         await ownerConn.getStageInfo(0);
-      expect(stageInfo.maxStageSupply.toNumber()).to.equal(100);
+      expect(stageInfo.maxStageSupply).to.equal(100);
       expect(walletMintedCount).to.equal(0);
       expect(stagedMintedCount.toNumber()).to.equal(1);
     });

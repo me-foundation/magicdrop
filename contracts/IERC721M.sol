@@ -25,22 +25,22 @@ interface IERC721M {
     error WithdrawFailed();
 
     struct MintStageInfo {
-        uint256 price;
+        uint80 price;
         uint32 walletLimit; // 0 for unlimited
         bytes32 merkleRoot; // 0x0 for no presale enforced
-        uint256 maxStageSupply; // 0 for unlimited
-        uint256 startTimeUnixSeconds;
-        uint256 endTimeUnixSeconds;
+        uint24 maxStageSupply; // 0 for unlimited
+        uint64 startTimeUnixSeconds;
+        uint64 endTimeUnixSeconds;
     }
 
     event UpdateStage(
         uint256 stage,
-        uint256 price,
+        uint80 price,
         uint32 walletLimit,
         bytes32 merkleRoot,
-        uint256 maxStageSupply,
-        uint256 startTimeUnixSeconds,
-        uint256 endTimeUnixSeconds
+        uint24 maxStageSupply,
+        uint64 startTimeUnixSeconds,
+        uint64 endTimeUnixSeconds
     );
 
     event SetCosigner(address cosigner);
