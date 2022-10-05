@@ -5,10 +5,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "./IERC721M.sol";
 
-contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
+contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
 
     uint64 public constant MIN_STAGE_INTERVAL_SECONDS = 60;
@@ -242,7 +243,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         bytes32[] calldata proof,
         uint256 timestamp,
         bytes calldata signature
-    ) external payable {
+    ) external payable nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
     }
 
@@ -252,7 +253,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable {
         bytes32[] calldata proof,
         uint256 timestamp,
         bytes calldata signature
-    ) external payable {
+    ) external payable nonReentrant {
         if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
 
         // Check the caller is Crossmint

@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
@@ -11,7 +10,7 @@ import "erc721a/contracts/ERC721A.sol";
 import "./IBucketAuction.sol";
 import "./ERC721M.sol";
 
-contract BucketAuction is IBucketAuction, ERC721M, ReentrancyGuard {
+contract BucketAuction is IBucketAuction, ERC721M {
     bool private _claimable;
     uint256 private _minimumContributionInWei;
     uint256 private _price;
