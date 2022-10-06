@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-interface IERC721M {
+import "erc721a/contracts/extensions/IERC721AQueryable.sol";
+
+interface IERC721M is IERC721AQueryable {
     error CannotIncreaseMaxMintableSupply();
     error CannotUpdatePermanentBaseURI();
     error CosignerNotSet();
@@ -52,4 +54,43 @@ interface IERC721M {
     event SetBaseURI(string baseURI);
     event PermanentBaseURI(string baseURI);
     event Withdraw(uint256 value);
+
+    function getCosigner() external view returns (address);
+
+    function getCrossmintAddress() external view returns (address);
+
+    function getNumberStages() external view returns (uint256);
+
+    function getGlobalWalletLimit() external view returns (uint256);
+
+    function getMaxMintableSupply() external view returns (uint256);
+
+    function getMintable() external view returns (bool);
+
+    function totalMintedByAddress(address a) external view returns (uint256);
+
+    function getTokenURISuffix() external view returns (string memory);
+
+    function getStageInfo(uint256 index)
+        external
+        view
+        returns (
+            MintStageInfo memory,
+            uint32,
+            uint256
+        );
+
+    function getActiveStage() external view returns (uint256);
+
+    function getActiveStageFromTimestamp(uint64 timestamp)
+        external
+        view
+        returns (uint256);
+
+    function assertValidCosign(
+        address minter,
+        uint32 qty,
+        uint64 timestamp,
+        bytes memory signature
+    ) external view;
 }
