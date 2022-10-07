@@ -44,7 +44,7 @@ contract DutchAuction is IDutchAuction, ERC721M {
         if (
             block.timestamp > config.endTime ||
             block.timestamp < config.startTime
-        ) revert InvalidStartEndTime();
+        ) revert InvalidStartEndTime(config.startTime, config.endTime);
         _;
     }
 
@@ -55,7 +55,7 @@ contract DutchAuction is IDutchAuction, ERC721M {
         uint64 endTime
     ) external onlyOwner {
         if (startTime == 0 || startTime >= endTime)
-            revert InvalidStartEndTime();
+            revert InvalidStartEndTime(startTime, endTime);
         if (startAmountInWei == 0) revert InvalidAmountInWei();
 
         _config = Config({

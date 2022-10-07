@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 interface IDutchAuction {
-    error InvalidStartEndTime();
+    error InvalidStartEndTime(uint64 startTime, uint64 endTime);
     error NotStarted();
     error NotEnded();
     error InvalidAmountInWei();
