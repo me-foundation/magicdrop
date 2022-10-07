@@ -10,7 +10,7 @@ import {
 
 chai.use(chaiAsPromised);
 
-describe.only('ERC721MCallback', () => {
+describe('ERC721MCallback', () => {
   let contract: ERC721MCallback;
   let readonlyContract: ERC721MCallback;
   let stakingContract: TestStaking;
