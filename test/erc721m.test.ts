@@ -3,7 +3,7 @@ import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
-import { ERC721M, TestReentrantExploit__factory } from '../typechain-types';
+import { ERC721M } from '../typechain-types';
 
 const { keccak256, getAddress } = ethers.utils;
 
