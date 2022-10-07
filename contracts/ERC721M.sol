@@ -2,15 +2,17 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "./IERC721M.sol";
 
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
+    using Counters for Counters.Counter;
 
     uint64 public constant MIN_STAGE_INTERVAL_SECONDS = 60;
 
@@ -30,6 +32,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     mapping(uint256 => mapping(address => uint32))
         private _stageMintedCountsPerWallet;
     mapping(uint256 => uint256) private _stageMintedCounts;
+
+    mapping(address => Counters.Counter) private _cosignNonces;
 
     constructor(
         string memory collectionName,
@@ -66,6 +70,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     function getCosigner() external view override returns (address) {
         return _cosigner;
+    }
+
+    function getCosignNonce(address minter) public view returns (uint256) {
+        return _cosignNonces[minter].current();
     }
 
     function setCosigner(address cosigner) external onlyOwner {
@@ -275,23 +283,26 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
-        if (_activeStage >= _mintStages.length) revert InvalidStage();
+        uint256 activeStage = _activeStage;
+
+        if (activeStage >= _mintStages.length) revert InvalidStage();
 
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
+            _cosignNonces[msg.sender].increment();
             _assertValidTimestamp(timestamp);
-            stage = _mintStages[getActiveStageFromTimestamp(timestamp)];
-        } else {
-            stage = _mintStages[_activeStage];
+            activeStage = getActiveStageFromTimestamp(timestamp);
         }
+
+        stage = _mintStages[activeStage];
 
         // Check value
         if (msg.value < stage.price * qty) revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
-            if (_stageMintedCounts[_activeStage] + qty > stage.maxStageSupply)
+            if (_stageMintedCounts[activeStage] + qty > stage.maxStageSupply)
                 revert StageSupplyExceeded();
         }
 
@@ -304,7 +315,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         // Check wallet limit for stage if applicable, limit == 0 means no limit enforced
         if (stage.walletLimit > 0) {
             if (
-                _stageMintedCountsPerWallet[_activeStage][to] + qty >
+                _stageMintedCountsPerWallet[activeStage][to] + qty >
                 stage.walletLimit
             ) revert WalletStageLimitExceeded();
         }
@@ -319,8 +330,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             ) revert InvalidProof();
         }
 
-        _stageMintedCountsPerWallet[_activeStage][to] += qty;
-        _stageMintedCounts[_activeStage] += qty;
+        _stageMintedCountsPerWallet[activeStage][to] += qty;
+        _stageMintedCounts[activeStage] += qty;
         _safeMint(to, qty);
     }
 
@@ -397,7 +408,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                     minter,
                     qty,
                     _cosigner,
-                    timestamp
+                    timestamp,
+                    _chainID(),
+                    getCosignNonce(minter)
                 )
             ).toEthSignedMessageHash();
     }
@@ -444,5 +457,13 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         pure
     {
         if (start >= end) revert InvalidStartAndEndTimestamp();
+    }
+
+    function _chainID() private view returns (uint256) {
+        uint256 chainID;
+        assembly {
+            chainID := chainid()
+        }
+        return chainID;
     }
 }

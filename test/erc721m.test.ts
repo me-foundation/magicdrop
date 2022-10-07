@@ -1526,10 +1526,13 @@ describe('ERC721M', function () {
       const minterConn = erc721M.connect(minter);
       expect(await minterConn.getCosigner()).to.eq(cosigner.address);
 
+      const { chainId } = await ethers.provider.getNetwork()
+      const nonce = await readonlyContract.getCosignNonce(minter.address);
+
       const timestamp = Math.floor(new Date().getTime() / 1000);
       const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint64'],
-        [erc721M.address, minter.address, 1, cosigner.address, timestamp],
+        ['address', 'address', 'uint32', 'address', 'uint64', 'uint256', 'uint256'],
+        [erc721M.address, minter.address, 1, cosigner.address, timestamp, chainId, nonce],
       );
       const sig = await cosigner.signMessage(
         ethers.utils.arrayify(digestFromJs),
