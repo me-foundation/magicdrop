@@ -19,9 +19,8 @@ interface IDutchAuction {
     struct Config {
         uint256 startAmountInWei;
         uint256 endAmountInWei;
-        uint256 startTime;
-        uint256 endTime;
-        bool roundUp;
+        uint64 startTime;
+        uint64 endTime;
     }
     event ClaimRefund(address user, uint256 refundInWei);
     event Bid(address user, uint32 qty, uint256 price);

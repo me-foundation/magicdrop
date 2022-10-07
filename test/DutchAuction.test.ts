@@ -40,20 +40,17 @@ describe('DutchAuction', function () {
       const endAmountInWei = 10;
       const startTime = 2000;
       const endTime = 1664833933;
-      const roundUp = true;
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
       const config = await readonlyConn.getConfig();
       expect(config.startAmountInWei).to.eq(startAmountInWei);
       expect(config.endAmountInWei).to.eq(endAmountInWei);
       expect(config.startTime).to.eq(startTime);
       expect(config.endTime).to.eq(endTime);
-      expect(config.roundUp).to.eq(roundUp);
     });
 
     it('reverts on invalid config time', async () => {
@@ -61,7 +58,6 @@ describe('DutchAuction', function () {
       const endAmountInWei = 10;
       let startTime = 2000;
       const endTime = 2000;
-      const roundUp = true;
 
       await expect(
         ownerConn.setConfig(
@@ -69,7 +65,6 @@ describe('DutchAuction', function () {
           endAmountInWei,
           startTime,
           startTime,
-          roundUp,
         ),
       ).to.be.revertedWith('InvalidStartEndTime');
 
@@ -80,7 +75,6 @@ describe('DutchAuction', function () {
           endAmountInWei,
           startTime,
           endTime,
-          roundUp,
         ),
       ).to.be.revertedWith('InvalidStartEndTime');
     });
@@ -90,7 +84,6 @@ describe('DutchAuction', function () {
       const endAmountInWei = 10;
       const startTime = 2000;
       const endTime = 1664833933;
-      const roundUp = true;
 
       await expect(
         ownerConn.setConfig(
@@ -98,7 +91,6 @@ describe('DutchAuction', function () {
           endAmountInWei,
           startTime,
           endTime,
-          roundUp,
         ),
       ).to.be.revertedWith('InvalidAmountInWei');
     });
@@ -108,7 +100,6 @@ describe('DutchAuction', function () {
       const endAmountInWei = 10;
       const startTime = 2000;
       const endTime = 1664833933;
-      const roundUp = true;
 
       await expect(
         readonlyConn.setConfig(
@@ -116,7 +107,6 @@ describe('DutchAuction', function () {
           endAmountInWei,
           startTime,
           endTime,
-          roundUp,
         ),
       ).to.be.revertedWith('Ownable');
     });
@@ -132,17 +122,7 @@ describe('DutchAuction', function () {
         endAmountInWei: 200,
         startTimeOffst: 0,
         endTimeOffset: 1000,
-        roundUp: true,
         expectedPrice: 100,
-      },
-      {
-        name: 'increasing, start point, round down',
-        startAmountInWei: 1,
-        endAmountInWei: 100,
-        startTimeOffst: 0,
-        endTimeOffset: 1000,
-        roundUp: false,
-        expectedPrice: 1,
       },
       {
         name: 'increasing, mid point, round up',
@@ -150,17 +130,7 @@ describe('DutchAuction', function () {
         endAmountInWei: 201,
         startTimeOffst: -1000,
         endTimeOffset: 1000,
-        roundUp: true,
         expectedPrice: 151,
-      },
-      {
-        name: 'increasing, mid point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 201,
-        startTimeOffst: -1000,
-        endTimeOffset: 1000,
-        roundUp: false,
-        expectedPrice: 150,
       },
       {
         name: 'increasing, 25th point, round up',
@@ -168,17 +138,7 @@ describe('DutchAuction', function () {
         endAmountInWei: 901,
         startTimeOffst: -250,
         endTimeOffset: 750,
-        roundUp: true,
         expectedPrice: 301,
-      },
-      {
-        name: 'increasing, 75th point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 901,
-        startTimeOffst: -750,
-        endTimeOffset: 250,
-        roundUp: false,
-        expectedPrice: 700,
       },
       {
         name: 'increasing, end point, round up',
@@ -186,35 +146,14 @@ describe('DutchAuction', function () {
         endAmountInWei: 200,
         startTimeOffst: -1000,
         endTimeOffset: 0,
-        roundUp: true,
         expectedPrice: 200,
       },
-      {
-        name: 'increasing, end point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 200,
-        startTimeOffst: -1000,
-        endTimeOffset: 0,
-        roundUp: false,
-        expectedPrice: 200,
-      },
-
       {
         name: 'decreasing, start point, round up',
         startAmountInWei: 100,
         endAmountInWei: 99,
         startTimeOffst: 0,
         endTimeOffset: 999,
-        roundUp: true,
-        expectedPrice: 100,
-      },
-      {
-        name: 'decreasing, start point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 1,
-        startTimeOffst: 0,
-        endTimeOffset: 1000,
-        roundUp: false,
         expectedPrice: 100,
       },
       {
@@ -223,17 +162,7 @@ describe('DutchAuction', function () {
         endAmountInWei: 99,
         startTimeOffst: -1000,
         endTimeOffset: 1000,
-        roundUp: true,
         expectedPrice: 100,
-      },
-      {
-        name: 'decreasing, mid point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 99,
-        startTimeOffst: -1000,
-        endTimeOffset: 1000,
-        roundUp: false,
-        expectedPrice: 99,
       },
       {
         name: 'decreasing, 25th point, round up',
@@ -241,17 +170,7 @@ describe('DutchAuction', function () {
         endAmountInWei: 1,
         startTimeOffst: -100,
         endTimeOffset: 300,
-        roundUp: true,
         expectedPrice: 76,
-      },
-      {
-        name: 'decreasing, 75th point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 1,
-        startTimeOffst: -30,
-        endTimeOffset: 10,
-        roundUp: false,
-        expectedPrice: 25,
       },
       {
         name: 'decreasing, end point, round up',
@@ -259,36 +178,15 @@ describe('DutchAuction', function () {
         endAmountInWei: 1,
         startTimeOffst: -1000,
         endTimeOffset: 0,
-        roundUp: true,
         expectedPrice: 1,
       },
-      {
-        name: 'decreasing, end point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 2,
-        startTimeOffst: -1000,
-        endTimeOffset: 0,
-        roundUp: false,
-        expectedPrice: 2,
-      },
-
       {
         name: 'same, start point, round up',
         startAmountInWei: 100,
         endAmountInWei: 100,
         startTimeOffst: 0,
         endTimeOffset: 999,
-        roundUp: true,
         expectedPrice: 100,
-      },
-      {
-        name: 'same, mid point, round down',
-        startAmountInWei: 99,
-        endAmountInWei: 99,
-        startTimeOffst: -1000,
-        endTimeOffset: 1000,
-        roundUp: false,
-        expectedPrice: 99,
       },
       {
         name: 'same, 25th point, round up',
@@ -296,17 +194,7 @@ describe('DutchAuction', function () {
         endAmountInWei: 99,
         startTimeOffst: -100,
         endTimeOffset: 300,
-        roundUp: true,
         expectedPrice: 99,
-      },
-      {
-        name: 'same, 75th point, round down',
-        startAmountInWei: 101,
-        endAmountInWei: 101,
-        startTimeOffst: -30,
-        endTimeOffset: 10,
-        roundUp: false,
-        expectedPrice: 101,
       },
       {
         name: 'same, random point, round up',
@@ -314,16 +202,6 @@ describe('DutchAuction', function () {
         endAmountInWei: 100,
         startTimeOffst: -1 * getRandomInt(100),
         endTimeOffset: getRandomInt(100),
-        roundUp: true,
-        expectedPrice: 100,
-      },
-      {
-        name: 'same, end point, round down',
-        startAmountInWei: 100,
-        endAmountInWei: 100,
-        startTimeOffst: -1000,
-        endTimeOffset: 0,
-        roundUp: false,
         expectedPrice: 100,
       },
       {
@@ -332,7 +210,6 @@ describe('DutchAuction', function () {
         endAmountInWei: 99,
         startTimeOffst: 1000,
         endTimeOffset: 2000,
-        roundUp: false,
         expectedPrice: 1,
       },
       {
@@ -341,7 +218,6 @@ describe('DutchAuction', function () {
         endAmountInWei: 99,
         startTimeOffst: -2000,
         endTimeOffset: -1000,
-        roundUp: true,
         expectedPrice: 99,
       },
     ];
@@ -359,7 +235,6 @@ describe('DutchAuction', function () {
           run.endAmountInWei,
           startTime,
           endTime,
-          run.roundUp,
         );
 
         await time.increaseTo(nextBlockTime);
@@ -372,76 +247,17 @@ describe('DutchAuction', function () {
   });
 
   describe('Bid', function () {
-    it('can make bids for refundable type of DA - happy code path without roundUp', async () => {
-      const duration = 4000;
-      const startAmountInWei = 100;
-      const endAmountInWei = 10;
-      const startTime = Math.floor(new Date().getTime() / 1000);
-      const endTime = startTime + duration;
-      const roundUp = false;
-      await ownerConn.setConfig(
-        startAmountInWei,
-        endAmountInWei,
-        startTime,
-        endTime,
-        roundUp,
-      );
-      await ethers.provider.send('hardhat_setBalance', [
-        readonly.address,
-        ONE_ETH,
-      ]);
-
-      // mock the timestamp so that we can make bids
-      let now;
-      let expectedSettledPrice;
-      now = endTime - 1000;
-      await ethers.provider.send('evm_mine', [now]);
-      expectedSettledPrice = Math.floor(
-        startAmountInWei -
-          ((startAmountInWei - endAmountInWei) * (now - startTime)) /
-            (endTime - startTime),
-      );
-      await expect(readonlyConn.bid(1, { value: 100 }))
-        .to.emit(readonlyConn, 'Transfer')
-        .to.emit(readonlyConn, 'Bid')
-        .withArgs(readonly.address, 1, expectedSettledPrice);
-      // mock the timestamp so that we can make bids again
-      now = endTime - 900;
-      await ethers.provider.send('evm_mine', [now]);
-      expectedSettledPrice = Math.floor(
-        startAmountInWei -
-          ((startAmountInWei - endAmountInWei) * (now - startTime)) /
-            (endTime - startTime),
-      );
-      await expect(readonlyConn.bid(1, { value: 100 }))
-        .to.emit(readonlyConn, 'Transfer')
-        .to.emit(readonlyConn, 'Bid')
-        .withArgs(readonly.address, 1, expectedSettledPrice);
-
-      // mock the timestamp so that we can claim refund
-      now = endTime + 1000;
-      await ethers.provider.send('evm_mine', [now]);
-      await expect(readonlyConn.claimRefund()).to.emit(
-        readonlyConn,
-        'ClaimRefund',
-      );
-      const settledPrice = await readonlyConn.getSettledPriceInWei();
-      expect(settledPrice).to.eq(expectedSettledPrice);
-    });
-
     it('can make bids for refundable type of DA - happy code path with roundUp', async () => {
       const duration = 4000;
       const startAmountInWei = 100;
       const endAmountInWei = 10;
       const startTime = Math.floor(new Date().getTime() / 1000);
       const endTime = startTime + duration;
-      const roundUp = true;
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
@@ -528,14 +344,12 @@ describe('DutchAuction', function () {
       const currentTime = await time.latest();
       const startTime = currentTime - 1000;
       const endTime = currentTime + 1000;
-      const roundUp = true;
 
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
 
       await expect(readonlyConn.bid(1, { value: 15 }))
@@ -554,14 +368,12 @@ describe('DutchAuction', function () {
       const currentTime = await time.latest();
       const startTime = currentTime - 1000;
       const endTime = currentTime + 1000;
-      const roundUp = true;
 
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
 
       await time.increaseTo(endTime + 1);
@@ -577,14 +389,12 @@ describe('DutchAuction', function () {
       const currentTime = await time.latest();
       const startTime = currentTime + 1000;
       const endTime = currentTime + 2000;
-      const roundUp = true;
 
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
 
       await time.increaseTo(startTime - 10);
@@ -600,14 +410,12 @@ describe('DutchAuction', function () {
       const currentTime = await time.latest();
       const startTime = currentTime - 1000;
       const endTime = currentTime + 1000;
-      const roundUp = true;
 
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
 
       // Total supply is 1000.
@@ -622,14 +430,12 @@ describe('DutchAuction', function () {
       const currentTime = await time.latest();
       const startTime = currentTime - 1000;
       const endTime = currentTime + 1000;
-      const roundUp = true;
 
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
 
       // Total supply is 1000.
@@ -644,14 +450,12 @@ describe('DutchAuction', function () {
       const currentTime = await time.latest();
       const startTime = currentTime - 1000;
       const endTime = currentTime + 1000;
-      const roundUp = true;
 
       await ownerConn.setConfig(
         startAmountInWei,
         endAmountInWei,
         startTime,
         endTime,
-        roundUp,
       );
 
       // Total supply is 1000.

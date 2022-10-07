@@ -11,7 +11,7 @@ import "erc721a/contracts/ERC721A.sol";
 import "./IDutchAuction.sol";
 import "./ERC721M.sol";
 
-contract DutchAuction is IDutchAuction, ERC721M, ReentrancyGuard {
+contract DutchAuction is IDutchAuction, ERC721M {
     bool private immutable _refundable;
     uint256 private _settledPriceInWei;
     Config private _config;
@@ -51,23 +51,19 @@ contract DutchAuction is IDutchAuction, ERC721M, ReentrancyGuard {
     function setConfig(
         uint256 startAmountInWei,
         uint256 endAmountInWei,
-        uint256 startTime,
-        uint256 endTime,
-        bool roundUp
+        uint64 startTime,
+        uint64 endTime
     ) external onlyOwner {
         if (startTime == 0 || startTime >= endTime)
             revert InvalidStartEndTime();
         if (startAmountInWei == 0) revert InvalidAmountInWei();
 
-        Config memory config;
-        config = Config({
+        _config = Config({
             startAmountInWei: startAmountInWei,
             endAmountInWei: endAmountInWei,
             startTime: startTime,
-            endTime: endTime,
-            roundUp: roundUp
+            endTime: endTime
         });
-        _config = config;
     }
 
     function getConfig() external view returns (Config memory) {
@@ -80,15 +76,15 @@ contract DutchAuction is IDutchAuction, ERC721M, ReentrancyGuard {
 
     function getCurrentPriceInWei() public view returns (uint256) {
         Config memory config = _config; // storage to memory
-        uint256 amount;
-        bool roundUp = config.roundUp;
-
         // Return startAmountInWei if auction not started
         if (block.timestamp <= config.startTime) return config.startAmountInWei;
         // Return endAmountInWei if auction ended
         if (block.timestamp >= config.endTime) return config.endAmountInWei;
 
         if (config.startAmountInWei != config.endAmountInWei) {
+            uint256 amount;
+            bool roundUp = true; // we always round up the calculation
+
             // Declare variables to derive in the subsequent unchecked scope.
             uint256 duration;
             uint256 elapsed;
@@ -170,8 +166,7 @@ contract DutchAuction is IDutchAuction, ERC721M, ReentrancyGuard {
         if (user.refundClaimed) revert UserAlreadyClaimed();
         user.refundClaimed = true;
         uint256 refundInWei = user.contribution -
-            _settledPriceInWei *
-            user.tokensBidded;
+            (_settledPriceInWei * user.tokensBidded);
         if (refundInWei > 0) {
             (bool success, ) = msg.sender.call{value: refundInWei}("");
             if (!success) revert TransferFailed();
