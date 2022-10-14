@@ -33,8 +33,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         private _stageMintedCountsPerWallet;
     mapping(uint256 => uint256) private _stageMintedCounts;
 
-    mapping(address => Counters.Counter) private _cosignNonces;
-
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -73,7 +71,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     function getCosignNonce(address minter) public view returns (uint256) {
-        return _cosignNonces[minter].current();
+        return _numberMinted(minter);
     }
 
     function setCosigner(address cosigner) external onlyOwner {
@@ -290,7 +288,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
-            _cosignNonces[msg.sender].increment();
             _assertValidTimestamp(timestamp);
             activeStage = getActiveStageFromTimestamp(timestamp);
         }
