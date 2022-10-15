@@ -3,7 +3,7 @@ import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
-import { ERC721M, TestReentrantExploit__factory } from '../typechain-types';
+import { ERC721M } from '../typechain-types';
 
 const { keccak256, getAddress } = ethers.utils;
 
@@ -14,6 +14,38 @@ describe('ERC721M', function () {
   let readonlyContract: ERC721M;
   let owner: SignerWithAddress;
   let readonly: SignerWithAddress;
+  let chainId: number;
+
+  const getCosignSignature = async (
+    contractInstance: ERC721M,
+    cosigner: SignerWithAddress,
+    minter: string,
+    timestamp: number,
+    qty: number,
+  ) => {
+    const nonce = await contractInstance.getCosignNonce(minter);
+    const digestFromJs = ethers.utils.solidityKeccak256(
+      [
+        'address',
+        'address',
+        'uint32',
+        'address',
+        'uint64',
+        'uint256',
+        'uint256',
+      ],
+      [
+        contractInstance.address,
+        minter,
+        qty,
+        cosigner.address,
+        timestamp,
+        chainId,
+        nonce,
+      ],
+    );
+    return await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
+  };
 
   beforeEach(async () => {
     const ERC721M = await ethers.getContractFactory('ERC721M');
@@ -30,6 +62,7 @@ describe('ERC721M', function () {
     [owner, readonly] = await ethers.getSigners();
     contract = erc721M.connect(owner);
     readonlyContract = erc721M.connect(readonly);
+    chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
   });
 
   it('Contract can be paused/unpaused', async () => {
@@ -701,12 +734,12 @@ describe('ERC721M', function () {
       await contract.setCosigner(cosigner.address);
 
       const timestamp = stageStart + 500;
-      const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint64'],
-        [contract.address, minter.address, 1, cosigner.address, timestamp],
-      );
-      const sig = await cosigner.signMessage(
-        ethers.utils.arrayify(digestFromJs),
+      const sig = getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        1,
       );
       await readonlyContract.mint(
         1,
@@ -740,12 +773,12 @@ describe('ERC721M', function () {
       await contract.setCosigner(cosigner.address);
 
       const timestamp = Math.floor(new Date().getTime() / 1000);
-      const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint64'],
-        [contract.address, minter.address, 1, cosigner.address, timestamp],
-      );
-      const sig = await cosigner.signMessage(
-        ethers.utils.arrayify(digestFromJs),
+      const sig = await getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        1,
       );
 
       // invalid because of unexpected timestamp
@@ -835,11 +868,13 @@ describe('ERC721M', function () {
       await contract.setCosigner(cosigner.address);
 
       const earlyTimestamp = stageStart - 1;
-      let digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint64'],
-        [contract.address, minter.address, 1, cosigner.address, earlyTimestamp],
+      let sig = getCosignSignature(
+        readonlyContract,
+        cosigner,
+        minter.address,
+        earlyTimestamp,
+        1,
       );
-      let sig = await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
 
       await expect(
         readonlyContract.mint(
@@ -854,11 +889,13 @@ describe('ERC721M', function () {
       ).to.be.revertedWith('InvalidStage');
 
       const lateTimestamp = stageStart + 1001;
-      digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint64'],
-        [contract.address, minter.address, 1, cosigner.address, lateTimestamp],
+      sig = getCosignSignature(
+        readonlyContract,
+        cosigner,
+        minter.address,
+        lateTimestamp,
+        1,
       );
-      sig = await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
 
       await expect(
         readonlyContract.mint(
@@ -893,12 +930,12 @@ describe('ERC721M', function () {
       await contract.setCosigner(cosigner.address);
 
       const timestamp = stageStart;
-      const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint64'],
-        [contract.address, minter.address, 1, cosigner.address, timestamp],
-      );
-      const sig = await cosigner.signMessage(
-        ethers.utils.arrayify(digestFromJs),
+      const sig = getCosignSignature(
+        readonlyContract,
+        cosigner,
+        minter.address,
+        timestamp,
+        1,
       );
 
       // fast forward 2 minutes
@@ -1527,12 +1564,12 @@ describe('ERC721M', function () {
       expect(await minterConn.getCosigner()).to.eq(cosigner.address);
 
       const timestamp = Math.floor(new Date().getTime() / 1000);
-      const digestFromJs = ethers.utils.solidityKeccak256(
-        ['address', 'address', 'uint32', 'address', 'uint64'],
-        [erc721M.address, minter.address, 1, cosigner.address, timestamp],
-      );
-      const sig = await cosigner.signMessage(
-        ethers.utils.arrayify(digestFromJs),
+      const sig = await getCosignSignature(
+        erc721M,
+        cosigner,
+        minter.address,
+        timestamp,
+        1,
       );
       await expect(
         minterConn.assertValidCosign(minter.address, 1, timestamp, sig),
