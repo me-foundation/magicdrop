@@ -2,6 +2,8 @@ export interface ICosignRequest {
   collectionContract: string;
   minter: string;
   qty: number;
+  chainId: number;
+  nonce: number;
 }
 
 export interface ICollectionRequest {

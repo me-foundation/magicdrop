@@ -110,13 +110,23 @@ router.post(
 
     const cosigner = getCosigner();
     const digest = keccak256(
-      ['address', 'address', 'uint32', 'address', 'uint64'],
+      [
+        'address',
+        'address',
+        'uint32',
+        'address',
+        'uint64',
+        'uint256',
+        'uint256',
+      ],
       [
         payload.collectionContract.toLowerCase(),
         payload.minter,
         payload.qty,
         cosigner.address,
         timestamp,
+        payload.chainId,
+        payload.nonce,
       ],
     );
     const sig = await cosigner.signMessage(arrayify(digest));
