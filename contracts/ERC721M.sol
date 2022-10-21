@@ -13,6 +13,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
 
     uint64 public constant MIN_STAGE_INTERVAL_SECONDS = 60;
+    uint64 public constant CROSSMINT_TIMESTAMP_EXPIRY_SECONDS = 300;
 
     bool private _mintable;
     string private _currentBaseURI;
@@ -286,9 +287,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
-            if (msg.sender != _crossmintAddress) {
-                _assertValidTimestamp(timestamp);
-            }
+            _assertValidTimestamp(timestamp);
             activeStage = getActiveStageFromTimestamp(timestamp);
         }
 
@@ -445,8 +444,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - MIN_STAGE_INTERVAL_SECONDS)
-            revert TimestampExpired();
+        uint64 threshold = msg.sender == _crossmintAddress
+            ? CROSSMINT_TIMESTAMP_EXPIRY_SECONDS
+            : MIN_STAGE_INTERVAL_SECONDS;
+        if (timestamp < block.timestamp - threshold) revert TimestampExpired();
     }
 
     function _assertValidStartAndEndTimestamp(uint64 start, uint64 end)
