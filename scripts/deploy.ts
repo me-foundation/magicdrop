@@ -4,6 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { getSaleEnumValueByName } from './common/utils';
 
 export interface IDeployParams {
   name: string;
@@ -12,24 +13,38 @@ export interface IDeployParams {
   maxsupply: string;
   globalwalletlimit: string;
   cosigner?: string;
+  contractName?: string;
+  minContributionInWei?: number; // Required only for the BucketAuction
 }
 
 export const deploy = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-  console.log('Deploying ERC721M with params', JSON.stringify(args, null, 2));
-  const ERC721M = await hre.ethers.getContractFactory('ERC721M');
-  const erc721M = await ERC721M.deploy(
+  // Get the contract name to be initialized; defaults to ERC721M
+  const contractName = args.contractName ?? 'ERC721M';
+  console.log(
+    `Going to deploy ${contractName} with params`,
+    JSON.stringify(args, null, 2),
+  );
+  const contractFactory = await hre.ethers.getContractFactory(contractName);
+  // Set the base parameters for ERC721M
+  const params = [
     args.name,
     args.symbol,
     args.tokenurisuffix,
     hre.ethers.BigNumber.from(args.maxsupply),
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
-  );
+  ];
+  // Set the additional parameters e.g. for the BucketAuction
+  if (getSaleEnumValueByName(contractName) == 1) {
+    params.push(hre.ethers.BigNumber.from(args.minContributionInWei ?? 0.01));
+  }
 
-  await erc721M.deployed();
+  const contract = await contractFactory.deploy(...params);
 
-  console.log('ERC721M deployed to:', erc721M.address);
+  await contract.deployed();
+
+  console.log(`${contractName} deployed to:`, contract.address);
 };

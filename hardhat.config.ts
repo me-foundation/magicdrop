@@ -16,6 +16,7 @@ import { deploy } from './scripts/deploy';
 import { setBaseURI } from './scripts/setBaseURI';
 import { mint } from './scripts/mint';
 import { ownerMint } from './scripts/ownerMint';
+import { setAuctionActive } from './scripts/setAuctionActive';
 import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
 
 const config: HardhatUserConfig = {
@@ -70,7 +71,7 @@ task('setMintable', 'Set mintable state for ERC721M')
   .addParam('mintable', 'mintable state', 'true', types.boolean)
   .setAction(setMintable);
 
-task('deploy', 'Deploy ERC721M')
+task('deploy', 'Deploy the specified contract; defaults to ERC721M')
   .addParam('name', 'name')
   .addParam('symbol', 'symbol')
   .addParam('maxsupply', 'max supply')
@@ -80,6 +81,16 @@ task('deploy', 'Deploy ERC721M')
     'cosigner',
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
+    'minContributionInWei',
+    'The minimum contribution in wei required only for the AcutionBucket',
+    '0',
+  )
+  .addOptionalParam(
+    'contractName',
+    'The name of the contract to initialize',
+    'ERC721M',
   )
   .setAction(deploy);
 
@@ -108,5 +119,18 @@ task('setGlobalWalletLimit', 'Set the global wallet limit')
   .addParam('contract', 'contract address')
   .addParam('limit', 'global wallet limit (0 for no global limit)')
   .setAction(setGlobalWalletLimit);
+
+task(
+  'setAuctionActive',
+  'Resets the auctionActive flag; the default contract is BucketAuction',
+)
+  .addParam('contract', 'contract address')
+  .addParam('auctionActive', 'the new value of the auctionActive flag')
+  .addOptionalParam(
+    'contractName',
+    'The name of the contract to initialize',
+    'BucketAuction',
+  )
+  .setAction(setAuctionActive);
 
 export default config;

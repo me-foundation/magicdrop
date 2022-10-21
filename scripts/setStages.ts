@@ -1,6 +1,11 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
+import { boolean } from 'hardhat/internal/core/params/argumentTypes';
+import {
+  getStageEnumValueByName,
+  getSaleEnumValueByName,
+} from './common/utils';
 
 export interface ISetStagesParams {
   stages: string;
@@ -14,6 +19,8 @@ interface StageConfig {
   walletLimit?: number;
   maxSupply?: number;
   whitelistPath?: string;
+  stageType: string;
+  saleType: string;
 }
 
 export const setStages = async (
@@ -53,6 +60,10 @@ export const setStages = async (
       merkleRoot: merkleRoots[i],
       startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
       endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
+      stageType: hre.ethers.BigNumber.from(
+        getStageEnumValueByName(s.stageType),
+      ),
+      saleType: hre.ethers.BigNumber.from(getSaleEnumValueByName(s.saleType)),
     })),
     { gasLimit: 500_000 },
   );
