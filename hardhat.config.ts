@@ -17,6 +17,8 @@ import { setBaseURI } from './scripts/setBaseURI';
 import { mint } from './scripts/mint';
 import { ownerMint } from './scripts/ownerMint';
 import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
+import { setCallbacks } from './scripts/setCallbacks';
+import { setOnMintApprovals } from './scripts/setOnMintApprovals';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -90,7 +92,7 @@ task('setBaseURI', 'Set the base uri')
 
 task('setCrossmintAddress', 'Set crossmint address')
   .addParam('contract', 'contract address')
-  .addParam('crossmintAddress', 'new crossmint address')
+  .addParam('crossmintaddress', 'new crossmint address')
   .setAction(setCrossmintAddress);
 
 task('mint', 'Mint token(s)')
@@ -109,4 +111,13 @@ task('setGlobalWalletLimit', 'Set the global wallet limit')
   .addParam('limit', 'global wallet limit (0 for no global limit)')
   .setAction(setGlobalWalletLimit);
 
+task('setCallbacks', 'sets callbacks')
+  .addParam('contract', 'contract address')
+  .addParam('callbackconfigsfile', 'path to callback configs')
+  .setAction(setCallbacks);
+
+task('setOnMintApprovals', 'sets on mint approvals')
+  .addParam('contract', 'contract address')
+  .addParam('approvals', 'comma-separated list of approvals')
+  .setAction(setOnMintApprovals);
 export default config;

@@ -19,7 +19,7 @@ export const deploy = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   console.log('Deploying ERC721M with params', JSON.stringify(args, null, 2));
-  const ERC721M = await hre.ethers.getContractFactory('ERC721M');
+  const ERC721M = await hre.ethers.getContractFactory('ERC721MCallback');
   const erc721M = await ERC721M.deploy(
     args.name,
     args.symbol,
@@ -28,6 +28,8 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
   );
+
+  console.log('deployment transaction:', erc721M.deployTransaction.hash);
 
   await erc721M.deployed();
 

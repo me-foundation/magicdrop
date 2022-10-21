@@ -88,9 +88,9 @@ contract ERC721MCallback is ERC721M, IERC721MCallback {
         for (uint256 i = 0; i < _callbackInfos.length; i++) {
             CallbackInfo memory cbInfo = _callbackInfos[i];
             (bool success, ) = cbInfo.callbackContract.call(
-                abi.encodePacked(
+                abi.encodeWithSelector(
                     cbInfo.callbackFunction,
-                    callbackDatas[i],
+                    msg.sender,
                     tokenIds
                 )
             );
