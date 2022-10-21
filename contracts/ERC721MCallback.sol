@@ -62,7 +62,15 @@ contract ERC721MCallback is ERC721M, IERC721MCallback {
         bytes calldata signature,
         bytes[] calldata callbackDatas
     ) external payable {
+        uint256 start = totalSupply();
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
+        uint256 end = totalSupply();
+
+        uint256[] memory tokenIds = new uint256[](end - start);
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            tokenIds[i] = start + i;
+        }
 
         if (callbackDatas.length != _callbackInfos.length) {
             revert InvalidCallbackDatasLength(
@@ -80,7 +88,11 @@ contract ERC721MCallback is ERC721M, IERC721MCallback {
         for (uint256 i = 0; i < _callbackInfos.length; i++) {
             CallbackInfo memory cbInfo = _callbackInfos[i];
             (bool success, ) = cbInfo.callbackContract.call(
-                abi.encodePacked(cbInfo.callbackFunction, callbackDatas[i])
+                abi.encodePacked(
+                    cbInfo.callbackFunction,
+                    callbackDatas[i],
+                    tokenIds
+                )
             );
 
             if (!success) {

@@ -97,7 +97,7 @@ describe('ERC721MCallback', () => {
       const stakeFunctionSelector = new ethers.utils.Interface(
         TestStaking__factory.abi,
       )
-        .encodeFunctionData('stakeFor', [ethers.constants.AddressZero, 0])
+        .encodeFunctionData('stakeTokensFor', [ethers.constants.AddressZero, [0]])
         .slice(0, 10);
       await contract.setCallbackInfos([
         {
@@ -119,7 +119,7 @@ describe('ERC721MCallback', () => {
         [
           '0x' +
             new ethers.utils.Interface(TestStaking__factory.abi)
-              .encodeFunctionData('stakeFor', [readonly.address, 0])
+              .encodeFunctionData('stakeTokensFor', [readonly.address, [0]])
               .slice(10),
         ],
         {

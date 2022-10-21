@@ -26,6 +26,19 @@ contract TestStaking {
         _stakers[msg.sender].add(tokenId);
     }
 
+    function stakeTokensFor(address staker, uint256[] calldata tokenIds)
+        public
+    {
+        require(
+            msg.sender == address(_nft),
+            "Only NFT contract can stake on behalf"
+        );
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            _nft.transferFrom(staker, address(this), tokenIds[i]);
+            _stakers[staker].add(tokenIds[i]);
+        }
+    }
+
     function stakeFor(address staker, uint256 tokenId) public {
         require(
             msg.sender == address(_nft),
