@@ -286,7 +286,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
-            _assertValidTimestamp(timestamp);
+            if (msg.sender != _crossmintAddress) {
+                _assertValidTimestamp(timestamp);
+            }
             activeStage = getActiveStageFromTimestamp(timestamp);
         }
 
