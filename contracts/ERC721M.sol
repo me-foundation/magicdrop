@@ -16,7 +16,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     bool private _mintable;
     string private _currentBaseURI;
-    uint256 private _activeStage;
+    uint256 internal _activeStage;
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
     string private _tokenURISuffix;
@@ -24,7 +24,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     address private _cosigner;
     address private _crossmintAddress;
 
-    MintStageInfo[] private _mintStages;
+    MintStageInfo[] internal _mintStages;
 
     // Need this because struct cannot have nested mapping
     mapping(uint256 => mapping(address => uint32))
@@ -113,7 +113,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
                     startTimeUnixSeconds: newStages[i].startTimeUnixSeconds,
-                    endTimeUnixSeconds: newStages[i].endTimeUnixSeconds
+                    endTimeUnixSeconds: newStages[i].endTimeUnixSeconds,
+                    stageType: newStages[i].stageType,
+                    saleType: newStages[i].saleType
                 })
             );
             emit UpdateStage(
@@ -123,7 +125,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,
                 newStages[i].startTimeUnixSeconds,
-                newStages[i].endTimeUnixSeconds
+                newStages[i].endTimeUnixSeconds,
+                newStages[i].stageType,
+                newStages[i].saleType
             );
         }
     }
@@ -214,7 +218,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes32 merkleRoot,
         uint24 maxStageSupply,
         uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
+        uint64 endTimeUnixSeconds,
+        StageType stageType,
+        SaleType saleType
     ) external onlyOwner {
         if (index >= _mintStages.length) revert InvalidStage();
         if (index >= 1) {
@@ -236,6 +242,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _mintStages[index].maxStageSupply = maxStageSupply;
         _mintStages[index].startTimeUnixSeconds = startTimeUnixSeconds;
         _mintStages[index].endTimeUnixSeconds = endTimeUnixSeconds;
+        _mintStages[index].stageType = stageType;
+        _mintStages[index].saleType = saleType;
 
         emit UpdateStage(
             index,
@@ -244,7 +252,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             merkleRoot,
             maxStageSupply,
             startTimeUnixSeconds,
-            endTimeUnixSeconds
+            endTimeUnixSeconds,
+            stageType,
+            saleType
         );
     }
 

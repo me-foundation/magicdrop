@@ -26,6 +26,11 @@ interface IERC721M is IERC721AQueryable {
     error WalletStageLimitExceeded();
     error WithdrawFailed();
 
+    // The type of the stage
+    enum StageType { Public, WhiteList }
+    // The type of the sale
+    enum SaleType { DirectSale, BucketAuction }
+
     struct MintStageInfo {
         uint80 price;
         uint32 walletLimit; // 0 for unlimited
@@ -33,6 +38,8 @@ interface IERC721M is IERC721AQueryable {
         uint24 maxStageSupply; // 0 for unlimited
         uint64 startTimeUnixSeconds;
         uint64 endTimeUnixSeconds;
+        StageType stageType; 
+        SaleType saleType;
     }
 
     event UpdateStage(
@@ -42,7 +49,9 @@ interface IERC721M is IERC721AQueryable {
         bytes32 merkleRoot,
         uint24 maxStageSupply,
         uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
+        uint64 endTimeUnixSeconds,
+        StageType stageType,
+        SaleType saleType
     );
 
     event SetCosigner(address cosigner);
