@@ -83,12 +83,12 @@ task('deploy', 'Deploy the specified contract; defaults to ERC721M')
     '0x0000000000000000000000000000000000000000',
   )
   .addOptionalParam(
-    'minContributionInWei',
+    'mincontributioninwei',
     'The minimum contribution in wei required only for the AcutionBucket',
     '0',
   )
   .addOptionalParam(
-    'contractName',
+    'contractname',
     'The name of the contract to initialize',
     'ERC721M',
   )
@@ -122,12 +122,12 @@ task('setGlobalWalletLimit', 'Set the global wallet limit')
 
 task(
   'setAuctionActive',
-  'Resets the auctionActive flag; the default contract is BucketAuction',
+  'Re-sets the auctionActive flag; the default contract is BucketAuction',
 )
   .addParam('contract', 'contract address')
-  .addParam('auctionActive', 'the new value of the auctionActive flag')
+  .addParam('auctionactive', 'the new value of the auctionActive flag')
   .addOptionalParam(
-    'contractName',
+    'contractname',
     'The name of the contract to initialize',
     'BucketAuction',
   )

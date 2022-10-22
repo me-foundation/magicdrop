@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { SaleTypes, StageTypes } from './common/constants';
 
 export interface ISetActiveStageParams {
   stage: number;
@@ -10,7 +11,7 @@ export const setActiveStage = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const ERC721M = await ethers.getContractFactory('ERC721M');
+  const ERC721M = await ethers.getContractFactory(SaleTypes.ERC721M.strVal);
   const contract = ERC721M.attach(args.contract);
   const tx = await contract.setActiveStage(args.stage);
   console.log(`Submitted tx ${tx.hash}`);

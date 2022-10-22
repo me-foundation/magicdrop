@@ -13,8 +13,8 @@ export interface IDeployParams {
   maxsupply: string;
   globalwalletlimit: string;
   cosigner?: string;
-  contractName?: string;
-  minContributionInWei?: number; // Required only for the BucketAuction
+  contractname?: string;
+  mincontributioninwei?: number; // Required only for the BucketAuction
 }
 
 export const deploy = async (
@@ -22,7 +22,7 @@ export const deploy = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   // Get the contract name to be initialized; defaults to ERC721M
-  const contractName = args.contractName ?? 'ERC721M';
+  const contractName = args.contractname ?? 'ERC721M';
   console.log(
     `Going to deploy ${contractName} with params`,
     JSON.stringify(args, null, 2),
@@ -39,7 +39,7 @@ export const deploy = async (
   ];
   // Set the additional parameters e.g. for the BucketAuction
   if (getSaleEnumValueByName(contractName) == 1) {
-    params.push(hre.ethers.BigNumber.from(args.minContributionInWei ?? 0.01));
+    params.push(hre.ethers.BigNumber.from(args.mincontributioninwei ?? 0.01));
   }
 
   const contract = await contractFactory.deploy(...params);

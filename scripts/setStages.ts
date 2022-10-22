@@ -1,12 +1,8 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
-import {
-  SaleTypes,
-  StageTypes,
-  isEquivalent,
-  getSaleEnumValueByName,
-} from './common/utils';
+import { SaleTypes, StageTypes } from './common/constants';
+import { isEquivalent, getSaleEnumValueByName } from './common/utils';
 
 export interface ISetStagesParams {
   stages: string;

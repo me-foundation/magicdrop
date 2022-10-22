@@ -1,9 +1,10 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { SaleTypes } from './common/constants';
 
 export interface ISetAuctionActiveParams {
-  auctionActive: boolean;
+  auctionactive: boolean;
   contract: string;
-  contractName: string;
+  contractname: string;
 }
 
 export const setAuctionActive = async (
@@ -11,14 +12,16 @@ export const setAuctionActive = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   // Get the contract name to be initialized; defaults to BucketAuction
-  const contractName = args.contractName ?? 'BucketAuction';
+  const contractName = args.contractname ?? SaleTypes.BucketAuction.strVal;
   const { ethers } = hre;
   const contractFactory = await ethers.getContractFactory(contractName);
   const contract = contractFactory.attach(args.contract);
 
   // Set the auction active
-  console.log(`New auction state to be set: ${args.auctionActive}`);
-  const tx = await contract.setAuctionActive(args.auctionActive);
+  console.log(
+    `New auction state to be set for ${contractName}: ${args.auctionactive}`,
+  );
+  const tx = await contract.setAuctionActive(args.auctionactive);
   console.log(`Submitted tx ${tx.hash}`);
   await tx.wait();
   console.log('Set active stage:', tx.hash);
