@@ -1,43 +1,43 @@
 // This module wraps up the utility functions which can be used by any script
 
-export const saleEnumValueByType = {
-  ERC721M: 0, // The contract of direct sales
-  BucketAuction: 1, // The contract of bucket auctions
+export const SaleTypes = {
+  ERC721M: { enumVal: 0, strVal: 'ERC721M' }, // The contract of direct sales
+  BucketAuction: { enumVal: 1, strVal: 'BucketAuction' }, // The contract of bucket auctions
 };
 
-const stageEnumValueByType = {
-  Public: 0, // Stage where any wallet can buy
-  WhiteList: 1, // Stage where only predetermined wallets can buy
+export const StageTypes = {
+  Public: { enumVal: 0, strVal: 'Public' }, // Stage where any wallet can buy
+  WhiteList: { enumVal: 1, strVal: 'WhiteList' }, // Stage where only predetermined wallets can buy
 };
 
-const caseInsensitiveGetByPropertyName = (
+const getPropertyByCaseInsensitiveName = (
   objectClass: object,
   propertyName: string,
   defaultValue: any,
 ) => {
-  // Object.entries(objectClass).forEach((k, v) => console.log(`${k}`));
-  const foundPropVal = Object.entries(objectClass)
-    .filter(
-      ([key, value]) =>
-        key.localeCompare(propertyName, 'en', {
-          sensitivity: 'base',
-        }) == 0,
-    )
+  const foundEnumValues = Object.entries(objectClass)
+    .filter(([key, value]) => isEquivalent(value.strVal, propertyName))
     .map(([key, value]) => {
-      return value;
+      return value.enumVal;
     });
 
-  return foundPropVal.length > 0 ? foundPropVal[0] : defaultValue;
+  return foundEnumValues.length > 0 ? foundEnumValues[0] : defaultValue;
 };
 
 export const getStageEnumValueByName = (stageTypeName: string) => {
-  return caseInsensitiveGetByPropertyName(
-    stageEnumValueByType,
-    stageTypeName,
-    0,
-  );
+  return getPropertyByCaseInsensitiveName(StageTypes, stageTypeName, 0);
 };
 
 export const getSaleEnumValueByName = (saleTypeName: string) => {
-  return caseInsensitiveGetByPropertyName(saleEnumValueByType, saleTypeName, 0);
+  return getPropertyByCaseInsensitiveName(SaleTypes, saleTypeName, 0);
+};
+
+export const isEquivalent = (str1: string, str2: string) => {
+  return (
+    (!str1 && !str2) ||
+    (str1 &&
+      str1.localeCompare(str2, 'en', {
+        sensitivity: 'accent',
+      }) == 0)
+  );
 };
