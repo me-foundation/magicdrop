@@ -114,7 +114,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                     maxStageSupply: newStages[i].maxStageSupply,
                     startTimeUnixSeconds: newStages[i].startTimeUnixSeconds,
                     endTimeUnixSeconds: newStages[i].endTimeUnixSeconds,
-                    stageType: newStages[i].stageType,
                     saleType: newStages[i].saleType
                 })
             );
@@ -126,7 +125,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                 newStages[i].maxStageSupply,
                 newStages[i].startTimeUnixSeconds,
                 newStages[i].endTimeUnixSeconds,
-                newStages[i].stageType,
                 newStages[i].saleType
             );
         }
@@ -219,7 +217,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint24 maxStageSupply,
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds,
-        StageType stageType,
         SaleType saleType
     ) external onlyOwner {
         if (index >= _mintStages.length) revert InvalidStage();
@@ -242,7 +239,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _mintStages[index].maxStageSupply = maxStageSupply;
         _mintStages[index].startTimeUnixSeconds = startTimeUnixSeconds;
         _mintStages[index].endTimeUnixSeconds = endTimeUnixSeconds;
-        _mintStages[index].stageType = stageType;
         _mintStages[index].saleType = saleType;
 
         emit UpdateStage(
@@ -253,7 +249,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             maxStageSupply,
             startTimeUnixSeconds,
             endTimeUnixSeconds,
-            stageType,
             saleType
         );
     }
@@ -290,8 +285,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
         uint256 activeStage = _activeStage;
-
-        if (activeStage >= _mintStages.length) revert InvalidStage();
 
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {

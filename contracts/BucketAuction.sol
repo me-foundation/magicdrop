@@ -45,6 +45,7 @@ contract BucketAuction is IBucketAuction, ERC721M {
     }
 
     modifier isAuctionActive() {
+        if (_mintStages[_activeStage].saleType != SaleType.BucketAuction) revert InvalidStage();
         if (!_auctionActive) revert BucketAuctionNotActive();
         _;
     }
@@ -95,9 +96,6 @@ contract BucketAuction is IBucketAuction, ERC721M {
      *   and cannot be reversed.
      */
     function bid() external payable isAuctionActive nonReentrant cannotMint {
-        if (_activeStage >= _mintStages.length) revert InvalidStage();
-        if (_mintStages[_activeStage].saleType != SaleType.BucketAuction) revert InvalidStage();
-        
         User storage bidder = _userData[msg.sender]; // get user's current bid total
         uint256 contribution_ = bidder.contribution; // bidder.contribution is uint216
         unchecked {
