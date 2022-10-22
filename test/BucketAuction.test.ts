@@ -376,12 +376,58 @@ describe('BucketAuction', function () {
       );
 
       await ownerConn.setAuctionActive(false);
-      // Expected tokens is 1001 whcih exceeds max mintbale supply = 1000.
+      // Expected tokens is 1001 which exceeds max mintbale supply = 1000.
       await ownerConn.setPrice(1);
       await ownerConn.setClaimable(true);
 
       await expect(readonlyConn.claimTokensAndRefund()).to.be.revertedWith(
         'NoSupplyLeft',
+      );
+    });
+
+    it('Reverts if token already sent or refund already claimed', async () => {
+      await ownerConn.setAuctionActive(true);
+
+      await ethers.provider.send('hardhat_setBalance', [
+        readonly.address,
+        ONE_ETH,
+      ]);
+
+      await expect(readonlyConn.bid({ value: 100 })).to.emit(
+        readonlyConn,
+        'Bid',
+      );
+
+      await ownerConn.setAuctionActive(false);
+      await ownerConn.setPrice(1);
+      await ownerConn.setClaimable(true);
+
+      // Send tokens
+      await expect(ownerConn.sendTokens(readonly.address, 1)).to.emit(
+        readonlyConn,
+        'Transfer',
+      );
+
+      let userData = await readonlyConn.getUserData(readonly.address);
+      expect(userData.contribution).to.eq(100);
+      expect(userData.tokensClaimed).to.eq(1);
+      expect(userData.refundClaimed).to.eq(false);
+
+      // Try to re-send tokens and the refund and expect a revert with AlreadySentTokensToUser
+      await expect(
+        ownerConn.sendTokensAndRefund(readonly.address),
+      ).to.be.revertedWith('AlreadySentTokensToUser');
+
+      // Issue refund
+      await ownerConn.sendRefund(readonly.address);
+      userData = await readonlyConn.getUserData(readonly.address);
+      expect(userData.contribution).to.eq(100);
+      expect(userData.tokensClaimed).to.eq(1);
+      expect(userData.refundClaimed).to.eq(true);
+
+      // Try to re-issue the refund and expect a revert with UserAlreadyClaimed
+      await expect(ownerConn.sendRefund(readonly.address)).to.be.revertedWith(
+        'UserAlreadyClaimed',
       );
     });
 

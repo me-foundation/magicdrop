@@ -159,6 +159,54 @@ describe('ERC721M', function () {
       ).to.be.revertedWith('InsufficientStageTimeGap');
     });
 
+    it('cannot set stages due to startTimeUnixSeconds is not smaller than endTimeUnixSeconds', async () => {
+      await expect(
+        contract.setStages([
+          {
+            price: ethers.utils.parseEther('0.5'),
+            walletLimit: 3,
+            merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+            maxStageSupply: 5,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 0,
+            saleType: 0,
+          },
+          {
+            price: ethers.utils.parseEther('0.6'),
+            walletLimit: 4,
+            merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
+            maxStageSupply: 10,
+            startTimeUnixSeconds: 61,
+            endTimeUnixSeconds: 61,
+            saleType: 0,
+          },
+        ]),
+      ).to.be.revertedWith('InvalidStartAndEndTimestamp');
+
+      await expect(
+        contract.setStages([
+          {
+            price: ethers.utils.parseEther('0.5'),
+            walletLimit: 3,
+            merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+            maxStageSupply: 5,
+            startTimeUnixSeconds: 1,
+            endTimeUnixSeconds: 0,
+            saleType: 0,
+          },
+          {
+            price: ethers.utils.parseEther('0.6'),
+            walletLimit: 4,
+            merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
+            maxStageSupply: 10,
+            startTimeUnixSeconds: 62,
+            endTimeUnixSeconds: 61,
+            saleType: 0,
+          },
+        ]),
+      ).to.be.revertedWith('InvalidStartAndEndTimestamp');
+    });
+
     it('can set / reset stages', async () => {
       await contract.setStages([
         {
@@ -401,6 +449,61 @@ describe('ERC721M', function () {
       );
 
       await expect(updateStage).to.be.revertedWith('InsufficientStageTimeGap');
+    });
+
+    it('cannot update stage due to the startTimeUnixSeconds is not smaller than the endTimeUnixSeconds', async () => {
+      await contract.setStages([
+        {
+          price: ethers.utils.parseEther('0.5'),
+          walletLimit: 3,
+          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+          maxStageSupply: 5,
+          startTimeUnixSeconds: 0,
+          endTimeUnixSeconds: 1,
+          saleType: 0,
+        },
+        {
+          price: ethers.utils.parseEther('0.6'),
+          walletLimit: 4,
+          merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
+          maxStageSupply: 10,
+          startTimeUnixSeconds: 61,
+          endTimeUnixSeconds: 62,
+          saleType: 0,
+        },
+      ]);
+
+      // Update stage 1 and set startTimeUnixSeconds and endTimeUnixSeconds to identical values
+      const updateStageWithIdenticalStartAndEndTime = contract.updateStage(
+        /* _index= */ 1,
+        /* price= */ ethers.utils.parseEther('0.1'),
+        /* walletLimit= */ 13,
+        /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
+        /* maxStageSupply= */ 15,
+        /* startTimeUnixSeconds= */ 61,
+        /* endTimeUnixSeconds= */ 61,
+        /* saleType= */ 0,
+      );
+
+      await expect(updateStageWithIdenticalStartAndEndTime).to.be.revertedWith(
+        'InvalidStartAndEndTimestamp',
+      );
+
+      // Update stage 1 and set startTimeUnixSeconds to a value which is not smaller than the endTimeUnixSeconds
+      const updateStageWithStartTimeAfterEndTime = contract.updateStage(
+        /* _index= */ 1,
+        /* price= */ ethers.utils.parseEther('0.1'),
+        /* walletLimit= */ 13,
+        /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
+        /* maxStageSupply= */ 15,
+        /* startTimeUnixSeconds= */ 61,
+        /* endTimeUnixSeconds= */ 60,
+        /* saleType= */ 0,
+      );
+
+      await expect(updateStageWithStartTimeAfterEndTime).to.be.revertedWith(
+        'InvalidStartAndEndTimestamp',
+      );
     });
 
     it('gets stage info', async () => {
