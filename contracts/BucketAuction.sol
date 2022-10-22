@@ -45,13 +45,17 @@ contract BucketAuction is IBucketAuction, ERC721M {
     }
 
     modifier isAuctionActive() {
-        if (_mintStages[_activeStage].saleType != SaleType.BucketAuction) revert InvalidStage();
         if (!_auctionActive) revert BucketAuctionNotActive();
         _;
     }
 
-    modifier isAuctionInactive() {
+        modifier isAuctionInactive() {
         if (_auctionActive) revert BucketAuctionActive();
+        _;
+    }
+
+    modifier auctionStage() {
+        if (_mintStages[_activeStage].saleType != SaleType.BucketAuction) revert InvalidStage();
         _;
     }
 
@@ -95,7 +99,7 @@ contract BucketAuction is IBucketAuction, ERC721M {
      *   multiple times will increase your bid amount. All bids placed are final
      *   and cannot be reversed.
      */
-    function bid() external payable isAuctionActive nonReentrant cannotMint {
+    function bid() external payable auctionStage isAuctionActive nonReentrant cannotMint {
         User storage bidder = _userData[msg.sender]; // get user's current bid total
         uint256 contribution_ = bidder.contribution; // bidder.contribution is uint216
         unchecked {
