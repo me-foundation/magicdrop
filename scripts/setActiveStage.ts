@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { SaleTypes, StageTypes } from './common/constants';
+import { SaleTypes } from './common/constants';
 
 export interface ISetActiveStageParams {
   stage: number;
