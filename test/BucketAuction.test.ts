@@ -30,6 +30,26 @@ describe('BucketAuction', function () {
 
     [owner, readonly] = await ethers.getSigners();
     ownerConn = ba.connect(owner);
+    await ownerConn.setStages([
+      {
+        price: ethers.utils.parseEther('0.1'),
+        walletLimit: 0,
+        merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
+        maxStageSupply: 100,
+        startTimeUnixSeconds: 0,
+        endTimeUnixSeconds: 1,
+        saleType: 1,
+      },
+      {
+        price: ethers.utils.parseEther('0.2'),
+        walletLimit: 0,
+        merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
+        maxStageSupply: 100,
+        startTimeUnixSeconds: 61,
+        endTimeUnixSeconds: 62,
+        saleType: 0,
+      },
+    ]);
     readonlyConn = ba.connect(readonly);
   });
 
@@ -66,6 +86,12 @@ describe('BucketAuction', function () {
   });
 
   describe('Bidding', function () {
+    it('Reverts if the active stage is not a BucketAuction', async () => {
+      await ownerConn.setActiveStage(1);
+      // if the current active stage is not a bucket auction; revert with InvalidStage
+      await expect(readonlyConn.bid()).to.be.revertedWith('InvalidStage');
+    });
+
     it('Reverts if auction not active', async () => {
       // it starts as Inactive, so we cannot make bids
       await expect(readonlyConn.bid()).to.be.revertedWith(

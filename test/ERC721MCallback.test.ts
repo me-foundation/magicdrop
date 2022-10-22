@@ -91,6 +91,7 @@ describe('ERC721MCallback', () => {
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           startTimeUnixSeconds: 0,
           endTimeUnixSeconds: 1,
+          saleType: 0,
         },
       ]);
       await contract.setMintable(true);
@@ -153,6 +154,7 @@ describe('ERC721MCallback', () => {
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           startTimeUnixSeconds: 0,
           endTimeUnixSeconds: 1,
+          saleType: 0,
         },
       ]);
       await contract.setMintable(true);
@@ -185,6 +187,7 @@ describe('ERC721MCallback', () => {
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           startTimeUnixSeconds: 0,
           endTimeUnixSeconds: 1,
+          saleType: 0,
         },
       ]);
       await contract.setMintable(true);
@@ -217,6 +220,7 @@ describe('ERC721MCallback', () => {
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           startTimeUnixSeconds: 0,
           endTimeUnixSeconds: 1,
+          saleType: 0,
         },
       ]);
       await contract.setMintable(true);
