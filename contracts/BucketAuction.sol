@@ -49,7 +49,7 @@ contract BucketAuction is IBucketAuction, ERC721M {
         _;
     }
 
-        modifier isAuctionInactive() {
+    modifier isAuctionInactive() {
         if (_auctionActive) revert BucketAuctionActive();
         _;
     }
