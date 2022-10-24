@@ -17,7 +17,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     bool private _mintable;
     string private _currentBaseURI;
-    uint256 internal _activeStage;
+    uint256 private _activeStage;
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
     string private _tokenURISuffix;
@@ -25,7 +25,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     address private _cosigner;
     address private _crossmintAddress;
 
-    MintStageInfo[] internal _mintStages;
+    MintStageInfo[] private _mintStages;
 
     // Need this because struct cannot have nested mapping
     mapping(uint256 => mapping(address => uint32))
@@ -62,6 +62,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
+        _;
+    }
+
+    modifier restrictStageType(SaleType expectedStageType) {
+        if (_mintStages[_activeStage].saleType != expectedStageType) revert InvalidStage();
         _;
     }
 
