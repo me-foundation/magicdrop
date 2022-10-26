@@ -17,6 +17,7 @@ import { setBaseURI } from './scripts/setBaseURI';
 import { mint } from './scripts/mint';
 import { ownerMint } from './scripts/ownerMint';
 import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
+import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -42,6 +43,11 @@ const config: HardhatUserConfig = {
     },
     goerli: {
       url: process.env.GOERLI_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    mainnet: {
+      url: process.env.MAINNET_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -109,4 +115,8 @@ task('setGlobalWalletLimit', 'Set the global wallet limit')
   .addParam('limit', 'global wallet limit (0 for no global limit)')
   .setAction(setGlobalWalletLimit);
 
+task('setMaxMintableSupply', 'set max mintable supply')
+  .addParam('contract', 'contract address')
+  .addParam('supply', 'new supply')
+  .setAction(setMaxMintableSupply);
 export default config;
