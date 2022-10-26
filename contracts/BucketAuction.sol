@@ -54,12 +54,12 @@ contract BucketAuction is IBucketAuction, ERC721M {
     }
 
     modifier isAuctionActive() {
-        if (_startTimeUnixSeconds > block.timestamp  || _endTimeUnixSeconds < block.timestamp) revert BucketAuctionNotActive();
+        if (_startTimeUnixSeconds > block.timestamp  || _endTimeUnixSeconds <= block.timestamp) revert BucketAuctionNotActive();
         _;
     }
 
     modifier isAuctionInactive() {
-        if (_startTimeUnixSeconds <= block.timestamp  && _endTimeUnixSeconds >= block.timestamp) revert BucketAuctionActive();
+        if (_startTimeUnixSeconds <= block.timestamp  && block.timestamp < _endTimeUnixSeconds) revert BucketAuctionActive();
         _;
     }
 
