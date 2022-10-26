@@ -17,7 +17,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     bool private _mintable;
     string private _currentBaseURI;
-    uint256 private _activeStage;
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
     string private _tokenURISuffix;
@@ -62,11 +61,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
-        _;
-    }
-
-    modifier restrictStageType(SaleType expectedStageType) {
-        if (_mintStages[_activeStage].saleType != expectedStageType) revert InvalidStage();
         _;
     }
 
@@ -119,8 +113,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
                     startTimeUnixSeconds: newStages[i].startTimeUnixSeconds,
-                    endTimeUnixSeconds: newStages[i].endTimeUnixSeconds,
-                    saleType: newStages[i].saleType
+                    endTimeUnixSeconds: newStages[i].endTimeUnixSeconds
                 })
             );
             emit UpdateStage(
@@ -130,8 +123,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,
                 newStages[i].startTimeUnixSeconds,
-                newStages[i].endTimeUnixSeconds,
-                newStages[i].saleType
+                newStages[i].endTimeUnixSeconds
             );
         }
     }
@@ -178,16 +170,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
-    function getActiveStage() external view override returns (uint256) {
-        return _activeStage;
-    }
-
-    function setActiveStage(uint256 activeStage) external onlyOwner {
-        if (activeStage >= _mintStages.length) revert InvalidStage();
-        _activeStage = activeStage;
-        emit SetActiveStage(activeStage);
-    }
-
     function totalMintedByAddress(address a)
         external
         view
@@ -222,8 +204,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes32 merkleRoot,
         uint24 maxStageSupply,
         uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds,
-        SaleType saleType
+        uint64 endTimeUnixSeconds
     ) external onlyOwner {
         if (index >= _mintStages.length) revert InvalidStage();
         if (index >= 1) {
@@ -245,7 +226,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _mintStages[index].maxStageSupply = maxStageSupply;
         _mintStages[index].startTimeUnixSeconds = startTimeUnixSeconds;
         _mintStages[index].endTimeUnixSeconds = endTimeUnixSeconds;
-        _mintStages[index].saleType = saleType;
 
         emit UpdateStage(
             index,
@@ -254,8 +234,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             merkleRoot,
             maxStageSupply,
             startTimeUnixSeconds,
-            endTimeUnixSeconds,
-            saleType
+            endTimeUnixSeconds
         );
     }
 
@@ -290,14 +269,16 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
-        uint256 activeStage = _activeStage;
+        uint256 stageTimestamp = block.timestamp;
 
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
             _assertValidTimestamp(timestamp);
-            activeStage = getActiveStageFromTimestamp(timestamp);
+            stageTimestamp = timestamp;
         }
+
+        uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
         stage = _mintStages[activeStage];
 
@@ -434,7 +415,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         ) revert InvalidCosignSignature();
     }
 
-    function getActiveStageFromTimestamp(uint64 timestamp)
+    function getActiveStageFromTimestamp(uint256 timestamp)
         public
         view
         override
