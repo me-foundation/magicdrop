@@ -10,12 +10,9 @@ export const setMaxMintableSupply = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const ERC721M = await ethers.getContractFactory('ERC721MCallback');
+  const ERC721M = await ethers.getContractFactory('ERC721M');
   const contract = ERC721M.attach(args.contract);
-  const tx = await contract.setMaxMintableSupply(parseInt(args.supply, 10), {
-    nonce: 12,
-    gasPrice: ethers.utils.parseUnits('30', 'gwei'),
-  });
+  const tx = await contract.setMaxMintableSupply(parseInt(args.supply, 10));
   console.log(`Submitted tx ${tx.hash}`);
 
   await tx.wait();
