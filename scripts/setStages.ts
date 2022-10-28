@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
+import { ContractDetails } from './common/constants';
 
 export interface ISetStagesParams {
   stages: string;
@@ -24,7 +25,7 @@ export const setStages = async (
   const stagesConfig = JSON.parse(
     fs.readFileSync(args.stages, 'utf-8'),
   ) as StageConfig[];
-  const ERC721M = await ethers.getContractFactory('ERC721M');
+  const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
   const merkleRoots = await Promise.all(
     stagesConfig.map((stage) => {

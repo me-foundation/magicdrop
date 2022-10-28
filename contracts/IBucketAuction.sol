@@ -7,6 +7,7 @@ interface IBucketAuction {
     error BucketAuctionNotActive();
     error CannotSendMoreThanUserPurchased();
     error CannotSetPriceIfClaimable();
+    error CannotSetPriceIfFirstTokenSent();
     error LowerThanMinBidAmount();
     error NotClaimable();
     error PriceHasBeenSet();

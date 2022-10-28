@@ -17,7 +17,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     bool private _mintable;
     string private _currentBaseURI;
-    uint256 private _activeStage;
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
     string private _tokenURISuffix;
@@ -171,16 +170,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
-    function getActiveStage() external view override returns (uint256) {
-        return _activeStage;
-    }
-
-    function setActiveStage(uint256 activeStage) external onlyOwner {
-        if (activeStage >= _mintStages.length) revert InvalidStage();
-        _activeStage = activeStage;
-        emit SetActiveStage(activeStage);
-    }
-
     function totalMintedByAddress(address a)
         external
         view
@@ -280,16 +269,16 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
-        uint256 activeStage = _activeStage;
-
-        if (activeStage >= _mintStages.length) revert InvalidStage();
+        uint64 stageTimestamp = uint64(block.timestamp);
 
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
             _assertValidTimestamp(timestamp);
-            activeStage = getActiveStageFromTimestamp(timestamp);
+            stageTimestamp = timestamp;
         }
+
+        uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
         stage = _mintStages[activeStage];
 
