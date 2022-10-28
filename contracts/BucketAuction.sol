@@ -11,13 +11,12 @@ import "./IBucketAuction.sol";
 import "./ERC721M.sol";
 
 contract BucketAuction is IBucketAuction, ERC721M {
-    
-    uint256 private _startTimeUnixSeconds;
-    uint256 private _endTimeUnixSeconds;
     bool private _claimable;
+    bool private _firstTokenSent;
+    uint64 private _startTimeUnixSeconds;
+    uint64 private _endTimeUnixSeconds;
     uint256 private _minimumContributionInWei;
     uint256 private _price;
-    bool private _firstTokenSent;
     mapping(address => User) private _userData;
 
     constructor(
@@ -28,8 +27,8 @@ contract BucketAuction is IBucketAuction, ERC721M {
         uint256 globalWalletLimit,
         address cosigner,
         uint256 minimumContributionInWei,
-        uint256 startTimeUnixSeconds,
-        uint256 endTimeUnixSeconds
+        uint64 startTimeUnixSeconds,
+        uint64 endTimeUnixSeconds
 
     )
         ERC721M(
@@ -71,16 +70,16 @@ contract BucketAuction is IBucketAuction, ERC721M {
         return _price;
     }
 
-    function getStartTimeUnixSecods() external view returns(uint256) {
+    function getStartTimeUnixSecods() external view returns (uint64) {
         return _startTimeUnixSeconds;
     }
 
-    function getEndTimeUnixSecods() external view returns(uint256) {
+    function getEndTimeUnixSecods() external view returns (uint64) {
         return _endTimeUnixSeconds;
     }
 
     function getAuctionActive() external view returns (bool) {
-        return _startTimeUnixSeconds <= block.timestamp  && block.timestamp < _endTimeUnixSeconds;
+        return _startTimeUnixSeconds <= block.timestamp && block.timestamp < _endTimeUnixSeconds;
     }
 
     function getUserData(address user) external view returns (User memory) {
@@ -102,7 +101,7 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @param startTime set to unix timestamp for the auction start time.
      * @param endTime set to unix timestamp for the auction end time.
      */
-    function setStartAndEndTimeUnixSeconds(uint256 startTime, uint256 endTime) external onlyOwner {
+    function setStartAndEndTimeUnixSeconds(uint64 startTime, uint64 endTime) external onlyOwner {
         if (_price != 0) revert PriceHasBeenSet();
         if (endTime <= startTime) revert InvalidStartAndEndTimestamp();
 

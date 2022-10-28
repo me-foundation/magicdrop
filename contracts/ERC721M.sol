@@ -269,7 +269,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
-        uint256 stageTimestamp = block.timestamp;
+        uint64 stageTimestamp = uint64(block.timestamp);
 
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
@@ -415,7 +415,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         ) revert InvalidCosignSignature();
     }
 
-    function getActiveStageFromTimestamp(uint256 timestamp)
+    function getActiveStageFromTimestamp(uint64 timestamp)
         public
         view
         override

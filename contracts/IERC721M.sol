@@ -80,7 +80,7 @@ interface IERC721M is IERC721AQueryable {
             uint256
         );
 
-    function getActiveStageFromTimestamp(uint256 timestamp)
+    function getActiveStageFromTimestamp(uint64 timestamp)
         external
         view
         returns (uint256);
