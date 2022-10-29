@@ -29,7 +29,6 @@ contract BucketAuction is IBucketAuction, ERC721M {
         uint256 minimumContributionInWei,
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds
-
     )
         ERC721M(
             collectionName,
@@ -37,13 +36,15 @@ contract BucketAuction is IBucketAuction, ERC721M {
             tokenURISuffix,
             maxMintableSupply,
             globalWalletLimit,
-            cosigner
+            cosigner,
+            /* timestampExpirySeconds= */
+            300
         )
     {
         _claimable = false;
         _minimumContributionInWei = minimumContributionInWei;
         _startTimeUnixSeconds = startTimeUnixSeconds;
-        _endTimeUnixSeconds = endTimeUnixSeconds ;
+        _endTimeUnixSeconds = endTimeUnixSeconds;
         _firstTokenSent = false;
     }
 
@@ -53,12 +54,18 @@ contract BucketAuction is IBucketAuction, ERC721M {
     }
 
     modifier isAuctionActive() {
-        if (_startTimeUnixSeconds > block.timestamp  || _endTimeUnixSeconds <= block.timestamp) revert BucketAuctionNotActive();
+        if (
+            _startTimeUnixSeconds > block.timestamp ||
+            _endTimeUnixSeconds <= block.timestamp
+        ) revert BucketAuctionNotActive();
         _;
     }
 
     modifier isAuctionInactive() {
-        if (_startTimeUnixSeconds <= block.timestamp  && block.timestamp < _endTimeUnixSeconds) revert BucketAuctionActive();
+        if (
+            _startTimeUnixSeconds <= block.timestamp &&
+            block.timestamp < _endTimeUnixSeconds
+        ) revert BucketAuctionActive();
         _;
     }
 
@@ -79,7 +86,9 @@ contract BucketAuction is IBucketAuction, ERC721M {
     }
 
     function getAuctionActive() external view returns (bool) {
-        return _startTimeUnixSeconds <= block.timestamp && block.timestamp < _endTimeUnixSeconds;
+        return
+            _startTimeUnixSeconds <= block.timestamp &&
+            block.timestamp < _endTimeUnixSeconds;
     }
 
     function getUserData(address user) external view returns (User memory) {
@@ -101,7 +110,10 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @param startTime set to unix timestamp for the auction start time.
      * @param endTime set to unix timestamp for the auction end time.
      */
-    function setStartAndEndTimeUnixSeconds(uint64 startTime, uint64 endTime) external onlyOwner {
+    function setStartAndEndTimeUnixSeconds(uint64 startTime, uint64 endTime)
+        external
+        onlyOwner
+    {
         if (_price != 0) revert PriceHasBeenSet();
         if (endTime <= startTime) revert InvalidStartAndEndTimestamp();
 
@@ -114,12 +126,7 @@ contract BucketAuction is IBucketAuction, ERC721M {
      *   multiple times will increase your bid amount. All bids placed are final
      *   and cannot be reversed.
      */
-    function bid() 
-        external 
-        payable 
-        isAuctionActive 
-        nonReentrant
-    {
+    function bid() external payable isAuctionActive nonReentrant {
         User storage bidder = _userData[msg.sender]; // get user's current bid total
         uint256 contribution_ = bidder.contribution; // bidder.contribution is uint216
         unchecked {
@@ -150,12 +157,10 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @dev set this price in wei, not eth!
      * @param priceInWei new price, set in wei
      */
-    function setPrice(uint256 priceInWei)
-        external
-        onlyOwner
-    {
+    function setPrice(uint256 priceInWei) external onlyOwner {
         if (_claimable) revert CannotSetPriceIfClaimable();
-        if (block.timestamp <= _endTimeUnixSeconds) revert BucketAuctionActive();
+        if (block.timestamp <= _endTimeUnixSeconds)
+            revert BucketAuctionActive();
         if (_firstTokenSent) revert CannotSetPriceIfFirstTokenSent();
 
         _price = priceInWei;
