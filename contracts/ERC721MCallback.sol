@@ -14,7 +14,8 @@ contract ERC721MCallback is ERC721M, IERC721MCallback {
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner
+        address cosigner,
+        uint64 timestampExpirySeconds
     )
         ERC721M(
             collectionName,
@@ -22,7 +23,8 @@ contract ERC721MCallback is ERC721M, IERC721MCallback {
             tokenURISuffix,
             maxMintableSupply,
             globalWalletLimit,
-            cosigner
+            cosigner,
+            timestampExpirySeconds
         )
     {}
 
