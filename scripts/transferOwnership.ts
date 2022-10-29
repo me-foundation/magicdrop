@@ -1,5 +1,4 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
 
 export interface ITransferOwnershipParams {
   owner: string;
@@ -11,7 +10,7 @@ export const transferOwnership = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
+  const ERC721M = await ethers.getContractFactory('ERC721M');
   const contract = ERC721M.attach(args.contract);
   const tx = await contract.transferOwnership(args.owner);
   console.log(`Submitted tx ${tx.hash}`);

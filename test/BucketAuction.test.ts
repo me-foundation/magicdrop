@@ -14,8 +14,6 @@ describe('BucketAuction', function () {
   let readonlyConn: BucketAuction;
   let owner: SignerWithAddress;
   let readonly: SignerWithAddress;
-  let auctionStartTimestamp = 0;
-  let auctionEndTimestamp = 1;
 
   beforeEach(async () => {
     const BA = await ethers.getContractFactory('BucketAuction');
@@ -27,117 +25,47 @@ describe('BucketAuction', function () {
       /* globalWalletLimit= */ 0,
       ethers.constants.AddressZero,
       /* minimumContributionInWei= */ 100,
-      0, // Placeholder; startTimeUnixSeconds will be overwritten later
-      1, // Placeholder; endTimeUnixSeconds will be overwritten later
     );
     await ba.deployed();
 
     [owner, readonly] = await ethers.getSigners();
     ownerConn = ba.connect(owner);
-    await ownerConn.setStages([
-      {
-        price: ethers.utils.parseEther('0.1'),
-        walletLimit: 0,
-        merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
-        maxStageSupply: 100,
-        startTimeUnixSeconds: 0,
-        endTimeUnixSeconds: 1,
-      },
-      {
-        price: ethers.utils.parseEther('0.2'),
-        walletLimit: 0,
-        merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
-        maxStageSupply: 100,
-        startTimeUnixSeconds: 61,
-        endTimeUnixSeconds: 62,
-      },
-    ]);
-    // Get an estimated stage start time
-    const block = await ethers.provider.getBlock(
-      await ethers.provider.getBlockNumber(),
-    );
-    // Set the start and end timestamps for the bucket Auction
-    auctionStartTimestamp = block.timestamp + 100;
-    auctionEndTimestamp = block.timestamp + 200;
-    ownerConn.setStartAndEndTimeUnixSeconds(
-      auctionStartTimestamp,
-      auctionEndTimestamp,
-    );
-
     readonlyConn = ba.connect(readonly);
   });
 
-  it('Getters/Setters of the auction start and end timestamps ', async () => {
-    // Set the auction start time
-    expect(await readonlyConn.getStartTimeUnixSecods()).to.be.equal(
-      auctionStartTimestamp,
-    );
-    // Set the auction end time
-    expect(await readonlyConn.getEndTimeUnixSecods()).to.be.equal(
-      auctionEndTimestamp,
-    );
-    // It should be reverted if start and end times are equal
-    await expect(
-      ownerConn.setStartAndEndTimeUnixSeconds(
-        auctionStartTimestamp,
-        auctionStartTimestamp,
-      ),
-    ).to.be.revertedWith('InvalidStartAndEndTimestamp');
-    // It should be reverted if start is bigger than the end time
-    await expect(
-      ownerConn.setStartAndEndTimeUnixSeconds(
-        auctionStartTimestamp,
-        auctionStartTimestamp - 1,
-      ),
-    ).to.be.revertedWith('InvalidStartAndEndTimestamp');
-    // Set both start and end times together
-    await ownerConn.setStartAndEndTimeUnixSeconds(
-      auctionStartTimestamp - 100,
-      auctionEndTimestamp - 100,
-    );
-    // Verify the start and end times were updated properly
-    expect(await readonlyConn.getStartTimeUnixSecods()).to.be.equal(
-      auctionStartTimestamp - 100,
-    );
-    expect(await readonlyConn.getEndTimeUnixSecods()).to.be.equal(
-      auctionEndTimestamp - 100,
-    );
-    // Active auction by setting the block.timestamp to the start time of the auction
-    await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
-    // Set the price so that the subsequent time setters would fail
-    await ownerConn.setPrice(100);
-    // Set the price so that the subsequent setters would fail
-    await expect(
-      ownerConn.setStartAndEndTimeUnixSeconds(
-        auctionStartTimestamp + 100,
-        auctionEndTimestamp + 100,
-      ),
-    ).to.be.revertedWith('PriceHasBeenSet');
-  });
-
-  it('Auction is Active/Inactive according to the current time', async () => {
-    // Inactive before the start time of the auction
-    await ethers.provider.send('evm_mine', [auctionStartTimestamp - 10]);
+  it('Contract can be set Active/Inactive', async () => {
     // starts as Inactive
     expect(await ownerConn.getAuctionActive()).to.be.false;
 
-    // Active after the start time of the auction
-    await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+    // as an owner, we can set it to be active
+    await ownerConn.setAuctionActive(true);
     expect(await ownerConn.getAuctionActive()).to.be.true;
 
-    // Inactive after the end time of the auction
-    await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+    // as an owner, we can set it to be inactive again
+    await ownerConn.setAuctionActive(false);
     expect(await ownerConn.getAuctionActive()).to.be.false;
+
+    // as an owner, if it's mintable, we cannot set this function
+    await ownerConn.setMintable(true);
+    await expect(ownerConn.setAuctionActive(true)).to.be.revertedWith(
+      'Mintable',
+    );
+    await ownerConn.setMintable(false); // clean up
+
+    // as an owner, if the price is set, we cannot set this function
+    await ownerConn.setPrice(100);
+    await expect(ownerConn.setAuctionActive(true)).to.be.revertedWith(
+      'PriceHasBeenSet',
+    );
+    await ownerConn.setPrice(0); // clean up
+
+    // as an readonly user, we cannot set it to be active
+    await expect(readonlyConn.setAuctionActive(true)).to.be.revertedWith(
+      'Ownable',
+    );
   });
 
   describe('Bidding', function () {
-    it('Reverts if the active stage is not a BucketAuction', async () => {
-      // if the current active stage is not a bucket auction; revert with InvalidStage
-      await expect(readonlyConn.bid()).to.be.revertedWith(
-        'BucketAuctionNotActive',
-      );
-    });
-
     it('Reverts if auction not active', async () => {
       // it starts as Inactive, so we cannot make bids
       await expect(readonlyConn.bid()).to.be.revertedWith(
@@ -146,8 +74,8 @@ describe('BucketAuction', function () {
     });
 
     it('Reverts if bid under minimum', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       // we cannot bid under the minimum
       await expect(readonlyConn.bid({ value: 10 })).to.be.revertedWith(
         'LowerThanMinBidAmount',
@@ -155,8 +83,8 @@ describe('BucketAuction', function () {
     });
 
     it('Can make bids', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
         ONE_ETH,
@@ -179,13 +107,12 @@ describe('BucketAuction', function () {
     });
 
     it('Revert if bid when collection is mintable', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       // we cannot make bids when colleciton is mintable in the ERC721M stages
       await ownerConn.setMintable(true);
-      await expect(readonlyConn.bid({ value: 100 })).to.emit(
-        readonlyConn,
-        'Bid',
+      await expect(readonlyConn.bid({ value: 100 })).to.be.revertedWith(
+        'Mintable',
       );
     });
   });
@@ -203,15 +130,19 @@ describe('BucketAuction', function () {
   });
 
   it('Can set price', async () => {
-    // Setup the test context: block.timestamp should comply to the stage being active
-    await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
     // If the auction is active, then we cannot set price.
+    await ownerConn.setAuctionActive(true);
     await expect(ownerConn.setPrice(200)).to.be.revertedWith(
       'BucketAuctionActive',
     );
+    // Clean up
+    await ownerConn.setAuctionActive(false);
 
-    // Setup the test context: block.timestamp should comply to the stage being active
-    await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+    // If can mint, it means something weng wrong. Then we cannot set price.
+    await ownerConn.setMintable(true);
+    await expect(ownerConn.setPrice(200)).to.be.revertedWith('Mintable');
+    // Clean up
+    await ownerConn.setMintable(false);
 
     // If claimable, then we cannot set price.
     await ownerConn.setClaimable(true);
@@ -220,13 +151,6 @@ describe('BucketAuction', function () {
     );
     // Clean up
     await ownerConn.setClaimable(false);
-
-    // If can mint, we should still be able to set price.
-    await ownerConn.setMintable(true);
-    await expect(ownerConn.setPrice(100)).to.emit(ownerConn, 'SetPrice');
-    await expect(await readonlyConn.getPrice()).to.be.equal(100);
-    // Clean up
-    await ownerConn.setMintable(false);
 
     await expect(ownerConn.setPrice(200)).to.emit(ownerConn, 'SetPrice');
     expect(await readonlyConn.getPrice()).to.be.equal(200);
@@ -255,8 +179,8 @@ describe('BucketAuction', function () {
 
     runs.forEach((run) => {
       it(`Bid: ${run.bids}, price: ${run.price}`, async () => {
-        // Active auction by setting the block.timestamp to the start time of the auction
-        await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+        await ownerConn.setAuctionActive(true);
+
         await ethers.provider.send('hardhat_setBalance', [
           readonly.address,
           ONE_ETH,
@@ -275,8 +199,7 @@ describe('BucketAuction', function () {
         ).toNumber();
         expect(balance).to.eq(contribution);
 
-        // Inactive auction by setting the block.timestamp to the end time of the auction
-        await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+        await ownerConn.setAuctionActive(false);
         await ownerConn.setPrice(run.price);
         await ownerConn.setClaimable(true);
 
@@ -303,8 +226,9 @@ describe('BucketAuction', function () {
 
   describe('User claim and refund', function () {
     it('user claimTokensAndRefund', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      // we then turn on the AuctionActive, so that we can start the bids
+      await ownerConn.setAuctionActive(true);
+
       // we can make bids
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
@@ -324,9 +248,8 @@ describe('BucketAuction', function () {
       ).toNumber();
       expect(balance).to.eq(100);
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
       // and then we prepare to close the auction and settle the price and refund
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setPrice(80);
 
       expect(await ownerConn.getClaimable()).to.be.false;
@@ -360,8 +283,6 @@ describe('BucketAuction', function () {
     });
 
     it('user without bidding claimTokensAndRefund', async () => {
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
       await ownerConn.setPrice(80);
       await ownerConn.setClaimable(true);
 
@@ -376,8 +297,8 @@ describe('BucketAuction', function () {
     });
 
     it('Reverts if price not set', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
         ONE_ETH,
@@ -387,8 +308,7 @@ describe('BucketAuction', function () {
         'Bid',
       );
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setClaimable(true);
 
       await expect(readonlyConn.claimTokensAndRefund()).to.be.revertedWith(
@@ -397,8 +317,8 @@ describe('BucketAuction', function () {
     });
 
     it('Reverts if not claimable', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
         ONE_ETH,
@@ -408,8 +328,7 @@ describe('BucketAuction', function () {
         'Bid',
       );
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setPrice(100);
 
       await expect(readonlyConn.claimTokensAndRefund()).to.be.revertedWith(
@@ -418,8 +337,8 @@ describe('BucketAuction', function () {
     });
 
     it('Reverts if not enough supply', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
         ONE_ETH,
@@ -430,92 +349,13 @@ describe('BucketAuction', function () {
         'Bid',
       );
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
-      // Expected tokens is 1001 which exceeds max mintbale supply = 1000.
+      await ownerConn.setAuctionActive(false);
+      // Expected tokens is 1001 whcih exceeds max mintbale supply = 1000.
       await ownerConn.setPrice(1);
       await ownerConn.setClaimable(true);
 
       await expect(readonlyConn.claimTokensAndRefund()).to.be.revertedWith(
         'NoSupplyLeft',
-      );
-    });
-
-    it('Can NOT set price if the first token already sent', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
-      await ethers.provider.send('hardhat_setBalance', [
-        readonly.address,
-        ONE_ETH,
-      ]);
-
-      await expect(readonlyConn.bid({ value: 100 })).to.emit(
-        readonlyConn,
-        'Bid',
-      );
-
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
-      await ownerConn.setPrice(1);
-
-      // Send tokens
-      await expect(ownerConn.sendTokens(readonly.address, 1)).to.emit(
-        readonlyConn,
-        'Transfer',
-      );
-
-      // Should be reverted when re-setting the price if
-      //  it is not claimable but the first token is already sent
-      await ownerConn.setClaimable(false);
-      await expect(ownerConn.setPrice(1)).to.be.revertedWith(
-        'CannotSetPriceIfFirstTokenSent',
-      );
-    });
-
-    it('Reverts if token already sent or refund already claimed', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
-      await ethers.provider.send('hardhat_setBalance', [
-        readonly.address,
-        ONE_ETH,
-      ]);
-
-      await expect(readonlyConn.bid({ value: 100 })).to.emit(
-        readonlyConn,
-        'Bid',
-      );
-
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
-      await ownerConn.setPrice(1);
-      await ownerConn.setClaimable(true);
-
-      // Send tokens
-      await expect(ownerConn.sendTokens(readonly.address, 1)).to.emit(
-        readonlyConn,
-        'Transfer',
-      );
-
-      let userData = await readonlyConn.getUserData(readonly.address);
-      expect(userData.contribution).to.eq(100);
-      expect(userData.tokensClaimed).to.eq(1);
-      expect(userData.refundClaimed).to.eq(false);
-
-      // Try to re-send tokens and the refund and expect a revert with AlreadySentTokensToUser
-      await expect(
-        ownerConn.sendTokensAndRefund(readonly.address),
-      ).to.be.revertedWith('AlreadySentTokensToUser');
-
-      // Issue refund
-      await ownerConn.sendRefund(readonly.address);
-      userData = await readonlyConn.getUserData(readonly.address);
-      expect(userData.contribution).to.eq(100);
-      expect(userData.tokensClaimed).to.eq(1);
-      expect(userData.refundClaimed).to.eq(true);
-
-      // Try to re-issue the refund and expect a revert with UserAlreadyClaimed
-      await expect(ownerConn.sendRefund(readonly.address)).to.be.revertedWith(
-        'UserAlreadyClaimed',
       );
     });
 
@@ -526,8 +366,8 @@ describe('BucketAuction', function () {
 
   describe('Owner send tokens and refund', function () {
     it('sendTokensAndRefund', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
         ONE_ETH,
@@ -548,8 +388,7 @@ describe('BucketAuction', function () {
       ).toNumber();
       expect(balance).to.eq(100);
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setPrice(20);
       await ownerConn.setClaimable(true);
 
@@ -579,8 +418,8 @@ describe('BucketAuction', function () {
 
     // Two bidders.
     it('sendTokensAndRefundBatch', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       const readonly2 = await ethers.getImpersonatedSigner(
         '0xef59F379B48f2E92aBD94ADcBf714D170967925D',
       );
@@ -616,8 +455,7 @@ describe('BucketAuction', function () {
       ).toNumber();
       expect(balance).to.eq(300);
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setPrice(110);
       await ownerConn.setClaimable(true);
 
@@ -643,8 +481,8 @@ describe('BucketAuction', function () {
     });
 
     it('sendTokens & sendRefund', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
         ONE_ETH,
@@ -655,8 +493,7 @@ describe('BucketAuction', function () {
         'Bid',
       );
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setPrice(20);
       await ownerConn.setClaimable(true);
 
@@ -687,8 +524,8 @@ describe('BucketAuction', function () {
     });
 
     it('sendTokensBatch & sendRefundBatch', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       const readonly2 = await ethers.getImpersonatedSigner(
         '0xef59F379B48f2E92aBD94ADcBf714D170967925D',
       );
@@ -719,8 +556,7 @@ describe('BucketAuction', function () {
         'Bid',
       );
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setPrice(30);
       await ownerConn.setClaimable(true);
 
@@ -752,8 +588,8 @@ describe('BucketAuction', function () {
     });
 
     it('sendAllTokens', async () => {
-      // Active auction by setting the block.timestamp to the start time of the auction
-      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+      await ownerConn.setAuctionActive(true);
+
       await ethers.provider.send('hardhat_setBalance', [
         readonly.address,
         ONE_ETH,
@@ -764,8 +600,7 @@ describe('BucketAuction', function () {
         'Bid',
       );
 
-      // Inactive auction by setting the block.timestamp to the end time of the auction
-      await ethers.provider.send('evm_mine', [auctionEndTimestamp]);
+      await ownerConn.setAuctionActive(false);
       await ownerConn.setPrice(20);
       await ownerConn.setClaimable(true);
 
