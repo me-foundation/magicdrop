@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { ContractDetails } from './common/constants';
 
 export interface ISetBaseURIParams {
   limit: string;
@@ -10,7 +11,7 @@ export const setGlobalWalletLimit = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const ERC721M = await ethers.getContractFactory('ERC721M');
+  const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
   const tx = await contract.setGlobalWalletLimit(args.limit);
   console.log(`Submitted tx ${tx.hash}`);

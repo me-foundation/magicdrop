@@ -4,6 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { ContractDetails } from './common/constants';
 
 export interface IDeployParams {
   name: string;
@@ -18,8 +19,15 @@ export const deploy = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-  console.log('Deploying ERC721M with params', JSON.stringify(args, null, 2));
-  const ERC721M = await hre.ethers.getContractFactory('ERC721M');
+  console.log(
+    `Going to deploy ${ContractDetails.ERC721M.name} with params`,
+    JSON.stringify(args, null, 2),
+  );
+
+  const ERC721M = await hre.ethers.getContractFactory(
+    ContractDetails.ERC721M.name,
+  );
+
   const erc721M = await ERC721M.deploy(
     args.name,
     args.symbol,
@@ -31,5 +39,5 @@ export const deploy = async (
 
   await erc721M.deployed();
 
-  console.log('ERC721M deployed to:', erc721M.address);
+  console.log(`${ContractDetails.ERC721M.name} deployed to:`, erc721M.address);
 };

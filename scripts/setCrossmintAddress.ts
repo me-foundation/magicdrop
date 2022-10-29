@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { ContractDetails } from './common/constants';
 
 export interface ISetCrossmintAddress {
   crossmintAddress: string;
@@ -10,7 +11,7 @@ export const setCrossmintAddress = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const ERC721M = await ethers.getContractFactory('ERC721M');
+  const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
   const tx = await contract.setCrossmintAddress(args.crossmintAddress);
   console.log(`Submitted tx ${tx.hash}`);
