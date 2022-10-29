@@ -3,21 +3,11 @@ import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
-import { ERC721M, IERC721M } from '../typechain-types';
+import { ERC721M } from '../typechain-types';
 
 const { keccak256, getAddress } = ethers.utils;
 
 chai.use(chaiAsPromised);
-
-const setBlockTimestamp = async () => {
-  const block = await ethers.provider.getBlock(
-    await ethers.provider.getBlockNumber(),
-  );
-  // +3 for the transactions setStages, setMintable and mint
-  const stageStart = block.timestamp + 3;
-  // + 2 for two subsequent of mint transactions
-  const stageEnd = stageStart + 2;
-};
 
 describe('ERC721M', function () {
   let contract: ERC721M;
@@ -66,6 +56,7 @@ describe('ERC721M', function () {
       1000,
       0,
       ethers.constants.AddressZero,
+      60,
     );
     await erc721M.deployed();
 
@@ -525,6 +516,18 @@ describe('ERC721M', function () {
 
       const getStageInfo = readonlyContract.getStageInfo(1);
       await expect(getStageInfo).to.be.revertedWith('InvalidStage');
+    });
+
+    it('can set/get timestamp expiry', async () => {
+      expect((await contract.getTimestampExpirySeconds()).toNumber()).to.eq(60);
+
+      await expect(contract.setTimestampExpirySeconds(120))
+        .to.emit(contract, 'SetTimestampExpirySeconds')
+        .withArgs(120);
+
+      expect((await contract.getTimestampExpirySeconds()).toNumber()).to.eq(
+        120,
+      );
     });
 
     it('can find active stage', async () => {
@@ -1288,6 +1291,7 @@ describe('ERC721M', function () {
         1000,
         0,
         ethers.constants.AddressZero,
+        60,
       );
       await erc721M.deployed();
 
@@ -1361,6 +1365,7 @@ describe('ERC721M', function () {
         1000,
         0,
         owner.address,
+        300,
       );
       await erc721M.deployed();
 
@@ -1400,8 +1405,7 @@ describe('ERC721M', function () {
       const crossMintConn = erc721M.connect(crossmintSigner);
 
       // fast forward 2 minutes, timestamp should still be valid since crossmint is the sender
-      await ethers.provider.send('evm_increaseTime', [120]);
-      await ethers.provider.send('evm_mine', []);
+      await ethers.provider.send('evm_mine', [block.timestamp + 120]);
       const twoMinuteOldTimestamp = block.timestamp;
       const signature = await getCosignSignature(
         erc721M,
@@ -1722,6 +1726,7 @@ describe('ERC721M', function () {
           100,
           1001,
           ethers.constants.AddressZero,
+          60,
         ),
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
@@ -1823,6 +1828,7 @@ describe('ERC721M', function () {
         1000,
         0,
         ethers.constants.AddressZero,
+        60,
       );
       await erc721M.deployed();
       const ownerConn = erc721M.connect(owner);
@@ -1851,6 +1857,7 @@ describe('ERC721M', function () {
         1000,
         0,
         cosigner.address,
+        60,
       );
       await erc721M.deployed();
 

@@ -34,6 +34,7 @@ describe('BucketAuction', function () {
 
     [owner, readonly] = await ethers.getSigners();
     ownerConn = ba.connect(owner);
+    await ownerConn.setTimestampExpirySeconds(60);
     await ownerConn.setStages([
       {
         price: ethers.utils.parseEther('0.1'),

@@ -22,7 +22,9 @@ contract ERC721MCallback is ERC721M, IERC721MCallback {
             tokenURISuffix,
             maxMintableSupply,
             globalWalletLimit,
-            cosigner
+            cosigner,
+            /* timestampExpirySeconds= */
+            300
         )
     {}
 

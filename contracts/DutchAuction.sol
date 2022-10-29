@@ -33,7 +33,9 @@ contract DutchAuction is IDutchAuction, ERC721M {
             tokenURISuffix,
             maxMintableSupply,
             globalWalletLimit,
-            cosigner
+            cosigner,
+            /* timestampExpirySeconds= */
+            300
         )
     {
         _refundable = refundable;

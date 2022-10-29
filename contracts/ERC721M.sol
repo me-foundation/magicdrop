@@ -12,21 +12,19 @@ import "./IERC721M.sol";
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
 
-    uint64 public constant MIN_STAGE_INTERVAL_SECONDS = 60;
-    uint64 public constant CROSSMINT_TIMESTAMP_EXPIRY_SECONDS = 300;
-
     bool private _mintable;
-    string private _currentBaseURI;
-    uint256 private _maxMintableSupply;
-    uint256 private _globalWalletLimit;
-    string private _tokenURISuffix;
     bool private _baseURIPermanent;
+    // @notice Specify how long a signature from cosigner is valid for, recommend 300 seconds
+    uint64 private _timestampExpirySeconds;
     address private _cosigner;
     address private _crossmintAddress;
+    uint256 private _maxMintableSupply;
+    uint256 private _globalWalletLimit;
+    string private _currentBaseURI;
+    string private _tokenURISuffix;
 
     MintStageInfo[] private _mintStages;
 
-    // Need this because struct cannot have nested mapping
     mapping(uint256 => mapping(address => uint32))
         private _stageMintedCountsPerWallet;
     mapping(uint256 => uint256) private _stageMintedCounts;
@@ -37,7 +35,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner
+        address cosigner,
+        uint64 timestampExpirySeconds
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -47,6 +46,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
+        _timestampExpirySeconds = timestampExpirySeconds;
     }
 
     modifier canMint() {
@@ -77,6 +77,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetCosigner(cosigner);
     }
 
+    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
+        _timestampExpirySeconds = expiry;
+        emit SetTimestampExpirySeconds(expiry);
+    }
+
     function getCrossmintAddress() external view override returns (address) {
         return _crossmintAddress;
     }
@@ -92,12 +97,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             _mintStages.pop();
         }
 
+        uint64 timestampExpirySeconds = getTimestampExpirySeconds();
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds +
-                        MIN_STAGE_INTERVAL_SECONDS
+                    newStages[i - 1].endTimeUnixSeconds + timestampExpirySeconds
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -211,7 +216,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             if (
                 startTimeUnixSeconds <
                 _mintStages[index - 1].endTimeUnixSeconds +
-                    MIN_STAGE_INTERVAL_SECONDS
+                    getTimestampExpirySeconds()
             ) {
                 revert InsufficientStageTimeGap();
             }
@@ -432,11 +437,13 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         revert InvalidStage();
     }
 
+    function getTimestampExpirySeconds() public view override returns (uint64) {
+        return _timestampExpirySeconds;
+    }
+
     function _assertValidTimestamp(uint64 timestamp) internal view {
-        uint64 threshold = msg.sender == _crossmintAddress
-            ? CROSSMINT_TIMESTAMP_EXPIRY_SECONDS
-            : MIN_STAGE_INTERVAL_SECONDS;
-        if (timestamp < block.timestamp - threshold) revert TimestampExpired();
+        if (timestamp < block.timestamp - getTimestampExpirySeconds())
+            revert TimestampExpired();
     }
 
     function _assertValidStartAndEndTimestamp(uint64 start, uint64 end)
