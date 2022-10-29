@@ -1,5 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import chai, { expect } from 'chai';
+import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import {
@@ -27,7 +27,6 @@ describe('ERC721MCallback', () => {
       100,
       0,
       ethers.constants.AddressZero,
-      300,
     );
     await erc721mCallback.deployed();
 
@@ -84,14 +83,21 @@ describe('ERC721MCallback', () => {
 
   describe('Minting', () => {
     it('Callbacks should be triggered', async () => {
+      // Get an estimated stage start time
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
           walletLimit: 0,
           maxStageSupply: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1,
         },
       ]);
       await contract.setMintable(true);
@@ -112,6 +118,8 @@ describe('ERC721MCallback', () => {
         stakingContract.address,
       ]);
 
+      // Setup the test context: block.timestamp should comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
       await readonlyContract.mintWithCallbacks(
         1,
         [],
@@ -146,14 +154,21 @@ describe('ERC721MCallback', () => {
     });
 
     it('Reverts when not enough callbacks passed', async () => {
+      // Get an estimated stage start time
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
           walletLimit: 0,
           maxStageSupply: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1,
         },
       ]);
       await contract.setMintable(true);
@@ -170,6 +185,8 @@ describe('ERC721MCallback', () => {
       ]);
       await contract.setOnMintApprovals([stakingContract.address]);
 
+      // Setup the test context: block.timestamp should comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
       await expect(
         readonlyContract.mintWithCallbacks(1, [], 0, '0x', [], {
           value: ethers.utils.parseEther('0.1'),
@@ -178,14 +195,21 @@ describe('ERC721MCallback', () => {
     });
 
     it('Reverts when callback fails', async () => {
+      // Get an estimated stage start time
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
           walletLimit: 0,
           maxStageSupply: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1,
         },
       ]);
       await contract.setMintable(true);
@@ -202,6 +226,8 @@ describe('ERC721MCallback', () => {
       ]);
       await contract.setOnMintApprovals([stakingContract.address]);
 
+      // Setup the test context: block.timestamp should comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
       await expect(
         readonlyContract.mintWithCallbacks(1, [], 0, '0x', ['0x1234'], {
           value: ethers.utils.parseEther('0.1'),
@@ -210,18 +236,27 @@ describe('ERC721MCallback', () => {
     });
 
     it('can mint normally', async () => {
+      // Get an estimated stage start time
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
           walletLimit: 0,
           maxStageSupply: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1,
         },
       ]);
       await contract.setMintable(true);
 
+      // Setup the test context: block.timestamp should comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
       await readonlyContract.mint(1, [], 0, '0x', {
         value: ethers.utils.parseEther('0.1'),
       });

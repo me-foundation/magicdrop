@@ -1,4 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { ContractDetails } from './common/constants';
 
 export interface IOwnerMintParams {
   contract: string;
@@ -12,7 +13,7 @@ export const ownerMint = async (
 ) => {
   console.log(`Minting ${args.qty ?? 1} tokens to ${args.to}...`);
   const { ethers } = hre;
-  const ERC721M = await ethers.getContractFactory('ERC721M');
+  const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
   const qty = ethers.BigNumber.from(args.qty ?? 1);
   const tx = await contract.ownerMint(

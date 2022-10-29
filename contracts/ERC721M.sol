@@ -12,20 +12,21 @@ import "./IERC721M.sol";
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
 
+    uint64 public constant MIN_STAGE_INTERVAL_SECONDS = 60;
+    uint64 public constant CROSSMINT_TIMESTAMP_EXPIRY_SECONDS = 300;
+
     bool private _mintable;
-    bool private _baseURIPermanent;
-    // @notice Specify how long a signature from cosigner is valid for recommend 300 seconds
-    uint64 private _timestampExpirySeconds;
-    address private _cosigner;
-    address private _crossmintAddress;
-    uint256 private _activeStage;
+    string private _currentBaseURI;
     uint256 private _maxMintableSupply;
     uint256 private _globalWalletLimit;
-    string private _currentBaseURI;
     string private _tokenURISuffix;
+    bool private _baseURIPermanent;
+    address private _cosigner;
+    address private _crossmintAddress;
 
     MintStageInfo[] private _mintStages;
 
+    // Need this because struct cannot have nested mapping
     mapping(uint256 => mapping(address => uint32))
         private _stageMintedCountsPerWallet;
     mapping(uint256 => uint256) private _stageMintedCounts;
@@ -36,8 +37,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner,
-        uint64 timestampExpirySeconds
+        address cosigner
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -47,7 +47,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
-        _timestampExpirySeconds = timestampExpirySeconds;
     }
 
     modifier canMint() {
@@ -78,11 +77,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetCosigner(cosigner);
     }
 
-    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
-        _timestampExpirySeconds = expiry;
-        emit SetTimestampExpirySeconds(expiry);
-    }
-
     function getCrossmintAddress() external view override returns (address) {
         return _crossmintAddress;
     }
@@ -98,12 +92,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             _mintStages.pop();
         }
 
-        uint64 timestampExpirySeconds = getTimestampExpirySeconds();
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds + timestampExpirySeconds
+                    newStages[i - 1].endTimeUnixSeconds +
+                        MIN_STAGE_INTERVAL_SECONDS
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -176,16 +170,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
-    function getActiveStage() external view override returns (uint256) {
-        return _activeStage;
-    }
-
-    function setActiveStage(uint256 activeStage) external onlyOwner {
-        if (activeStage >= _mintStages.length) revert InvalidStage();
-        _activeStage = activeStage;
-        emit SetActiveStage(activeStage);
-    }
-
     function totalMintedByAddress(address a)
         external
         view
@@ -227,7 +211,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             if (
                 startTimeUnixSeconds <
                 _mintStages[index - 1].endTimeUnixSeconds +
-                    getTimestampExpirySeconds()
+                    MIN_STAGE_INTERVAL_SECONDS
             ) {
                 revert InsufficientStageTimeGap();
             }
@@ -285,16 +269,16 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
-        uint256 activeStage = _activeStage;
-
-        if (activeStage >= _mintStages.length) revert InvalidStage();
+        uint64 stageTimestamp = uint64(block.timestamp);
 
         MintStageInfo memory stage;
         if (_cosigner != address(0)) {
             assertValidCosign(msg.sender, qty, timestamp, signature);
             _assertValidTimestamp(timestamp);
-            activeStage = getActiveStageFromTimestamp(timestamp);
+            stageTimestamp = timestamp;
         }
+
+        uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
         stage = _mintStages[activeStage];
 
@@ -448,13 +432,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         revert InvalidStage();
     }
 
-    function getTimestampExpirySeconds() public view override returns (uint64) {
-        return _timestampExpirySeconds;
-    }
-
     function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - getTimestampExpirySeconds())
-            revert TimestampExpired();
+        uint64 threshold = msg.sender == _crossmintAddress
+            ? CROSSMINT_TIMESTAMP_EXPIRY_SECONDS
+            : MIN_STAGE_INTERVAL_SECONDS;
+        if (timestamp < block.timestamp - threshold) revert TimestampExpired();
     }
 
     function _assertValidStartAndEndTimestamp(uint64 start, uint64 end)
