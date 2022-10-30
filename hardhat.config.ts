@@ -21,7 +21,7 @@ import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.7',
+    version: '0.8.16',
     settings: {
       optimizer: {
         enabled: true,
