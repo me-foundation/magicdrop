@@ -13,7 +13,7 @@ export interface IDeployParams {
   maxsupply: string;
   globalwalletlimit: string;
   cosigner?: string;
-  timestampexpiryseconds: number;
+  timestampexpiryseconds?: number;
 }
 
 export const deploy = async (
@@ -36,7 +36,7 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.maxsupply),
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
-    args.timestampexpiryseconds,
+    args.timestampexpiryseconds ?? 300,
   );
 
   await erc721M.deployed();
