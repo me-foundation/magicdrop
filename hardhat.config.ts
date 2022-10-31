@@ -77,6 +77,7 @@ task('deploy', 'Deploy ERC721M')
   .addParam('maxsupply', 'max supply')
   .addParam('tokenurisuffix', 'token uri suffix', '.json')
   .addParam('globalwalletlimit', 'global wallet limit')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds')
   .addOptionalParam(
     'cosigner',
     'cosigner address (0x00...000 if not using cosign)',
