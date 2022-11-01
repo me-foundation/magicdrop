@@ -5,12 +5,15 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "erc721a/contracts/ERC721A.sol";
 
 import "./IBucketAuction.sol";
 import "./ERC721M.sol";
 
 contract BucketAuction is IBucketAuction, ERC721M {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     bool private _claimable;
     bool private _firstTokenSent;
     uint64 private _startTimeUnixSeconds;
@@ -18,6 +21,7 @@ contract BucketAuction is IBucketAuction, ERC721M {
     uint256 private _minimumContributionInWei;
     uint256 private _price;
     mapping(address => User) private _userData;
+    EnumerableSet.AddressSet private _users;
 
     constructor(
         string memory collectionName,
@@ -95,6 +99,37 @@ contract BucketAuction is IBucketAuction, ERC721M {
         return _userData[user];
     }
 
+    function getUserDataPage(uint256 limit, uint256 offset)
+        external
+        view
+        returns (
+            User[] memory,
+            address[] memory,
+            uint256 total
+        )
+    {
+        uint256 numUsers = _users.length();
+        uint256 pageSize = limit;
+        if (pageSize > numUsers - offset) {
+            pageSize = numUsers - offset;
+        }
+
+        User[] memory userData = new User[](pageSize);
+        address[] memory userAddresses = new address[](pageSize);
+
+        for (uint256 i = 0; i < pageSize; i++) {
+            address user = _users.at(i + offset);
+            userData[i] = _userData[user];
+            userAddresses[i] = user;
+        }
+
+        return (userData, userAddresses, numUsers);
+    }
+
+    function getTotalUsers() external view returns (uint256) {
+        return _users.length();
+    }
+
     function getClaimable() external view returns (bool) {
         return _claimable;
     }
@@ -136,6 +171,9 @@ contract BucketAuction is IBucketAuction, ERC721M {
         if (contribution_ < _minimumContributionInWei)
             revert LowerThanMinBidAmount();
         bidder.contribution = uint216(contribution_);
+
+        _users.add(msg.sender);
+
         emit Bid(msg.sender, msg.value, contribution_, address(this).balance);
     }
 
