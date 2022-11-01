@@ -232,6 +232,26 @@ describe('BucketAuction', function () {
       expect(paginatedUserData).to.deep.eq(userDatas);
       expect(paginatedAddresses).to.deep.eq(addresses);
     });
+
+    it('getUserDataPage truncates page if limit + offset would exceed _users.length', async () => {
+      const bidders = await ethers.getSigners();
+      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+
+      await Promise.all(
+        bidders.map((bidder, i) => ba.connect(bidder).bid({ value: 100 + i })),
+      );
+
+      expect(await readonlyConn.getTotalUsers()).to.eq(20);
+
+      // 20 total, so requesting 10 items at offset 15 should return just 5
+      const [userDatas, addresses, total] = await readonlyConn.getUserDataPage(
+        10,
+        15,
+      );
+      expect(userDatas.length).to.eq(5);
+      expect(addresses.length).to.eq(5);
+      expect(total).to.eq(20);
+    });
   });
 
   it('Can set minimum contribution', async () => {
