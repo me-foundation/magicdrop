@@ -189,6 +189,49 @@ describe('BucketAuction', function () {
         'Bid',
       );
     });
+
+    it('Can fetch pages of bids', async () => {
+      const bidders = await ethers.getSigners();
+      await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
+
+      await Promise.all(
+        bidders.map((bidder, i) => ba.connect(bidder).bid({ value: 100 + i })),
+      );
+
+      expect(await readonlyConn.getTotalUsers()).to.eq(20);
+
+      const checkPage = async (limit: number, offset: number) => {
+        const [userDatas, addresses, total] =
+          await readonlyConn.getUserDataPage(limit, offset);
+        expect(total).to.eq(20);
+        expect(userDatas.length).to.eq(limit);
+        expect(addresses.length).to.eq(limit);
+        for (let i = 0; i < limit; i += 1) {
+          const data = userDatas[i];
+          const user = addresses[i];
+          expect(data.contribution).to.eq(100 + offset + i);
+          const userData = await readonlyConn.getUserData(user);
+          expect(userData.contribution).to.eq(data.contribution);
+        }
+
+        return {
+          userDatas,
+          addresses,
+        };
+      };
+
+      const paginatedUserData = [];
+      const paginatedAddresses: string[] = [];
+      for (let i = 0; i < 20; i += 5) {
+        const { userDatas, addresses } = await checkPage(5, i);
+        paginatedUserData.push(...userDatas);
+        paginatedAddresses.push(...addresses);
+      }
+
+      const { userDatas, addresses } = await checkPage(20, 0);
+      expect(paginatedUserData).to.deep.eq(userDatas);
+      expect(paginatedAddresses).to.deep.eq(addresses);
+    });
   });
 
   it('Can set minimum contribution', async () => {
