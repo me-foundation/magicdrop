@@ -18,6 +18,7 @@ import { mint } from './scripts/mint';
 import { ownerMint } from './scripts/ownerMint';
 import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
 import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
+import { transferOwnership } from './scripts/transferOwnership';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -146,4 +147,9 @@ task('deployBA', 'Deploy BucketAuction')
   .addParam('auctionendtime', 'The end time of the bucket auction')
   .setAction(deployBA);
 
+task('transferOwnership', 'transfer contract ownership')
+  .addParam('contract', 'contract address')
+  .addParam('owner', 'new owner address')
+  .setAction(transferOwnership);
+  
 export default config;
