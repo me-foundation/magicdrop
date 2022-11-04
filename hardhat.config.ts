@@ -60,7 +60,7 @@ const config: HardhatUserConfig = {
       url: process.env.POLYGON_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    }
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -102,7 +102,7 @@ task('setBaseURI', 'Set the base uri')
 
 task('setCrossmintAddress', 'Set crossmint address')
   .addParam('contract', 'contract address')
-  .addParam('crossmintAddress', 'new crossmint address')
+  .addParam('crossmintaddress', 'new crossmint address')
   .setAction(setCrossmintAddress);
 
 task('mint', 'Mint token(s)')
