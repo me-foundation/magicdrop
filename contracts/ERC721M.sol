@@ -1,4 +1,5 @@
 //SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -9,24 +10,54 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "./IERC721M.sol";
 
+/**
+ * @title ERC721M
+ *
+ * @dev ERC721A subclass with MagicEden launchpad features including
+ *  - multiple minting stages with time-based auto stage switch
+ *  - global and stage wallet-level minting limit
+ *  - whitelist using merkle tree
+ *  - crossmint support
+ *  - anti-botting
+ */
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
 
+    // Whether this contract is mintable.
     bool private _mintable;
+
+    // Whether base URI is permanent. Once set, base URI is immutable.
     bool private _baseURIPermanent;
-    // @notice Specify how long a signature from cosigner is valid for, recommend 300 seconds
+
+    // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
     uint64 private _timestampExpirySeconds;
+
+    // The address of the cosigner server.
     address private _cosigner;
+
+    // The crossmint address. Need to set if using crossmint.
     address private _crossmintAddress;
+
+    // The total mintable supply.
     uint256 private _maxMintableSupply;
+
+    // Global wallet limit, across all stages.
     uint256 private _globalWalletLimit;
+
+    // Current base URI.
     string private _currentBaseURI;
+
+    // The suffix for the token URL, e.g. ".json".
     string private _tokenURISuffix;
 
+    // Mint stage infomation. See MintStageInfo for details.
     MintStageInfo[] private _mintStages;
 
+    // Minted count per stage per wallet.
     mapping(uint256 => mapping(address => uint32))
         private _stageMintedCountsPerWallet;
+
+    // Minted count per stage.
     mapping(uint256 => uint256) private _stageMintedCounts;
 
     constructor(
@@ -49,48 +80,105 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _timestampExpirySeconds = timestampExpirySeconds;
     }
 
+    /**
+     * @dev Returns whether mintable.
+     */
     modifier canMint() {
         if (!_mintable) revert NotMintable();
         _;
     }
 
+    /**
+     * @dev Returns whether NOT mintable.
+     */
     modifier cannotMint() {
         if (_mintable) revert Mintable();
         _;
     }
 
+    /**
+     * @dev Returns whether it has enough supply for the given qty.
+     */
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
         _;
     }
 
+    /**
+     * @dev Returns cosigner address.
+     */
     function getCosigner() external view override returns (address) {
         return _cosigner;
     }
 
+    /**
+     * @dev Returns cosign nonce.
+     */
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
     }
 
+    /**
+     * @dev Sets cosigner.
+     */
     function setCosigner(address cosigner) external onlyOwner {
         _cosigner = cosigner;
         emit SetCosigner(cosigner);
     }
 
+    /**
+     * @dev Returns expiry in seconds.
+     */
+    function getTimestampExpirySeconds() public view override returns (uint64) {
+        return _timestampExpirySeconds;
+    }
+
+    /**
+     * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
+     */
     function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
         _timestampExpirySeconds = expiry;
         emit SetTimestampExpirySeconds(expiry);
     }
 
+    /**
+     * @dev Returns crossmint address.
+     */
     function getCrossmintAddress() external view override returns (address) {
         return _crossmintAddress;
     }
 
+    /**
+     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
+     */
     function setCrossmintAddress(address crossmintAddress) external onlyOwner {
         _crossmintAddress = crossmintAddress;
         emit SetCrossmintAddress(crossmintAddress);
     }
 
+    /**
+     * @dev Sets stages in the format of an array of `MintStageInfo`.
+     *
+     * Following is an example of launch with two stages. The first stage is exclusive for whitelisted wallets
+     * specified by merkle root.
+     *    [{
+     *      price: 10000000000000000000,
+     *      maxStageSupply: 2000,
+     *      walletLimit: 1,
+     *      merkleRoot: 0x559fadeb887449800b7b320bf1e92d309f329b9641ac238bebdb74e15c0a5218,
+     *      startTimeUnixSeconds: 1667768000,
+     *      endTimeUnixSeconds: 1667771600,
+     *     },
+     *     {
+     *      price: 20000000000000000000,
+     *      maxStageSupply: 3000,
+     *      walletLimit: 2,
+     *      merkleRoot: 0,
+     *      startTimeUnixSeconds: 1667771600,
+     *      endTimeUnixSeconds: 1667775200,
+     *     }
+     * ]
+     */
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         uint256 originalSize = _mintStages.length;
         for (uint256 i = 0; i < originalSize; i++) {
@@ -133,23 +221,40 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     * @dev Gets whether mintable.
+     */
     function getMintable() external view override returns (bool) {
         return _mintable;
     }
 
+    /**
+     * @dev Sets mintable.
+     */
     function setMintable(bool mintable) external onlyOwner {
         _mintable = mintable;
         emit SetMintable(mintable);
     }
 
+    /**
+     * @dev Returns number of stages.
+     */
     function getNumberStages() external view override returns (uint256) {
         return _mintStages.length;
     }
 
+    /**
+     * @dev Returns maximum mintable supply.
+     */
     function getMaxMintableSupply() external view override returns (uint256) {
         return _maxMintableSupply;
     }
 
+    /**
+     * @dev Sets maximum mintable supply.
+     *
+     * New supply cannot be larger than the old.
+     */
     function setMaxMintableSupply(uint256 maxMintableSupply)
         external
         onlyOwner
@@ -161,10 +266,16 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetMaxMintableSupply(maxMintableSupply);
     }
 
+    /**
+     * @dev Returns global wallet limit. This is the max number of tokens can be minted by one wallet.
+     */
     function getGlobalWalletLimit() external view override returns (uint256) {
         return _globalWalletLimit;
     }
 
+    /**
+     * @dev Sets global wallet limit.
+     */
     function setGlobalWalletLimit(uint256 globalWalletLimit)
         external
         onlyOwner
@@ -175,6 +286,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
+    /**
+     * @dev Returns number of minted token for a given address.
+     */
     function totalMintedByAddress(address a)
         external
         view
@@ -184,6 +298,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         return _numberMinted(a);
     }
 
+    /**
+     * @dev Returns info for one stage specified by index (starting from 0).
+     */
     function getStageInfo(uint256 index)
         external
         view
@@ -202,6 +319,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         return (_mintStages[index], walletMinted, stageMinted);
     }
 
+    /**
+     * @dev Updates info for one stage specified by index (starting from 0).
+     */
     function updateStage(
         uint256 index,
         uint80 price,
@@ -243,6 +363,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         );
     }
 
+    /**
+     * @dev Mints token(s).
+     *
+     * qty - number of tokens to mint
+     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner.
+     */
     function mint(
         uint32 qty,
         bytes32[] calldata proof,
@@ -252,6 +380,15 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
     }
 
+    /**
+     * @dev Mints token(s) through crossmint. This function is supposed to be called by crossmint.
+     *
+     * qty - number of tokens to mint
+     * to - the address to mint tokens to
+     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner.
+     */
     function crossmint(
         uint32 qty,
         address to,
@@ -267,6 +404,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _mintInternal(qty, to, proof, timestamp, signature);
     }
 
+    /**
+     * @dev Implementation of minting.
+     */
     function _mintInternal(
         uint32 qty,
         address to,
@@ -325,6 +465,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _safeMint(to, qty);
     }
 
+    /**
+     * @dev Mints token(s) by owner.
+     *
+     * NOTE: This function bypasses validations thus only available for owner.
+     * This is typically used for owner to  pre-mint or mint the remaining of the supply.
+     */
     function ownerMint(uint32 qty, address to)
         external
         onlyOwner
@@ -333,6 +479,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _safeMint(to, qty);
     }
 
+    /**
+     * @dev Withdraws funds by owner.
+     */
     function withdraw() external onlyOwner {
         uint256 value = address(this).balance;
         (bool success, ) = msg.sender.call{value: value}("");
@@ -340,17 +489,26 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         emit Withdraw(value);
     }
 
+    /**
+     * @dev Sets token base URI.
+     */
     function setBaseURI(string calldata baseURI) external onlyOwner {
         if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
     }
 
+    /**
+     * @dev Sets token base URI permanent. Cannot revert.
+     */
     function setBaseURIPermanent() external onlyOwner {
         _baseURIPermanent = true;
         emit PermanentBaseURI(_currentBaseURI);
     }
 
+    /**
+     * @dev Returns token URI suffix.
+     */
     function getTokenURISuffix()
         external
         view
@@ -360,10 +518,16 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         return _tokenURISuffix;
     }
 
+    /**
+     * @dev Sets token URI suffix. e.g. ".json".
+     */
     function setTokenURISuffix(string calldata suffix) external onlyOwner {
         _tokenURISuffix = suffix;
     }
 
+    /**
+     * @dev Returns token URI for a given token id.
+     */
     function tokenURI(uint256 tokenId)
         public
         view
@@ -385,6 +549,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                 : "";
     }
 
+    /**
+     * @dev Returns data hash for the given minter, qty and timestamp.
+     */
     function getCosignDigest(
         address minter,
         uint32 qty,
@@ -405,6 +572,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             ).toEthSignedMessageHash();
     }
 
+    /**
+     * @dev Validates the the given signature.
+     */
     function assertValidCosign(
         address minter,
         uint32 qty,
@@ -420,6 +590,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         ) revert InvalidCosignSignature();
     }
 
+    /**
+     * @dev Returns the current active stage based on timestamp.
+     */
     function getActiveStageFromTimestamp(uint64 timestamp)
         public
         view
@@ -437,15 +610,17 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         revert InvalidStage();
     }
 
-    function getTimestampExpirySeconds() public view override returns (uint64) {
-        return _timestampExpirySeconds;
-    }
-
+    /**
+     * @dev Validates the timestamp is not expired.
+     */
     function _assertValidTimestamp(uint64 timestamp) internal view {
         if (timestamp < block.timestamp - getTimestampExpirySeconds())
             revert TimestampExpired();
     }
 
+    /**
+     * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
+     */
     function _assertValidStartAndEndTimestamp(uint64 start, uint64 end)
         internal
         pure
@@ -453,6 +628,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 
+    /**
+     * @dev Returns chain id.
+     */
     function _chainID() private view returns (uint256) {
         uint256 chainID;
         assembly {
