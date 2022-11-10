@@ -1,6 +1,6 @@
 {
   "name": "@magiceden-oss/erc721m",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "erc721m contract for Solidity",
   "files": [
     "/contracts/**/*.sol",
