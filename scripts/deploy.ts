@@ -14,20 +14,24 @@ export interface IDeployParams {
   globalwalletlimit: string;
   cosigner?: string;
   timestampexpiryseconds?: number;
+  increasesupply?: boolean;
 }
 
 export const deploy = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
+  // Compile again in case we have a coverage build (binary too large to deploy)
+  await hre.run('compile');
+
+  const contractName = args.increasesupply
+    ? ContractDetails.ERC721MIncreasableSupply.name
+    : ContractDetails.ERC721M.name;
   console.log(
-    `Going to deploy ${ContractDetails.ERC721M.name} with params`,
+    `Going to deploy ${contractName} with params`,
     JSON.stringify(args, null, 2),
   );
-
-  const ERC721M = await hre.ethers.getContractFactory(
-    ContractDetails.ERC721M.name,
-  );
+  const ERC721M = await hre.ethers.getContractFactory(contractName);
 
   const erc721M = await ERC721M.deploy(
     args.name,
@@ -41,5 +45,5 @@ export const deploy = async (
 
   await erc721M.deployed();
 
-  console.log(`${ContractDetails.ERC721M.name} deployed to:`, erc721M.address);
+  console.log(`${contractName} deployed to:`, erc721M.address);
 };

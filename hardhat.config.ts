@@ -93,6 +93,10 @@ task('deploy', 'Deploy ERC721M')
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
   )
+  .addFlag(
+    'increasesupply',
+    'whether or not to enable increasing supply behavior',
+  )
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')
