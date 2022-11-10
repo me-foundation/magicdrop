@@ -39,7 +39,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     address private _crossmintAddress;
 
     // The total mintable supply.
-    uint256 private _maxMintableSupply;
+    uint256 internal _maxMintableSupply;
 
     // Global wallet limit, across all stages.
     uint256 private _globalWalletLimit;
@@ -257,6 +257,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      */
     function setMaxMintableSupply(uint256 maxMintableSupply)
         external
+        virtual
         onlyOwner
     {
         if (maxMintableSupply > _maxMintableSupply) {
