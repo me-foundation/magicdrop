@@ -697,7 +697,6 @@ describe('ERC721M', function () {
       await contract.setMaxMintableSupply(98);
       expect(await contract.getMaxMintableSupply()).to.equal(98);
 
-      // can not set the mintable supply with higher value
       await expect(contract.setMaxMintableSupply(100)).to.be.rejectedWith(
         'CannotIncreaseMaxMintableSupply',
       );
