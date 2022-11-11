@@ -3,8 +3,9 @@
 pragma solidity ^0.8.4;
 
 import "./ERC721M.sol";
+import "./OperatorFilter/DefaultOperatorFilterer.sol";
 
-contract ERC721MIncreasableSupply is ERC721M {
+contract ERC721MIncreasableSupply is ERC721M, DefaultOperatorFilterer {
     // Whether mintable supply can increase. Once set to false, _maxMintableSupply can never increase.
     bool private _canIncreaseMaxMintableSupply;
 
@@ -65,5 +66,30 @@ contract ERC721MIncreasableSupply is ERC721M {
         }
         _maxMintableSupply = maxMintableSupply;
         emit SetMaxMintableSupply(maxMintableSupply);
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public payable override(ERC721A, IERC721A) onlyAllowedOperator(from) {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public payable override(ERC721A, IERC721A) onlyAllowedOperator(from) {
+        super.safeTransferFrom(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) public payable override(ERC721A, IERC721A) onlyAllowedOperator(from) {
+        super.safeTransferFrom(from, to, tokenId, data);
     }
 }
