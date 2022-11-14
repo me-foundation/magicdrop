@@ -21,4 +21,7 @@ export const setTimestampExpirySeconds = async (
   await tx.wait();
 
   console.log('New expiry:', await contract.getTimestampExpirySeconds());
+  console.log(
+    'Make sure to update stages to have sufficient gap to account for the new timestamp expiry!',
+  );
 };
