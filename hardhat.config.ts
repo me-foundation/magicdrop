@@ -19,6 +19,7 @@ import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
 import { setMintable } from './scripts/setMintable';
 import { setStages } from './scripts/setStages';
 import { setTimestampExpirySeconds } from './scripts/setTimestampExpirySeconds';
+import { transferOwnership } from './scripts/transferOwnership';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -155,5 +156,10 @@ task('setTimestampExpirySeconds', 'Set the timestamp expiry seconds')
   .addParam('contract', 'contract address')
   .addParam('timestampexpiryseconds', 'timestamp expiry in seconds')
   .setAction(setTimestampExpirySeconds);
+
+task('transferOwnership', 'transfer contract ownership')
+  .addParam('contract', 'contract address')
+  .addParam('owner', 'new owner address')
+  .setAction(transferOwnership);
 
 export default config;
