@@ -8,16 +8,17 @@ import 'hardhat-watcher';
 import { HardhatUserConfig, task, types } from 'hardhat/config';
 import 'solidity-coverage';
 
-import { setCrossmintAddress } from './scripts/setCrossmintAddress';
-import { setStages } from './scripts/setStages';
-import { setMintable } from './scripts/setMintable';
 import { deploy } from './scripts/deploy';
 import { deployBA } from './scripts/deployBA';
-import { setBaseURI } from './scripts/setBaseURI';
 import { mint } from './scripts/mint';
 import { ownerMint } from './scripts/ownerMint';
+import { setBaseURI } from './scripts/setBaseURI';
+import { setCrossmintAddress } from './scripts/setCrossmintAddress';
 import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
 import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
+import { setMintable } from './scripts/setMintable';
+import { setStages } from './scripts/setStages';
+import { setTimestampExpirySeconds } from './scripts/setTimestampExpirySeconds';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -149,5 +150,10 @@ task('deployBA', 'Deploy BucketAuction')
   .addParam('auctionstarttime', 'The start time of the bucket auction')
   .addParam('auctionendtime', 'The end time of the bucket auction')
   .setAction(deployBA);
+
+task('setTimestampExpirySeconds', 'Set the timestamp expiry seconds')
+  .addParam('contract', 'contract address')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds')
+  .setAction(setTimestampExpirySeconds);
 
 export default config;
