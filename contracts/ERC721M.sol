@@ -293,6 +293,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function totalMintedByAddress(address a)
         external
         view
+        virtual
         override
         returns (uint256)
     {
