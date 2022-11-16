@@ -20,6 +20,12 @@ import { setMintable } from './scripts/setMintable';
 import { setStages } from './scripts/setStages';
 import { setTimestampExpirySeconds } from './scripts/setTimestampExpirySeconds';
 import { transferOwnership } from './scripts/transferOwnership';
+import { setStartAndEndTimeUnixSeconds } from './scripts/setStartAndEndTimeUnixSeconds';
+import { setMinContributionInWei } from './scripts/setMinContributionInWei';
+
+import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
+import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
+import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -161,5 +167,31 @@ task('transferOwnership', 'transfer contract ownership')
   .addParam('contract', 'contract address')
   .addParam('owner', 'new owner address')
   .setAction(transferOwnership);
+
+task(
+  'setStartAndEndTimeUnixSeconds',
+  'set the start and end time for bucket auction',
+)
+  .addParam('contract', 'contract address')
+  .addParam('starttime', 'start time of the bucket auction')
+  .addParam('endtime', 'end time of the bucket auction')
+  .setAction(setStartAndEndTimeUnixSeconds);
+
+task('setMinContributionInWei', 'set the min contribution in wei for BA')
+  .addParam('contract', 'contract address')
+  .addParam('mincontributioninwei', 'min contribution in wei')
+  .setAction(setMinContributionInWei);
+
+task('getMinContributionInWei', 'get the min contribution in wei for BA')
+  .addParam('contract', 'contract address')
+  .setAction(getMinContributionInWei);
+
+task('getStartTimeBA', 'get the start time of BA')
+  .addParam('contract', 'contract address')
+  .setAction(getStartTimeBA);
+
+task('getEndTimeBA', 'get the end time of BA')
+  .addParam('contract', 'contract address')
+  .setAction(getEndTimeBA);
 
 export default config;
