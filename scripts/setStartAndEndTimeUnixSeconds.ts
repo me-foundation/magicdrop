@@ -23,10 +23,7 @@ export const setStartAndEndTimeUnixSeconds = async (
     Math.floor(new Date(args.endtime).getTime() / 1000),
   ] as const;
 
-  const tx = await contract.setStartAndEndTimeUnixSeconds(...params, {
-    gasLimit: 5_000_000,
-    // nonce: 344,
-  });
+  const tx = await contract.setStartAndEndTimeUnixSeconds(...params);
   console.log(`Submitted tx ${tx.hash}`);
 
   await tx.wait();
