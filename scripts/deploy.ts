@@ -32,8 +32,7 @@ export const deploy = async (
     JSON.stringify(args, null, 2),
   );
   const ERC721M = await hre.ethers.getContractFactory(contractName);
-
-  const erc721M = await ERC721M.deploy(
+  const deployArgs = [
     args.name,
     args.symbol,
     args.tokenurisuffix,
@@ -41,7 +40,17 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
+  ] as const;
+
+  const deployTx = ERC721M.getDeployTransaction(...deployArgs);
+  const gas = await hre.ethers.provider.estimateGas(deployTx);
+  const gasPrice = await hre.ethers.provider.getGasPrice();
+  console.log(
+    'Deployment estimated cost (ETH):',
+    hre.ethers.utils.formatEther(gas.mul(gasPrice)),
   );
+
+  const erc721M = await ERC721M.deploy(...deployArgs);
 
   await erc721M.deployed();
 
