@@ -46,7 +46,7 @@ export const deployBA = async (
     hre.ethers.BigNumber.from(args.mincontributioninwei),
     Math.floor(new Date(args.auctionstarttime).getTime() / 1000),
     Math.floor(new Date(args.auctionendtime).getTime() / 1000),
-  ];
+  ] as const;
 
   const contract = await contractFactory.deploy(...params);
   await contract.deployed();
