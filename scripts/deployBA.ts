@@ -48,6 +48,18 @@ export const deployBA = async (
     Math.floor(new Date(args.auctionendtime).getTime() / 1000),
   ] as const;
 
+  console.log(
+    `Constructor params: `,
+    JSON.stringify(
+      params.map((param) => {
+        if (hre.ethers.BigNumber.isBigNumber(param)) {
+          return param.toString();
+        }
+        return param;
+      }),
+    ),
+  );
+
   const contract = await contractFactory.deploy(...params);
   await contract.deployed();
 

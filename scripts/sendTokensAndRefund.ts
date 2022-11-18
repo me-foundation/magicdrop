@@ -1,14 +1,13 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
 
-export interface ISetStartAndEndTimeUnixSecondsParams {
+export interface ISendTokensRefundParams {
   contract: string;
-  starttime: string;
-  endtime: string;
+  to: string;
 }
 
-export const setStartAndEndTimeUnixSeconds = async (
-  args: ISetStartAndEndTimeUnixSecondsParams,
+export const sendTokensAndRefund = async (
+  args: ISendTokensRefundParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
@@ -18,12 +17,9 @@ export const setStartAndEndTimeUnixSeconds = async (
   const contract = ERC721M.attach(args.contract);
 
   // Set the parameters for the contract function
-  const params = [
-    Math.floor(new Date(args.starttime).getTime() / 1000),
-    Math.floor(new Date(args.endtime).getTime() / 1000),
-  ] as const;
+  const params = [args.to] as const;
 
-  const tx = await contract.setStartAndEndTimeUnixSeconds(...params);
+  const tx = await contract.sendTokensAndRefund(...params);
   console.log(`Submitted tx ${tx.hash}`);
 
   await tx.wait();

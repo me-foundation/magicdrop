@@ -33,7 +33,7 @@ export const deploy = async (
   );
   const ERC721M = await hre.ethers.getContractFactory(contractName);
 
-  const erc721M = await ERC721M.deploy(
+  const params = [
     args.name,
     args.symbol,
     args.tokenurisuffix,
@@ -41,7 +41,21 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
+  ] as const;
+
+  console.log(
+    `Constructor params: `,
+    JSON.stringify(
+      params.map((param) => {
+        if (hre.ethers.BigNumber.isBigNumber(param)) {
+          return param.toString();
+        }
+        return param;
+      }),
+    ),
   );
+
+  const erc721M = await ERC721M.deploy(...params);
 
   await erc721M.deployed();
 

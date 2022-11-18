@@ -22,7 +22,13 @@ import { setTimestampExpirySeconds } from './scripts/setTimestampExpirySeconds';
 import { transferOwnership } from './scripts/transferOwnership';
 import { setStartAndEndTimeUnixSeconds } from './scripts/setStartAndEndTimeUnixSeconds';
 import { setMinContributionInWei } from './scripts/setMinContributionInWei';
+import { sendRefund } from './scripts/sendRefund';
+import { sendRefundBatch } from './scripts/sendRefundBatch';
+import { sendTokensAndRefund } from './scripts/sendTokensAndRefund';
+import { sendTokensAndRefundBatch } from './scripts/sendTokensAndRefundBatch';
 
+import { setPrice } from './scripts/dev/setPrice';
+import { getPrice } from './scripts/dev/getPrice';
 import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
 import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
 import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
@@ -182,6 +188,38 @@ task('setMinContributionInWei', 'set the min contribution in wei for BA')
   .addParam('mincontributioninwei', 'min contribution in wei')
   .setAction(setMinContributionInWei);
 
+task('sendRefund', 'send refund to the sepcified address for BA')
+  .addParam('contract', 'contract address')
+  .addParam('to', 'address to refund')
+  .setAction(sendRefund);
+
+task('sendRefundBatch', 'send refund to the sepcified addresses for BA')
+  .addParam('contract', 'contract address')
+  .addParam(
+    'addresses',
+    'path to the json file with an array of addresses to refund',
+  )
+  .setAction(sendRefundBatch);
+
+task(
+  'sendTokensAndRefund',
+  'send tokens and refund the remaining to the sepcified address for BA',
+)
+  .addParam('contract', 'contract address')
+  .addParam('to', 'address to refund')
+  .setAction(sendTokensAndRefund);
+
+task(
+  'sendTokensAndRefundBatch',
+  'send tokens and refund to the sepcified addresses for BA',
+)
+  .addParam('contract', 'contract address')
+  .addParam(
+    'addresses',
+    'path to the json file with an array of addresses to refund',
+  )
+  .setAction(sendTokensAndRefundBatch);
+
 task('getMinContributionInWei', 'get the min contribution in wei for BA')
   .addParam('contract', 'contract address')
   .setAction(getMinContributionInWei);
@@ -193,5 +231,14 @@ task('getStartTimeBA', 'get the start time of BA')
 task('getEndTimeBA', 'get the end time of BA')
   .addParam('contract', 'contract address')
   .setAction(getEndTimeBA);
+
+task('getPrice', 'get the price set for BA')
+  .addParam('contract', 'contract address')
+  .setAction(getPrice);
+
+task('setPrice', 'set the price set for BA')
+  .addParam('contract', 'contract address')
+  .addParam('priceinwei', 'price in wei')
+  .setAction(setPrice);
 
 export default config;
