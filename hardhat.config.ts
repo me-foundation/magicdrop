@@ -27,7 +27,7 @@ import { sendRefundBatch } from './scripts/sendRefundBatch';
 import { sendTokensAndRefund } from './scripts/sendTokensAndRefund';
 import { sendTokensAndRefundBatch } from './scripts/sendTokensAndRefundBatch';
 
-import { setPrice } from './scripts/dev/setPrice';
+import { setPrice } from './scripts/setPrice';
 import { getPrice } from './scripts/dev/getPrice';
 import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
 import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
