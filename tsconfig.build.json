@@ -1,17 +1,21 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "target": "es2020",
-    "module": "commonjs",
+    "declarationDir": "./dist",
+    "target": "ES2016",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "inlineSourceMap": true,
     "composite": true,
     "strict": true,
     "esModuleInterop": true,
+    "emitDeclarationOnly": true,
     "declaration": true,
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "typeRoots": ["types", "../../types", "../../node_modules/@types"]
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
-  "include": ["./typechain-types", "./src"]
+  "include": ["./typechain-types", "./src"],
+  "exclude": ["./test", "node_modules", "hardhat.config.ts", "./scripts"],
 }
