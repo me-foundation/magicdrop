@@ -9,9 +9,6 @@ export default {
     { file: pkg.module, format: 'es', sourcemap: true },
   ],
   plugins: [
-    // copy({
-    //   targets: [{ src: 'src/abis/**/*', dest: 'dist/abis' }],
-    // }),
     json(),
     typescript({
       tsconfig: './tsconfig.build.json',
