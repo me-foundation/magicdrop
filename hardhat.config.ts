@@ -158,7 +158,7 @@ task('deployBA', 'Deploy BucketAuction')
   )
   .addParam(
     'mincontributioninwei',
-    'The minimum contribution in wei required only for the AcutionBucket',
+    'The minimum contribution in wei required only for the AuctionBucket',
   )
   .addParam('auctionstarttime', 'The start time of the bucket auction')
   .addParam('auctionendtime', 'The end time of the bucket auction')
@@ -188,12 +188,12 @@ task('setMinContributionInWei', 'set the min contribution in wei for BA')
   .addParam('mincontributioninwei', 'min contribution in wei')
   .setAction(setMinContributionInWei);
 
-task('sendRefund', 'send refund to the sepcified address for BA')
+task('sendRefund', 'send refund to the specified address for BA')
   .addParam('contract', 'contract address')
   .addParam('to', 'address to refund')
   .setAction(sendRefund);
 
-task('sendRefundBatch', 'send refund to the sepcified addresses for BA')
+task('sendRefundBatch', 'send refund to the specified addresses for BA')
   .addParam('contract', 'contract address')
   .addParam(
     'addresses',
@@ -203,7 +203,7 @@ task('sendRefundBatch', 'send refund to the sepcified addresses for BA')
 
 task(
   'sendTokensAndRefund',
-  'send tokens and refund the remaining to the sepcified address for BA',
+  'send tokens and refund the remaining to the specified address for BA',
 )
   .addParam('contract', 'contract address')
   .addParam('to', 'address to refund')
@@ -211,7 +211,7 @@ task(
 
 task(
   'sendTokensAndRefundBatch',
-  'send tokens and refund to the sepcified addresses for BA',
+  'send tokens and refund to the specified addresses for BA',
 )
   .addParam('contract', 'contract address')
   .addParam(
