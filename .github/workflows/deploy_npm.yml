@@ -1,14 +1,14 @@
-name: Publish Package to npmjs
+name: deploy_npm
 on:
   release:
     types: [published]
 jobs:
+  environment: publish
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v2
         with:
           node-version: "16.x"
