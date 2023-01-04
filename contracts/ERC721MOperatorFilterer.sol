@@ -12,7 +12,8 @@ contract ERC721MOperatorFilterer is ERC721M, DefaultOperatorFilterer {
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner
+        address cosigner,
+        uint64 timestampExpirySeconds
     )
         ERC721M(
             collectionName,
@@ -21,8 +22,7 @@ contract ERC721MOperatorFilterer is ERC721M, DefaultOperatorFilterer {
             maxMintableSupply,
             globalWalletLimit,
             cosigner,
-            /* timestampExpirySeconds= */
-            300
+            timestampExpirySeconds
         )
     {}
 

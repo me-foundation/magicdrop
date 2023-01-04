@@ -97,6 +97,10 @@ task('deploy', 'Deploy ERC721M')
     'increasesupply',
     'whether or not to enable increasing supply behavior',
   )
+  .addFlag(
+    'useoperatorfilterer',
+    'whether or not to use operator filterer',
+  )
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')
