@@ -15,6 +15,7 @@ export interface IDeployParams {
   cosigner?: string;
   timestampexpiryseconds?: number;
   increasesupply?: boolean;
+  useoperatorfilterer?: boolean;
 }
 
 export const deploy = async (
@@ -24,9 +25,14 @@ export const deploy = async (
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
 
-  const contractName = args.increasesupply
+  let contractName: string = args.increasesupply
     ? ContractDetails.ERC721MIncreasableSupply.name
     : ContractDetails.ERC721M.name;
+
+  if (args.useoperatorfilterer) {
+    contractName = ContractDetails.ERC721MOperatorFilterer.name;
+  }
+
   console.log(
     `Going to deploy ${contractName} with params`,
     JSON.stringify(args, null, 2),
