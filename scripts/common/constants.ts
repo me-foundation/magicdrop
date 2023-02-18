@@ -5,4 +5,5 @@ export const ContractDetails = {
   BucketAuction: { name: 'BucketAuction' }, // The contract of bucket auctions
   ERC721MIncreasableSupply: { name: 'ERC721MIncreasableSupply' }, // ERC721M with increasable supply
   ERC721MOperatorFilterer: { name: 'ERC721MOperatorFilterer' }, // ERC721M with operator filterer
+  ERC721MIncreasableOperatorFilterer: { name: 'ERC721MIncreasableOperatorFilterer' }, // ERC721M with increasable supply and operator filterer
 } as const;
