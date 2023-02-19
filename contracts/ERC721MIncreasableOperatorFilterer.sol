@@ -25,7 +25,7 @@ contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, Default
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds
-        );
+        )
     {}
 
     function transferFrom(
