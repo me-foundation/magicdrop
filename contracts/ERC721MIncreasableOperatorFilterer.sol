@@ -7,7 +7,6 @@ import "./ERC721MIncreasableSupply.sol";
 import "./OperatorFilter/DefaultOperatorFilterer.sol";
 
 contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, DefaultOperatorFilterer {
-    // Whether mintable supply can increase. Once set to false, _maxMintableSupply can never increase.
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
