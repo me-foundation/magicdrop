@@ -25,12 +25,18 @@ export const deploy = async (
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
 
-  let contractName: string = args.increasesupply
-    ? ContractDetails.ERC721MIncreasableSupply.name
-    : ContractDetails.ERC721M.name;
+  let contractName: string;
 
-  if (args.useoperatorfilterer) {
-    contractName = ContractDetails.ERC721MOperatorFilterer.name;
+  if (args.increasesupply) {
+    contractName = ContractDetails.ERC721MIncreasableSupply.name;
+    if (args.useoperatorfilterer) {
+      contractName = ContractDetails.ERC721MIncreasableOperatorFilterer.name;
+    }
+  } else {
+    contractName = ContractDetails.ERC721M.name;
+    if (args.useoperatorfilterer) {
+      contractName = ContractDetails.ERC721MOperatorFilterer.name;
+    }
   }
 
   console.log(
