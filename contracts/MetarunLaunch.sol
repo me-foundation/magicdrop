@@ -529,6 +529,9 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
             _collection.mint(to, nextCharacterIdToMint, 1);
             qtyMinted += 1;
         }
+
+        _numberMinted[to] += qtyMinted;
+        totalMinted += qtyMinted;
     }
 
     /**
