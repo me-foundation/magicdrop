@@ -765,7 +765,7 @@ describe('MetarunLaunch', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 0,
           startTimeUnixSeconds: stageStart,
-          endTimeUnixSeconds: stageStart + 2,
+          endTimeUnixSeconds: stageStart + 2000,
         },
       ]);
       await contract.setMaxMintableSupply(999);
@@ -806,7 +806,7 @@ describe('MetarunLaunch', function () {
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
           startTimeUnixSeconds: stageStart,
-          endTimeUnixSeconds: stageStart + 2,
+          endTimeUnixSeconds: stageStart + 2000,
         },
       ]);
       await contract.setMaxMintableSupply(999);
@@ -1287,60 +1287,6 @@ describe('MetarunLaunch', function () {
         value: ethers.utils.parseEther('0.5'),
       });
       await expect(mint).to.be.revertedWith('InvalidProof');
-    });
-
-    it('mints by owner', async () => {
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0.5'),
-          walletLimit: 1,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 1,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
-        },
-      ]);
-      await contract.setMintable(true);
-
-      const [owner, address1] = await ethers.getSigners();
-
-      await contract.ownerMint(5, owner.address);
-
-      const [, walletMintedCount, stagedMintedCount] =
-        await contract.getStageInfo(0);
-      expect(walletMintedCount).to.equal(0);
-      expect(stagedMintedCount.toNumber()).to.equal(0);
-      // todo: need to check resulting balance of ERC1155
-      // const ownerBalance = await contract.balanceOf(owner.address);
-      // expect(ownerBalance.toNumber()).to.equal(5);
-
-      await contract.ownerMint(5, address1.address);
-      const [, address1Minted] = await readonlyContract.getStageInfo(0, {
-        from: address1.address,
-      });
-      expect(address1Minted).to.equal(0);
-
-      // todo: need to check resulting balance of ERC1155
-      // const address1Balance = await contract.balanceOf(address1.address);
-      // expect(address1Balance.toNumber()).to.equal(5);
-      expect((await contract.totalMinted()).toNumber()).to.equal(10);
-    });
-
-    it('mints by owner - invalid cases', async () => {
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0.5'),
-          walletLimit: 1,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 1,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
-        },
-      ]);
-      await contract.setMintable(true);
-      await expect(
-        contract.ownerMint(1001, readonly.address),
-      ).to.be.revertedWith('NoSupplyLeft');
     });
   });
 

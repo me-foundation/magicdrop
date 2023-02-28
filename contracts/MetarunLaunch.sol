@@ -18,7 +18,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
 
     error CannotIncreaseMaxMintableSupply();
-    error CannotUpdatePermanentBaseURI();
     error CosignerNotSet();
     error GlobalWalletLimitOverflow();
     error InsufficientStageTimeGap();
@@ -61,16 +60,11 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
     event SetMaxMintableSupply(uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
     event SetActiveStage(uint256 activeStage);
-    event SetBaseURI(string baseURI);
     event SetTimestampExpirySeconds(uint64 expiry);
-    event PermanentBaseURI(string baseURI);
     event Withdraw(uint256 value);
 
     // Whether this contract is mintable.
     bool private _mintable;
-
-    // Whether base URI is permanent. Once set, base URI is immutable.
-    bool private _baseURIPermanent;
 
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
     uint64 private _timestampExpirySeconds;
@@ -83,9 +77,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
 
     // Global wallet limit, across all stages.
     uint256 private _globalWalletLimit;
-
-    // Current base URI.
-    string private _currentBaseURI;
 
     // ERC1155 token of the collection on sale
     MetarunCollection private _collection;
@@ -490,20 +481,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Mints token(s) by owner.
-     *
-     * NOTE: This function bypasses validations thus only available for owner.
-     * This is typically used for owner to  pre-mint or mint the remaining of the supply.
-     */
-    function ownerMint(uint32 qty, address to)
-        external
-        onlyOwner
-        hasSupply(qty)
-    {
-        //_safeMint(to, qty);
-    }
-
-    /**
      * @dev Withdraws funds by owner.
      */
     function withdraw() external onlyOwner {
@@ -512,24 +489,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
         if (!success) revert WithdrawFailed();
         emit Withdraw(value);
     }
-
-    /**
-     * @dev Sets token base URI.
-     */
-    function setBaseURI(string calldata baseURI) external onlyOwner {
-        if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
-        _currentBaseURI = baseURI;
-        emit SetBaseURI(baseURI);
-    }
-
-    /**
-     * @dev Sets token base URI permanent. Cannot revert.
-     */
-    function setBaseURIPermanent() external onlyOwner {
-        _baseURIPermanent = true;
-        emit PermanentBaseURI(_currentBaseURI);
-    }
-
 
     /**
      * @dev Returns data hash for the given minter, qty and timestamp.
