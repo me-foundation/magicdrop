@@ -20,8 +20,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
     error CannotIncreaseMaxMintableSupply();
     error CannotUpdatePermanentBaseURI();
     error CosignerNotSet();
-    error CrossmintAddressNotSet();
-    error CrossmintOnly();
     error GlobalWalletLimitOverflow();
     error InsufficientStageTimeGap();
     error InvalidCosignSignature();
@@ -59,7 +57,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
     );
 
     event SetCosigner(address cosigner);
-    event SetCrossmintAddress(address crossmintAddress);
     event SetMintable(bool mintable);
     event SetMaxMintableSupply(uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
@@ -80,9 +77,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
 
     // The address of the cosigner server.
     address private _cosigner;
-
-    // The crossmint address. Need to set if using crossmint.
-    address private _crossmintAddress;
 
     // The total mintable supply.
     uint256 internal _maxMintableSupply;
@@ -192,21 +186,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
     function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
         _timestampExpirySeconds = expiry;
         emit SetTimestampExpirySeconds(expiry);
-    }
-
-    /**
-     * @dev Returns crossmint address.
-     */
-    function getCrossmintAddress() external view returns (address) {
-        return _crossmintAddress;
-    }
-
-    /**
-     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
-     */
-    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
-        _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(crossmintAddress);
     }
 
     /**
@@ -431,30 +410,6 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
         bytes calldata signature
     ) external payable nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
-    }
-
-    /**
-     * @dev Mints token(s) through crossmint. This function is supposed to be called by crossmint.
-     *
-     * qty - number of tokens to mint
-     * to - the address to mint tokens to
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function crossmint(
-        uint32 qty,
-        address to,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable nonReentrant {
-        if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
-
-        // Check the caller is Crossmint
-        if (msg.sender != _crossmintAddress) revert CrossmintOnly();
-
-        _mintInternal(qty, to, proof, timestamp, signature);
     }
 
     /**
