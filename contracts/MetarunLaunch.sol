@@ -114,7 +114,7 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
         _globalWalletLimit = globalWalletLimit;
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
-        _collectionKind = _collection.MAGICEDEN_BOX_KIND();
+        _collectionKind = _collection.MYSTERY_BOX_KIND();
         nextCharacterIdToMint = _collectionKind << 16;
     }
 

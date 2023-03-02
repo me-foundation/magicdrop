@@ -17,7 +17,6 @@ contract MetarunCollection is ERC1155Upgradeable, AccessControlUpgradeable, ERC1
     uint256 public constant GOLD_GIVEAWAY_KIND = 0x00000405;
 
     uint256 public constant MYSTERY_BOX_KIND = 0x00000406;
-    uint256 public constant MAGICEDEN_BOX_KIND = 0x00000407;
 
     uint256 public constant ARTIFACT_TOKEN_KIND = 0x00000100;
     uint256 public constant PET_TOKEN_KIND = 0x00000200;
