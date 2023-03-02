@@ -1425,4 +1425,32 @@ describe('MetarunLaunch', function () {
       ).to.be.revertedWith('InvalidCosignSignature');
     });
   });
+
+  describe('NextCharacterIdToMint', function () {
+    it('can set correct id', async () => {
+      const сorrectKindId = (await collectionContract.MAGICEDEN_BOX_KIND()).toNumber() << 16;
+      expect(await contract.nextCharacterIdToMint()).to.be.equal(сorrectKindId);
+      await contract.setNextCharacterIdToMint(сorrectKindId+1);
+      expect(await contract.nextCharacterIdToMint()).to.be.equal(сorrectKindId+1);
+    });
+
+    it('cannot set id from wrong kind', async () => {
+      const wrongKindId = (await collectionContract.GOLD_TICKET_KIND()).toNumber() << 16;
+      const сorrectKindId = (await collectionContract.MAGICEDEN_BOX_KIND()).toNumber() << 16;
+      expect(await contract.nextCharacterIdToMint()).to.be.equal(сorrectKindId);
+      await expect(contract.setNextCharacterIdToMint(wrongKindId)).to.be.revertedWith("Incorrect kind token id");
+    });
+
+    it('cannot set exists id', async () => {
+      const firstTokenId = (await collectionContract.MAGICEDEN_BOX_KIND()).toNumber() << 16;
+      await collectionContract.mint(owner.address, firstTokenId, 1);
+      expect(await contract.nextCharacterIdToMint()).to.be.equal(firstTokenId);
+      await expect(contract.setNextCharacterIdToMint(firstTokenId)).to.be.revertedWith("ID already exists");
+    });
+
+    it('cannot set id not owner', async () => {
+      const firstTokenId = (await collectionContract.MAGICEDEN_BOX_KIND()).toNumber() << 16;
+      await expect(readonlyContract.setNextCharacterIdToMint(firstTokenId)).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
 });

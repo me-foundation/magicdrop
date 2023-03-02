@@ -311,6 +311,21 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Sets the value of the variable NextCharacterIdToMint.
+     */
+    function setNextCharacterIdToMint(uint256 nextCharacterId)
+        external
+        onlyOwner
+    {
+        require(
+            _collection.getKind(nextCharacterId) == _collectionKind,
+            "Incorrect kind token id"
+        );
+        require(!_collection.exists(nextCharacterId), "ID already exists");
+        nextCharacterIdToMint = nextCharacterId;
+    }
+
+    /**
      * @dev Returns number of minted token for a given address.
      */
     function totalMintedByAddress(address a)
@@ -470,7 +485,10 @@ contract MetarunLaunch is Ownable, ReentrancyGuard {
             while (_collection.exists(nextCharacterIdToMint)) {
                 nextCharacterIdToMint += 1;
             }
-            require(_collection.isKind(nextCharacterIdToMint, _collectionKind), "OUT_OF_KIND_BOUNDARIES");
+            require(
+                _collection.isKind(nextCharacterIdToMint, _collectionKind),
+                "OUT_OF_KIND_BOUNDARIES"
+            );
             // Current ERC1155 collection is Non-fungble, so amount can be just 1.
             _collection.mint(to, nextCharacterIdToMint, 1);
             qtyMinted += 1;
