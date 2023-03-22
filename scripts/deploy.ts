@@ -16,6 +16,7 @@ export interface IDeployParams {
   timestampexpiryseconds?: number;
   increasesupply?: boolean;
   useoperatorfilterer?: boolean;
+  openedition?: boolean;
 }
 
 export const deploy = async (
@@ -39,6 +40,12 @@ export const deploy = async (
     }
   }
 
+  let maxsupply = hre.ethers.BigNumber.from(args.maxsupply);
+
+  if (args.openedition) {
+    maxsupply = hre.ethers.BigNumber.from('999999999');
+  }
+
   console.log(
     `Going to deploy ${contractName} with params`,
     JSON.stringify(args, null, 2),
@@ -49,7 +56,7 @@ export const deploy = async (
     args.name,
     args.symbol,
     args.tokenurisuffix,
-    hre.ethers.BigNumber.from(args.maxsupply),
+    maxsupply,
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,

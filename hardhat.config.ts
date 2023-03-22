@@ -115,6 +115,10 @@ task('deploy', 'Deploy ERC721M')
     'useoperatorfilterer',
     'whether or not to use operator filterer',
   )
+  .addFlag(
+    'openedition',
+    'whether or not a open edition mint (unlimited supply, 999,999,999)',
+  )
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')
