@@ -43,10 +43,8 @@ contract ERC721MAutoApprover is ERC721M {
             _autoApproveAddress != address(0) &&
             !super.isApprovedForAll(msg.sender, _autoApproveAddress)
         ) {
-            if (!super.isApprovedForAll(msg.sender, _autoApproveAddress)) {
-                // approve the address if not already approved
-                super.setApprovalForAll(_autoApproveAddress, true);
-            }
+            // approve the address if not already approved
+            super.setApprovalForAll(_autoApproveAddress, true);
         }
     }
 }
