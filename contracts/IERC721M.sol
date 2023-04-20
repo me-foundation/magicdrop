@@ -53,7 +53,6 @@ interface IERC721M is IERC721AQueryable {
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
     event SetTimestampExpirySeconds(uint64 expiry);
-    event SetAutoApprovalAddress(address autoApprovalAddress);
     event PermanentBaseURI(string baseURI);
     event Withdraw(uint256 value);
 

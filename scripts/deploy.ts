@@ -34,7 +34,7 @@ export const deploy = async (
     if (args.useoperatorfilterer) {
       contractName = ContractDetails.ERC721MIncreasableOperatorFilterer.name;
     }
-  }else {
+  } else {
     contractName = ContractDetails.ERC721M.name;
     if (args.useoperatorfilterer && args.autoApproveAddress) {
       contractName = ContractDetails.ERC721MOperatorFiltererAutoApprover.name;

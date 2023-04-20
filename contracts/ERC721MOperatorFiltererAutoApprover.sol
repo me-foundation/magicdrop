@@ -27,7 +27,7 @@ contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
             timestampExpirySeconds
         )
     {
-        _autoApproveAddress = autoApproveAddress;   
+        _autoApproveAddress = autoApproveAddress;
     }
 
     function mint(
@@ -38,11 +38,13 @@ contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
     ) external payable override nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
 
-        // auto approve address
-        if (_autoApproveAddress != address(0)) {
-            // check if the address is already approved
+        // if auto approve address is not all zero, check if the address is already approved
+        if (
+            _autoApproveAddress != address(0) &&
+            !super.isApprovedForAll(msg.sender, _autoApproveAddress)
+        ) {
             if (!super.isApprovedForAll(msg.sender, _autoApproveAddress)) {
-                // approve the address
+                // approve the address if not already approved
                 super.setApprovalForAll(_autoApproveAddress, true);
             }
         }
