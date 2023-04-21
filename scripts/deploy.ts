@@ -17,7 +17,7 @@ export interface IDeployParams {
   increasesupply?: boolean;
   useoperatorfilterer?: boolean;
   openedition?: boolean;
-  autoApproveAddress?: string;
+  autoapproveaddress?: string;
 }
 
 export const deploy = async (
@@ -36,11 +36,11 @@ export const deploy = async (
     }
   } else {
     contractName = ContractDetails.ERC721M.name;
-    if (args.useoperatorfilterer && args.autoApproveAddress) {
+    if (args.useoperatorfilterer && args.autoapproveaddress) {
       contractName = ContractDetails.ERC721MOperatorFiltererAutoApprover.name;
     } else if (args.useoperatorfilterer) {
       contractName = ContractDetails.ERC721MOperatorFilterer.name;
-    } else if (args.autoApproveAddress) {
+    } else if (args.autoapproveaddress) {
       contractName = ContractDetails.ERC721MAutoApprover.name;
     }
   }
@@ -65,7 +65,7 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
-    args.autoApproveAddress ?? hre.ethers.constants.AddressZero,
+    args.autoapproveaddress ?? hre.ethers.constants.AddressZero,
   ] as const;
 
   console.log(
