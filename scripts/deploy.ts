@@ -65,7 +65,7 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
-    args.autoapproveaddress ?? hre.ethers.constants.AddressZero,
+    args.autoapproveaddress ? args.autoapproveaddress : {}
   ] as const;
 
   console.log(
