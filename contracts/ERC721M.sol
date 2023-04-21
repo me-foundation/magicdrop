@@ -378,7 +378,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes32[] calldata proof,
         uint64 timestamp,
         bytes calldata signature
-    ) external payable nonReentrant {
+    ) virtual external payable nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
     }
 
