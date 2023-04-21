@@ -107,14 +107,12 @@ task('deploy', 'Deploy ERC721M')
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
   )
+  .addOptionalParam('autoapproveaddress', 'auto approve address')
   .addFlag(
     'increasesupply',
     'whether or not to enable increasing supply behavior',
   )
-  .addFlag(
-    'useoperatorfilterer',
-    'whether or not to use operator filterer',
-  )
+  .addFlag('useoperatorfilterer', 'whether or not to use operator filterer')
   .addFlag(
     'openedition',
     'whether or not a open edition mint (unlimited supply, 999,999,999)',
