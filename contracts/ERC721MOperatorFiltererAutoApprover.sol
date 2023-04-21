@@ -7,6 +7,8 @@ import "./ERC721MOperatorFilterer.sol";
 contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
     address private _autoApproveAddress;
 
+    event SetAutoApproveAddress(address autoApproveAddress);
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -46,5 +48,16 @@ contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
             // approve the address if not already approved
             super.setApprovalForAll(_autoApproveAddress, true);
         }
+    }
+
+    function getAutoApproveAddress() external view returns (address) {
+        return _autoApproveAddress;
+    }
+
+    function setAutoApproveAddress(
+        address autoApproveAddress
+    ) external onlyOwner {
+        _autoApproveAddress = autoApproveAddress;
+        emit SetAutoApproveAddress(autoApproveAddress);
     }
 }

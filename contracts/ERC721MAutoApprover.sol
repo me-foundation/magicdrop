@@ -6,6 +6,8 @@ import "./ERC721M.sol";
 
 contract ERC721MAutoApprover is ERC721M {
     address private _autoApproveAddress;
+    
+    event SetAutoApproveAddress(address autoApproveAddress);
 
     constructor(
         string memory collectionName,
@@ -46,5 +48,16 @@ contract ERC721MAutoApprover is ERC721M {
             // approve the address if not already approved
             super.setApprovalForAll(_autoApproveAddress, true);
         }
+    }
+
+    function getAutoApproveAddress() external view returns (address) {
+        return _autoApproveAddress;
+    }
+
+    function setAutoApproveAddress(
+        address autoApproveAddress
+    ) external onlyOwner {
+        _autoApproveAddress = autoApproveAddress;
+        emit SetAutoApproveAddress(autoApproveAddress);
     }
 }
