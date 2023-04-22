@@ -41,3 +41,4 @@ jobs:
         with:
           fail-on: low
           slither-args: "--exclude-dependencies"
+          node-version: 16
