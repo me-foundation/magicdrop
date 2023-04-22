@@ -7,6 +7,7 @@ import 'hardhat-gas-reporter';
 import 'hardhat-watcher';
 import { HardhatUserConfig, task, types } from 'hardhat/config';
 import 'solidity-coverage';
+import "@openzeppelin/hardhat-upgrades";
 
 import { deploy } from './scripts/deploy';
 import { deployBA } from './scripts/deployBA';
