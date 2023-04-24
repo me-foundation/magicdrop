@@ -26,7 +26,6 @@ export const deploy = async (
 ) => {
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
-
   let contractName: string;
 
   if (args.increasesupply) {
@@ -65,7 +64,7 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
-    args.autoapproveaddress ?? {}
+    args.autoapproveaddress ?? {},
   ] as const;
 
   console.log(
