@@ -2,10 +2,13 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
+import { BigNumberish } from 'ethers';
 
 export interface ISetStagesParams {
   stages: string;
   contract: string;
+  gaslimit?: BigNumberish;
+  gasprice?: number;
 }
 
 interface StageConfig {
@@ -27,6 +30,8 @@ export const setStages = async (
   ) as StageConfig[];
   const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
+  const gasLimit = args.gaslimit ? args.gaslimit : 500_000;
+  const gasPrice = args.gasprice ? args.gasprice * 1e9 : 500 * 1e9;
   const merkleRoots = await Promise.all(
     stagesConfig.map((stage) => {
       if (!stage.whitelistPath) {
@@ -55,7 +60,7 @@ export const setStages = async (
       startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
       endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
     })),
-    { gasLimit: 500_000 },
+    { gasPrice: gasPrice, gasLimit: gasLimit },
   );
   console.log(`Submitted tx ${tx.hash}`);
 

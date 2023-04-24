@@ -88,6 +88,8 @@ const config: HardhatUserConfig = {
 task('setStages', 'Set stages for ERC721M')
   .addParam('contract', 'contract address')
   .addParam('stages', 'stages json file')
+  .addOptionalParam('gaslimit', 'Set gas limit in wei')
+  .addOptionalParam('gasprice', 'Set gas price in wei')
   .setAction(setStages);
 
 task('setMintable', 'Set mintable state for ERC721M')
