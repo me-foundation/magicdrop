@@ -66,7 +66,7 @@
     "hardhat": "^2.9.9",
     "hardhat-gas-reporter": "^1.0.8",
     "hardhat-watcher": "^2.5.0",
-    "lint-staged": "^12.4.1",
+    "lint-staged": "^13.2.1",
     "merkletreejs": "^0.2.32",
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "^1.0.0-beta.24",
