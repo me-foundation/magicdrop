@@ -7,6 +7,9 @@ import "./ERC721MIncreasableSupply.sol";
 import "./OperatorFilter/DefaultOperatorFilterer.sol";
 
 contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, DefaultOperatorFilterer {
+
+    bool public _tradable = false;
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -51,4 +54,23 @@ contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, Default
     ) public payable override(ERC721A, IERC721A) onlyAllowedOperator(from) {
         super.safeTransferFrom(from, to, tokenId, data);
     }
-}
+
+    function setTradable(bool tradable) external onlyOwner
+    {
+        _tradable = tradable;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual override(ERC721) {
+        if (
+            _tradable != true
+        ) {
+            revert("Transfers are currently disabled");
+        }
+        super._beforeTokenTransfer(from, to, tokenId);
+    }
+
+}   
