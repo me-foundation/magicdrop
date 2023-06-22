@@ -4,7 +4,6 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 
-import { confirm } from '@inquirer/prompts';
 import { ContractDetails } from './common/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -38,8 +37,6 @@ export const deployBA = async (
     `Going to deploy ${contractName} with params`,
     JSON.stringify(args, null, 2),
   );
-  const answer = await confirm({ message: 'Continue?', default: false });
-  if (!answer) { return; }
 
   if (args.mincontributioninwei <= 0) {
     throw new Error(
