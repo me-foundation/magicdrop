@@ -60,6 +60,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Minted count per stage.
     mapping(uint256 => uint256) private _stageMintedCounts;
 
+    // Whether this collection is tradable.
+    bool public _tradable = false;
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -639,5 +642,24 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             chainID := chainid()
         }
         return chainID;
+    }
+
+    /**
+     * @dev Set whether the token is tradable.
+     */
+    function setTradable(bool tradable) external onlyOwner {
+        _tradable = tradable;
+    }
+
+    function _beforeTokenTransfers(
+        address from,
+        address to,
+        uint256 startTokenId,
+        uint256 quantity
+    ) internal virtual override(ERC721A) {
+        if (!_tradable) {
+            revert("Transfers are currently disabled");
+         }
+        super._beforeTokenTransfers(from, to, startTokenId, quantity);
     }
 }
