@@ -170,6 +170,10 @@ task('deployBA', 'Deploy BucketAuction')
   )
   .addParam('auctionstarttime', 'The start time of the bucket auction')
   .addParam('auctionendtime', 'The end time of the bucket auction')
+  .addFlag(
+    'useoperatorfilterer',
+    'whether or not to use operator filterer',
+  )
   .setAction(deployBA);
 
 task('setTimestampExpirySeconds', 'Set the timestamp expiry seconds')

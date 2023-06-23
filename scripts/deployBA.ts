@@ -3,7 +3,7 @@
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-import fs from 'fs';
+
 import { ContractDetails } from './common/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
@@ -17,6 +17,7 @@ export interface IDeployParams {
   mincontributioninwei: number;
   auctionstarttime: string;
   auctionendtime: string;
+  useoperatorfilterer?: boolean;
 }
 
 export const deployBA = async (
@@ -24,11 +25,19 @@ export const deployBA = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   // Set the contract name
-  const contractName = ContractDetails.BucketAuction.name;
+  let contractName: string;
+
+  if (args.useoperatorfilterer) {
+    contractName = ContractDetails.BucketAuctionOperatorFilterer.name;
+  } else {
+    contractName = ContractDetails.BucketAuction.name;
+  }
+
   console.log(
     `Going to deploy ${contractName} with params`,
     JSON.stringify(args, null, 2),
   );
+
   if (args.mincontributioninwei <= 0) {
     throw new Error(
       `The parameter mincontributioninwei should be bigger than 0. Given value: ${args.mincontributioninwei}`,
