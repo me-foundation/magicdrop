@@ -1,8 +1,8 @@
+import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
-import { BigNumberish } from 'ethers';
 
 export interface ISetStagesParams {
   stages: string;
@@ -55,17 +55,27 @@ export const setStages = async (
       return mt.getHexRoot();
     }),
   );
-  const tx = await contract.setStages(
-    stagesConfig.map((s, i) => ({
-      price: ethers.utils.parseEther(s.price),
-      maxStageSupply: s.maxSupply ?? 0,
-      walletLimit: s.walletLimit ?? 0,
-      merkleRoot: merkleRoots[i],
-      startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
-      endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
-    })),
-    overrides,
+
+  const stages = stagesConfig.map((s, i) => ({
+    price: ethers.utils.parseEther(s.price),
+    maxStageSupply: s.maxSupply ?? 0,
+    walletLimit: s.walletLimit ?? 0,
+    merkleRoot: merkleRoots[i],
+    startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
+    endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
+  }));
+
+  console.log(
+    `Stage params: `,
+    JSON.stringify(
+      stages.map(stage => hre.ethers.BigNumber.isBigNumber(stage)? stage.toString() : stage)
+    ),
   );
+
+  if (!await confirm({ message: 'Continue to set stages?' })) return;
+
+  const tx = await contract.setStages(stages,overrides);
+
   console.log(`Submitted tx ${tx.hash}`);
 
   await tx.wait();
