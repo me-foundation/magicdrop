@@ -45,6 +45,13 @@ interface IERC721M is IERC721AQueryable {
         uint64 endTimeUnixSeconds
     );
 
+    event CheckedStage(
+        uint256 stage,
+        uint64 startTimeUnixSeconds,
+        uint64 endTimeUnixSeconds,
+        uint64 timestamp
+    );
+
     event SetCosigner(address cosigner);
     event SetCrossmintAddress(address crossmintAddress);
     event SetMintable(bool mintable);
