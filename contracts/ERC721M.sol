@@ -53,10 +53,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Mint stage infomation. See MintStageInfo for details.
     MintStageInfo[] private _mintStages;
 
-    // Minted count per stage per wallet.
-    mapping(uint256 => mapping(address => uint32))
-        private _stageMintedCountsPerWallet;
-
     // Minted count per stage.
     mapping(uint256 => uint256) private _stageMintedCounts;
 
@@ -180,6 +176,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      * ]
      */
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
+        if (newStages.length > 4) revert InvalidStageArgsLength();
+
         uint256 originalSize = _mintStages.length;
         for (uint256 i = 0; i < originalSize; i++) {
             _mintStages.pop();
@@ -309,14 +307,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         override
         returns (
             MintStageInfo memory,
-            uint32,
+            uint16,
             uint256
         )
     {
         if (index >= _mintStages.length) {
             revert("InvalidStage");
         }
-        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
+        uint16 walletMinted = _numberMintedForStage(msg.sender, index);
         uint256 stageMinted = _stageMintedCounts[index];
         return (_mintStages[index], walletMinted, stageMinted);
     }
@@ -447,7 +445,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         // Check wallet limit for stage if applicable, limit == 0 means no limit enforced
         if (stage.walletLimit > 0) {
             if (
-                _stageMintedCountsPerWallet[activeStage][to] + qty >
+                _numberMintedForStage(to, activeStage) + qty >
                 stage.walletLimit
             ) revert WalletStageLimitExceeded();
         }
@@ -462,9 +460,21 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             ) revert InvalidProof();
         }
 
-        _stageMintedCountsPerWallet[activeStage][to] += qty;
+        // Optimizes Stage per wallet mint counts gas
+        // - previously was: _stageMintedCountsPerWallet[to][activeStage] += qty;
+        uint64 packed = _getAux(to);
+        packed += uint64(qty * (1 << (16 * activeStage)));
+        _setAux(to, packed);
+
         _stageMintedCounts[activeStage] += qty;
         _safeMint(to, qty);
+    }
+
+    /**
+     * Returns the number of tokens minted by `owner` for a specific stage.
+     */
+    function _numberMintedForStage(address owner, uint256 stageIndex) internal view returns (uint16) {
+        return uint16((_getAux(owner) >> (16 * stageIndex)) & ((1 << 16) - 1));
     }
 
     /**
