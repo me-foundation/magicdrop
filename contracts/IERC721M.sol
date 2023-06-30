@@ -79,7 +79,7 @@ interface IERC721M is IERC721AQueryable {
         view
         returns (
             MintStageInfo memory,
-            uint32,
+            uint16,
             uint256
         );
 
