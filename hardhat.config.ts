@@ -3,6 +3,7 @@ import 'dotenv/config';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+import 'hardhat-contract-sizer';
 import 'hardhat-gas-reporter';
 import 'hardhat-watcher';
 import { HardhatUserConfig, task, types } from 'hardhat/config';
@@ -26,12 +27,14 @@ import { sendRefund } from './scripts/sendRefund';
 import { sendRefundBatch } from './scripts/sendRefundBatch';
 import { sendTokensAndRefund } from './scripts/sendTokensAndRefund';
 import { sendTokensAndRefundBatch } from './scripts/sendTokensAndRefundBatch';
-
 import { setPrice } from './scripts/setPrice';
 import { getPrice } from './scripts/dev/getPrice';
 import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
 import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
 import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
+import { deployERC721MOnft } from './scripts/deployERC721MOnft';
+import { setTrustedRemote } from './scripts/setTrustedRemote';
+import { sendOnft } from './scripts/sendOnft';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -42,6 +45,12 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
   paths: {
     artifacts: './artifacts',
@@ -252,5 +261,39 @@ task('setPrice', 'set the price set for BA')
   .addParam('contract', 'contract address')
   .addParam('priceinwei', 'price in wei')
   .setAction(setPrice);
+
+task('deployERC721MOnft', 'Deploy ERC721MOnft')
+  .addParam('name', 'name')
+  .addParam('symbol', 'symbol')
+  .addParam('maxsupply', 'max supply')
+  .addParam('tokenurisuffix', 'token uri suffix', '.json')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds')
+  .addOptionalParam(
+    'cosigner',
+    'cosigner address (0x00...000 if not using cosign)',
+    '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam('autoapproveaddress', 'auto approve address')
+  .addFlag(
+    'increasesupply',
+    'whether or not to enable increasing supply behavior',
+  )
+  .addOptionalParam('minGasToStore', 'minimum gas to store default 150000', '15000')
+  .setAction(deployERC721MOnft);
+
+task('setTrustedRemote', 'Set trusted remote for ERC721MOnft')
+  .addParam('sourceaddress', 'the contract address you are setting the remote on')
+  .addParam('targetnetwork', 'the network you are setting the remote to')
+  .addParam('targetaddress', 'the address of the contract on the target network')
+  .setAction(setTrustedRemote);
+
+task('sendOnft', 'Send tokens to target network')
+  .addParam('contract', 'the contract address you are sending tokens from')
+  .addParam('tokenowner', 'the owner of the tokens')
+  .addParam('targetnetwork', 'the network you are sending the tokens to')
+  .addParam('tokenid', 'the token id you are sending')
+  .addOptionalParam('refundaddress', 'the address you want to refund to')
+  .addOptionalParam('zeropaymentaddress', 'the address you want to send a zero payment to')
+  .setAction(sendOnft);
 
 export default config;
