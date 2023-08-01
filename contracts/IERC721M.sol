@@ -56,7 +56,7 @@ interface IERC721M is IERC721AQueryable {
     event SetMintCurrency(address mintCurrency);
     event PermanentBaseURI(string baseURI);
     event Withdraw(uint256 value);
-    event WithdrawERC20(address mintCurrencyWithdrawn, uint256 value);
+    event WithdrawERC20(address mintCurrency, uint256 value);
 
     function getCosigner() external view returns (address);
 
@@ -84,6 +84,8 @@ interface IERC721M is IERC721AQueryable {
             uint32,
             uint256
         );
+
+    function getMintCurrency() external view returns (address);
 
     function getActiveStageFromTimestamp(uint64 timestamp)
         external

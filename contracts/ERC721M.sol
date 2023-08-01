@@ -375,16 +375,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns mint currency address.
      */
-    function getMintCurrency() external view returns (address) {
+    function getMintCurrency() external view override returns (address) {
         return _mintCurrency;
-    }
-
-    /**
-     * @dev Sets the mint currency used for payment.
-     */
-    function setMintCurrency(address mintCurrency) external onlyOwner {
-        _mintCurrency = mintCurrency;
-        emit SetMintCurrency(mintCurrency);
     }
 
     /**
@@ -520,10 +512,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Withdraws ERC-20 funds by owner.
      */
-    function withdrawERC20(address mintCurrency) external onlyOwner {
-        uint256 value = IERC20(mintCurrency).balanceOf(address(this));
-        IERC20(mintCurrency).safeTransfer(msg.sender, value);
-        emit WithdrawERC20(mintCurrency, value);
+    function withdrawERC20() external onlyOwner {
+        uint256 value = IERC20(_mintCurrency).balanceOf(address(this));
+        IERC20(_mintCurrency).safeTransfer(msg.sender, value);
+        emit WithdrawERC20(_mintCurrency, value);
     }
 
     /**
