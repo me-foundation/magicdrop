@@ -63,7 +63,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     mapping(uint256 => uint256) private _stageMintedCounts;
 
     // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
-    address public mintCurrency;
+    address private _mintCurrency;
 
     constructor(
         string memory collectionName,
@@ -72,7 +72,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds
+        uint64 timestampExpirySeconds,
+        address mintCurrency
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -83,7 +84,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _tokenURISuffix = tokenURISuffix;
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
-        mintCurrency = address(0);
+        _mintCurrency = mintCurrency;
     }
 
     /**
@@ -372,10 +373,17 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Returns mint currency address.
+     */
+    function getMintCurrency() external view returns (address) {
+        return _mintCurrency;
+    }
+
+    /**
      * @dev Sets the mint currency used for payment.
      */
-    function setMintCurrency(address newMintCurrency) external onlyOwner {
-        mintCurrency = newMintCurrency;
+    function setMintCurrency(address mintCurrency) external onlyOwner {
+        _mintCurrency = mintCurrency;
         emit SetMintCurrency(mintCurrency);
     }
 
@@ -444,7 +452,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         stage = _mintStages[activeStage];
 
         // Check value if minting with ETH
-        if (mintCurrency == address(0) && msg.value < stage.price * qty) revert NotEnoughValue();
+        if (_mintCurrency == address(0) && msg.value < stage.price * qty) revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
@@ -476,8 +484,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             ) revert InvalidProof();
         }
 
-        if (mintCurrency != address(0)) {
-            IERC20(mintCurrency).safeTransferFrom(msg.sender, address(this), stage.price * qty);
+        if (_mintCurrency != address(0)) {
+            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(this), stage.price * qty);
         }
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
@@ -512,10 +520,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Withdraws ERC-20 funds by owner.
      */
-    function withdrawERC20(address mintCurrencyWithdrawn) external onlyOwner {
-        uint256 value = IERC20(mintCurrencyWithdrawn).balanceOf(address(this));
-        IERC20(mintCurrencyWithdrawn).safeTransfer(msg.sender, value);
-        emit WithdrawERC20(mintCurrencyWithdrawn, value);
+    function withdrawERC20(address mintCurrency) external onlyOwner {
+        uint256 value = IERC20(mintCurrency).balanceOf(address(this));
+        IERC20(mintCurrency).safeTransfer(msg.sender, value);
+        emit WithdrawERC20(mintCurrency, value);
     }
 
     /**
