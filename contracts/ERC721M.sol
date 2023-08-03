@@ -513,6 +513,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      * @dev Withdraws ERC-20 funds by owner.
      */
     function withdrawERC20() external onlyOwner {
+        if (_mintCurrency == address(0)) revert WrongMintCurrency();
         uint256 value = IERC20(_mintCurrency).balanceOf(address(this));
         IERC20(_mintCurrency).safeTransfer(msg.sender, value);
         emit WithdrawERC20(_mintCurrency, value);

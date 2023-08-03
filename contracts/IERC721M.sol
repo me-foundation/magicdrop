@@ -25,6 +25,7 @@ interface IERC721M is IERC721AQueryable {
     error WalletGlobalLimitExceeded();
     error WalletStageLimitExceeded();
     error WithdrawFailed();
+    error WrongMintCurrency();
 
     struct MintStageInfo {
         uint80 price;

@@ -19,6 +19,7 @@ describe('ERC721MOperatorFiltererAutoApprover', () => {
       0,
       ethers.constants.AddressZero,
       300,
+      ethers.constants.AddressZero,
       test_approve_address,
     );
     const [owner] = await ethers.getSigners();
