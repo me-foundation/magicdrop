@@ -20,6 +20,7 @@ export interface IDeployParams {
   useoperatorfilterer?: boolean;
   openedition?: boolean;
   autoapproveaddress?: string;
+  mintcurrency?: string;
 }
 
 export const deploy = async (
@@ -67,6 +68,7 @@ export const deploy = async (
     hre.ethers.BigNumber.from(args.globalwalletlimit),
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
+    args.mintcurrency ?? hre.ethers.constants.AddressZero,
     args.autoapproveaddress ?? {},
   ] as const;
 
@@ -82,7 +84,7 @@ export const deploy = async (
     ),
   );
 
-  if (!await confirm({ message: 'Continue to deploy?' })) return;
+  if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
   const erc721M = await ERC721M.deploy(...params);
 

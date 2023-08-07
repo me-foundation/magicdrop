@@ -15,6 +15,7 @@ describe('ERC721MIncreasableSupply', () => {
       0,
       ethers.constants.AddressZero,
       300,
+      ethers.constants.AddressZero,
     );
     const [owner] = await ethers.getSigners();
     contract = contract.connect(owner);

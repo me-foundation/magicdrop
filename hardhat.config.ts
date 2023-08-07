@@ -108,6 +108,11 @@ task('deploy', 'Deploy ERC721M')
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
   )
+  .addOptionalParam(
+    'mintcurrency',
+    'ERC-20 contract address (if minting with ERC-20)',
+    '0x0000000000000000000000000000000000000000',
+  )
   .addOptionalParam('autoapproveaddress', 'auto approve address')
   .addFlag(
     'increasesupply',
@@ -170,10 +175,7 @@ task('deployBA', 'Deploy BucketAuction')
   )
   .addParam('auctionstarttime', 'The start time of the bucket auction')
   .addParam('auctionendtime', 'The end time of the bucket auction')
-  .addFlag(
-    'useoperatorfilterer',
-    'whether or not to use operator filterer',
-  )
+  .addFlag('useoperatorfilterer', 'whether or not to use operator filterer')
   .setAction(deployBA);
 
 task('setTimestampExpirySeconds', 'Set the timestamp expiry seconds')

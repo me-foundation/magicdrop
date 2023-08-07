@@ -17,7 +17,8 @@ contract ERC721MIncreasableSupply is ERC721M {
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds
+        uint64 timestampExpirySeconds,
+        address mintCurrency
     )
         ERC721M(
             collectionName,
@@ -26,7 +27,8 @@ contract ERC721MIncreasableSupply is ERC721M {
             maxMintableSupply,
             globalWalletLimit,
             cosigner,
-            timestampExpirySeconds
+            timestampExpirySeconds,
+            mintCurrency
         )
     {
         _canIncreaseMaxMintableSupply = true;
