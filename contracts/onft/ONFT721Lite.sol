@@ -109,9 +109,4 @@ contract ONFT721Lite is ONFT721CoreLite, ERC721, IONFT721 {
             mstore(str, length)
         }
     }
-
-    /// REMOVE
-    function mint(address _to, uint256 _tokenId) public virtual {
-        _safeMint(_to, _tokenId);
-    }
 }
