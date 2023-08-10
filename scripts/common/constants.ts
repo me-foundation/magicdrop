@@ -8,6 +8,7 @@ export const ContractDetails = {
   ERC721MAutoApprover: { name: 'ERC721MAutoApprover' }, // ERC721M with auto approver
   ERC721MOperatorFiltererAutoApprover: { name: 'ERC721MOperatorFiltererAutoApprover' }, // ERC721M with operator filterer and auto approver
   ERC721MOnft: { name: 'ERC721MOnft' }, // ERC721M with LayerZero integration 
+  ONFT721Lite: { name: 'ONFT721Lite' }, // ERC721 non-minting with LayerZero integration 
   BucketAuction: { name: 'BucketAuction' }, // The contract of bucket auctions
   BucketAuctionOperatorFilterer: { name: 'BucketAuctionOperatorFilterer' }, // Bucket auction with operator filterer
 } as const;

@@ -32,7 +32,8 @@ import { getPrice } from './scripts/dev/getPrice';
 import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
 import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
 import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
-import { deployERC721MOnft } from './scripts/deployERC721MOnft';
+import { deployOnft } from './scripts/deployOnft';
+import { setOnftMinDstGas } from './scripts/setOnftMinDstGas';
 import { setTrustedRemote } from './scripts/setTrustedRemote';
 import { sendOnft } from './scripts/sendOnft';
 
@@ -65,7 +66,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     goerli: {
-      url: process.env.GOERLI_URL || '',
+      url: process.env.GOERLI_URL || 'https://eth-goerli.api.onfinality.io/public',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -75,7 +76,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {
-      url: process.env.MUMBAI_URL || '',
+      url: process.env.MUMBAI_URL || 'https://rpc-mumbai.maticvigil.com/',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -262,24 +263,21 @@ task('setPrice', 'set the price set for BA')
   .addParam('priceinwei', 'price in wei')
   .setAction(setPrice);
 
-task('deployERC721MOnft', 'Deploy ERC721MOnft')
+task('deployOnft', 'Deploy ERC721MOnft')
+  .addFlag('ismintingcontract', 'whether or not this is a minting contract')
   .addParam('name', 'name')
   .addParam('symbol', 'symbol')
   .addParam('maxsupply', 'max supply')
   .addParam('tokenurisuffix', 'token uri suffix', '.json')
-  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
+  .addParam('globalwalletlimit', 'global wallet limit', '0')
   .addOptionalParam(
     'cosigner',
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
   )
-  .addOptionalParam('autoapproveaddress', 'auto approve address')
-  .addFlag(
-    'increasesupply',
-    'whether or not to enable increasing supply behavior',
-  )
-  .addOptionalParam('minGasToStore', 'minimum gas to store default 150000', '15000')
-  .setAction(deployERC721MOnft);
+  .addOptionalParam('mingastostore', 'minimum gas to store default 15000', '15000')
+  .setAction(deployOnft);
 
 task('setTrustedRemote', 'Set trusted remote for ERC721MOnft')
   .addParam('sourceaddress', 'the contract address you are setting the remote on')
@@ -287,11 +285,18 @@ task('setTrustedRemote', 'Set trusted remote for ERC721MOnft')
   .addParam('targetaddress', 'the address of the contract on the target network')
   .setAction(setTrustedRemote);
 
+task('setOnftMinDstGas', 'Set min destination gas for ERC721MOnft')
+  .addParam('contract', 'the contract address')
+  .addParam('targetnetwork', 'the network you plan to send the tokens to')
+  .addOptionalParam('packettype', 'package type. default to 1', '1')
+  .addOptionalParam('mingas', 'min gas. default to 200000', '200000')
+  .setAction(setOnftMinDstGas);
+  
 task('sendOnft', 'Send tokens to target network')
   .addParam('contract', 'the contract address you are sending tokens from')
-  .addParam('tokenowner', 'the owner of the tokens')
   .addParam('targetnetwork', 'the network you are sending the tokens to')
   .addParam('tokenid', 'the token id you are sending')
+  .addOptionalParam('tokenowner', 'the owner of the tokens')
   .addOptionalParam('refundaddress', 'the address you want to refund to')
   .addOptionalParam('zeropaymentaddress', 'the address you want to send a zero payment to')
   .setAction(sendOnft);

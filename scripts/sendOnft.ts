@@ -1,11 +1,12 @@
+import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ChainIds, ContractDetails } from './common/constants';
 
 export interface ISendOnftParams {
   contract: string;
-  tokenowner: string;
-  targetnetwork: string;
   tokenid: string;
+  targetnetwork: string;
+  tokenowner?: string;
   newowner?: string;
   refundaddress?: string;
   zeropaymentaddress?: string;
@@ -17,10 +18,8 @@ export const sendOnft = async (
   ) => {
     const supportedNetworks = Object.keys(ChainIds);
     if (!supportedNetworks.includes(args.targetnetwork)) {
-        throw new Error(`Invalid network. Supported networks are: ${supportedNetworks.join(', ')}`);
+      throw new Error(`Invalid network. Supported networks are: ${supportedNetworks.join(', ')}`);
     }
-
-    console.log(1);
 
     const { ethers } = hre;
     const ERC721MOnft = await ethers.getContractFactory(
@@ -28,27 +27,24 @@ export const sendOnft = async (
     );
     const contract = ERC721MOnft.attach(args.contract);
 
+    const signers = await ethers.getSigners();
+    const owner = signers[0].address;
     const targetChainId = ChainIds[args.targetnetwork];
-    const newOwner = args.newowner ?? args.tokenowner;
-    const refundAddress = args.refundaddress ?? args.tokenowner;
+    const newOwner = args.newowner ?? owner;
+    const refundAddress = args.refundaddress ?? owner;
     const zeroPaymentAddress = args.refundaddress ?? ethers.constants.AddressZero;
 
     // quote fee with default adapterParams
     const adapterParams = ethers.utils.solidityPack(["uint16", "uint256"], [1, 200000]) // default adapterParams example
-    console.log(adapterParams);
-
-    console.log(2);
-
     const fees = await contract.estimateSendFee(targetChainId, newOwner, args.tokenid, /* useZro= */false, adapterParams);
-    console.log(3);
 
     const nativeFee = fees[0];
     console.log(`native fees (wei): ${nativeFee}`)
-
-    console.log();
+    console.log(`Going to send tokenId: ${args.tokenid} from ${hre.network.name}/${args.contract} owned by ${owner} \n\rto \n\r trusted remote on ${args.targetnetwork} owned by ${newOwner} `);
+    if (!await confirm({ message: 'Continue?' })) return;
 
     try {
-        const tx = await contract.sendFrom(args.tokenowner, targetChainId, newOwner, args.tokenid, refundAddress, zeroPaymentAddress, adapterParams, { value: nativeFee.mul(5).div(4), gasLimit: 2_500_000 });
+        const tx = await contract.sendFrom(owner, targetChainId, newOwner, args.tokenid, refundAddress, zeroPaymentAddress, adapterParams, { value: nativeFee.mul(5).div(4) });
         console.log(`Submitted tx ${tx.hash}`);
         await tx.wait();
         console.log(`✅ Sent.`)

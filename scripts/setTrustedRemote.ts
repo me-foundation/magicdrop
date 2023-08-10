@@ -29,13 +29,6 @@ export const setTrustedRemote = async (
     );
     const contract = ERC721MOnft.attach(args.sourceaddress);
 
-    const isTrustedRemoteSet = await contract.isTrustedRemote(remoteChainId, remoteAndLocal);
-
-    if (isTrustedRemoteSet) {
-        console.log("TrustedRemote already set for this source contract.")
-        if (!await confirm({ message: 'Reset?' })) return;
-    }
-
     console.log(`Setting TrustedRemote on ${hre.network.name}/${args.sourceaddress} to target ${args.targetnetwork}/${args.targetaddress}`)
     if (!await confirm({ message: 'Continue?' })) return;
 

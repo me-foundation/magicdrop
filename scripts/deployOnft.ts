@@ -9,43 +9,57 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails, LayerZeroEndpoints } from './common/constants';
 
 export interface IDeployParams {
+  ismintingcontract: boolean;
   name: string;
   symbol: string;
   tokenurisuffix: string;
   maxsupply: string;
+  globalwalletlimit: string;
   cosigner?: string;
   timestampexpiryseconds?: number;
-  increasesupply?: boolean;
-  minGasToStore: string;
+  mingastostore: string;
 }
 
-export const deployERC721MOnft = async (
+export const deployOnft = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
 
-  const contractName = ContractDetails.ERC721MOnft.name;
+  let contractName;
+  let deployParams;
+
+  if (args.ismintingcontract) {
+    contractName = ContractDetails.ERC721MOnft.name;
+    deployParams = [
+      args.name,
+      args.symbol,
+      args.tokenurisuffix,
+      hre.ethers.BigNumber.from(args.maxsupply),
+      hre.ethers.BigNumber.from(args.globalwalletlimit),
+      args.cosigner ?? hre.ethers.constants.AddressZero,
+      args.timestampexpiryseconds ?? 300,
+      hre.ethers.BigNumber.from(args.mingastostore),
+      LayerZeroEndpoints[hre.network.name],
+    ] as const;
+  } else {
+    contractName = ContractDetails.ONFT721Lite.name;
+    deployParams = [
+      args.name,
+      args.symbol,
+      hre.ethers.BigNumber.from(args.mingastostore),
+      LayerZeroEndpoints[hre.network.name],
+    ] as const;
+  }
 
   console.log(
     `Going to deploy ${contractName} with params`,
     JSON.stringify(args, null, 2),
   );
 
-  const params = [
-    args.name,
-    args.symbol,
-    args.tokenurisuffix,
-    hre.ethers.BigNumber.from(args.maxsupply),
-    args.cosigner ?? hre.ethers.constants.AddressZero,
-    args.timestampexpiryseconds ?? 300,
-    hre.ethers.BigNumber.from(args.minGasToStore),
-    LayerZeroEndpoints[hre.network.name],
-  ] as const;
-
   console.log(
     `Constructor params: `,
     JSON.stringify(
-      params.map((param) => {
+      deployParams?.map((param) => {
         if (hre.ethers.BigNumber.isBigNumber(param)) {
           return param.toString();
         }
@@ -57,7 +71,7 @@ export const deployERC721MOnft = async (
   if (!await confirm({ message: 'Continue to deploy?' })) return;
 
   const contract = await hre.ethers.getContractFactory(contractName);
-  const erc721MOnft = await contract.deploy(...params);
+  const erc721MOnft = await contract.deploy(...deployParams);
 
   await erc721MOnft.deployed();
 

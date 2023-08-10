@@ -8,58 +8,66 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
-import "./IERC721MCore.sol";
+import "./IERC721M.sol";
 
 /**
- * @title ERC721MCore
+ * @title ERC721MLite
  *
  * @dev ERC721A subclass with MagicEden launchpad features including
  *  - multiple minting stages with time-based auto stage switch
- *  - stage wallet-level minting limit
+ *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
+ *  - crossmint support
  *  - anti-botting
  */
-contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard {
+contract ERC721MLite is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
 
     // Whether this contract is mintable.
-    bool internal _mintable;
+    bool private _mintable;
 
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
-    uint64 internal _timestampExpirySeconds;
+    uint64 private _timestampExpirySeconds;
 
     // The address of the cosigner server.
-    address internal _cosigner;
+    address private _cosigner;
 
     // The total mintable supply.
     uint256 internal _maxMintableSupply;
 
+    // Global wallet limit, across all stages.
+    uint256 private _globalWalletLimit;
+
     // Current base URI.
-    string internal _currentBaseURI;
+    string private _currentBaseURI;
 
     // The suffix for the token URL, e.g. ".json".
-    string internal _tokenURISuffix;
+    string private _tokenURISuffix;
 
     // Mint stage infomation. See MintStageInfo for details.
-    MintStageInfo[] internal _mintStages;
+    MintStageInfo[] private _mintStages;
 
     // Minted count per stage per wallet.
     mapping(uint256 => mapping(address => uint32))
-        internal _stageMintedCountsPerWallet;
+        private _stageMintedCountsPerWallet;
 
     // Minted count per stage.
-    mapping(uint256 => uint256) internal _stageMintedCounts;
+    mapping(uint256 => uint256) private _stageMintedCounts;
 
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
+        uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds
     ) ERC721A(collectionName, collectionSymbol) {
+        if (globalWalletLimit > maxMintableSupply)
+            revert GlobalWalletLimitOverflow();
         _mintable = false;
         _maxMintableSupply = maxMintableSupply;
+        _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
@@ -74,6 +82,14 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
     }
 
     /**
+     * @dev Returns whether NOT mintable.
+     */
+    modifier cannotMint() {
+        if (_mintable) revert Mintable();
+        _;
+    }
+
+    /**
      * @dev Returns whether it has enough supply for the given qty.
      */
     modifier hasSupply(uint256 qty) {
@@ -82,10 +98,31 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
     }
 
     /**
+     * @dev Returns crossmint address. Always returns 0x0.
+     */
+    function getCrossmintAddress() external pure override returns (address) {
+        return address(0);
+    }
+
+    /**
+     * @dev Returns cosigner address.
+     */
+    function getCosigner() external view override returns (address) {
+        return _cosigner;
+    }
+
+    /**
      * @dev Returns cosign nonce.
      */
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
+    }
+
+    /**
+     * @dev Returns expiry in seconds.
+     */
+    function getTimestampExpirySeconds() public view override returns (uint64) {
+        return _timestampExpirySeconds;
     }
 
     /**
@@ -117,11 +154,12 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
             _mintStages.pop();
         }
 
+        uint64 timestampExpirySeconds = getTimestampExpirySeconds();
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds
+                    newStages[i - 1].endTimeUnixSeconds + timestampExpirySeconds
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -187,7 +225,8 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
     function setMaxMintableSupply(uint256 maxMintableSupply)
         external
         virtual
-        onlyOwner {
+        onlyOwner
+    {
         _maxMintableSupply = maxMintableSupply;
         emit SetMaxMintableSupply(maxMintableSupply);
     }
@@ -195,8 +234,8 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
     /**
      * @dev Returns global wallet limit. This is the max number of tokens can be minted by one wallet.
      */
-    function getGlobalWalletLimit() external view virtual returns (uint256) {
-        return 0;
+    function getGlobalWalletLimit() external view override returns (uint256) {
+        return _globalWalletLimit;
     }
 
     /**
@@ -207,7 +246,8 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
         view
         virtual
         override
-        returns (uint256) {
+        returns (uint256)
+    {
         return _numberMinted(a);
     }
 
@@ -222,10 +262,14 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
             MintStageInfo memory,
             uint32,
             uint256
-        ) {
-        if (index >= _mintStages.length) revert InvalidStage();
-
-        return (_mintStages[index], _stageMintedCountsPerWallet[index][msg.sender],  _stageMintedCounts[index]);
+        )
+    {
+        if (index >= _mintStages.length) {
+            revert("InvalidStage");
+        }
+        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
+        uint256 stageMinted = _stageMintedCounts[index];
+        return (_mintStages[index], walletMinted, stageMinted);
     }
 
     /**
@@ -245,7 +289,7 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
             if (
                 startTimeUnixSeconds <
                 _mintStages[index - 1].endTimeUnixSeconds +
-                    _timestampExpirySeconds
+                    getTimestampExpirySeconds()
             ) {
                 revert InsufficientStageTimeGap();
             }
@@ -301,16 +345,16 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
     ) internal canMint hasSupply(qty) {
         uint64 stageTimestamp = uint64(block.timestamp);
 
-        
+        MintStageInfo memory stage;
         if (_cosigner != address(0)) {
-            _assertValidCosign(msg.sender, qty, timestamp, signature);
+            assertValidCosign(msg.sender, qty, timestamp, signature);
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;
         }
 
-        uint256 activeStage = _getActiveStageFromTimestamp(stageTimestamp);
+        uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
-        MintStageInfo memory stage = _mintStages[activeStage];
+        stage = _mintStages[activeStage];
 
         // Check value
         if (msg.value < stage.price * qty) revert NotEnoughValue();
@@ -319,6 +363,12 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
         if (stage.maxStageSupply > 0) {
             if (_stageMintedCounts[activeStage] + qty > stage.maxStageSupply)
                 revert StageSupplyExceeded();
+        }
+
+        // Check global wallet limit if applicable
+        if (_globalWalletLimit > 0) {
+            if (_numberMinted(to) + qty > _globalWalletLimit)
+                revert WalletGlobalLimitExceeded();
         }
 
         // Check wallet limit for stage if applicable, limit == 0 means no limit enforced
@@ -350,7 +400,11 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
      * NOTE: This function bypasses validations thus only available for owner.
      * This is typically used for owner to  pre-mint or mint the remaining of the supply.
      */
-    function ownerMint(uint32 qty, address to) external onlyOwner hasSupply(qty) {
+    function ownerMint(uint32 qty, address to)
+        external
+        onlyOwner
+        hasSupply(qty)
+    {
         _safeMint(to, qty);
     }
 
@@ -358,17 +412,30 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
      * @dev Withdraws funds by owner.
      */
     function withdraw() external onlyOwner {
-        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        uint256 value = address(this).balance;
+        (bool success, ) = msg.sender.call{value: value}("");
         if (!success) revert WithdrawFailed();
-        emit Withdraw(address(this).balance);
+        emit Withdraw(value);
     }
 
     /**
      * @dev Sets token base URI.
      */
-    function setBaseURI(string calldata baseURI) external virtual onlyOwner {
+    function setBaseURI(string calldata baseURI) external onlyOwner {
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
+    }
+
+    /**
+     * @dev Returns token URI suffix.
+     */
+    function getTokenURISuffix()
+        external
+        view
+        override
+        returns (string memory)
+    {
+        return _tokenURISuffix;
     }
 
     /**
@@ -385,14 +452,16 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
         public
         view
         override(ERC721A, IERC721A)
-        returns (string memory) {
+        returns (string memory)
+    {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
+        string memory baseURI = _currentBaseURI;
         return
-            bytes(_currentBaseURI).length != 0
+            bytes(baseURI).length != 0
                 ? string(
                     abi.encodePacked(
-                        _currentBaseURI,
+                        baseURI,
                         _toString(tokenId),
                         _tokenURISuffix
                     )
@@ -407,7 +476,7 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
         address minter,
         uint32 qty,
         uint64 timestamp
-    ) internal view returns (bytes32) {
+    ) public view returns (bytes32) {
         if (_cosigner == address(0)) revert CosignerNotSet();
         return
             keccak256(
@@ -426,7 +495,7 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
     /**
      * @dev Validates the the given signature.
      */
-    function _assertValidCosign(
+    function assertValidCosign(
         address minter,
         uint32 qty,
         uint64 timestamp,
@@ -444,9 +513,10 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
     /**
      * @dev Returns the current active stage based on timestamp.
      */
-    function _getActiveStageFromTimestamp(uint64 timestamp)
-        internal
+    function getActiveStageFromTimestamp(uint64 timestamp)
+        public
         view
+        override
         returns (uint256)
     {
         for (uint256 i = 0; i < _mintStages.length; i++) {
@@ -464,14 +534,17 @@ contract ERC721MCore is IERC721MCore, ERC721AQueryable, Ownable, ReentrancyGuard
      * @dev Validates the timestamp is not expired.
      */
     function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - _timestampExpirySeconds)
+        if (timestamp < block.timestamp - getTimestampExpirySeconds())
             revert TimestampExpired();
     }
 
     /**
      * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
      */
-    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end) internal pure {
+    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end)
+        internal
+        pure
+    {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 

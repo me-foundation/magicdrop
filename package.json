@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
-    "@layerzerolabs/solidity-examples": "^0.0.12",
+    "@layerzerolabs/solidity-examples": "^0.0.13",
     "@openzeppelin/contracts": "^4.7.3",
     "erc721a": "^4.2.3"
   },
