@@ -531,6 +531,13 @@ contract ERC721MLite is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Returns mint currency address.
+     */
+    function getMintCurrency() external pure override returns (address) {
+        return address(0);
+    }
+
+    /**
      * @dev Validates the timestamp is not expired.
      */
     function _assertValidTimestamp(uint64 timestamp) internal view {
