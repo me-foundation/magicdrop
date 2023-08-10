@@ -57,6 +57,7 @@ describe('ERC721M', function () {
       0,
       ethers.constants.AddressZero,
       60,
+      ethers.constants.AddressZero,
     );
     await erc721M.deployed();
 
@@ -1292,6 +1293,7 @@ describe('ERC721M', function () {
         0,
         ethers.constants.AddressZero,
         60,
+        ethers.constants.AddressZero,
       );
       await erc721M.deployed();
 
@@ -1366,6 +1368,7 @@ describe('ERC721M', function () {
         0,
         owner.address,
         300,
+        ethers.constants.AddressZero,
       );
       await erc721M.deployed();
 
@@ -1727,6 +1730,7 @@ describe('ERC721M', function () {
           1001,
           ethers.constants.AddressZero,
           60,
+          ethers.constants.AddressZero,
         ),
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
@@ -1829,6 +1833,7 @@ describe('ERC721M', function () {
         0,
         ethers.constants.AddressZero,
         60,
+        ethers.constants.AddressZero,
       );
       await erc721M.deployed();
       const ownerConn = erc721M.connect(owner);
@@ -1858,6 +1863,7 @@ describe('ERC721M', function () {
         0,
         cosigner.address,
         60,
+        ethers.constants.AddressZero,
       );
       await erc721M.deployed();
 

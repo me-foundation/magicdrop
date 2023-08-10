@@ -14,7 +14,8 @@ contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, Default
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds
+        uint64 timestampExpirySeconds,
+        address mintCurrency
     )
         ERC721MIncreasableSupply(
             collectionName,
@@ -23,7 +24,8 @@ contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, Default
             maxMintableSupply,
             globalWalletLimit,
             cosigner,
-            timestampExpirySeconds
+            timestampExpirySeconds,
+            mintCurrency
         )
     {}
 

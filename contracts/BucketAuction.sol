@@ -42,7 +42,9 @@ contract BucketAuction is IBucketAuction, ERC721M {
             globalWalletLimit,
             cosigner,
             /* timestampExpirySeconds= */
-            300
+            300,
+            /* mintCurrency= */
+            address(0)
         )
     {
         _claimable = false;

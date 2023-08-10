@@ -17,6 +17,7 @@ contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
+        address mintCurrency,
         address autoApproveAddress
     )
         ERC721MOperatorFilterer(
@@ -26,7 +27,8 @@ contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
             maxMintableSupply,
             globalWalletLimit,
             cosigner,
-            timestampExpirySeconds
+            timestampExpirySeconds,
+            mintCurrency
         )
     {
         _autoApproveAddress = autoApproveAddress;

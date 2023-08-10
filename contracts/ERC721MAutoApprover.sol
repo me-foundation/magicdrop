@@ -17,6 +17,7 @@ contract ERC721MAutoApprover is ERC721M {
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
+        address mintCurrency,
         address autoApproveAddress
     )
         ERC721M(
@@ -26,7 +27,8 @@ contract ERC721MAutoApprover is ERC721M {
             maxMintableSupply,
             globalWalletLimit,
             cosigner,
-            timestampExpirySeconds
+            timestampExpirySeconds,
+            mintCurrency
         )
     {
         _autoApproveAddress = autoApproveAddress;

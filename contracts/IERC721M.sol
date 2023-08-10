@@ -25,6 +25,7 @@ interface IERC721M is IERC721AQueryable {
     error WalletGlobalLimitExceeded();
     error WalletStageLimitExceeded();
     error WithdrawFailed();
+    error WrongMintCurrency();
 
     struct MintStageInfo {
         uint80 price;
@@ -53,8 +54,10 @@ interface IERC721M is IERC721AQueryable {
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
     event SetTimestampExpirySeconds(uint64 expiry);
+    event SetMintCurrency(address mintCurrency);
     event PermanentBaseURI(string baseURI);
     event Withdraw(uint256 value);
+    event WithdrawERC20(address mintCurrency, uint256 value);
 
     function getCosigner() external view returns (address);
 
@@ -82,6 +85,8 @@ interface IERC721M is IERC721AQueryable {
             uint32,
             uint256
         );
+
+    function getMintCurrency() external view returns (address);
 
     function getActiveStageFromTimestamp(uint64 timestamp)
         external
