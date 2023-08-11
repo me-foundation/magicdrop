@@ -9,7 +9,9 @@ import { ILayerZeroEndpoint } from "@layerzerolabs/solidity-examples/contracts/i
 import { BytesLib } from "@layerzerolabs/solidity-examples/contracts/util/BytesLib.sol";
 
 /*
- * a generic LzReceiver implementation
+ * A lite version of generic LzReceiver implementation (LzApp)
+ * - shorten error messages
+ * - remove unncessary functions including getConfig, setTrustedRemoteAddress, getTrustedRemoteAddress and isTrustedRemote 
  */
 abstract contract LzAppLite is Ownable, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
     using BytesLib for bytes;

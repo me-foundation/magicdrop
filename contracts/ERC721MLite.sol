@@ -17,8 +17,7 @@ import "./IERC721M.sol";
  *  - multiple minting stages with time-based auto stage switch
  *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
- *  - crossmint support
- *  - anti-botting
+ *  - anti-botting with cosigner
  */
 contract ERC721MLite is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
@@ -227,6 +226,10 @@ contract ERC721MLite is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         virtual
         onlyOwner
     {
+        if (maxMintableSupply > _maxMintableSupply) {
+            revert CannotIncreaseMaxMintableSupply();
+        }
+
         _maxMintableSupply = maxMintableSupply;
         emit SetMaxMintableSupply(maxMintableSupply);
     }
