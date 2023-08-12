@@ -7,38 +7,29 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "./IERC721M.sol";
 
 /**
- * @title ERC721M
+ * @title ERC721MLite
  *
  * @dev ERC721A subclass with MagicEden launchpad features including
  *  - multiple minting stages with time-based auto stage switch
  *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
- *  - crossmint support
- *  - anti-botting
+ *  - anti-botting with cosigner
  */
-contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
+contract ERC721MLite is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
-    using SafeERC20 for IERC20;
 
     // Whether this contract is mintable.
     bool private _mintable;
-
-    // Whether base URI is permanent. Once set, base URI is immutable.
-    bool private _baseURIPermanent;
 
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
     uint64 private _timestampExpirySeconds;
 
     // The address of the cosigner server.
     address private _cosigner;
-
-    // The crossmint address. Need to set if using crossmint.
-    address private _crossmintAddress;
 
     // The total mintable supply.
     uint256 internal _maxMintableSupply;
@@ -62,9 +53,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Minted count per stage.
     mapping(uint256 => uint256) private _stageMintedCounts;
 
-    // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
-    address private _mintCurrency;
-
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -72,8 +60,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds,
-        address mintCurrency
+        uint64 timestampExpirySeconds
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -83,7 +70,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _tokenURISuffix = tokenURISuffix;
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
-        _mintCurrency = mintCurrency;
     }
 
     /**
@@ -111,6 +97,13 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Returns crossmint address. Always returns 0x0.
+     */
+    function getCrossmintAddress() external pure override returns (address) {
+        return address(0);
+    }
+
+    /**
      * @dev Returns cosigner address.
      */
     function getCosigner() external view override returns (address) {
@@ -125,41 +118,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Sets cosigner.
-     */
-    function setCosigner(address cosigner) external onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
-    }
-
-    /**
      * @dev Returns expiry in seconds.
      */
     function getTimestampExpirySeconds() public view override returns (uint64) {
         return _timestampExpirySeconds;
-    }
-
-    /**
-     * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
-     */
-    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
-        _timestampExpirySeconds = expiry;
-        emit SetTimestampExpirySeconds(expiry);
-    }
-
-    /**
-     * @dev Returns crossmint address.
-     */
-    function getCrossmintAddress() external view override returns (address) {
-        return _crossmintAddress;
-    }
-
-    /**
-     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
-     */
-    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
-        _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(crossmintAddress);
     }
 
     /**
@@ -258,8 +220,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     /**
      * @dev Sets maximum mintable supply.
-     *
-     * New supply cannot be larger than the old.
      */
     function setMaxMintableSupply(uint256 maxMintableSupply)
         external
@@ -269,6 +229,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         if (maxMintableSupply > _maxMintableSupply) {
             revert CannotIncreaseMaxMintableSupply();
         }
+
         _maxMintableSupply = maxMintableSupply;
         emit SetMaxMintableSupply(maxMintableSupply);
     }
@@ -278,19 +239,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      */
     function getGlobalWalletLimit() external view override returns (uint256) {
         return _globalWalletLimit;
-    }
-
-    /**
-     * @dev Sets global wallet limit.
-     */
-    function setGlobalWalletLimit(uint256 globalWalletLimit)
-        external
-        onlyOwner
-    {
-        if (globalWalletLimit > _maxMintableSupply)
-            revert GlobalWalletLimitOverflow();
-        _globalWalletLimit = globalWalletLimit;
-        emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
     /**
@@ -372,13 +320,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns mint currency address.
-     */
-    function getMintCurrency() external view override returns (address) {
-        return _mintCurrency;
-    }
-
-    /**
      * @dev Mints token(s).
      *
      * qty - number of tokens to mint
@@ -393,30 +334,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes calldata signature
     ) virtual external payable nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
-    }
-
-    /**
-     * @dev Mints token(s) through crossmint. This function is supposed to be called by crossmint.
-     *
-     * qty - number of tokens to mint
-     * to - the address to mint tokens to
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function crossmint(
-        uint32 qty,
-        address to,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable nonReentrant {
-        if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
-
-        // Check the caller is Crossmint
-        if (msg.sender != _crossmintAddress) revert CrossmintOnly();
-
-        _mintInternal(qty, to, proof, timestamp, signature);
     }
 
     /**
@@ -442,8 +359,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
         stage = _mintStages[activeStage];
 
-        // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < stage.price * qty) revert NotEnoughValue();
+        // Check value
+        if (msg.value < stage.price * qty) revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
@@ -473,10 +390,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                     keccak256(abi.encodePacked(to))
                 ) != stage.merkleRoot
             ) revert InvalidProof();
-        }
-
-        if (_mintCurrency != address(0)) {
-            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(this), stage.price * qty);
         }
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
@@ -509,30 +422,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Withdraws ERC-20 funds by owner.
-     */
-    function withdrawERC20() external onlyOwner {
-        if (_mintCurrency == address(0)) revert WrongMintCurrency();
-        uint256 value = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(msg.sender, value);
-        emit WithdrawERC20(_mintCurrency, value);
-    }
-
-    /**
      * @dev Sets token base URI.
      */
     function setBaseURI(string calldata baseURI) external onlyOwner {
-        if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
-    }
-
-    /**
-     * @dev Sets token base URI permanent. Cannot revert.
-     */
-    function setBaseURIPermanent() external onlyOwner {
-        _baseURIPermanent = true;
-        emit PermanentBaseURI(_currentBaseURI);
     }
 
     /**
@@ -581,7 +475,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns data hash for the given minter, qty and timestamp.
      */
-    function getCosignDigest(
+    function _getCosignDigest(
         address minter,
         uint32 qty,
         uint64 timestamp
@@ -609,11 +503,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint32 qty,
         uint64 timestamp,
         bytes memory signature
-    ) public view override {
+    ) public view {
         if (
             !SignatureChecker.isValidSignatureNow(
                 _cosigner,
-                getCosignDigest(minter, qty, timestamp),
+                _getCosignDigest(minter, qty, timestamp),
                 signature
             )
         ) revert InvalidCosignSignature();
@@ -637,6 +531,13 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             }
         }
         revert InvalidStage();
+    }
+
+    /**
+     * @dev Returns mint currency address.
+     */
+    function getMintCurrency() external pure override returns (address) {
+        return address(0);
     }
 
     /**

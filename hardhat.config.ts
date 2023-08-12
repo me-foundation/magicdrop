@@ -3,6 +3,7 @@ import 'dotenv/config';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+import 'hardhat-contract-sizer';
 import 'hardhat-gas-reporter';
 import 'hardhat-watcher';
 import { HardhatUserConfig, task, types } from 'hardhat/config';
@@ -26,12 +27,15 @@ import { sendRefund } from './scripts/sendRefund';
 import { sendRefundBatch } from './scripts/sendRefundBatch';
 import { sendTokensAndRefund } from './scripts/sendTokensAndRefund';
 import { sendTokensAndRefundBatch } from './scripts/sendTokensAndRefundBatch';
-
 import { setPrice } from './scripts/setPrice';
 import { getPrice } from './scripts/dev/getPrice';
 import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
 import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
 import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
+import { deployOnft } from './scripts/deployOnft';
+import { setOnftMinDstGas } from './scripts/setOnftMinDstGas';
+import { setTrustedRemote } from './scripts/setTrustedRemote';
+import { sendOnft } from './scripts/sendOnft';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -42,6 +46,12 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
   paths: {
     artifacts: './artifacts',
@@ -56,7 +66,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     goerli: {
-      url: process.env.GOERLI_URL || '',
+      url: process.env.GOERLI_URL || 'https://eth-goerli.api.onfinality.io/public',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -66,7 +76,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     mumbai: {
-      url: process.env.MUMBAI_URL || '',
+      url: process.env.MUMBAI_URL || 'https://rpc-mumbai.maticvigil.com/',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -254,5 +264,43 @@ task('setPrice', 'set the price set for BA')
   .addParam('contract', 'contract address')
   .addParam('priceinwei', 'price in wei')
   .setAction(setPrice);
+
+task('deployOnft', 'Deploy ERC721MOnft')
+  .addFlag('ismintingcontract', 'whether or not this is a minting contract')
+  .addParam('name', 'name')
+  .addParam('symbol', 'symbol')
+  .addParam('maxsupply', 'max supply')
+  .addParam('tokenurisuffix', 'token uri suffix', '.json')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
+  .addParam('globalwalletlimit', 'global wallet limit', '0')
+  .addOptionalParam(
+    'cosigner',
+    'cosigner address (0x00...000 if not using cosign)',
+    '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam('mingastostore', 'minimum gas to store default 15000', '15000')
+  .setAction(deployOnft);
+
+task('setTrustedRemote', 'Set trusted remote for ERC721MOnft')
+  .addParam('sourceaddress', 'the contract address you are setting the remote on')
+  .addParam('targetnetwork', 'the network you are setting the remote to')
+  .addParam('targetaddress', 'the address of the contract on the target network')
+  .setAction(setTrustedRemote);
+
+task('setOnftMinDstGas', 'Set min destination gas for ERC721MOnft')
+  .addParam('contract', 'the contract address')
+  .addParam('targetnetwork', 'the network you plan to send the tokens to')
+  .addOptionalParam('packettype', 'package type. default to 1', '1')
+  .addOptionalParam('mingas', 'min gas. default to 200000', '200000')
+  .setAction(setOnftMinDstGas);
+  
+task('sendOnft', 'Send tokens to target network')
+  .addParam('contract', 'the contract address you are sending tokens from')
+  .addParam('targetnetwork', 'the network you are sending the tokens to')
+  .addParam('tokenid', 'the token id you are sending')
+  .addOptionalParam('tokenowner', 'the owner of the tokens')
+  .addOptionalParam('refundaddress', 'the address you want to refund to')
+  .addOptionalParam('zeropaymentaddress', 'the address you want to send a zero payment to')
+  .setAction(sendOnft);
 
 export default config;
