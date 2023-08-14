@@ -11,7 +11,11 @@ import {IONFT721} from "@layerzerolabs/solidity-examples/contracts/token/onft/IO
  *
  * @dev ERC721MOnft is an ERC721M contract with LayerZero integration.
  */
-contract ERC721MOnft is ERC721MLite, ONFT721CoreLite, ERC721A__IERC721Receiver {
+contract ERC721MOnft is
+    ERC721MLite,
+    ONFT721CoreLite,
+    ERC721A__IERC721Receiver
+{
     error CallerNotOwnerOrApproved();
     error FromAddressNotOwner();
     error NotExistOrNotOwnedByContract();
