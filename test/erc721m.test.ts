@@ -519,18 +519,6 @@ describe('ERC721M', function () {
       await expect(getStageInfo).to.be.revertedWith('InvalidStage');
     });
 
-    it('can set/get timestamp expiry', async () => {
-      expect((await contract.getTimestampExpirySeconds()).toNumber()).to.eq(60);
-
-      await expect(contract.setTimestampExpirySeconds(120))
-        .to.emit(contract, 'SetTimestampExpirySeconds')
-        .withArgs(120);
-
-      expect((await contract.getTimestampExpirySeconds()).toNumber()).to.eq(
-        120,
-      );
-    });
-
     it('can find active stage', async () => {
       await contract.setStages([
         {
@@ -1318,10 +1306,6 @@ describe('ERC721M', function () {
       await ownerConn.setMintable(true);
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
 
-      expect(await ownerConn.getCrossmintAddress()).to.equal(
-        crossmintAddressStr,
-      );
-
       // Impersonate Crossmint wallet
       const crossmintSigner = await ethers.getImpersonatedSigner(
         crossmintAddressStr,
@@ -1388,10 +1372,6 @@ describe('ERC721M', function () {
       ]);
       await ownerConn.setMintable(true);
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
-
-      expect(await ownerConn.getCrossmintAddress()).to.equal(
-        crossmintAddressStr,
-      );
 
       // Impersonate Crossmint wallet
       const crossmintSigner = await ethers.getImpersonatedSigner(
@@ -1788,9 +1768,6 @@ describe('ERC721M', function () {
         'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4/',
       );
 
-      const suffix = await contract.getTokenURISuffix();
-      expect(suffix).to.equal('.json');
-
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
@@ -1837,14 +1814,12 @@ describe('ERC721M', function () {
       );
       await erc721M.deployed();
       const ownerConn = erc721M.connect(owner);
-      expect(await ownerConn.getCosigner()).to.eq(ethers.constants.AddressZero);
       await expect(
         ownerConn.getCosignDigest(owner.address, 1, 0),
       ).to.be.revertedWith('CosignerNotSet');
 
       // we can set the cosigner
       await ownerConn.setCosigner(cosigner.address);
-      expect(await ownerConn.getCosigner()).to.eq(cosigner.address);
 
       // readonly contract can't set cosigner
       await expect(
@@ -1868,8 +1843,6 @@ describe('ERC721M', function () {
       await erc721M.deployed();
 
       const minterConn = erc721M.connect(minter);
-      expect(await minterConn.getCosigner()).to.eq(cosigner.address);
-
       const timestamp = Math.floor(new Date().getTime() / 1000);
       const sig = await getCosignSignature(
         erc721M,
