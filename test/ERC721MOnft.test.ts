@@ -3,7 +3,7 @@ import { Contract, Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 
-describe.only('ERC721MOnft Test', () => {
+describe('ERC721MOnft Test', () => {
   let contract: ERC721MOnft;
   let lzEndpoint: Contract;
   let owner: Signer;

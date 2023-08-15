@@ -95,26 +95,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns whether NOT mintable.
-     */
-    modifier cannotMint() {
-        if (_mintable) revert Mintable();
-        _;
-    }
-
-    /**
      * @dev Returns whether it has enough supply for the given qty.
      */
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
         _;
-    }
-
-    /**
-     * @dev Returns cosigner address.
-     */
-    function getCosigner() external view override returns (address) {
-        return _cosigner;
     }
 
     /**
@@ -133,25 +118,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns expiry in seconds.
-     */
-    function getTimestampExpirySeconds() public view override returns (uint64) {
-        return _timestampExpirySeconds;
-    }
-
-    /**
      * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
      */
     function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
         _timestampExpirySeconds = expiry;
         emit SetTimestampExpirySeconds(expiry);
-    }
-
-    /**
-     * @dev Returns crossmint address.
-     */
-    function getCrossmintAddress() external view override returns (address) {
-        return _crossmintAddress;
     }
 
     /**
@@ -191,12 +162,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             _mintStages.pop();
         }
 
-        uint64 timestampExpirySeconds = getTimestampExpirySeconds();
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds + timestampExpirySeconds
+                    newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -230,7 +200,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Gets whether mintable.
      */
-    function getMintable() external view override returns (bool) {
+    function getMintable() external view returns (bool) {
         return _mintable;
     }
 
@@ -344,7 +314,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             if (
                 startTimeUnixSeconds <
                 _mintStages[index - 1].endTimeUnixSeconds +
-                    getTimestampExpirySeconds()
+                    _timestampExpirySeconds
             ) {
                 revert InsufficientStageTimeGap();
             }
@@ -374,7 +344,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns mint currency address.
      */
-    function getMintCurrency() external view override returns (address) {
+    function getMintCurrency() external view returns (address) {
         return _mintCurrency;
     }
 
@@ -536,18 +506,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns token URI suffix.
-     */
-    function getTokenURISuffix()
-        external
-        view
-        override
-        returns (string memory)
-    {
-        return _tokenURISuffix;
-    }
-
-    /**
      * @dev Sets token URI suffix. e.g. ".json".
      */
     function setTokenURISuffix(string calldata suffix) external onlyOwner {
@@ -609,7 +567,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint32 qty,
         uint64 timestamp,
         bytes memory signature
-    ) public view override {
+    ) public view {
         if (
             !SignatureChecker.isValidSignatureNow(
                 _cosigner,
@@ -625,7 +583,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function getActiveStageFromTimestamp(uint64 timestamp)
         public
         view
-        override
         returns (uint256)
     {
         for (uint256 i = 0; i < _mintStages.length; i++) {
@@ -643,7 +600,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      * @dev Validates the timestamp is not expired.
      */
     function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - getTimestampExpirySeconds())
+        if (timestamp < block.timestamp - _timestampExpirySeconds)
             revert TimestampExpired();
     }
 

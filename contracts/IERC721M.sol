@@ -59,23 +59,13 @@ interface IERC721M is IERC721AQueryable {
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
 
-    function getCosigner() external view returns (address);
-
-    function getCrossmintAddress() external view returns (address);
-
     function getNumberStages() external view returns (uint256);
 
     function getGlobalWalletLimit() external view returns (uint256);
 
-    function getTimestampExpirySeconds() external view returns (uint64);
-
     function getMaxMintableSupply() external view returns (uint256);
 
-    function getMintable() external view returns (bool);
-
     function totalMintedByAddress(address a) external view returns (uint256);
-
-    function getTokenURISuffix() external view returns (string memory);
 
     function getStageInfo(uint256 index)
         external
@@ -85,18 +75,4 @@ interface IERC721M is IERC721AQueryable {
             uint32,
             uint256
         );
-
-    function getMintCurrency() external view returns (address);
-
-    function getActiveStageFromTimestamp(uint64 timestamp)
-        external
-        view
-        returns (uint256);
-
-    function assertValidCosign(
-        address minter,
-        uint32 qty,
-        uint64 timestamp,
-        bytes memory signature
-    ) external view;
 }
