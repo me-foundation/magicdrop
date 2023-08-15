@@ -114,7 +114,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      */
     function setCosigner(address cosigner) external onlyOwner {
         _cosigner = cosigner;
-        emit SetCosigner(_cosigner);
+        emit SetCosigner(cosigner);
     }
 
     /**
@@ -130,7 +130,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      */
     function setCrossmintAddress(address crossmintAddress) external onlyOwner {
         _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(_crossmintAddress);
+        emit SetCrossmintAddress(crossmintAddress);
     }
 
     /**
