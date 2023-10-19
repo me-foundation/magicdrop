@@ -20,6 +20,7 @@ export interface IDeployParams {
   useoperatorfilterer?: boolean;
   openedition?: boolean;
   autoapproveaddress?: string;
+  pausable?: boolean;
   mintcurrency?: string;
 }
 
@@ -29,21 +30,24 @@ export const deploy = async (
 ) => {
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
-  let contractName: string;
-
-  if (args.increasesupply) {
-    contractName = ContractDetails.ERC721MIncreasableSupply.name;
-    if (args.useoperatorfilterer) {
+  let contractName: string = ContractDetails.ERC721M.name;
+  if (args.useoperatorfilterer) {
+    if (args.increasesupply) {
       contractName = ContractDetails.ERC721MIncreasableOperatorFilterer.name;
+    } else if (args.autoapproveaddress) {
+      contractName = ContractDetails.ERC721MOperatorFiltererAutoApprover.name;
+    } else if (args.pausable) {
+      contractName = ContractDetails.ERC721MPausableOperatorFilterer.name;
+    } else {
+      contractName = ContractDetails.ERC721MOperatorFilterer.name;
     }
   } else {
-    contractName = ContractDetails.ERC721M.name;
-    if (args.useoperatorfilterer && args.autoapproveaddress) {
-      contractName = ContractDetails.ERC721MOperatorFiltererAutoApprover.name;
-    } else if (args.useoperatorfilterer) {
-      contractName = ContractDetails.ERC721MOperatorFilterer.name;
+    if (args.increasesupply) {
+      contractName = ContractDetails.ERC721MIncreasableSupply.name;
     } else if (args.autoapproveaddress) {
       contractName = ContractDetails.ERC721MAutoApprover.name;
+    } else if (args.pausable) {
+      contractName = ContractDetails.ERC721MPausable.name;
     }
   }
 

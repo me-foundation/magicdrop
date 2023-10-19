@@ -128,6 +128,7 @@ task('deploy', 'Deploy ERC721M')
     'increasesupply',
     'whether or not to enable increasing supply behavior',
   )
+  .addFlag('pausable', 'whether to allow transfers to be paused')
   .addFlag('useoperatorfilterer', 'whether or not to use operator filterer')
   .addFlag(
     'openedition',
