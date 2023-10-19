@@ -48,6 +48,15 @@ describe('ERC721MPausableOperatorFilterer', function () {
     await ethers.provider.send('evm_mine', [stageStart - 1]);
   });
 
+  it('should revert if non-owner tries to pause/unpause', async function () {
+    await expect(
+      erc721MPausableOperatorFilterer.connect(receiver).pause(),
+    ).to.be.revertedWith('Ownable: caller is not the owner');
+    await expect(
+      erc721MPausableOperatorFilterer.connect(receiver).unpause(),
+    ).to.be.revertedWith('Ownable: caller is not the owner');
+  });
+
   describe('Test transfers when paused/unpaused', function () {
     beforeEach(async function () {
       const qty = 2;
@@ -116,6 +125,51 @@ describe('ERC721MPausableOperatorFilterer', function () {
       ](owner.address, receiver.address, 1, []);
       expect(await erc721MPausableOperatorFilterer.ownerOf(1)).to.equal(
         receiver.address,
+      );
+    });
+  });
+
+  describe('Test other actions when paused/unpaused', function () {
+    it('should allow minting when paused', async function () {
+      const qty = 1;
+      const proof = [ethers.utils.hexZeroPad('0x', 32)]; // Placeholder
+      const timestamp = 0;
+      const signature = '0x00'; // Placeholder
+      await erc721MPausableOperatorFilterer.pause();
+      await erc721MPausableOperatorFilterer.mint(
+        qty,
+        proof,
+        timestamp,
+        signature,
+        {
+          value: ethers.utils.parseEther('50'),
+        },
+      );
+
+      expect(await erc721MPausableOperatorFilterer.ownerOf(0)).to.equal(
+        owner.address,
+      );
+    });
+
+    it('should allow minting when unpaused', async function () {
+      const qty = 1;
+      const proof = [ethers.utils.hexZeroPad('0x', 32)]; // Placeholder
+      const timestamp = 0;
+      const signature = '0x00'; // Placeholder
+      await erc721MPausableOperatorFilterer.pause();
+      await erc721MPausableOperatorFilterer.unpause();
+      await erc721MPausableOperatorFilterer.mint(
+        qty,
+        proof,
+        timestamp,
+        signature,
+        {
+          value: ethers.utils.parseEther('50'),
+        },
+      );
+
+      expect(await erc721MPausableOperatorFilterer.ownerOf(0)).to.equal(
+        owner.address,
       );
     });
   });
