@@ -66,7 +66,8 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     goerli: {
-      url: process.env.GOERLI_URL || 'https://eth-goerli.api.onfinality.io/public',
+      url:
+        process.env.GOERLI_URL || 'https://eth-goerli.api.onfinality.io/public',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -279,13 +280,23 @@ task('deployOnft', 'Deploy ERC721MOnft')
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
   )
-  .addOptionalParam('mingastostore', 'minimum gas to store default 15000', '15000')
+  .addOptionalParam(
+    'mingastostore',
+    'minimum gas to store default 15000',
+    '15000',
+  )
   .setAction(deployOnft);
 
 task('setTrustedRemote', 'Set trusted remote for ERC721MOnft')
-  .addParam('sourceaddress', 'the contract address you are setting the remote on')
+  .addParam(
+    'sourceaddress',
+    'the contract address you are setting the remote on',
+  )
   .addParam('targetnetwork', 'the network you are setting the remote to')
-  .addParam('targetaddress', 'the address of the contract on the target network')
+  .addParam(
+    'targetaddress',
+    'the address of the contract on the target network',
+  )
   .setAction(setTrustedRemote);
 
 task('setOnftMinDstGas', 'Set min destination gas for ERC721MOnft')
@@ -294,14 +305,17 @@ task('setOnftMinDstGas', 'Set min destination gas for ERC721MOnft')
   .addOptionalParam('packettype', 'package type. default to 1', '1')
   .addOptionalParam('mingas', 'min gas. default to 200000', '200000')
   .setAction(setOnftMinDstGas);
-  
+
 task('sendOnft', 'Send tokens to target network')
   .addParam('contract', 'the contract address you are sending tokens from')
   .addParam('targetnetwork', 'the network you are sending the tokens to')
   .addParam('tokenid', 'the token id you are sending')
   .addOptionalParam('tokenowner', 'the owner of the tokens')
   .addOptionalParam('refundaddress', 'the address you want to refund to')
-  .addOptionalParam('zeropaymentaddress', 'the address you want to send a zero payment to')
+  .addOptionalParam(
+    'zeropaymentaddress',
+    'the address you want to send a zero payment to',
+  )
   .setAction(sendOnft);
 
 export default config;
