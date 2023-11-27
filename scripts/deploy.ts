@@ -9,6 +9,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
 
 export interface IDeployParams {
+  useerc721c?: boolean;
   name: string;
   symbol: string;
   tokenurisuffix: string;
@@ -31,7 +32,10 @@ export const deploy = async (
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
   let contractName: string = ContractDetails.ERC721M.name;
-  if (args.useoperatorfilterer) {
+
+  if (args.useerc721c) {
+    contractName = ContractDetails.ERC721CM.name;
+  } else if (args.useoperatorfilterer) {
     if (args.increasesupply) {
       contractName = ContractDetails.ERC721MIncreasableOperatorFilterer.name;
     } else if (args.autoapproveaddress) {
@@ -62,7 +66,7 @@ export const deploy = async (
     JSON.stringify(args, null, 2),
   );
 
-  const ERC721M = await hre.ethers.getContractFactory(contractName);
+  const contractFactory = await hre.ethers.getContractFactory(contractName);
 
   const params = [
     args.name,
@@ -90,9 +94,9 @@ export const deploy = async (
 
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
-  const erc721M = await ERC721M.deploy(...params);
+  const contract = await contractFactory.deploy(...params);
 
-  await erc721M.deployed();
+  await contract.deployed();
 
-  console.log(`${contractName} deployed to:`, erc721M.address);
+  console.log(`${contractName} deployed to:`, contract.address);
 };
