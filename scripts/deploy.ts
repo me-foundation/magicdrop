@@ -9,7 +9,6 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
 
 export interface IDeployParams {
-  useerc721c?: boolean;
   name: string;
   symbol: string;
   tokenurisuffix: string;
@@ -23,6 +22,10 @@ export interface IDeployParams {
   autoapproveaddress?: string;
   pausable?: boolean;
   mintcurrency?: string;
+  useerc721c?: boolean;
+  useerc2198?: boolean;
+  erc2198royaltyreceiver?: string,
+  erc2198royaltyfeenumerator?: number,
 }
 
 export const deploy = async (
@@ -33,7 +36,9 @@ export const deploy = async (
   await hre.run('compile');
   let contractName: string = ContractDetails.ERC721M.name;
 
-  if (args.useerc721c) {
+  if (args.useerc721c && args.useerc2198) {
+    contractName = ContractDetails.ERC721CMBasicRoyalties.name;
+  } else if (args.useerc721c) {
     contractName = ContractDetails.ERC721CM.name;
   } else if (args.useoperatorfilterer) {
     if (args.increasesupply) {
@@ -77,8 +82,18 @@ export const deploy = async (
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
-    args.autoapproveaddress ?? {},
-  ] as const;
+  ] as any[];
+
+  if (args.autoapproveaddress) {
+    params.push(args.autoapproveaddress);
+  }
+
+  if (args.useerc2198) {
+    params.push(
+      args.erc2198royaltyreceiver ?? hre.ethers.constants.AddressZero,
+      args.erc2198royaltyfeenumerator ?? 0,
+    );
+  }
 
   console.log(
     `Constructor params: `,

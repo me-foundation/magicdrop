@@ -142,7 +142,9 @@ task('deploy', 'Deploy ERC721M')
     'whether or not a open edition mint (unlimited supply, 999,999,999)',
   )
   .addFlag('useerc721c', 'whether or not to use ERC721C')
-
+  .addFlag('useerc2198', 'whether or not to use ERC2198')
+  .addOptionalParam('erc2198royaltyreceiver', 'erc2198 royalty receiver address')
+  .addOptionalParam('erc2198royaltyfeenumerator', 'erc2198 royalty fee numerator')
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')

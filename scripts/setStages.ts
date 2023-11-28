@@ -74,7 +74,7 @@ export const setStages = async (
 
   if (!await confirm({ message: 'Continue to set stages?' })) return;
 
-  const tx = await contract.setStages(stages,overrides);
+  const tx = await contract.setStages(stages, overrides);
 
   console.log(`Submitted tx ${tx.hash}`);
 

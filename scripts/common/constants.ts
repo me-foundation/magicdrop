@@ -2,6 +2,7 @@
 
 export const ContractDetails = {
   ERC721CM: { name: 'ERC721CM' }, // ERC721M on ERC721C v2
+  ERC721CMBasicRoyalties: { name: 'ERC721CMBasicRoyalties' }, // ERC721M on ERC721C v2 with basic royalties
   ERC721M: { name: 'ERC721M' }, // The contract of direct sales
   ERC721MIncreasableSupply: { name: 'ERC721MIncreasableSupply' }, // ERC721M with increasable supply
   ERC721MOperatorFilterer: { name: 'ERC721MOperatorFilterer' }, // ERC721M with operator filterer
