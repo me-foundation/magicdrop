@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "contracts/creator-token-standards/access/OwnablePermissions.sol";
-import "contracts/creator-token-standards/interfaces/ICreatorTokenV2.sol";
+import "contracts/creator-token-standards/interfaces/ICreatorToken.sol";
 import "contracts/creator-token-standards/interfaces/ICreatorTokenTransferValidatorV2.sol";
 import "contracts/creator-token-standards/utils/TransferValidation.sol";
 import "@openzeppelin/contracts/interfaces/IERC165.sol";
@@ -34,8 +34,9 @@ import "@openzeppelin/contracts/interfaces/IERC165.sol";
  * <h4>Compatibility:</h4>
  * <ul>Backward and Forward Compatible - V1/V2 Creator Token Base will work with both V1 and V2 Transfer Validators.</ul>
  */
-abstract contract CreatorTokenBaseV2 is OwnablePermissions, TransferValidation, ICreatorTokenV2 {
-    
+abstract contract CreatorTokenBaseV2 is OwnablePermissions, TransferValidation, ICreatorToken {
+
+    error CreatorTokenBase__FunctionDeprecatedUseTransferValidatorInstead();
     error CreatorTokenBase__InvalidTransferValidatorContract();
     error CreatorTokenBase__SetTransferValidatorFirst();
 
@@ -148,155 +149,16 @@ abstract contract CreatorTokenBaseV2 is OwnablePermissions, TransferValidation, 
     }
 
     /**
-     * @notice Returns the transfer validator contract address for this token contract, if V2.
+     * @notice Returns the transfer validator contract address for this token contract.
      */
-    function getTransferValidatorV2() public view override returns (ICreatorTokenTransferValidatorV2 transferValidator) {
-        transferValidator = ICreatorTokenTransferValidatorV2(transferValidatorReference.transferValidator);
+    function getTransferValidator() public view override returns (ICreatorTokenTransferValidator transferValidator) {
+        transferValidator = ICreatorTokenTransferValidator(transferValidatorReference.transferValidator);
 
         if (address(transferValidator) == address(0)) {
             if (!transferValidatorReference.isInitialized) {
-                transferValidator = ICreatorTokenTransferValidatorV2(DEFAULT_TRANSFER_VALIDATOR);
+                transferValidator = ICreatorTokenTransferValidator(DEFAULT_TRANSFER_VALIDATOR);
             }
-        } else if (transferValidatorReference.version < 2) {
-            transferValidator = ICreatorTokenTransferValidatorV2(address(0));
         }
-    }
-
-    /**
-     * @notice Returns the security policy for this token contract, if V2 which includes:
-     *         Transfer security level, and list id.
-     */
-    function getSecurityPolicyV2() public view override returns (CollectionSecurityPolicyV2 memory) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getCollectionSecurityPolicyV2(address(this));
-        }
-
-        return CollectionSecurityPolicyV2({
-            transferSecurityLevel: TransferSecurityLevels.Zero,
-            listId: 0
-        });
-    }
-
-    /**
-     * @notice Returns the list of all blacklisted accounts for this token contract.
-     * @dev    This can be an expensive call and should only be used in view-only functions.
-     * @return The list of all blacklisted accounts for this token contract.
-     */
-    function getBlacklistedAccounts() external view override returns (address[] memory) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getBlacklistedAccountsByCollection(address(this));
-        }
-
-        return new address[](0);
-    }
-
-    /**
-     * @notice Returns the list of all whitelisted accounts for this token contract.
-     * @dev    This can be an expensive call and should only be used in view-only functions.
-     * @return The list of all whitelisted accounts for this token contract.
-     */
-    function getWhitelistedAccounts() external view override returns (address[] memory) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getWhitelistedAccountsByCollection(address(this));
-        }
-
-        return new address[](0);
-    }
-
-    /**
-     * @notice Returns the list of all blacklisted code hashes for this token contract.
-     * @dev    This can be an expensive call and should only be used in view-only functions.
-     * @return The list of all blacklisted code hashes for this token contract.
-     */
-    function getBlacklistedCodeHashes() external view override returns (bytes32[] memory) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getBlacklistedCodeHashesByCollection(address(this));
-        }
-
-        return new bytes32[](0);
-    }
-
-    /**
-     * @notice Returns the list of all whitelisted code hashes for this token contract.
-     * @dev    This can be an expensive call and should only be used in view-only functions.
-     * @return The list of all whitelisted code hashes for this token contract.
-     */
-    function getWhitelistedCodeHashes() external view override returns (bytes32[] memory) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getWhitelistedCodeHashesByCollection(address(this));
-        }
-
-        return new bytes32[](0);
-    }
-
-    /**
-     * @notice Checks if an account is blacklisted for this token contract.
-     * @param account The address of the account to check.
-     * @return        True if the account is blacklisted, false otherwise.
-     */
-    function isAccountBlacklisted(address account) external view override returns (bool) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.isAccountBlacklistedByCollection(address(this), account);
-        }
-
-        return false;
-    }
-
-    /**
-     * @notice Checks if an account is whitelisted for this token contract.
-     * @param account The address of the account to check.
-     * @return        True if the account is whitelisted, false otherwise.
-     */
-    function isAccountWhitelisted(address account) external view override returns (bool) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.isAccountWhitelistedByCollection(address(this), account);
-        }
-
-        return false;
-    }
-
-    /**
-     * @notice Checks if a code hash is blacklisted for this token contract.
-     * @param codehash The code hash to check.
-     * @return         True if the code hash is blacklisted, false otherwise.
-     */
-    function isCodeHashBlacklisted(bytes32 codehash) external view override returns (bool) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.isCodeHashBlacklistedByCollection(address(this), codehash);
-        }
-
-        return false;
-    }
-
-    /**
-     * @notice Checks if a code hash is whitelisted for this token contract.
-     * @param codehash The code hash to check.
-     * @return         True if the code hash is whitelisted, false otherwise.
-     */
-    function isCodeHashWhitelisted(bytes32 codehash) external view override returns (bool) {
-        ICreatorTokenTransferValidatorV2 transferValidator = getTransferValidatorV2();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.isCodeHashWhitelistedByCollection(address(this), codehash);
-        }
-
-        return false;
     }
 
     /**
@@ -401,93 +263,36 @@ abstract contract CreatorTokenBaseV2 is OwnablePermissions, TransferValidation, 
     }
 
     /**
-     * @notice Returns the transfer validator contract address for this token contract.
+     * @notice Deprecated - Query On Transfer Validator Instead
      */
-    function getTransferValidator() public view override returns (ICreatorTokenTransferValidator transferValidator) {
-        transferValidator = ICreatorTokenTransferValidator(transferValidatorReference.transferValidator);
-
-        if (address(transferValidator) == address(0)) {
-            if (!transferValidatorReference.isInitialized) {
-                transferValidator = ICreatorTokenTransferValidator(DEFAULT_TRANSFER_VALIDATOR);
-            }
-        }
-    }
+    function getSecurityPolicy() public view override throwsDeprecatedError returns (CollectionSecurityPolicy memory) {}
 
     /**
-     * @notice Returns the security policy for this token contract, which includes:
-     *         Transfer security level, operator whitelist id, permitted contract receiver allowlist id.
+     * @notice Deprecated - Query On Transfer Validator Instead
      */
-    function getSecurityPolicy() public view override returns (CollectionSecurityPolicy memory) {
-        ICreatorTokenTransferValidator transferValidator = getTransferValidator();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getCollectionSecurityPolicy(address(this));
-        }
-
-        return CollectionSecurityPolicy({
-            transferSecurityLevel: TransferSecurityLevels.Zero,
-            operatorWhitelistId: 0,
-            permittedContractReceiversId: 0
-        });
-    }
+    function getWhitelistedOperators() public view override throwsDeprecatedError returns (address[] memory) {}
 
     /**
-     * @notice Returns the list of all whitelisted operators for this token contract.
-     * @dev    This can be an expensive call and should only be used in view-only functions.
+     * @notice Deprecated - Query On Transfer Validator Instead
      */
-    function getWhitelistedOperators() public view override returns (address[] memory) {
-        ICreatorTokenTransferValidator transferValidator = getTransferValidator();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getWhitelistedOperators(
-                transferValidator.getCollectionSecurityPolicy(address(this)).operatorWhitelistId);
-        }
-
-        return new address[](0);
-    }
+    function getPermittedContractReceivers() public view override throwsDeprecatedError returns (address[] memory) {}
 
     /**
-     * @notice Returns the list of permitted contract receivers for this token contract.
-     * @dev    This can be an expensive call and should only be used in view-only functions.
+     * @notice Deprecated - Query On Transfer Validator Instead
      */
-    function getPermittedContractReceivers() public view override returns (address[] memory) {
-        ICreatorTokenTransferValidator transferValidator = getTransferValidator();
-
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.getPermittedContractReceivers(
-                transferValidator.getCollectionSecurityPolicy(address(this)).permittedContractReceiversId);
-        }
-
-        return new address[](0);
-    }
+    function isOperatorWhitelisted(address operator) public view override throwsDeprecatedError returns (bool) {}
 
     /**
-     * @notice Checks if an operator is whitelisted for this token contract.
-     * @param operator The address of the operator to check.
+     * @notice Deprecated - Query On Transfer Validator Instead
      */
-    function isOperatorWhitelisted(address operator) public view override returns (bool) {
-        ICreatorTokenTransferValidator transferValidator = getTransferValidator();
+    function isContractReceiverPermitted(address receiver) public view override throwsDeprecatedError returns (bool) {}
 
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.isOperatorWhitelisted(
-                transferValidator.getCollectionSecurityPolicy(address(this)).operatorWhitelistId, operator);
-        }
-
-        return false;
+    modifier throwsDeprecatedError() {
+        _throwDeprecatedError();
+        _;
     }
 
-    /**
-     * @notice Checks if a contract receiver is permitted for this token contract.
-     * @param receiver The address of the receiver to check.
-     */
-    function isContractReceiverPermitted(address receiver) public view override returns (bool) {
-        ICreatorTokenTransferValidator transferValidator = getTransferValidator();
-        
-        if (address(transferValidator) != address(0)) {
-            return transferValidator.isContractReceiverPermitted(
-                transferValidator.getCollectionSecurityPolicy(address(this)).permittedContractReceiversId, receiver);
-        }
-
-        return false;
+    function _throwDeprecatedError() internal pure {
+        revert CreatorTokenBase__FunctionDeprecatedUseTransferValidatorInstead();
     }
 }
