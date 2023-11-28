@@ -3,21 +3,21 @@ import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
-import { ERC721M } from '../typechain-types';
+import { ERC721CM } from '../typechain-types';
 
 const { keccak256, getAddress } = ethers.utils;
 
 chai.use(chaiAsPromised);
 
-describe('ERC721M', function () {
-  let contract: ERC721M;
-  let readonlyContract: ERC721M;
+describe('ERC721CM', function () {
+  let contract: ERC721CM;
+  let readonlyContract: ERC721CM;
   let owner: SignerWithAddress;
   let readonly: SignerWithAddress;
   let chainId: number;
 
   const getCosignSignature = async (
-    contractInstance: ERC721M,
+    contractInstance: ERC721CM,
     cosigner: SignerWithAddress,
     minter: string,
     timestamp: number,
@@ -48,8 +48,8 @@ describe('ERC721M', function () {
   };
 
   beforeEach(async () => {
-    const ERC721M = await ethers.getContractFactory('ERC721M');
-    const erc721M = await ERC721M.deploy(
+    const ERC721CM = await ethers.getContractFactory('ERC721CM');
+    const erc721cm = await ERC721CM.deploy(
       'Test',
       'TEST',
       '',
@@ -59,11 +59,11 @@ describe('ERC721M', function () {
       60,
       ethers.constants.AddressZero,
     );
-    await erc721M.deployed();
+    await erc721cm.deployed();
 
     [owner, readonly] = await ethers.getSigners();
-    contract = erc721M.connect(owner);
-    readonlyContract = erc721M.connect(readonly);
+    contract = erc721cm.connect(owner);
+    readonlyContract = erc721cm.connect(readonly);
     chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
   });
 
@@ -872,7 +872,7 @@ describe('ERC721M', function () {
       await contract.setMintable(true);
       await contract.setCosigner(cosigner.address);
 
-      const timestamp = stageStart + 200;
+      const timestamp = stageStart + 100;
       const sig = getCosignSignature(
         contract,
         cosigner,
@@ -1276,8 +1276,8 @@ describe('ERC721M', function () {
 
     it('crossmint', async () => {
       const crossmintAddressStr = '0xdAb1a1854214684acE522439684a145E62505233';
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1287,10 +1287,10 @@ describe('ERC721M', function () {
         60,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
+      await erc721cm.deployed();
 
       [owner, readonly] = await ethers.getSigners();
-      const ownerConn = erc721M.connect(owner);
+      const ownerConn = erc721cm.connect(owner);
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
@@ -1322,7 +1322,7 @@ describe('ERC721M', function () {
         '0xFFFFFFFFFFFFFFFF',
       ]);
 
-      const crossMintConn = erc721M.connect(crossmintSigner);
+      const crossMintConn = erc721cm.connect(crossmintSigner);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1347,8 +1347,8 @@ describe('ERC721M', function () {
     it('crossmint with cosign', async () => {
       const crossmintAddressStr = '0xdAb1a1854214684acE522439684a145E62505233';
       [owner, readonly] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1358,9 +1358,9 @@ describe('ERC721M', function () {
         300,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
+      await erc721cm.deployed();
 
-      const ownerConn = erc721M.connect(owner);
+      const ownerConn = erc721cm.connect(owner);
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
@@ -1389,13 +1389,13 @@ describe('ERC721M', function () {
         '0xFFFFFFFFFFFFFFFF',
       ]);
 
-      const crossMintConn = erc721M.connect(crossmintSigner);
+      const crossMintConn = erc721cm.connect(crossmintSigner);
 
       // fast forward 2 minutes, timestamp should still be valid since crossmint is the sender
       await ethers.provider.send('evm_mine', [block.timestamp + 120]);
       const twoMinuteOldTimestamp = block.timestamp;
       const signature = await getCosignSignature(
-        erc721M,
+        erc721cm,
         owner,
         crossmintSigner.address,
         twoMinuteOldTimestamp,
@@ -1704,9 +1704,9 @@ describe('ERC721M', function () {
 
   describe('Global wallet limit', function () {
     it('validates global wallet limit in constructor', async () => {
-      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
       await expect(
-        ERC721M.deploy(
+        ERC721CM.deploy(
           'Test',
           'TEST',
           '',
@@ -1805,8 +1805,8 @@ describe('ERC721M', function () {
   describe('Cosign', () => {
     it('can deploy with 0x0 cosign', async () => {
       const [owner, cosigner] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1816,8 +1816,8 @@ describe('ERC721M', function () {
         60,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
-      const ownerConn = erc721M.connect(owner);
+      await erc721cm.deployed();
+      const ownerConn = erc721cm.connect(owner);
       await expect(
         ownerConn.getCosignDigest(owner.address, 1, 0),
       ).to.be.revertedWith('CosignerNotSet');
@@ -1833,8 +1833,8 @@ describe('ERC721M', function () {
 
     it('can deploy with cosign', async () => {
       const [_, minter, cosigner] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1844,12 +1844,12 @@ describe('ERC721M', function () {
         60,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
+      await erc721cm.deployed();
 
-      const minterConn = erc721M.connect(minter);
+      const minterConn = erc721cm.connect(minter);
       const timestamp = Math.floor(new Date().getTime() / 1000);
       const sig = await getCosignSignature(
-        erc721M,
+        erc721cm,
         cosigner,
         minter.address,
         timestamp,
@@ -1864,5 +1864,23 @@ describe('ERC721M', function () {
         minterConn.assertValidCosign(minter.address, 1, timestamp, invalidSig),
       ).to.be.revertedWith('InvalidCosignSignature');
     });
+  });
+
+  describe('Contract URI', function() {
+    it('can set contract URI', async () => {
+      await contract.setContractURI('ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4');
+      const contractURI = await contract.contractURI();
+      expect(contractURI).to.equal(
+        'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4',
+      );
+    });
+  });
+
+  describe('Transfer validator', function() {
+    it('default validator settings', async () => {
+      expect(await contract.getTransferValidator()).to.equal('0xF2E246BB76DF876Cef8b38ae84130F4F55De395b');
+    });
+
+    // TODO: figure out a way to mock the validator contract
   });
 });
