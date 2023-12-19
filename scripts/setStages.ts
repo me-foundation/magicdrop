@@ -12,6 +12,7 @@ export interface ISetStagesParams {
 
 interface StageConfig {
   price: string;
+  mintFee?: string;
   startDate: number;
   endDate: number;
   walletLimit?: number;
@@ -28,7 +29,7 @@ export const setStages = async (
     fs.readFileSync(args.stages, 'utf-8'),
   ) as StageConfig[];
 
-  let overrides: any = { gasLimit: 500_000 };
+  const overrides: any = { gasLimit: 500_000 };
 
   const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
@@ -58,6 +59,7 @@ export const setStages = async (
 
   const stages = stagesConfig.map((s, i) => ({
     price: ethers.utils.parseEther(s.price),
+    mintFee: s.mintFee ? ethers.utils.parseEther(s.mintFee) : 0,
     maxStageSupply: s.maxSupply ?? 0,
     walletLimit: s.walletLimit ?? 0,
     merkleRoot: merkleRoots[i],
@@ -74,7 +76,7 @@ export const setStages = async (
 
   if (!await confirm({ message: 'Continue to set stages?' })) return;
 
-  const tx = await contract.setStages(stages,overrides);
+  const tx = await contract.setStages(stages, overrides);
 
   console.log(`Submitted tx ${tx.hash}`);
 
