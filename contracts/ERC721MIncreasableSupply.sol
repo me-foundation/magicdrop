@@ -18,7 +18,8 @@ contract ERC721MIncreasableSupply is ERC721M {
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address crossMintAddress
     )
         ERC721M(
             collectionName,
@@ -28,7 +29,8 @@ contract ERC721MIncreasableSupply is ERC721M {
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            crossMintAddress
         )
     {
         _canIncreaseMaxMintableSupply = true;
@@ -54,11 +56,9 @@ contract ERC721MIncreasableSupply is ERC721M {
      *
      * New supply cannot be larger than the old, unless _canIncreaseMaxMintableSupply is true.
      */
-    function setMaxMintableSupply(uint256 maxMintableSupply)
-        external
-        override
-        onlyOwner
-    {
+    function setMaxMintableSupply(
+        uint256 maxMintableSupply
+    ) external onlyOwner {
         if (
             !_canIncreaseMaxMintableSupply &&
             maxMintableSupply > _maxMintableSupply

@@ -6,7 +6,7 @@ import "./ERC721M.sol";
 
 contract ERC721MAutoApprover is ERC721M {
     address private _autoApproveAddress;
-    
+
     event SetAutoApproveAddress(address autoApproveAddress);
 
     constructor(
@@ -18,7 +18,8 @@ contract ERC721MAutoApprover is ERC721M {
         address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency,
-        address autoApproveAddress
+        address autoApproveAddress,
+        address crossmintAddress
     )
         ERC721M(
             collectionName,
@@ -28,7 +29,8 @@ contract ERC721MAutoApprover is ERC721M {
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            crossmintAddress
         )
     {
         _autoApproveAddress = autoApproveAddress;

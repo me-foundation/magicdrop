@@ -5,7 +5,10 @@ pragma solidity ^0.8.4;
 import "./BucketAuction.sol";
 import "./OperatorFilter/DefaultOperatorFilterer.sol";
 
-contract BucketAuctionOperatorFilterer is BucketAuction, DefaultOperatorFilterer {
+contract BucketAuctionOperatorFilterer is
+    BucketAuction,
+    DefaultOperatorFilterer
+{
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -15,7 +18,8 @@ contract BucketAuctionOperatorFilterer is BucketAuction, DefaultOperatorFilterer
         address cosigner,
         uint256 minimumContributionInWei,
         uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
+        uint64 endTimeUnixSeconds,
+        address crossMintAddress
     )
         BucketAuction(
             collectionName,
@@ -26,7 +30,8 @@ contract BucketAuctionOperatorFilterer is BucketAuction, DefaultOperatorFilterer
             cosigner,
             minimumContributionInWei,
             startTimeUnixSeconds,
-            endTimeUnixSeconds
+            endTimeUnixSeconds,
+            crossMintAddress
         )
     {}
 

@@ -5,7 +5,10 @@ pragma solidity ^0.8.4;
 import "./ERC721MPausable.sol";
 import "./OperatorFilter/DefaultOperatorFilterer.sol";
 
-contract ERC721MPausableOperatorFilterer is ERC721MPausable, DefaultOperatorFilterer {
+contract ERC721MPausableOperatorFilterer is
+    ERC721MPausable,
+    DefaultOperatorFilterer
+{
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -14,9 +17,10 @@ contract ERC721MPausableOperatorFilterer is ERC721MPausable, DefaultOperatorFilt
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address crossMintAddress
     )
-    ERC721MPausable(
+        ERC721MPausable(
             collectionName,
             collectionSymbol,
             tokenURISuffix,
@@ -24,7 +28,8 @@ contract ERC721MPausableOperatorFilterer is ERC721MPausable, DefaultOperatorFilt
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            crossMintAddress
         )
     {}
 

@@ -1,7 +1,7 @@
-import { ERC721M } from '../typechain-types';
+import { expect } from 'chai';
 import { Contract, Signer } from 'ethers';
 import { ethers } from 'hardhat';
-import { expect } from 'chai';
+import { ERC721M } from '../typechain-types';
 
 describe('Mint Currency', () => {
   let erc721M: ERC721M,
@@ -26,11 +26,12 @@ describe('Mint Currency', () => {
         'Test',
         'TEST',
         '',
-        1000,
+        999,
         0,
         ethers.constants.AddressZero,
         60,
         erc20.address,
+        ethers.constants.AddressZero,
       );
       await erc721M.deployed();
 
@@ -54,7 +55,6 @@ describe('Mint Currency', () => {
           endTimeUnixSeconds: stageStart + 10000,
         },
       ]);
-      await contract.setMaxMintableSupply(999);
       await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
@@ -134,7 +134,7 @@ describe('Mint Currency', () => {
         await erc20.mint(erc721M.address, initialAmount);
 
         // Then, call the withdrawERC20 function from the owner's account
-        await erc721M.connect(owner).withdrawERC20();
+        await erc721M.connect(owner).withdraw();
 
         // Get the owner's balance
         const ownerBalance = await erc20.balanceOf(await owner.getAddress());
@@ -146,7 +146,7 @@ describe('Mint Currency', () => {
 
     it('should revert if a non-owner tries to withdraw', async function () {
       // Try to call withdrawERC20 from another account
-      await expect(erc721M.connect(minter).withdrawERC20()).to.be.revertedWith(
+      await expect(erc721M.connect(minter).withdraw()).to.be.revertedWith(
         'Ownable: caller is not the owner',
       );
     });
@@ -165,32 +165,13 @@ describe('Mint Currency', () => {
         ethers.constants.AddressZero,
         60,
         ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
       );
       await erc721M.deployed();
 
       [owner, minter] = await ethers.getSigners();
 
       contract = erc721M.connect(owner);
-    });
-
-    describe('withdrawERC20', function () {
-      it("should not change the contract's balance", async function () {
-        // Get initial balance
-        const initialBalance = await ethers.provider.getBalance(
-          contract.address,
-        );
-
-        // Expect withdrawERC20 to revert
-        await expect(contract.withdrawERC20()).to.be.revertedWith(
-          'WrongMintCurrency',
-        );
-
-        // Get final balance
-        const finalBalance = await ethers.provider.getBalance(erc721M.address);
-
-        // The initial and final balances should be the same
-        expect(initialBalance).to.equal(finalBalance);
-      });
     });
   });
 });

@@ -28,13 +28,13 @@ describe('BucketAuction', function () {
       ethers.constants.AddressZero,
       /* minimumContributionInWei= */ 100,
       0, // Placeholder; startTimeUnixSeconds will be overwritten later
-      1, // Placeholder; endTimeUnixSeconds will be overwritten later
+      1, // Placeholder; endTimeUnixSeconds will be overwritten later,
+      ethers.constants.AddressZero,
     );
     await ba.deployed();
 
     [owner, readonly] = await ethers.getSigners();
     ownerConn = ba.connect(owner);
-    await ownerConn.setTimestampExpirySeconds(60);
     await ownerConn.setStages([
       {
         price: ethers.utils.parseEther('0.1'),

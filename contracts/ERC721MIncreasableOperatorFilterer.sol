@@ -6,7 +6,10 @@ import "./ERC721M.sol";
 import "./ERC721MIncreasableSupply.sol";
 import "./OperatorFilter/DefaultOperatorFilterer.sol";
 
-contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, DefaultOperatorFilterer {
+contract ERC721MIncreasableOperatorFilterer is
+    ERC721MIncreasableSupply,
+    DefaultOperatorFilterer
+{
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -15,7 +18,8 @@ contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, Default
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address crossmintAddress
     )
         ERC721MIncreasableSupply(
             collectionName,
@@ -25,7 +29,8 @@ contract ERC721MIncreasableOperatorFilterer is ERC721MIncreasableSupply, Default
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            crossmintAddress
         )
     {}
 

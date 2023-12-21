@@ -24,7 +24,8 @@ contract ERC721MOperatorFilterer is ERC721M, DefaultOperatorFilterer {
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            address(0)
         )
     {}
 
