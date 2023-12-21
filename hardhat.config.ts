@@ -36,6 +36,7 @@ import { deployOnft } from './scripts/deployOnft';
 import { setOnftMinDstGas } from './scripts/setOnftMinDstGas';
 import { setTrustedRemote } from './scripts/setTrustedRemote';
 import { sendOnft } from './scripts/sendOnft';
+import { deployOwnedRegistrant } from './scripts/deployOwnedRegistrant';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -86,6 +87,16 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    fuji: {
+      url: process.env.FUJI_URL || 'https://api.avax-test.network/ext/bc/C/rpc',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    }
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -112,8 +123,8 @@ task('deploy', 'Deploy ERC721M')
   .addParam('symbol', 'symbol')
   .addParam('maxsupply', 'max supply')
   .addParam('tokenurisuffix', 'token uri suffix', '.json')
-  .addParam('globalwalletlimit', 'global wallet limit')
-  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds')
+  .addParam('globalwalletlimit', 'global wallet limit', '0')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
   .addOptionalParam(
     'cosigner',
     'cosigner address (0x00...000 if not using cosign)',
@@ -317,5 +328,9 @@ task('sendOnft', 'Send tokens to target network')
     'the address you want to send a zero payment to',
   )
   .setAction(sendOnft);
+
+task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
+  .addParam('newowner', 'new owner address', '0x0000000000000000000000000000000000000000')
+  .setAction(deployOwnedRegistrant);
 
 export default config;

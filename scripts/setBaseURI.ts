@@ -12,7 +12,7 @@ export const setBaseURI = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  let overrides: any = {gasLimit: 500_000};
+  const overrides: any = {gasLimit: 500_000};
 
   if (args.gaspricegwei) {
     overrides.gasPrice = args.gaspricegwei * 1e9;
