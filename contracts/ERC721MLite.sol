@@ -9,7 +9,8 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {ERC721A, ERC721AQueryable, ERC721A__IERC721Receiver} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import {IERC721A, IERC721M} from "./IERC721M.sol";
-import {DefaultOperatorFilterer} from "./OperatorFilter/DefaultOperatorFilterer.sol";
+import {UpdatableOperatorFilterer} from "operator-filter-registry/src/UpdatableOperatorFilterer.sol";
+import {CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION} from "./utils/Constants.sol";
 
 /**
  * @title ERC721MLite
@@ -21,7 +22,7 @@ import {DefaultOperatorFilterer} from "./OperatorFilter/DefaultOperatorFilterer.
 contract ERC721MLite is
     IERC721M,
     ERC721AQueryable,
-    DefaultOperatorFilterer,
+    UpdatableOperatorFilterer,
     Ownable,
     ReentrancyGuard
 {
@@ -66,7 +67,14 @@ contract ERC721MLite is
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds
-    ) ERC721A(collectionName, collectionSymbol) {
+    )
+        UpdatableOperatorFilterer(
+            CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS,
+            ME_SUBSCRIPTION,
+            true
+        )
+        ERC721A(collectionName, collectionSymbol)
+    {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = false;
@@ -452,6 +460,16 @@ contract ERC721MLite is
             chainID := chainid()
         }
         return chainID;
+    }
+
+    function owner()
+        public
+        view
+        virtual
+        override(Ownable, UpdatableOperatorFilterer)
+        returns (address)
+    {
+        return Ownable.owner();
     }
 
     function transferFrom(

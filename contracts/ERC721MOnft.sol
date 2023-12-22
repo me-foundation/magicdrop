@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import {IONFT721Core, ONFT721CoreLite} from "./onft/ONFT721CoreLite.sol";
-import {ERC721MLite, ERC721A, ERC721A__IERC721Receiver, IERC721A} from "./ERC721MLite.sol";
+import {ERC721MLite, ERC721A, ERC721A__IERC721Receiver, IERC721A, Ownable} from "./ERC721MLite.sol";
 import {IONFT721} from "@layerzerolabs/solidity-examples/contracts/token/onft/IONFT721.sol";
 
 /**
@@ -39,7 +39,18 @@ contract ERC721MOnft is ERC721MLite, ONFT721CoreLite, ERC721A__IERC721Receiver {
         ONFT721CoreLite(minGasToTransferAndStore, lzEndpoint)
     {}
 
-    function supportsInterface(bytes4 interfaceId)
+    function owner()
+        public
+        view
+        override(Ownable, ERC721MLite)
+        returns (address)
+    {
+        return Ownable.owner();
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual
@@ -83,12 +94,10 @@ contract ERC721MOnft is ERC721MLite, ONFT721CoreLite, ERC721A__IERC721Receiver {
         return ERC721A__IERC721Receiver.onERC721Received.selector;
     }
 
-    function _isApprovedOrOwner(address spender, uint256 tokenId)
-        internal
-        view
-        virtual
-        returns (bool)
-    {
+    function _isApprovedOrOwner(
+        address spender,
+        uint256 tokenId
+    ) internal view virtual returns (bool) {
         address owner = ownerOf(tokenId);
         return (spender == owner ||
             isApprovedForAll(owner, spender) ||

@@ -3,11 +3,12 @@
 pragma solidity ^0.8.4;
 
 import "./ERC721MPausable.sol";
-import "./OperatorFilter/DefaultOperatorFilterer.sol";
+import {UpdatableOperatorFilterer} from "operator-filter-registry/src/UpdatableOperatorFilterer.sol";
+import {CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION} from "./utils/Constants.sol";
 
 contract ERC721MPausableOperatorFilterer is
     ERC721MPausable,
-    DefaultOperatorFilterer
+    UpdatableOperatorFilterer
 {
     constructor(
         string memory collectionName,
@@ -20,6 +21,11 @@ contract ERC721MPausableOperatorFilterer is
         address mintCurrency,
         address crossMintAddress
     )
+        UpdatableOperatorFilterer(
+            CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS,
+            ME_SUBSCRIPTION,
+            true
+        )
         ERC721MPausable(
             collectionName,
             collectionSymbol,
@@ -32,6 +38,15 @@ contract ERC721MPausableOperatorFilterer is
             crossMintAddress
         )
     {}
+
+    function owner()
+        public
+        view
+        override(Ownable, UpdatableOperatorFilterer)
+        returns (address)
+    {
+        return Ownable.owner();
+    }
 
     function transferFrom(
         address from,
