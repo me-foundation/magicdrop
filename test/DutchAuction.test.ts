@@ -26,7 +26,6 @@ describe('DutchAuction', function () {
       0,
       ethers.constants.AddressZero,
       /* refundable= */ true,
-      ethers.constants.AddressZero,
     );
     await da.deployed();
 
@@ -328,7 +327,6 @@ describe('DutchAuction', function () {
         0,
         ethers.constants.AddressZero,
         /* refundable= */ false,
-        ethers.constants.AddressZero,
       );
       await da.deployed();
 

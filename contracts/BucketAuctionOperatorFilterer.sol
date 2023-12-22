@@ -20,7 +20,6 @@ contract BucketAuctionOperatorFilterer is
         uint256 minimumContributionInWei,
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds,
-        address crossMintAddress,
         uint64 timestampExpirySeconds
     )
         UpdatableOperatorFilterer(
@@ -38,7 +37,6 @@ contract BucketAuctionOperatorFilterer is
             minimumContributionInWei,
             startTimeUnixSeconds,
             endTimeUnixSeconds,
-            crossMintAddress,
             timestampExpirySeconds
         )
     {}

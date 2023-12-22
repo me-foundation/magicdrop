@@ -25,8 +25,7 @@ contract DutchAuction is IDutchAuction, ERC721M {
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        bool refundable,
-        address crossmintAddress
+        bool refundable
     )
         ERC721M(
             collectionName,
@@ -39,7 +38,7 @@ contract DutchAuction is IDutchAuction, ERC721M {
             300,
             /* mintCurrency= */
             address(0),
-            crossmintAddress
+            address(0)
         )
     {
         _refundable = refundable;
@@ -139,13 +138,9 @@ contract DutchAuction is IDutchAuction, ERC721M {
         return config.endAmountInWei;
     }
 
-    function bid(uint32 qty)
-        external
-        payable
-        nonReentrant
-        hasSupply(qty)
-        validTime
-    {
+    function bid(
+        uint32 qty
+    ) external payable nonReentrant hasSupply(qty) validTime {
         uint256 price = getCurrentPriceInWei();
         if (msg.value < qty * price) revert NotEnoughValue();
 
