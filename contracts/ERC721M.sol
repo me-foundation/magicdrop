@@ -65,7 +65,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
     address private _mintCurrency;
 
-    address public constant MINT_FEE_RECEIVER = address(0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc);
+    address public constant MINT_FEE_RECEIVER =
+        address(0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc);
 
     constructor(
         string memory collectionName,
@@ -420,7 +421,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         stage = _mintStages[activeStage];
 
         // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < (stage.price + stage.mintFee) * qty) revert NotEnoughValue();
+        if (
+            _mintCurrency == address(0) &&
+            msg.value < (stage.price + stage.mintFee) * qty
+        ) revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
@@ -454,11 +458,21 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
-            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(this), stage.price * qty);
-            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(MINT_FEE_RECEIVER), stage.mintFee * qty);
+            IERC20(_mintCurrency).safeTransferFrom(
+                msg.sender,
+                address(this),
+                stage.price * qty
+            );
+            IERC20(_mintCurrency).safeTransferFrom(
+                msg.sender,
+                address(MINT_FEE_RECEIVER),
+                stage.mintFee * qty
+            );
         } else {
             // ETH mint payment
-            (bool success, ) = MINT_FEE_RECEIVER.call{ value: stage.mintFee * qty }("");
+            (bool success, ) = MINT_FEE_RECEIVER.call{
+                value: stage.mintFee * qty
+            }("");
             if (!success) revert TransferFailed();
         }
 
