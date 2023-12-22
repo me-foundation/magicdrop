@@ -16,16 +16,16 @@ contract ERC721MPausable is ERC721M, Pausable {
         uint64 timestampExpirySeconds,
         address mintCurrency
     )
-    ERC721M(
-        collectionName,
-        collectionSymbol,
-        tokenURISuffix,
-        maxMintableSupply,
-        globalWalletLimit,
-        cosigner,
-        timestampExpirySeconds,
-        mintCurrency
-    )
+        ERC721M(
+            collectionName,
+            collectionSymbol,
+            tokenURISuffix,
+            maxMintableSupply,
+            globalWalletLimit,
+            cosigner,
+            timestampExpirySeconds,
+            mintCurrency
+        )
     {}
 
     function pause() external onlyOwner {

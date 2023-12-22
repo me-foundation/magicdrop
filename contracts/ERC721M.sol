@@ -168,7 +168,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds
+                    newStages[i - 1].endTimeUnixSeconds +
+                        _timestampExpirySeconds
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -367,7 +368,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes32[] calldata proof,
         uint64 timestamp,
         bytes calldata signature
-    ) virtual external payable nonReentrant {
+    ) external payable virtual nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
     }
 

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import { IONFT721 } from "@layerzerolabs/solidity-examples/contracts/token/onft/IONFT721.sol";
+import {IONFT721} from "@layerzerolabs/solidity-examples/contracts/token/onft/IONFT721.sol";
 import "./ONFT721CoreLite.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
@@ -14,20 +14,48 @@ contract ONFT721Lite is ONFT721CoreLite, ERC721, IONFT721 {
     // The suffix for the token URL, e.g. ".json".
     string private _tokenURISuffix;
 
-    constructor(string memory _name, string memory _symbol, uint256 _minGasToTransfer, address _lzEndpoint) ERC721(_name, _symbol) ONFT721CoreLite(_minGasToTransfer, _lzEndpoint) {}
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint256 _minGasToTransfer,
+        address _lzEndpoint
+    ) ERC721(_name, _symbol) ONFT721CoreLite(_minGasToTransfer, _lzEndpoint) {}
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ONFT721CoreLite, ERC721, IERC165) returns (bool) {
-        return interfaceId == type(IONFT721).interfaceId || super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ONFT721CoreLite, ERC721, IERC165)
+        returns (bool)
+    {
+        return
+            interfaceId == type(IONFT721).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
-    function _debitFrom(address _from, uint16, bytes memory, uint _tokenId) internal virtual override {
-        require(_isApprovedOrOwner(_msgSender(), _tokenId), "caller not owner nor approved");
+    function _debitFrom(
+        address _from,
+        uint16,
+        bytes memory,
+        uint256 _tokenId
+    ) internal virtual override {
+        require(
+            _isApprovedOrOwner(_msgSender(), _tokenId),
+            "caller not owner nor approved"
+        );
         require(ERC721.ownerOf(_tokenId) == _from, "incorrect owner");
         _transfer(_from, address(this), _tokenId);
     }
 
-    function _creditTo(uint16, address _toAddress, uint _tokenId) internal virtual override {
-        require(!_exists(_tokenId) || (_exists(_tokenId) && ERC721.ownerOf(_tokenId) == address(this)));
+    function _creditTo(
+        uint16,
+        address _toAddress,
+        uint256 _tokenId
+    ) internal virtual override {
+        require(
+            !_exists(_tokenId) ||
+                (_exists(_tokenId) && ERC721.ownerOf(_tokenId) == address(this))
+        );
         if (!_exists(_tokenId)) {
             _safeMint(_toAddress, _tokenId);
         } else {
@@ -52,7 +80,12 @@ contract ONFT721Lite is ONFT721CoreLite, ERC721, IONFT721 {
     /**
      * @dev Returns token URI for a given token id.
      */
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
         require(_exists(tokenId), "token not exist");
 
         string memory baseURI = _currentBaseURI;
@@ -71,7 +104,12 @@ contract ONFT721Lite is ONFT721CoreLite, ERC721, IONFT721 {
     /**
      * @dev Converts a uint256 to its ASCII string decimal representation.
      */
-    function _toString(uint256 value) internal pure virtual returns (string memory str) {
+    function _toString(uint256 value)
+        internal
+        pure
+        virtual
+        returns (string memory str)
+    {
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
             // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.
