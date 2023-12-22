@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
 import { Contract } from 'ethers';
+import { ethers } from 'hardhat';
 
 describe('ERC721MPausableOperatorFilterer', function () {
   let erc721MPausableOperatorFilterer: Contract;
@@ -21,6 +21,7 @@ describe('ERC721MPausableOperatorFilterer', function () {
         0,
         ethers.constants.AddressZero,
         300,
+        ethers.constants.AddressZero,
         ethers.constants.AddressZero,
       );
     erc721MPausableOperatorFilterer =

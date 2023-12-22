@@ -28,8 +28,9 @@ describe('BucketAuction', function () {
       ethers.constants.AddressZero,
       /* minimumContributionInWei= */ 100,
       0, // Placeholder; startTimeUnixSeconds will be overwritten later
-      1, // Placeholder; endTimeUnixSeconds will be overwritten later,
-      ethers.constants.AddressZero,
+      1, // Placeholder; endTimeUnixSeconds will be overwritten later
+      ethers.constants.AddressZero, // crossmint address
+      60, // timestamp expiry seconds
     );
     await ba.deployed();
 

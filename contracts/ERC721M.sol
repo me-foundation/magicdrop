@@ -80,8 +80,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             revert GlobalWalletLimitOverflow();
         _mintable = false;
         _maxMintableSupply = maxMintableSupply;
-        if (globalWalletLimit > _maxMintableSupply)
-            revert GlobalWalletLimitOverflow();
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
@@ -205,6 +203,21 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      */
     function getMaxMintableSupply() external view override returns (uint256) {
         return _maxMintableSupply;
+    }
+
+    /**
+     * @dev Sets maximum mintable supply.
+     *
+     * New supply cannot be larger than the old.
+     */
+    function setMaxMintableSupply(
+        uint256 maxMintableSupply
+    ) external virtual onlyOwner {
+        if (maxMintableSupply > _maxMintableSupply) {
+            revert CannotIncreaseMaxMintableSupply();
+        }
+        _maxMintableSupply = maxMintableSupply;
+        emit SetMaxMintableSupply(maxMintableSupply);
     }
 
     /**

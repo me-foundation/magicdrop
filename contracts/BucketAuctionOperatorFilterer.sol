@@ -19,7 +19,8 @@ contract BucketAuctionOperatorFilterer is
         uint256 minimumContributionInWei,
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds,
-        address crossMintAddress
+        address crossMintAddress,
+        uint64 timestampExpirySeconds
     )
         BucketAuction(
             collectionName,
@@ -31,7 +32,8 @@ contract BucketAuctionOperatorFilterer is
             minimumContributionInWei,
             startTimeUnixSeconds,
             endTimeUnixSeconds,
-            crossMintAddress
+            crossMintAddress,
+            timestampExpirySeconds
         )
     {}
 

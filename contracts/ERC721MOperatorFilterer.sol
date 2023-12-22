@@ -14,7 +14,8 @@ contract ERC721MOperatorFilterer is ERC721M, DefaultOperatorFilterer {
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address crossmintAddress
     )
         ERC721M(
             collectionName,
@@ -25,7 +26,7 @@ contract ERC721MOperatorFilterer is ERC721M, DefaultOperatorFilterer {
             cosigner,
             timestampExpirySeconds,
             mintCurrency,
-            address(0)
+            crossmintAddress
         )
     {}
 

@@ -49,6 +49,7 @@ describe('ERC721M', function () {
 
   beforeEach(async () => {
     const ERC721M = await ethers.getContractFactory('ERC721M');
+    [owner, readonly] = await ethers.getSigners();
     const erc721M = await ERC721M.deploy(
       'Test',
       'TEST',
@@ -62,7 +63,6 @@ describe('ERC721M', function () {
     );
     await erc721M.deployed();
 
-    [owner, readonly] = await ethers.getSigners();
     contract = erc721M.connect(owner);
     readonlyContract = erc721M.connect(readonly);
     chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
@@ -688,7 +688,22 @@ describe('ERC721M', function () {
 
     // TODO(channing): have a look on this one please
     it('mint with cosign - invalid sigs', async () => {
-      const [_owner, minter, cosigner] = await ethers.getSigners();
+      const [owner, minter, cosigner] = await ethers.getSigners();
+      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const erc721M = await ERC721M.deploy(
+        'Test',
+        'TEST',
+        '',
+        1000,
+        0,
+        cosigner.address,
+        20,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+      );
+      await erc721M.deployed();
+      contract = erc721M.connect(owner);
+      readonlyContract = erc721M.connect(minter);
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
@@ -778,7 +793,21 @@ describe('ERC721M', function () {
     });
 
     it('mint with cosign - timestamp out of stage', async () => {
-      const [_owner, minter, cosigner] = await ethers.getSigners();
+      const [owner, minter, cosigner] = await ethers.getSigners();
+      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const erc721M = await ERC721M.deploy(
+        'Test',
+        'TEST',
+        '',
+        1000,
+        0,
+        cosigner.address,
+        20,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+      );
+      await erc721M.deployed();
+      contract = erc721M.connect(owner);
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
@@ -839,7 +868,21 @@ describe('ERC721M', function () {
     });
 
     it('mint with cosign - expired signature', async () => {
-      const [_owner, minter, cosigner] = await ethers.getSigners();
+      const [owner, minter, cosigner] = await ethers.getSigners();
+      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const erc721M = await ERC721M.deploy(
+        'Test',
+        'TEST',
+        '',
+        1000,
+        0,
+        cosigner.address,
+        20,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+      );
+      await erc721M.deployed();
+      contract = erc721M.connect(owner);
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );

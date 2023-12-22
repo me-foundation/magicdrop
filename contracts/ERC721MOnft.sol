@@ -11,11 +11,7 @@ import {IONFT721} from "@layerzerolabs/solidity-examples/contracts/token/onft/IO
  *
  * @dev ERC721MOnft is an ERC721M contract with LayerZero integration.
  */
-contract ERC721MOnft is
-    ERC721MLite,
-    ONFT721CoreLite,
-    ERC721A__IERC721Receiver
-{
+contract ERC721MOnft is ERC721MLite, ONFT721CoreLite, ERC721A__IERC721Receiver {
     error CallerNotOwnerOrApproved();
     error FromAddressNotOwner();
     error NotExistOrNotOwnedByContract();
@@ -43,9 +39,7 @@ contract ERC721MOnft is
         ONFT721CoreLite(minGasToTransferAndStore, lzEndpoint)
     {}
 
-    function supportsInterface(
-        bytes4 interfaceId
-    )
+    function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
@@ -61,7 +55,7 @@ contract ERC721MOnft is
         address _from,
         uint16,
         bytes memory,
-        uint _tokenId
+        uint256 _tokenId
     ) internal virtual override {
         if (!_isApprovedOrOwner(_msgSender(), _tokenId))
             revert CallerNotOwnerOrApproved();
@@ -73,7 +67,7 @@ contract ERC721MOnft is
     function _creditTo(
         uint16,
         address _toAddress,
-        uint _tokenId
+        uint256 _tokenId
     ) internal virtual override {
         if (!_exists(_tokenId) || ERC721A.ownerOf(_tokenId) != address(this))
             revert NotExistOrNotOwnedByContract();
@@ -83,16 +77,18 @@ contract ERC721MOnft is
     function onERC721Received(
         address,
         address,
-        uint,
+        uint256,
         bytes memory
     ) public virtual override returns (bytes4) {
         return ERC721A__IERC721Receiver.onERC721Received.selector;
     }
 
-    function _isApprovedOrOwner(
-        address spender,
-        uint256 tokenId
-    ) internal view virtual returns (bool) {
+    function _isApprovedOrOwner(address spender, uint256 tokenId)
+        internal
+        view
+        virtual
+        returns (bool)
+    {
         address owner = ownerOf(tokenId);
         return (spender == owner ||
             isApprovedForAll(owner, spender) ||

@@ -1,6 +1,6 @@
-import { ERC721MAutoApprover } from '../typechain-types';
-import { ethers } from 'hardhat';
 import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { ERC721MAutoApprover } from '../typechain-types';
 
 const test_approve_address = '0x7897018b1cE161e58943C579AC3df50d89c3D4F4';
 
@@ -19,6 +19,7 @@ describe('ERC721MAutoApprover', () => {
       300,
       ethers.constants.AddressZero,
       test_approve_address,
+      ethers.constants.AddressZero,
     );
     const [owner] = await ethers.getSigners();
     contract = contract.connect(owner);

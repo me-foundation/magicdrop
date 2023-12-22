@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
 import { Contract } from 'ethers';
+import { ethers } from 'hardhat';
 
 describe('ERC721MPausable', function () {
   let erc721MPausable: Contract;
@@ -21,6 +21,7 @@ describe('ERC721MPausable', function () {
       0,
       ethers.constants.AddressZero,
       300,
+      ethers.constants.AddressZero,
       ethers.constants.AddressZero,
     );
     erc721MPausable = erc721MPausable.connect(owner);

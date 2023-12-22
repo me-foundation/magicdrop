@@ -139,9 +139,13 @@ contract DutchAuction is IDutchAuction, ERC721M {
         return config.endAmountInWei;
     }
 
-    function bid(
-        uint32 qty
-    ) external payable nonReentrant hasSupply(qty) validTime {
+    function bid(uint32 qty)
+        external
+        payable
+        nonReentrant
+        hasSupply(qty)
+        validTime
+    {
         uint256 price = getCurrentPriceInWei();
         if (msg.value < qty * price) revert NotEnoughValue();
 
