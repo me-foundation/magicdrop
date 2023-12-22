@@ -56,9 +56,11 @@ contract ERC721MIncreasableSupply is ERC721M {
      *
      * New supply cannot be larger than the old, unless _canIncreaseMaxMintableSupply is true.
      */
-    function setMaxMintableSupply(
-        uint256 maxMintableSupply
-    ) external override onlyOwner {
+    function setMaxMintableSupply(uint256 maxMintableSupply)
+        external
+        override
+        onlyOwner
+    {
         if (
             !_canIncreaseMaxMintableSupply &&
             maxMintableSupply > _maxMintableSupply
