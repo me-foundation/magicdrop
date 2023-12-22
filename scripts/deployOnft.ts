@@ -24,7 +24,6 @@ export const deployOnft = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-
   let contractName;
   let deployParams;
 
@@ -68,7 +67,7 @@ export const deployOnft = async (
     ),
   );
 
-  if (!await confirm({ message: 'Continue to deploy?' })) return;
+  if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
   const contract = await hre.ethers.getContractFactory(contractName);
   const erc721MOnft = await contract.deploy(...deployParams);

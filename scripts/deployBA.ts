@@ -5,8 +5,8 @@
 // Runtime Environment's members available in the global scope.
 
 import { confirm } from '@inquirer/prompts';
-import { ContractDetails } from './common/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { ContractDetails } from './common/constants';
 
 export interface IDeployParams {
   name: string;
@@ -19,6 +19,8 @@ export interface IDeployParams {
   auctionstarttime: string;
   auctionendtime: string;
   useoperatorfilterer?: boolean;
+  crossMintAddress?: string;
+  timestampExpirySeconds?: number;
 }
 
 export const deployBA = async (
@@ -56,6 +58,8 @@ export const deployBA = async (
     hre.ethers.BigNumber.from(args.mincontributioninwei),
     Math.floor(new Date(args.auctionstarttime).getTime() / 1000),
     Math.floor(new Date(args.auctionendtime).getTime() / 1000),
+    args.crossMintAddress ?? hre.ethers.constants.AddressZero,
+    args.timestampExpirySeconds ?? 300,
   ] as const;
 
   console.log(
@@ -70,7 +74,7 @@ export const deployBA = async (
     ),
   );
 
-  if (!await confirm({ message: 'Continue to deploy?' })) return;
+  if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
   const contract = await contractFactory.deploy(...params);
   await contract.deployed();
