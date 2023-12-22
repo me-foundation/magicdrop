@@ -1,6 +1,6 @@
-import { ERC721MIncreasableSupply } from '../typechain-types';
-import { ethers } from 'hardhat';
 import { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { ERC721MIncreasableSupply } from '../typechain-types';
 
 describe('ERC721MIncreasableSupply', () => {
   let contract: ERC721MIncreasableSupply;
@@ -15,6 +15,7 @@ describe('ERC721MIncreasableSupply', () => {
       0,
       ethers.constants.AddressZero,
       300,
+      ethers.constants.AddressZero,
       ethers.constants.AddressZero,
     );
     const [owner] = await ethers.getSigners();

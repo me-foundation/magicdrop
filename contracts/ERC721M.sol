@@ -383,20 +383,21 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _safeMint(to, qty);
     }
 
-    /**
-     * @dev Withdraws funds by owner.
-     */
     function withdraw() external onlyOwner {
-        if (_mintCurrency != address(0)) {
-            uint256 value = IERC20(_mintCurrency).balanceOf(address(this));
-            IERC20(_mintCurrency).safeTransfer(msg.sender, value);
-            emit WithdrawERC20(_mintCurrency, value);
-        } else {
-            uint256 value = address(this).balance;
-            (bool success, ) = msg.sender.call{value: value}("");
-            if (!success) revert WithdrawFailed();
-            emit Withdraw(value);
-        }
+        uint256 value = address(this).balance;
+        (bool success, ) = msg.sender.call{value: value}("");
+        if (!success) revert WithdrawFailed();
+        emit Withdraw(value);
+    }
+
+    /**
+     * @dev Withdraws ERC-20 funds by owner.
+     */
+    function withdrawERC20() external onlyOwner {
+        if (_mintCurrency == address(0)) revert WrongMintCurrency();
+        uint256 value = IERC20(_mintCurrency).balanceOf(address(this));
+        IERC20(_mintCurrency).safeTransfer(msg.sender, value);
+        emit WithdrawERC20(_mintCurrency, value);
     }
 
     /**
