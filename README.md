@@ -48,6 +48,8 @@ The composability of the stages is generic enough to enable flexible and complic
 | BucketAuction           | Bucket auction style minting contract. The contract is on beta. Use at your own risk. |
 | DutchAuction            | Dutch auction style minting contract. The contract is on beta. Use at your own risk.  |
 
+Please read [ERC721M Contract Usage Guide](./docs/ContractUsageGuide.md) for more details.
+
 ## Installation
 Provide step by step series of examples and explanations about how to get a development env running.
 
