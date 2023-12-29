@@ -38,6 +38,16 @@ The composability of the stages is generic enough to enable flexible and complic
 - Global and Per-stage Limit
 - Native TypeScript and Typechain-Types Support
 
+## Contracts
+| Contract                | Description                                                                           |
+|-------------------------|---------------------------------------------------------------------------------------|
+| ERC721M                 | The basic minting contract                                                            |
+| ERC721MLite             | The lite version of ERC721M                                                           |
+| ERC721MOperatorFilterer | ERC721M with OpenSea Operator Filterer                                                |
+| ERC721MOnft             | ERC721M with LayerZero bridging. The contract is on beta. Use at your own risk.       |
+| BucketAuction           | Bucket auction style minting contract. The contract is on beta. Use at your own risk. |
+| DutchAuction            | Dutch auction style minting contract. The contract is on beta. Use at your own risk.  |
+
 ## Installation
 Provide step by step series of examples and explanations about how to get a development env running.
 
@@ -79,7 +89,9 @@ We are targeting 100% lines coverage.
 
 ## Security
 - [ERC721M Kudelski Security Audit](./docs/AUDIT-PUBLIC-RELEASE-MagicEden-ERC721M1.pdf)
-- Hacker One Bounty Program, please contact https://magiceden.io/.well-known/security.txt
+### Bounty Program
+ - HackerOne program: please contact https://magiceden.io/.well-known/security.txt
+ - Please be noted that there are some prerequites need to be met and certain assumptions are made when using the contracts. Please check the [Contract Usage Guide](./docs/ContractUsageGuide.md) for more details.
 
 ## Used By
 
