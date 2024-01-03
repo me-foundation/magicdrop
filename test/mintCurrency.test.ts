@@ -1,7 +1,7 @@
-import { ERC721M } from '../typechain-types';
+import { expect } from 'chai';
 import { Contract, Signer } from 'ethers';
 import { ethers } from 'hardhat';
-import { expect } from 'chai';
+import { ERC721M } from '../typechain-types';
 
 describe('Mint Currency', () => {
   let erc721M: ERC721M,
@@ -31,6 +31,7 @@ describe('Mint Currency', () => {
         ethers.constants.AddressZero,
         60,
         erc20.address,
+        ethers.constants.AddressZero,
       );
       await erc721M.deployed();
 
@@ -164,6 +165,7 @@ describe('Mint Currency', () => {
         0,
         ethers.constants.AddressZero,
         60,
+        ethers.constants.AddressZero,
         ethers.constants.AddressZero,
       );
       await erc721M.deployed();

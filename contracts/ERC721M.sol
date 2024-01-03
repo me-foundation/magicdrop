@@ -73,7 +73,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address crossMintAddress
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -84,6 +85,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
+        _crossmintAddress = crossMintAddress;
     }
 
     /**
@@ -107,30 +109,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      */
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
-    }
-
-    /**
-     * @dev Sets cosigner.
-     */
-    function setCosigner(address cosigner) external onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
-    }
-
-    /**
-     * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
-     */
-    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
-        _timestampExpirySeconds = expiry;
-        emit SetTimestampExpirySeconds(expiry);
-    }
-
-    /**
-     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
-     */
-    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
-        _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(crossmintAddress);
     }
 
     /**
@@ -252,19 +230,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Sets global wallet limit.
-     */
-    function setGlobalWalletLimit(uint256 globalWalletLimit)
-        external
-        onlyOwner
-    {
-        if (globalWalletLimit > _maxMintableSupply)
-            revert GlobalWalletLimitOverflow();
-        _globalWalletLimit = globalWalletLimit;
-        emit SetGlobalWalletLimit(globalWalletLimit);
-    }
-
-    /**
      * @dev Returns number of minted token for a given address.
      */
     function totalMintedByAddress(address a)
@@ -293,52 +258,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         if (index >= _mintStages.length) {
             revert("InvalidStage");
         }
-        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
-        uint256 stageMinted = _stageMintedCounts[index];
-        return (_mintStages[index], walletMinted, stageMinted);
-    }
-
-    /**
-     * @dev Updates info for one stage specified by index (starting from 0).
-     */
-    function updateStage(
-        uint256 index,
-        uint80 price,
-        uint32 walletLimit,
-        bytes32 merkleRoot,
-        uint24 maxStageSupply,
-        uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
-    ) external onlyOwner {
-        if (index >= _mintStages.length) revert InvalidStage();
-        if (index >= 1) {
-            if (
-                startTimeUnixSeconds <
-                _mintStages[index - 1].endTimeUnixSeconds +
-                    _timestampExpirySeconds
-            ) {
-                revert InsufficientStageTimeGap();
-            }
-        }
-        _assertValidStartAndEndTimestamp(
-            startTimeUnixSeconds,
-            endTimeUnixSeconds
-        );
-        _mintStages[index].price = price;
-        _mintStages[index].walletLimit = walletLimit;
-        _mintStages[index].merkleRoot = merkleRoot;
-        _mintStages[index].maxStageSupply = maxStageSupply;
-        _mintStages[index].startTimeUnixSeconds = startTimeUnixSeconds;
-        _mintStages[index].endTimeUnixSeconds = endTimeUnixSeconds;
-
-        emit UpdateStage(
-            index,
-            price,
-            walletLimit,
-            merkleRoot,
-            maxStageSupply,
-            startTimeUnixSeconds,
-            endTimeUnixSeconds
+        return (
+            _mintStages[index],
+            _stageMintedCountsPerWallet[index][msg.sender],
+            _stageMintedCounts[index]
         );
     }
 
@@ -474,9 +397,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _safeMint(to, qty);
     }
 
-    /**
-     * @dev Withdraws funds by owner.
-     */
     function withdraw() external onlyOwner {
         uint256 value = address(this).balance;
         (bool success, ) = msg.sender.call{value: value}("");
@@ -501,14 +421,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
-    }
-
-    /**
-     * @dev Sets token base URI permanent. Cannot revert.
-     */
-    function setBaseURIPermanent() external onlyOwner {
-        _baseURIPermanent = true;
-        emit PermanentBaseURI(_currentBaseURI);
     }
 
     /**

@@ -22,6 +22,7 @@ export interface IDeployParams {
   autoapproveaddress?: string;
   pausable?: boolean;
   mintcurrency?: string;
+  crossMintAddress?: string;
 }
 
 export const deploy = async (
@@ -74,6 +75,7 @@ export const deploy = async (
     args.timestampexpiryseconds ?? 300,
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
     args.autoapproveaddress ?? {},
+    args.crossMintAddress ?? hre.ethers.constants.AddressZero,
   ] as const;
 
   console.log(

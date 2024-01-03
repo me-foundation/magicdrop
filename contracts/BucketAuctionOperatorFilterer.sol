@@ -19,7 +19,8 @@ contract BucketAuctionOperatorFilterer is
         address cosigner,
         uint256 minimumContributionInWei,
         uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
+        uint64 endTimeUnixSeconds,
+        uint64 timestampExpirySeconds
     )
         UpdatableOperatorFilterer(
             CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS,
@@ -35,7 +36,8 @@ contract BucketAuctionOperatorFilterer is
             cosigner,
             minimumContributionInWei,
             startTimeUnixSeconds,
-            endTimeUnixSeconds
+            endTimeUnixSeconds,
+            timestampExpirySeconds
         )
     {}
 

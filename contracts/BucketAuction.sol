@@ -32,7 +32,8 @@ contract BucketAuction is IBucketAuction, ERC721M {
         address cosigner,
         uint256 minimumContributionInWei,
         uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
+        uint64 endTimeUnixSeconds,
+        uint64 timestampExpirySeconds
     )
         ERC721M(
             collectionName,
@@ -41,10 +42,9 @@ contract BucketAuction is IBucketAuction, ERC721M {
             maxMintableSupply,
             globalWalletLimit,
             cosigner,
-            /* timestampExpirySeconds= */
-            300,
-            /* mintCurrency= */
-            address(0)
+            timestampExpirySeconds,
+            address(0), // mintCurrency
+            address(0) // crossMintAddress
         )
     {
         _claimable = false;

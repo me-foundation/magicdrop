@@ -18,7 +18,8 @@ contract ERC721MPausableOperatorFilterer is
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address crossMintAddress
     )
         UpdatableOperatorFilterer(
             CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS,
@@ -33,7 +34,8 @@ contract ERC721MPausableOperatorFilterer is
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            crossMintAddress
         )
     {}
 

@@ -37,6 +37,7 @@ contract DutchAuction is IDutchAuction, ERC721M {
             /* timestampExpirySeconds= */
             300,
             /* mintCurrency= */
+            address(0),
             address(0)
         )
     {

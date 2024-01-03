@@ -11,32 +11,30 @@ import 'solidity-coverage';
 
 import { deploy } from './scripts/deploy';
 import { deployBA } from './scripts/deployBA';
+import { deployOnft } from './scripts/deployOnft';
+import { deployOwnedRegistrant } from './scripts/deployOwnedRegistrant';
+import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
+import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
+import { getPrice } from './scripts/dev/getPrice';
+import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
 import { mint } from './scripts/mint';
 import { ownerMint } from './scripts/ownerMint';
-import { setBaseURI } from './scripts/setBaseURI';
-import { setCrossmintAddress } from './scripts/setCrossmintAddress';
-import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
-import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
-import { setMintable } from './scripts/setMintable';
-import { setStages } from './scripts/setStages';
-import { setTimestampExpirySeconds } from './scripts/setTimestampExpirySeconds';
-import { transferOwnership } from './scripts/transferOwnership';
-import { setStartAndEndTimeUnixSeconds } from './scripts/setStartAndEndTimeUnixSeconds';
-import { setMinContributionInWei } from './scripts/setMinContributionInWei';
+import { sendOnft } from './scripts/sendOnft';
 import { sendRefund } from './scripts/sendRefund';
 import { sendRefundBatch } from './scripts/sendRefundBatch';
 import { sendTokensAndRefund } from './scripts/sendTokensAndRefund';
 import { sendTokensAndRefundBatch } from './scripts/sendTokensAndRefundBatch';
-import { setPrice } from './scripts/setPrice';
-import { getPrice } from './scripts/dev/getPrice';
-import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
-import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
-import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
-import { deployOnft } from './scripts/deployOnft';
+import { setBaseURI } from './scripts/setBaseURI';
+import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
+import { setMinContributionInWei } from './scripts/setMinContributionInWei';
+import { setMintable } from './scripts/setMintable';
 import { setOnftMinDstGas } from './scripts/setOnftMinDstGas';
+import { setPrice } from './scripts/setPrice';
+import { setStages } from './scripts/setStages';
+import { setStartAndEndTimeUnixSeconds } from './scripts/setStartAndEndTimeUnixSeconds';
+import { setTimestampExpirySeconds } from './scripts/setTimestampExpirySeconds';
 import { setTrustedRemote } from './scripts/setTrustedRemote';
-import { sendOnft } from './scripts/sendOnft';
-import { deployOwnedRegistrant } from './scripts/deployOwnedRegistrant';
+import { transferOwnership } from './scripts/transferOwnership';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -96,7 +94,7 @@ const config: HardhatUserConfig = {
       url: process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    }
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -126,6 +124,11 @@ task('deploy', 'Deploy ERC721M')
   .addParam('globalwalletlimit', 'global wallet limit', '0')
   .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
   .addOptionalParam(
+    'crossMintAddress',
+    'cross mint address',
+    '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
     'cosigner',
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
@@ -154,11 +157,6 @@ task('setBaseURI', 'Set the base uri')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .setAction(setBaseURI);
 
-task('setCrossmintAddress', 'Set crossmint address')
-  .addParam('contract', 'contract address')
-  .addParam('crossmintaddress', 'new crossmint address')
-  .setAction(setCrossmintAddress);
-
 task('mint', 'Mint token(s)')
   .addParam('contract', 'contract address')
   .addParam('qty', 'quantity to mint', '1')
@@ -170,11 +168,6 @@ task('ownerMint', 'Mint token(s) as owner')
   .addParam('qty', 'quantity to mint', '1')
   .addOptionalParam('to', 'recipient address')
   .setAction(ownerMint);
-
-task('setGlobalWalletLimit', 'Set the global wallet limit')
-  .addParam('contract', 'contract address')
-  .addParam('limit', 'global wallet limit (0 for no global limit)')
-  .setAction(setGlobalWalletLimit);
 
 task('setMaxMintableSupply', 'set max mintable supply')
   .addParam('contract', 'contract address')
@@ -191,6 +184,11 @@ task('deployBA', 'Deploy BucketAuction')
     'cosigner',
     'cosigner address (0x00...000 if not using cosign)',
     '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
+    'timestampExpirySeconds',
+    'timestamp expiry in seconds',
+    '300',
   )
   .addParam(
     'mincontributioninwei',
@@ -330,7 +328,11 @@ task('sendOnft', 'Send tokens to target network')
   .setAction(sendOnft);
 
 task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
-  .addParam('newowner', 'new owner address', '0x0000000000000000000000000000000000000000')
+  .addParam(
+    'newowner',
+    'new owner address',
+    '0x0000000000000000000000000000000000000000',
+  )
   .setAction(deployOwnedRegistrant);
 
 export default config;

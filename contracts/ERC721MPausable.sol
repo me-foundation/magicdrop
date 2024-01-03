@@ -14,7 +14,8 @@ contract ERC721MPausable is ERC721M, Pausable {
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address crossmintAddress
     )
         ERC721M(
             collectionName,
@@ -24,7 +25,8 @@ contract ERC721MPausable is ERC721M, Pausable {
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            crossmintAddress
         )
     {}
 
