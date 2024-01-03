@@ -686,243 +686,227 @@ describe('ERC721M', function () {
       expect(stagedMintedCount.toNumber()).to.equal(1);
     });
 
-    // TODO(channing): have a look on this one please
-    it('mint with cosign - invalid sigs', async () => {
-      const [owner, minter, cosigner] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
-        'Test',
-        'TEST',
-        '',
-        1000,
-        0,
-        cosigner.address,
-        20,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-      );
-      await erc721M.deployed();
-      contract = erc721M.connect(owner);
-      readonlyContract = erc721M.connect(minter);
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0'),
-          walletLimit: 0,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 100,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
-        },
-      ]);
-      await contract.setMintable(true);
-
-      const timestamp = Math.floor(new Date().getTime() / 1000);
-      const sig = await getCosignSignature(
-        contract,
-        cosigner,
-        minter.address,
-        timestamp,
-        1,
-      );
-
-      // invalid because of unexpected timestamp
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp + 1,
-          sig,
-          {
-            value: ethers.utils.parseEther('0'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidStage');
-
-      // invalid because of unexptected sig
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          sig + '00',
-          {
-            value: ethers.utils.parseEther('0'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidStage');
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          '0x00',
-          {
-            value: ethers.utils.parseEther('0'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidStage');
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          '0',
-          {
-            value: ethers.utils.parseEther('0'),
-          },
-        ),
-      ).to.be.rejectedWith('invalid arrayify');
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
+    describe('mint with cosign - invalid cases', () => {
+      beforeEach(async () => {
+        const [_owner, _minter, cosigner] = await ethers.getSigners();
+        const ERC721M = await ethers.getContractFactory('ERC721M');
+        const erc721M = await ERC721M.deploy(
+          'Test',
+          'TEST',
           '',
+          1000,
+          0,
+          cosigner.address,
+          60,
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero,
+        );
+        await erc721M.deployed();
+
+        [owner, readonly] = await ethers.getSigners();
+        contract = erc721M.connect(owner);
+        readonlyContract = erc721M.connect(readonly);
+        chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
+      });
+      it('mint with cosign - invalid sigs', async () => {
+        const [_owner, minter, cosigner] = await ethers.getSigners();
+        await contract.setStages([
           {
-            value: ethers.utils.parseEther('0'),
+            price: ethers.utils.parseEther('0'),
+            walletLimit: 0,
+            merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+            maxStageSupply: 100,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1,
           },
-        ),
-      ).to.be.rejectedWith('invalid arrayify');
-
-      // invalid because of unawait expected minter
-      await expect(
-        contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], timestamp, sig, {
-          value: ethers.utils.parseEther('0'),
-        }),
-      ).to.be.revertedWith('InvalidStage');
-    });
-
-    it('mint with cosign - timestamp out of stage', async () => {
-      const [owner, minter, cosigner] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
-        'Test',
-        'TEST',
-        '',
-        1000,
-        0,
-        cosigner.address,
-        20,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-      );
-      await erc721M.deployed();
-      contract = erc721M.connect(owner);
-      const block = await ethers.provider.getBlock(
-        await ethers.provider.getBlockNumber(),
-      );
-      const stageStart = block.timestamp;
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0'),
-          walletLimit: 0,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 100,
-          startTimeUnixSeconds: stageStart,
-          endTimeUnixSeconds: stageStart + 1000,
-        },
-      ]);
-      await contract.setMintable(true);
-
-      const earlyTimestamp = stageStart - 1;
-      let sig = getCosignSignature(
-        readonlyContract,
-        cosigner,
-        minter.address,
-        earlyTimestamp,
-        1,
-      );
-
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          earlyTimestamp,
-          sig,
-          {
-            value: ethers.utils.parseEther('0'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidStage');
-
-      const lateTimestamp = stageStart + 1001;
-      sig = getCosignSignature(
-        readonlyContract,
-        cosigner,
-        minter.address,
-        lateTimestamp,
-        1,
-      );
-
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          lateTimestamp,
-          sig,
-          {
-            value: ethers.utils.parseEther('0'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidStage');
-    });
-
-    it('mint with cosign - expired signature', async () => {
-      const [owner, minter, cosigner] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
-        'Test',
-        'TEST',
-        '',
-        1000,
-        0,
-        cosigner.address,
-        20,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-      );
-      await erc721M.deployed();
-      contract = erc721M.connect(owner);
-      const block = await ethers.provider.getBlock(
-        await ethers.provider.getBlockNumber(),
-      );
-      const stageStart = block.timestamp;
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0'),
-          walletLimit: 0,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 100,
-          startTimeUnixSeconds: stageStart,
-          endTimeUnixSeconds: stageStart + 1000,
-        },
-      ]);
-      await contract.setMintable(true);
-
-      const timestamp = stageStart;
-      const sig = getCosignSignature(
-        readonlyContract,
-        cosigner,
-        minter.address,
-        timestamp,
-        1,
-      );
-
-      // fast forward 2 minutes
-      await ethers.provider.send('evm_increaseTime', [120]);
-      await ethers.provider.send('evm_mine', []);
-
-      await expect(
-        readonlyContract.mint(
-          1,
-          [ethers.utils.hexZeroPad('0x', 32)],
+        ]);
+        await contract.setMintable(true);
+        const timestamp = Math.floor(new Date().getTime() / 1000);
+        const sig = await getCosignSignature(
+          contract,
+          cosigner,
+          minter.address,
           timestamp,
-          sig,
+          1,
+        );
+
+        // invalid because of unexpected timestamp
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            timestamp + 1,
+            sig,
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.revertedWith('InvalidCosignSignature');
+
+        // invalid because of unexptected sig
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            timestamp,
+            sig + '00',
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.revertedWith('InvalidCosignSignature');
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            timestamp,
+            '0x00',
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.revertedWith('InvalidCosignSignature');
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            timestamp,
+            '0',
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.rejectedWith('invalid arrayify');
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            timestamp,
+            '',
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.rejectedWith('invalid arrayify');
+
+        // invalid because of unawait expected minter
+        await expect(
+          contract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            timestamp,
+            sig,
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.revertedWith('InvalidCosignSignature');
+      });
+
+      it('mint with cosign - timestamp out of stage', async () => {
+        const [_owner, minter, cosigner] = await ethers.getSigners();
+        const block = await ethers.provider.getBlock(
+          await ethers.provider.getBlockNumber(),
+        );
+        const stageStart = block.timestamp;
+        await contract.setStages([
           {
-            value: ethers.utils.parseEther('0'),
+            price: ethers.utils.parseEther('0'),
+            walletLimit: 0,
+            merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+            maxStageSupply: 100,
+            startTimeUnixSeconds: stageStart,
+            endTimeUnixSeconds: stageStart + 1000,
           },
-        ),
-      ).to.be.revertedWith('TimestampExpired');
+        ]);
+        await contract.setMintable(true);
+
+        const earlyTimestamp = stageStart - 1;
+        let sig = getCosignSignature(
+          readonlyContract,
+          cosigner,
+          minter.address,
+          earlyTimestamp,
+          1,
+        );
+
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            earlyTimestamp,
+            sig,
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.revertedWith('InvalidStage');
+
+        const lateTimestamp = stageStart + 1001;
+        sig = getCosignSignature(
+          readonlyContract,
+          cosigner,
+          minter.address,
+          lateTimestamp,
+          1,
+        );
+
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            lateTimestamp,
+            sig,
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.revertedWith('InvalidStage');
+      });
+
+      it('mint with cosign - expired signature', async () => {
+        const [_owner, minter, cosigner] = await ethers.getSigners();
+        const block = await ethers.provider.getBlock(
+          await ethers.provider.getBlockNumber(),
+        );
+        const stageStart = block.timestamp;
+        await contract.setStages([
+          {
+            price: ethers.utils.parseEther('0'),
+            walletLimit: 0,
+            merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
+            maxStageSupply: 100,
+            startTimeUnixSeconds: stageStart,
+            endTimeUnixSeconds: stageStart + 1000,
+          },
+        ]);
+        await contract.setMintable(true);
+
+        const timestamp = stageStart;
+        const sig = getCosignSignature(
+          readonlyContract,
+          cosigner,
+          minter.address,
+          timestamp,
+          1,
+        );
+
+        // fast forward 2 minutes
+        await ethers.provider.send('evm_increaseTime', [120]);
+        await ethers.provider.send('evm_mine', []);
+
+        await expect(
+          readonlyContract.mint(
+            1,
+            [ethers.utils.hexZeroPad('0x', 32)],
+            timestamp,
+            sig,
+            {
+              value: ethers.utils.parseEther('0'),
+            },
+          ),
+        ).to.be.revertedWith('TimestampExpired');
+      });
     });
 
     it('enforces stage supply', async () => {
