@@ -28,7 +28,7 @@ export const setStages = async (
     fs.readFileSync(args.stages, 'utf-8'),
   ) as StageConfig[];
 
-  let overrides: any = { gasLimit: 500_000 };
+  const overrides: any = { gasLimit: 500_000 };
 
   const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);

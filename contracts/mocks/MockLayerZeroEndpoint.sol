@@ -2,26 +2,54 @@
 
 pragma solidity ^0.8.0;
 
-import { ILayerZeroEndpoint } from "@layerzerolabs/solidity-examples/contracts/interfaces/ILayerZeroEndpoint.sol";
+import {ILayerZeroEndpoint} from "@layerzerolabs/solidity-examples/contracts/interfaces/ILayerZeroEndpoint.sol";
 
 contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
-    function send(uint16 _dstChainId, bytes calldata _destination, bytes calldata _payload, address payable _refundAddress, address _zroPaymentAddress, bytes calldata _adapterParams) external payable {
+    function send(
+        uint16 _dstChainId,
+        bytes calldata _destination,
+        bytes calldata _payload,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams
+    ) external payable {
         // do nothing
     }
 
-    function receivePayload(uint16 _srcChainId, bytes calldata _srcAddress, address _dstAddress, uint64 _nonce, uint _gasLimit, bytes calldata _payload) external {
+    function receivePayload(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        address _dstAddress,
+        uint64 _nonce,
+        uint256 _gasLimit,
+        bytes calldata _payload
+    ) external {
         // do nothing
     }
 
-    function getInboundNonce(uint16 _srcChainId, bytes calldata _srcAddress) external view returns (uint64)  {
+    function getInboundNonce(uint16 _srcChainId, bytes calldata _srcAddress)
+        external
+        view
+        returns (uint64)
+    {
         return 0;
     }
 
-    function getOutboundNonce(uint16 _dstChainId, address _srcAddress) external view returns (uint64) {
+    function getOutboundNonce(uint16 _dstChainId, address _srcAddress)
+        external
+        view
+        returns (uint64)
+    {
         return 0;
     }
 
-    function estimateFees(uint16 _dstChainId, address _userApplication, bytes calldata _payload, bool _payInZRO, bytes calldata _adapterParam) external view returns (uint nativeFee, uint zroFee) {
+    function estimateFees(
+        uint16 _dstChainId,
+        address _userApplication,
+        bytes calldata _payload,
+        bool _payInZRO,
+        bytes calldata _adapterParam
+    ) external view returns (uint256 nativeFee, uint256 zroFee) {
         return (0, 0);
     }
 
@@ -29,19 +57,35 @@ contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
         return 0;
     }
 
-    function retryPayload(uint16 _srcChainId, bytes calldata _srcAddress, bytes calldata _payload) external {
+    function retryPayload(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress,
+        bytes calldata _payload
+    ) external {
         // do nothing
     }
 
-    function hasStoredPayload(uint16 _srcChainId, bytes calldata _srcAddress) external view returns (bool) {
+    function hasStoredPayload(uint16 _srcChainId, bytes calldata _srcAddress)
+        external
+        view
+        returns (bool)
+    {
         return false;
     }
 
-    function getSendLibraryAddress(address _userApplication) external view returns (address) {
+    function getSendLibraryAddress(address _userApplication)
+        external
+        view
+        returns (address)
+    {
         return address(0);
     }
 
-    function getReceiveLibraryAddress(address _userApplication) external view returns (address) {
+    function getReceiveLibraryAddress(address _userApplication)
+        external
+        view
+        returns (address)
+    {
         return address(0);
     }
 
@@ -53,19 +97,37 @@ contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
         return false;
     }
 
-    function getConfig(uint16 _version, uint16 _chainId, address _userApplication, uint _configType) external view returns (bytes memory) {
+    function getConfig(
+        uint16 _version,
+        uint16 _chainId,
+        address _userApplication,
+        uint256 _configType
+    ) external view returns (bytes memory) {
         return "";
     }
 
-    function getSendVersion(address _userApplication) external view returns (uint16) {
+    function getSendVersion(address _userApplication)
+        external
+        view
+        returns (uint16)
+    {
         return 0;
     }
 
-    function getReceiveVersion(address _userApplication) external view returns (uint16) {
+    function getReceiveVersion(address _userApplication)
+        external
+        view
+        returns (uint16)
+    {
         return 0;
     }
 
-    function setConfig(uint16 _version, uint16 _chainId, uint _configType, bytes calldata _config) external {
+    function setConfig(
+        uint16 _version,
+        uint16 _chainId,
+        uint256 _configType,
+        bytes calldata _config
+    ) external {
         // do nothing
     }
 
@@ -77,9 +139,9 @@ contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
         // do nothing
     }
 
-    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress) external {
+    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress)
+        external
+    {
         // do nothing
     }
-
-
 }

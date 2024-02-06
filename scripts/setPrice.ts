@@ -10,7 +10,7 @@ export const setPrice = async (
   args: ISetPriceParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-  let overrides: any = { gasLimit: 500_000 };
+  const overrides: any = { gasLimit: 500_000 };
   const { ethers } = hre;
   const ERC721M = await ethers.getContractFactory(
     ContractDetails.BucketAuction.name,

@@ -3,9 +3,13 @@
 pragma solidity ^0.8.4;
 
 import "./BucketAuction.sol";
-import "./OperatorFilter/DefaultOperatorFilterer.sol";
+import {UpdatableOperatorFilterer} from "operator-filter-registry/src/UpdatableOperatorFilterer.sol";
+import {CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION} from "./utils/Constants.sol";
 
-contract BucketAuctionOperatorFilterer is BucketAuction, DefaultOperatorFilterer {
+contract BucketAuctionOperatorFilterer is
+    BucketAuction,
+    UpdatableOperatorFilterer
+{
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -17,6 +21,11 @@ contract BucketAuctionOperatorFilterer is BucketAuction, DefaultOperatorFilterer
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds
     )
+        UpdatableOperatorFilterer(
+            CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS,
+            ME_SUBSCRIPTION,
+            true
+        )
         BucketAuction(
             collectionName,
             collectionSymbol,
@@ -29,6 +38,15 @@ contract BucketAuctionOperatorFilterer is BucketAuction, DefaultOperatorFilterer
             endTimeUnixSeconds
         )
     {}
+
+    function owner()
+        public
+        view
+        override(Ownable, UpdatableOperatorFilterer)
+        returns (address)
+    {
+        return Ownable.owner();
+    }
 
     function transferFrom(
         address from,
