@@ -32,6 +32,7 @@
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
     "@layerzerolabs/solidity-examples": "^0.0.13",
+    "@limitbreak/creator-token-standards": "^2.0.1",
     "@openzeppelin/contracts": "^4.7.3",
     "erc721a": "^4.2.3",
     "operator-filter-registry": "^1.4.2"
