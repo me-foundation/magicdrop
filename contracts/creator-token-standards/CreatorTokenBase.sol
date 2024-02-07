@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "contracts/creator-token-standards/access/OwnablePermissions.sol";
-import "contracts/creator-token-standards/interfaces/ICreatorToken.sol";
-import "contracts/creator-token-standards/interfaces/ICreatorTokenTransferValidator.sol";
-import "contracts/creator-token-standards/utils/TransferValidation.sol";
+import "@limitbreak/creator-token-standards/src/access/OwnablePermissions.sol";
+import "@limitbreak/creator-token-standards/src/interfaces/ICreatorToken.sol";
+import "@limitbreak/creator-token-standards/src/interfaces/ICreatorTokenTransferValidator.sol";
+import "@limitbreak/creator-token-standards/src/utils/TransferValidation.sol";
 import "@openzeppelin/contracts/interfaces/IERC165.sol";
 
 /**
@@ -32,11 +32,22 @@ import "@openzeppelin/contracts/interfaces/IERC165.sol";
  */
 abstract contract CreatorTokenBase is OwnablePermissions, TransferValidation, ICreatorToken {
     
+    /**
+     * @dev Thrown when the transfer validator address is the zero address 
+     * @dev or it does not implement the `ICreatorTokenTransferValidator` interface.
+     */
     error CreatorTokenBase__InvalidTransferValidatorContract();
+
+    /// @dev Thrown when attempting to set transfer security settings before a transfer validator is set.
     error CreatorTokenBase__SetTransferValidatorFirst();
 
-    address public constant DEFAULT_TRANSFER_VALIDATOR = address(0x0000721C310194CcfC01E523fc93C9cCcFa2A0Ac);
+    /// @dev The default transfer validator address for calls to `setToDefaultSecurityPolicy`.
+    address public constant DEFAULT_TRANSFER_VALIDATOR = address(0x721C00182a990771244d7A71B9FA2ea789A3b433);
+
+    /// @dev The default transfer security level for calls to `setToDefaultSecurityPolicy`.
     TransferSecurityLevels public constant DEFAULT_TRANSFER_SECURITY_LEVEL = TransferSecurityLevels.One;
+
+    /// @dev The default operator whitelist id for calls to `setToDefaultSecurityPolicy`.
     uint120 public constant DEFAULT_OPERATOR_WHITELIST_ID = uint120(1);
 
     ICreatorTokenTransferValidator private transferValidator;
@@ -147,7 +158,7 @@ abstract contract CreatorTokenBase is OwnablePermissions, TransferValidation, IC
         }
 
         return CollectionSecurityPolicy({
-            transferSecurityLevel: TransferSecurityLevels.Zero,
+            transferSecurityLevel: TransferSecurityLevels.Recommended,
             operatorWhitelistId: 0,
             permittedContractReceiversId: 0
         });

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.4;
 
-import "contracts/creator-token-standards/programmable-royalties/BasicRoyalties.sol";
+import "@limitbreak/creator-token-standards/src/programmable-royalties/BasicRoyalties.sol";
 import "./ERC721CM.sol";
 
 /**
@@ -31,7 +31,7 @@ contract ERC721CMBasicRoyalties is ERC721CM, BasicRoyalties {
             mintCurrency)
         BasicRoyalties(royaltyReceiver, royaltyFeeNumerator) {}
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC2981, ERC721AC, IERC721A) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC2981, ERC721ACQueryable, IERC721A) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }

@@ -95,23 +95,32 @@ export const deploy = async (
     );
   }
 
-  console.log(
-    `Constructor params: `,
-    JSON.stringify(
-      params.map((param) => {
-        if (hre.ethers.BigNumber.isBigNumber(param)) {
-          return param.toString();
-        }
-        return param;
-      }),
-    ),
-  );
-
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
-  const contract = await contractFactory.deploy(...params);
+  const overrides: any = { gasLimit: 8_000_000 };
+
+  const contract = await contractFactory.deploy(...params, overrides);
+  console.log('Deploying contract... ');
+  console.log('tx:', contract.deployTransaction.hash);
 
   await contract.deployed();
 
   console.log(`${contractName} deployed to:`, contract.address);
+  console.log('run the following command to verify the contract:');
+  const paramsStr = params.map((param) => {
+    if (hre.ethers.BigNumber.isBigNumber(param)) {
+      return param.toString();
+    }
+    return param;
+  }).join(' ');
+
+  console.log(`npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`);
+
+  if (args.useerc721c) {
+    console.log('[ERC721CM] Setting security policy to ME default...');
+    const ERC721CM = await hre.ethers.getContractFactory(ContractDetails.ERC721CM.name);
+    const erc721cm = ERC721CM.attach(contract.address);
+    const tx = await erc721cm.setToDefaultSecurityPolicy();
+    console.log('[ERC721CM] Security policy set');
+  }
 };

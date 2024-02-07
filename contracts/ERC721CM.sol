@@ -9,20 +9,20 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "contracts/creator-token-standards/erc721c/v2/ERC721AC.sol";
+import "contracts/creator-token-standards/ERC721ACQueryable.sol";
 import "./IERC721M.sol";
 
 /**
  * @title ERC721CM
  *
- * @dev ERC721A and ERC721C subclass with MagicEden launchpad features including
+ * @dev ERC72ERC721ACQueryable1A and ERC721C subclass with MagicEden launchpad features including
  *  - multiple minting stages with time-based auto stage switch
  *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
  *  - crossmint support
  *  - anti-botting
  */
-contract ERC721CM is IERC721M, ERC721AC, Ownable, ReentrancyGuard {
+contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -78,7 +78,7 @@ contract ERC721CM is IERC721M, ERC721AC, Ownable, ReentrancyGuard {
         address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency
-    ) ERC721AC(collectionName, collectionSymbol) {
+    ) ERC721ACQueryable(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = false;
