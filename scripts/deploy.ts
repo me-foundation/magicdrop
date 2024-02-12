@@ -66,11 +66,6 @@ export const deploy = async (
     maxsupply = hre.ethers.BigNumber.from('999999999');
   }
 
-  console.log(
-    `Going to deploy ${contractName} with params`,
-    JSON.stringify(args, null, 2),
-  );
-
   const contractFactory = await hre.ethers.getContractFactory(contractName);
 
   const params = [
@@ -95,11 +90,22 @@ export const deploy = async (
     );
   }
 
+  console.log(
+    `Going to deploy ${contractName} with params`,
+    JSON.stringify(args, null, 2),
+  );
+
+  const deployTx = await contractFactory.getDeployTransaction(...params);
+  const estimatedGasUnit = await hre.ethers.provider.estimateGas(deployTx);
+  const estimatedGasPrice = await hre.ethers.provider.getGasPrice();
+  const estimatedGas = estimatedGasUnit.mul(estimatedGasPrice);
+  console.log('Estimated gas unit: ', estimatedGasUnit.toString());
+  console.log('Estimated gas price (WEI): ', estimatedGasPrice.toString());
+  console.log('Estimated gas (ETH): ', hre.ethers.utils.formatEther(estimatedGas));
+
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
-  const overrides: any = { gasLimit: 8_000_000 };
-
-  const contract = await contractFactory.deploy(...params, overrides);
+  const contract = await contractFactory.deploy(...params);
   console.log('Deploying contract... ');
   console.log('tx:', contract.deployTransaction.hash);
 
@@ -116,6 +122,7 @@ export const deploy = async (
 
   console.log(`npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`);
 
+  // Set security policy to ME default
   if (args.useerc721c) {
     console.log('[ERC721CM] Setting security policy to ME default...');
     const ERC721CM = await hre.ethers.getContractFactory(ContractDetails.ERC721CM.name);

@@ -4,6 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
 import { ERC721CM } from '../typechain-types';
+import { setMintable } from '../scripts/setMintable';
 
 const { keccak256, getAddress } = ethers.utils;
 
@@ -68,11 +69,7 @@ describe('ERC721CM', function () {
   });
 
   it('Contract can be paused/unpaused', async () => {
-    // starts paused
-    expect(await contract.getMintable()).to.be.false;
-
-    // unpause
-    await contract.setMintable(true);
+    // starts unpaused
     expect(await contract.getMintable()).to.be.true;
 
     // we should assert that the correct event is emitted
@@ -551,6 +548,8 @@ describe('ERC721CM', function () {
 
   describe('Minting', function () {
     it('revert if contract is not mintable', async () => {
+      await contract.setMintable(false);
+
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),

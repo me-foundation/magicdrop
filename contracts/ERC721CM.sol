@@ -15,7 +15,7 @@ import "./IERC721M.sol";
 /**
  * @title ERC721CM
  *
- * @dev ERC72ERC721ACQueryable1A and ERC721C subclass with MagicEden launchpad features including
+ * @dev ERC721ACQueryable and ERC721C subclass with MagicEden launchpad features including
  *  - multiple minting stages with time-based auto stage switch
  *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
@@ -81,7 +81,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     ) ERC721ACQueryable(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
-        _mintable = false;
+        _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
