@@ -44,8 +44,20 @@ export const setStages = async (
       const whitelist = JSON.parse(
         fs.readFileSync(stage.whitelistPath, 'utf-8'),
       );
+
+      // Clean up whitelist
+      const filteredWhitelist=  whitelist.filter((address: string) => ethers.utils.isAddress(address));
+      console.log(`Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`);
+      const invalidWhitelist=  whitelist.filter((address: string) => !ethers.utils.isAddress(address));
+      console.log(`❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`);
+
+      if (invalidWhitelist.length > 0) {
+        console.log(`🔄 🚨 updating whitelist file: ${stage.whitelistPath}`);
+        fs.writeFileSync(stage.whitelistPath, JSON.stringify(filteredWhitelist, null, 2))
+      }
+
       const mt = new MerkleTree(
-        whitelist.map(ethers.utils.getAddress),
+        filteredWhitelist.map(ethers.utils.getAddress),
         ethers.utils.keccak256,
         {
           sortPairs: true,

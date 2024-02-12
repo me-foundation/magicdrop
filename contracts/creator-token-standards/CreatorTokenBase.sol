@@ -45,7 +45,7 @@ abstract contract CreatorTokenBase is OwnablePermissions, TransferValidation, IC
     address public constant DEFAULT_TRANSFER_VALIDATOR = address(0x721C00182a990771244d7A71B9FA2ea789A3b433);
 
     /// @dev The default transfer security level for calls to `setToDefaultSecurityPolicy`.
-    TransferSecurityLevels public constant DEFAULT_TRANSFER_SECURITY_LEVEL = TransferSecurityLevels.One;
+    TransferSecurityLevels public constant DEFAULT_TRANSFER_SECURITY_LEVEL = TransferSecurityLevels.Two;
 
     /// @dev The default operator whitelist id for calls to `setToDefaultSecurityPolicy`.
     uint120 public constant DEFAULT_OPERATOR_WHITELIST_ID = uint120(1);
