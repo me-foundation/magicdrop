@@ -344,4 +344,14 @@ task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
   .addParam('newowner', 'new owner address', '0x0000000000000000000000000000000000000000')
   .setAction(deployOwnedRegistrant);
 
+task('getContractCodehash', 'Get the code hash of a contract')
+  .addParam('contract', 'contract address')
+  .setAction(async (args, hre) => {
+    const [signer] = await hre.ethers.getSigners();
+    const provider = signer.provider;
+    let code = await provider!.getCode(args.contract);
+    const codehash = hre.ethers.utils.keccak256(code);
+    console.log(codehash);
+  });
+
 export default config;
