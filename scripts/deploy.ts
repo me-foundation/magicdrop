@@ -7,6 +7,7 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
+import { estimateGas } from './utils/helper';
 
 export interface IDeployParams {
   name: string;
@@ -95,13 +96,7 @@ export const deploy = async (
     JSON.stringify(args, null, 2),
   );
 
-  const deployTx = await contractFactory.getDeployTransaction(...params);
-  const estimatedGasUnit = await hre.ethers.provider.estimateGas(deployTx);
-  const estimatedGasPrice = await hre.ethers.provider.getGasPrice();
-  const estimatedGas = estimatedGasUnit.mul(estimatedGasPrice);
-  console.log('Estimated gas unit: ', estimatedGasUnit.toString());
-  console.log('Estimated gas price (WEI): ', estimatedGasPrice.toString());
-  console.log('Estimated gas (ETH): ', hre.ethers.utils.formatEther(estimatedGas));
+  await estimateGas(hre, contractFactory.getDeployTransaction(...params));
 
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
