@@ -59,3 +59,5 @@ export const ChainIds: Record<string, number> = {
   'meter-testnet': 10156,
   'zksync-testnet': 10165,
 };
+
+export const ERC721BatchTransferContract = '0x38F7ba911f7efc434D29D6E39c814E9d4De3FEef';

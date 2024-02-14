@@ -3,6 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
+import { estimateGas } from './utils/helper';
 
 export interface ISetStagesParams {
   stages: string;
@@ -84,15 +85,16 @@ export const setStages = async (
     ),
   );
 
+  const tx = await contract.populateTransaction.setStages(stages, overrides);
+  estimateGas(hre, tx);
+
   if (!await confirm({ message: 'Continue to set stages?' })) return;
 
-  const tx = await contract.setStages(stages, overrides);
+  const submittedTx = await contract.setStages(stages, overrides);
 
-  console.log(`Submitted tx ${tx.hash}`);
-
-  await tx.wait();
-
-  console.log('Set stages:', tx.hash);
+  console.log(`Submitted tx ${submittedTx.hash}`);
+  await submittedTx.wait();
+  console.log('Stages set');
 
   for (let i = 0; i < stagesConfig.length; i++) {
     const [stage] = await contract.getStageInfo(i);

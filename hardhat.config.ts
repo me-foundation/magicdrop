@@ -37,6 +37,9 @@ import { setOnftMinDstGas } from './scripts/setOnftMinDstGas';
 import { setTrustedRemote } from './scripts/setTrustedRemote';
 import { sendOnft } from './scripts/sendOnft';
 import { deployOwnedRegistrant } from './scripts/deployOwnedRegistrant';
+import { getContractCodehash } from './scripts/dev/getContractCodehash';
+import { deploy721BatchTransfer } from './scripts/dev/deploy721BatchTransfer';
+import { send721Batch } from './scripts/send721Batch';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -346,12 +349,16 @@ task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
 
 task('getContractCodehash', 'Get the code hash of a contract')
   .addParam('contract', 'contract address')
-  .setAction(async (args, hre) => {
-    const [signer] = await hre.ethers.getSigners();
-    const provider = signer.provider;
-    let code = await provider!.getCode(args.contract);
-    const codehash = hre.ethers.utils.keccak256(code);
-    console.log(codehash);
-  });
+  .setAction(getContractCodehash);
+
+task('deploy721BatchTransfer', 'Deploy ERC721BatchTransfer')
+  .setAction(deploy721BatchTransfer);
+
+task('send721Batch', 'Send ERC721 tokens in batch')
+  .addParam('contract', 'contract address')
+  .addOptionalParam('transferfile', 'path to the file with the transfer details')
+  .addOptionalParam('to', 'recipient address (if not using transferFile)')
+  .addOptionalParam('tokenids', 'token ids (if not using transferFile), separate with comma')
+  .setAction(send721Batch);
 
 export default config;

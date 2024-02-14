@@ -7,6 +7,7 @@
 import { confirm } from '@inquirer/prompts';
 import { ContractDetails } from './common/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { estimateGas } from './utils/helper';
 
 export interface IDeployParams {
   name: string;
@@ -69,6 +70,8 @@ export const deployBA = async (
       }),
     ),
   );
+
+  await estimateGas(hre, contractFactory.getDeployTransaction(...params));
 
   if (!await confirm({ message: 'Continue to deploy?' })) return;
 
