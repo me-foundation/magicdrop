@@ -7,13 +7,12 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 /**
  * @title ERC721 Batch Transfer
  *
- * @notice ETransfer ERC721 tokens in batches to a single wallet or multiple wallets. This supports ERC721M and ERC721CM contracts.
+ * @notice Transfer ERC721 tokens in batches to a single wallet or multiple wallets. This supports ERC721M and ERC721CM contracts.
  * @notice To use any of the methods in this contract the user has to approve this contract to control their tokens using either `setApproveForAll` or `approve` functions from the ERC721 contract.
  */
 contract ERC721BatchTransfer {
     error InvalidArguments();
     error NotOwnerOfToken();
-    error InvalidCaller();
 
     event BatchTransferToSingle(
         address indexed contractAddress,
@@ -26,13 +25,6 @@ contract ERC721BatchTransfer {
         uint256 amount
     );
 
-    constructor() {}
-
-    modifier noZero() {
-        if (msg.sender == address(0)) revert InvalidCaller();
-        _;
-    }
-
     /** 
      * @notice Transfer multiple tokens to the same wallet using the ERC721.transferFrom method.
      * @notice If you don't know what that means, use the `safeBatchTransferToSingleWallet` method instead
@@ -44,7 +36,7 @@ contract ERC721BatchTransfer {
         IERC721 erc721Contract,
         address to,
         uint256[] calldata tokenIds
-    ) external noZero {
+    ) external {
         uint256 length = tokenIds.length;
         for (uint256 i; i < length; ) {
             uint256 tokenId = tokenIds[i];
@@ -70,7 +62,7 @@ contract ERC721BatchTransfer {
         IERC721 erc721Contract,
         address to,
         uint256[] calldata tokenIds
-    ) external noZero {
+    ) external {
         uint256 length = tokenIds.length;
         for (uint256 i; i < length; ) {
             uint256 tokenId = tokenIds[i];
@@ -102,7 +94,7 @@ contract ERC721BatchTransfer {
         IERC721 erc721Contract,
         address[] calldata tos,
         uint256[] calldata tokenIds
-    ) external noZero {
+    ) external {
         uint256 length = tokenIds.length;
         if (tos.length != length) revert InvalidArguments();
 
@@ -137,7 +129,7 @@ contract ERC721BatchTransfer {
         IERC721 erc721Contract,
         address[] calldata tos,
         uint256[] calldata tokenIds
-    ) external noZero {
+    ) external {
         uint256 length = tokenIds.length;
         if (tos.length != length) revert InvalidArguments();
 
