@@ -33,7 +33,9 @@ export const deploy = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-  await checkCodeVersion();
+  if (!await checkCodeVersion()) {
+    return;
+  }
 
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');

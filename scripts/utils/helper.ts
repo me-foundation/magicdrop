@@ -13,9 +13,10 @@ export const checkCodeVersion = async () => {
   if (localLatestCommit !== remoteLatestCommit) {
     console.log("🟡 Warning: you are NOT using the latest version of the code. Please run `git pull` on main branch to update the code.");
     if (!(await confirm({ message: 'Proceed anyway?', default: false }))) {
-      process.exit(0);
+      return false;
     };
   }
+  return true;
 }
 
 export const estimateGas = async (hre: HardhatRuntimeEnvironment, tx: Deferrable<TransactionRequest>) => {
