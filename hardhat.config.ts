@@ -145,19 +145,21 @@ task('deploy', 'Deploy ERC721M')
     '0x0000000000000000000000000000000000000000',
   )
   .addOptionalParam('autoapproveaddress', 'auto approve address')
-  .addParam(
+  .addParam<boolean>(
     'increasesupply',
-    'whether or not to enable increasing supply behavior', 'false',
+    'whether or not to enable increasing supply behavior', false,
+    types.boolean,
   )
-  .addParam('pausable', 'whether to allow transfers to be paused', 'false')
-  .addParam('useoperatorfilterer', 'whether or not to use operator filterer', 'false')
-  .addParam(
+  .addParam<boolean>('pausable', 'whether to allow transfers to be paused', false, types.boolean)
+  .addParam<boolean>('useoperatorfilterer', 'whether or not to use operator filterer', false, types.boolean)
+  .addParam<boolean>(
     'openedition',
     'whether or not a open edition mint (unlimited supply, 999,999,999)',
-    'false',
+    false,
+    types.boolean,
   )
-  .addOptionalParam('useerc721c', 'whether or not to use ERC721C', 'true')
-  .addOptionalParam('useerc2198', 'whether or not to use ERC2198', 'true')
+  .addOptionalParam<boolean>('useerc721c', 'whether or not to use ERC721C', true, types.boolean)
+  .addOptionalParam<boolean>('useerc2198', 'whether or not to use ERC2198', true, types.boolean)
   .addOptionalParam('erc2198royaltyreceiver', 'erc2198 royalty receiver address')
   .addOptionalParam('erc2198royaltyfeenumerator', 'erc2198 royalty fee numerator')
   .setAction(deploy);
