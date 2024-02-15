@@ -110,9 +110,9 @@ export const deploy = async (
   console.log('run the following command to verify the contract:');
   const paramsStr = params.map((param) => {
     if (hre.ethers.BigNumber.isBigNumber(param)) {
-      return param.toString();
+      return `"${param.toString()}"`;
     }
-    return param;
+    return `"${param}"`;
   }).join(' ');
 
   console.log(`npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`);
