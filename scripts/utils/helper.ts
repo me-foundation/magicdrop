@@ -7,8 +7,22 @@ export const estimateGas = async (hre: HardhatRuntimeEnvironment, tx: Deferrable
   const estimatedGasPrice = await hre.ethers.provider.getGasPrice();
   const estimatedGas = estimatedGasUnit.mul(estimatedGasPrice);
   console.log('Estimated gas unit: ', estimatedGasUnit.toString());
-  console.log('Estimated gas price (WEI): ', estimatedGasPrice.toString());
-  console.log('Estimated gas (ETH): ', hre.ethers.utils.formatEther(estimatedGas));
+  console.log('Estimated gas price (GWei): ', estimatedGasPrice.div(1000000000).toString());
+  console.log(`Estimated gas (${getTokenName(hre)}): `, hre.ethers.utils.formatEther(estimatedGas));
   return estimatedGas;
+}
+
+const getTokenName = (hre: HardhatRuntimeEnvironment) => {
+  switch(hre.network.name) {
+    case 'mainnet':
+    case 'sepolia':
+    case 'goerli':
+      return 'ETH';
+    case 'polygon':
+    case 'mumbai':
+      return 'MATIC';
+    default:
+      return 'ETH';
+  }
 }
 
