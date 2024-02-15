@@ -7,7 +7,7 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
-import { estimateGas } from './utils/helper';
+import { checkCodeVersion, estimateGas } from './utils/helper';
 
 export interface IDeployParams {
   name: string;
@@ -33,6 +33,10 @@ export const deploy = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
+  if (!await checkCodeVersion()) {
+    return;
+  }
+
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
   let contractName: string = ContractDetails.ERC721M.name;
