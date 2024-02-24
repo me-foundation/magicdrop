@@ -170,7 +170,8 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds
+                    newStages[i - 1].endTimeUnixSeconds +
+                        _timestampExpirySeconds
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -365,7 +366,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         bytes32[] calldata proof,
         uint64 timestamp,
         bytes calldata signature
-    ) virtual external payable nonReentrant {
+    ) external payable virtual nonReentrant {
         _mintInternal(qty, msg.sender, proof, timestamp, signature);
     }
 
@@ -417,7 +418,8 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         stage = _mintStages[activeStage];
 
         // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < stage.price * qty) revert NotEnoughValue();
+        if (_mintCurrency == address(0) && msg.value < stage.price * qty)
+            revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
@@ -450,7 +452,11 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         }
 
         if (_mintCurrency != address(0)) {
-            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(this), stage.price * qty);
+            IERC20(_mintCurrency).safeTransferFrom(
+                msg.sender,
+                address(this),
+                stage.price * qty
+            );
         }
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
@@ -552,7 +558,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      */
     function setContractURI(string calldata uri) external onlyOwner {
         _contractURI = uri;
-    } 
+    }
 
     /**
      * @dev Returns data hash for the given minter, qty and timestamp.
