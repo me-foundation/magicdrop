@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.4;
 
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
  * @title ERC721 Batch Transfer
@@ -25,7 +25,7 @@ contract ERC721BatchTransfer {
         uint256 amount
     );
 
-    /** 
+    /**
      * @notice Transfer multiple tokens to the same wallet using the ERC721.transferFrom method.
      * @notice If you don't know what that means, use the `safeBatchTransferToSingleWallet` method instead
      * @param erc721Contract the address of the nft contract

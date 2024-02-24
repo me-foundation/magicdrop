@@ -14,7 +14,7 @@ const addresses = {
   addr5: '0x17F6AD8Ef982297579C203069C1DbfFE4348c372',
 }
 
-describe.only('ERC721BatchTransfer', function () {
+describe('ERC721BatchTransfer', function () {
   let transferContract: ERC721BatchTransfer;
   let nftContract: MockERC721A;
   let owner: SignerWithAddress;

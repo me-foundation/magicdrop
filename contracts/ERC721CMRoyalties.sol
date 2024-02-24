@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.4;
 
-import "@limitbreak/creator-token-standards/src/programmable-royalties/BasicRoyalties.sol";
-import "./ERC721CM.sol";
+import {ERC2981, UpdatableRoyalties} from "./royalties/UpdatableRoyalties.sol";
+import {ERC721CM, ERC721ACQueryable, IERC721A} from "./ERC721CM.sol";
 
 /**
- * @title ERC721CM with BasicRoyalties
+ * @title ERC721CMRoyalties
  */
-contract ERC721CMBasicRoyalties is ERC721CM, BasicRoyalties {
+contract ERC721CMRoyalties is ERC721CM, UpdatableRoyalties {
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -31,7 +31,7 @@ contract ERC721CMBasicRoyalties is ERC721CM, BasicRoyalties {
             timestampExpirySeconds,
             mintCurrency
         )
-        BasicRoyalties(royaltyReceiver, royaltyFeeNumerator)
+        UpdatableRoyalties(royaltyReceiver, royaltyFeeNumerator)
     {}
 
     function supportsInterface(bytes4 interfaceId)
