@@ -4,6 +4,7 @@ import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
 import { estimateGas } from './utils/helper';
+import { keccak256 } from '@ethersproject/solidity';
 
 export interface ISetStagesParams {
   stages: string;
@@ -18,6 +19,7 @@ interface StageConfig {
   walletLimit?: number;
   maxSupply?: number;
   whitelistPath?: string;
+  variableLimitPath?: string;
 }
 
 export const setStages = async (
@@ -39,33 +41,63 @@ export const setStages = async (
   }
   const merkleRoots = await Promise.all(
     stagesConfig.map((stage) => {
-      if (!stage.whitelistPath) {
-        return ethers.utils.hexZeroPad('0x', 32);
+      if (stage.whitelistPath) {
+        const whitelist = JSON.parse(
+          fs.readFileSync(stage.whitelistPath, 'utf-8'),
+        );
+
+        // Clean up whitelist
+        const filteredWhitelist=  whitelist.filter((address: string) => ethers.utils.isAddress(address));
+        console.log(`Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`);
+        const invalidWhitelist=  whitelist.filter((address: string) => !ethers.utils.isAddress(address));
+        console.log(`❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`);
+
+        if (invalidWhitelist.length > 0) {
+          console.log(`🔄 🚨 updating whitelist file: ${stage.whitelistPath}`);
+          fs.writeFileSync(stage.whitelistPath, JSON.stringify(filteredWhitelist, null, 2))
+        }
+
+        const mt = new MerkleTree(
+          filteredWhitelist.map(ethers.utils.getAddress),
+          ethers.utils.keccak256,
+          {
+            sortPairs: true,
+            hashLeaves: true,
+          },
+        );
+        return mt.getHexRoot();
+      } else if (stage.variableLimitPath) {
+        const leaves: any[] = [];
+        const file = fs.readFileSync(stage.variableLimitPath, 'utf-8');
+        file.split('\n').filter(line => line).forEach(line => {
+          const [addressStr, limitStr] = line.split(',');
+          const address = ethers.utils.getAddress(addressStr.toLowerCase().trim());
+          const limit = parseInt(limitStr, 10)
+
+          const digest = keccak256(
+            [
+              'address',
+              'uint32',
+            ],
+            [
+              address,
+              limit,
+            ],
+          );
+          leaves.push(digest);
+        });
+        const mt = new MerkleTree(
+          leaves,
+          ethers.utils.keccak256,
+          {
+            sortPairs: true,
+            hashLeaves: true,
+          },
+        );
+        return mt.getHexRoot();
       }
-      const whitelist = JSON.parse(
-        fs.readFileSync(stage.whitelistPath, 'utf-8'),
-      );
 
-      // Clean up whitelist
-      const filteredWhitelist=  whitelist.filter((address: string) => ethers.utils.isAddress(address));
-      console.log(`Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`);
-      const invalidWhitelist=  whitelist.filter((address: string) => !ethers.utils.isAddress(address));
-      console.log(`❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`);
-
-      if (invalidWhitelist.length > 0) {
-        console.log(`🔄 🚨 updating whitelist file: ${stage.whitelistPath}`);
-        fs.writeFileSync(stage.whitelistPath, JSON.stringify(filteredWhitelist, null, 2))
-      }
-
-      const mt = new MerkleTree(
-        filteredWhitelist.map(ethers.utils.getAddress),
-        ethers.utils.keccak256,
-        {
-          sortPairs: true,
-          hashLeaves: true,
-        },
-      );
-      return mt.getHexRoot();
+      return ethers.utils.hexZeroPad('0x', 32);
     }),
   );
 

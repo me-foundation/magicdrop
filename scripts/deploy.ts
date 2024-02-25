@@ -42,9 +42,11 @@ export const deploy = async (
   let contractName: string = ContractDetails.ERC721M.name;
 
   if (args.useerc721c && args.useerc2198) {
-    contractName = ContractDetails.ERC721CMRoyalties.name;
+    contractName = 'AnimalRoyalties';
+    //contractName = ContractDetails.ERC721CMRoyalties.name;
   } else if (args.useerc721c) {
-    contractName = ContractDetails.ERC721CM.name;
+    contractName = 'Animal';
+    //contractName = ContractDetails.ERC721CM.name;
   } else if (args.useoperatorfilterer) {
     if (args.increasesupply) {
       contractName = ContractDetails.ERC721MIncreasableOperatorFilterer.name;

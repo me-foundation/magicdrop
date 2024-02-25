@@ -1,0 +1,9 @@
+[
+  {
+    "price": "0.00",
+    "walletLimit": 100,
+    "startDate": "2024-02-25T08:45:00.000Z",
+    "endDate": "2024-12-20T00:00:01.000Z",
+    "variableLimitPath": "/Users/channingmao/Documents/MagicEden/magiceden-oss/erc721m/variableWalletLimit.txt"
+  }
+]
