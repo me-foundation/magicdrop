@@ -41,6 +41,8 @@ contract ERC721CMRoyalties is ERC721CM, UpdatableRoyalties {
         override(ERC2981, ERC721ACQueryable, IERC721A)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return
+            ERC721ACQueryable.supportsInterface(interfaceId) ||
+            ERC2981.supportsInterface(interfaceId);
     }
 }
