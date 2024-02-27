@@ -43,4 +43,11 @@ describe('ERC721CMBasicRoyalties', function () {
     expect(royaltyInfo[0]).to.equal('0x0764844ac95ABCa4F6306E592c7D9C9f3615f590');
     expect(royaltyInfo[1].toNumber()).to.equal(9999999);
   });
+
+  it('Supports the right interfaces', async () => {
+    expect(await contract.supportsInterface('0x01ffc9a7')).to.be.true; // IERC165
+    expect(await contract.supportsInterface('0x80ac58cd')).to.be.true; // IERC721
+    expect(await contract.supportsInterface('0x5b5e139f')).to.be.true; // IERC721Metadata
+    expect(await contract.supportsInterface('0x2a55205a')).to.be.true; // IERC2981
+  });
 });

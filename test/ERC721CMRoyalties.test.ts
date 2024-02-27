@@ -102,4 +102,11 @@ describe('ERC721CMRoyalties', function () {
       nonOwnerConnection.setDefaultRoyalty(WALLET_2, 0)
       ).to.be.revertedWith('Ownable: caller is not the owner');
   });
+
+  it('Supports the right interfaces', async () => {
+    expect(await erc721cmRoyalties.supportsInterface('0x01ffc9a7')).to.be.true; // IERC165
+    expect(await erc721cmRoyalties.supportsInterface('0x80ac58cd')).to.be.true; // IERC721
+    expect(await erc721cmRoyalties.supportsInterface('0x5b5e139f')).to.be.true; // IERC721Metadata
+    expect(await erc721cmRoyalties.supportsInterface('0x2a55205a')).to.be.true; // IERC2981
+  });
 });
