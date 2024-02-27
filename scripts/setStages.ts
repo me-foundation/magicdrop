@@ -69,31 +69,24 @@ export const setStages = async (
       } else if (stage.variableLimitPath) {
         const leaves: any[] = [];
         const file = fs.readFileSync(stage.variableLimitPath, 'utf-8');
-        file.split('\n').filter(line => line).forEach(line => {
-          const [addressStr, limitStr] = line.split(',');
-          const address = ethers.utils.getAddress(addressStr.toLowerCase().trim());
-          const limit = parseInt(limitStr, 10)
+        file
+          .split('\n')
+          .filter((line) => line)
+          .forEach((line) => {
+            const [addressStr, limitStr] = line.split(',');
+            const address = ethers.utils.getAddress(
+              addressStr.toLowerCase().trim(),
+            );
+            const limit = parseInt(limitStr, 10);
 
-          const digest = keccak256(
-            [
-              'address',
-              'uint32',
-            ],
-            [
-              address,
-              limit,
-            ],
-          );
-          leaves.push(digest);
+            const digest = keccak256(['address', 'uint32'], [address, limit]);
+            leaves.push(digest);
+          });
+
+        const mt = new MerkleTree(leaves, ethers.utils.keccak256, {
+          sortPairs: true,
+          hashLeaves: false,
         });
-        const mt = new MerkleTree(
-          leaves,
-          ethers.utils.keccak256,
-          {
-            sortPairs: true,
-            hashLeaves: true,
-          },
-        );
         return mt.getHexRoot();
       }
 
