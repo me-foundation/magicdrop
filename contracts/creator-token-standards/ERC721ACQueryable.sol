@@ -22,7 +22,7 @@ abstract contract ERC721ACQueryable is ERC721AQueryable, CreatorTokenBase {
     {
         return
             interfaceId == type(ICreatorToken).interfaceId ||
-            super.supportsInterface(interfaceId);
+            ERC721A.supportsInterface(interfaceId);
     }
 
     /// @dev Ties the erc721a _beforeTokenTransfers hook to more granular transfer validation logic
