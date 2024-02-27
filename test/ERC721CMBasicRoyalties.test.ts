@@ -11,9 +11,7 @@ describe('ERC721CMBasicRoyalties', function () {
   let owner: SignerWithAddress;
 
   beforeEach(async () => {
-    const ERC721CMBasicRoyalties = await ethers.getContractFactory(
-      'ERC721CMBasicRoyalties',
-    );
+    const ERC721CMBasicRoyalties = await ethers.getContractFactory('ERC721CMBasicRoyalties');
     const erc721cmBasicRoyalties = await ERC721CMBasicRoyalties.deploy(
       'Test',
       'TEST',
@@ -34,21 +32,15 @@ describe('ERC721CMBasicRoyalties', function () {
 
   it('Royalty info', async () => {
     let royaltyInfo = await contract.royaltyInfo(0, 1000);
-    expect(royaltyInfo[0]).to.equal(
-      '0x0764844ac95ABCa4F6306E592c7D9C9f3615f590',
-    );
+    expect(royaltyInfo[0]).to.equal('0x0764844ac95ABCa4F6306E592c7D9C9f3615f590');
     expect(royaltyInfo[1].toNumber()).to.equal(1);
 
     royaltyInfo = await contract.royaltyInfo(1, 9999);
-    expect(royaltyInfo[0]).to.equal(
-      '0x0764844ac95ABCa4F6306E592c7D9C9f3615f590',
-    );
+    expect(royaltyInfo[0]).to.equal('0x0764844ac95ABCa4F6306E592c7D9C9f3615f590');
     expect(royaltyInfo[1].toNumber()).to.equal(9);
 
     royaltyInfo = await contract.royaltyInfo(1111, 9999999999);
-    expect(royaltyInfo[0]).to.equal(
-      '0x0764844ac95ABCa4F6306E592c7D9C9f3615f590',
-    );
+    expect(royaltyInfo[0]).to.equal('0x0764844ac95ABCa4F6306E592c7D9C9f3615f590');
     expect(royaltyInfo[1].toNumber()).to.equal(9999999);
   });
 
