@@ -7,6 +7,7 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
+import { checkCodeVersion, estimateGas } from './utils/helper';
 
 export interface IDeployParams {
   name: string;
@@ -22,16 +23,29 @@ export interface IDeployParams {
   autoapproveaddress?: string;
   pausable?: boolean;
   mintcurrency?: string;
+  useerc721c?: boolean;
+  useerc2198?: boolean;
+  erc2198royaltyreceiver?: string,
+  erc2198royaltyfeenumerator?: number,
 }
 
 export const deploy = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
+  if (!await checkCodeVersion()) {
+    return;
+  }
+
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
   let contractName: string = ContractDetails.ERC721M.name;
-  if (args.useoperatorfilterer) {
+
+  if (args.useerc721c && args.useerc2198) {
+    contractName = ContractDetails.ERC721CMRoyalties.name;
+  } else if (args.useerc721c) {
+    contractName = ContractDetails.ERC721CM.name;
+  } else if (args.useoperatorfilterer) {
     if (args.increasesupply) {
       contractName = ContractDetails.ERC721MIncreasableOperatorFilterer.name;
     } else if (args.autoapproveaddress) {
@@ -57,12 +71,7 @@ export const deploy = async (
     maxsupply = hre.ethers.BigNumber.from('999999999');
   }
 
-  console.log(
-    `Going to deploy ${contractName} with params`,
-    JSON.stringify(args, null, 2),
-  );
-
-  const ERC721M = await hre.ethers.getContractFactory(contractName);
+  const contractFactory = await hre.ethers.getContractFactory(contractName);
 
   const params = [
     args.name,
@@ -73,26 +82,51 @@ export const deploy = async (
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
-    args.autoapproveaddress ?? {},
-  ] as const;
+  ] as any[];
+
+  if (args.autoapproveaddress) {
+    params.push(args.autoapproveaddress);
+  }
+
+  if (args.useerc2198) {
+    params.push(
+      args.erc2198royaltyreceiver ?? hre.ethers.constants.AddressZero,
+      args.erc2198royaltyfeenumerator ?? 0,
+    );
+  }
 
   console.log(
-    `Constructor params: `,
-    JSON.stringify(
-      params.map((param) => {
-        if (hre.ethers.BigNumber.isBigNumber(param)) {
-          return param.toString();
-        }
-        return param;
-      }),
-    ),
+    `Going to deploy ${contractName} with params`,
+    JSON.stringify(args, null, 2),
   );
+
+  await estimateGas(hre, contractFactory.getDeployTransaction(...params));
 
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
-  const erc721M = await ERC721M.deploy(...params);
+  const contract = await contractFactory.deploy(...params);
+  console.log('Deploying contract... ');
+  console.log('tx:', contract.deployTransaction.hash);
 
-  await erc721M.deployed();
+  await contract.deployed();
 
-  console.log(`${contractName} deployed to:`, erc721M.address);
+  console.log(`${contractName} deployed to:`, contract.address);
+  console.log('run the following command to verify the contract:');
+  const paramsStr = params.map((param) => {
+    if (hre.ethers.BigNumber.isBigNumber(param)) {
+      return `"${param.toString()}"`;
+    }
+    return `"${param}"`;
+  }).join(' ');
+
+  console.log(`npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`);
+
+  // Set security policy to ME default
+  if (args.useerc721c) {
+    console.log('[ERC721CM] Setting security policy to ME default...');
+    const ERC721CM = await hre.ethers.getContractFactory(ContractDetails.ERC721CM.name);
+    const erc721cm = ERC721CM.attach(contract.address);
+    const tx = await erc721cm.setToDefaultSecurityPolicy();
+    console.log('[ERC721CM] Security policy set');
+  }
 };

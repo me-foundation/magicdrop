@@ -3,6 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
+import { estimateGas } from './utils/helper';
 
 export interface ISetStagesParams {
   stages: string;
@@ -44,8 +45,20 @@ export const setStages = async (
       const whitelist = JSON.parse(
         fs.readFileSync(stage.whitelistPath, 'utf-8'),
       );
+
+      // Clean up whitelist
+      const filteredWhitelist=  whitelist.filter((address: string) => ethers.utils.isAddress(address));
+      console.log(`Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`);
+      const invalidWhitelist=  whitelist.filter((address: string) => !ethers.utils.isAddress(address));
+      console.log(`❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`);
+
+      if (invalidWhitelist.length > 0) {
+        console.log(`🔄 🚨 updating whitelist file: ${stage.whitelistPath}`);
+        fs.writeFileSync(stage.whitelistPath, JSON.stringify(filteredWhitelist, null, 2))
+      }
+
       const mt = new MerkleTree(
-        whitelist.map(ethers.utils.getAddress),
+        filteredWhitelist.map(ethers.utils.getAddress),
         ethers.utils.keccak256,
         {
           sortPairs: true,
@@ -72,15 +85,16 @@ export const setStages = async (
     ),
   );
 
+  const tx = await contract.populateTransaction.setStages(stages, overrides);
+  estimateGas(hre, tx);
+
   if (!await confirm({ message: 'Continue to set stages?' })) return;
 
-  const tx = await contract.setStages(stages,overrides);
+  const submittedTx = await contract.setStages(stages, overrides);
 
-  console.log(`Submitted tx ${tx.hash}`);
-
-  await tx.wait();
-
-  console.log('Set stages:', tx.hash);
+  console.log(`Submitted tx ${submittedTx.hash}`);
+  await submittedTx.wait();
+  console.log('Stages set');
 
   for (let i = 0; i < stagesConfig.length; i++) {
     const [stage] = await contract.getStageInfo(i);

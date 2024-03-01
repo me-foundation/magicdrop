@@ -37,6 +37,11 @@ import { setOnftMinDstGas } from './scripts/setOnftMinDstGas';
 import { setTrustedRemote } from './scripts/setTrustedRemote';
 import { sendOnft } from './scripts/sendOnft';
 import { deployOwnedRegistrant } from './scripts/deployOwnedRegistrant';
+import { getContractCodehash } from './scripts/dev/getContractCodehash';
+import { deploy721BatchTransfer } from './scripts/dev/deploy721BatchTransfer';
+import { send721Batch } from './scripts/send721Batch';
+import { freezeTrading } from './scripts/freezeTrading';
+import { thawTrading } from './scripts/thawTrading';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -72,6 +77,12 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    sepolia: {
+      url:
+        process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     mainnet: {
       url: process.env.MAINNET_URL || '',
       accounts:
@@ -89,11 +100,6 @@ const config: HardhatUserConfig = {
     },
     fuji: {
       url: process.env.FUJI_URL || 'https://api.avax-test.network/ext/bc/C/rpc',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    sepolia: {
-      url: process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     }
@@ -136,16 +142,23 @@ task('deploy', 'Deploy ERC721M')
     '0x0000000000000000000000000000000000000000',
   )
   .addOptionalParam('autoapproveaddress', 'auto approve address')
-  .addFlag(
+  .addParam<boolean>(
     'increasesupply',
-    'whether or not to enable increasing supply behavior',
+    'whether or not to enable increasing supply behavior', false,
+    types.boolean,
   )
-  .addFlag('pausable', 'whether to allow transfers to be paused')
-  .addFlag('useoperatorfilterer', 'whether or not to use operator filterer')
-  .addFlag(
+  .addParam<boolean>('pausable', 'whether to allow transfers to be paused', false, types.boolean)
+  .addParam<boolean>('useoperatorfilterer', 'whether or not to use operator filterer', false, types.boolean)
+  .addParam<boolean>(
     'openedition',
     'whether or not a open edition mint (unlimited supply, 999,999,999)',
+    false,
+    types.boolean,
   )
+  .addOptionalParam<boolean>('useerc721c', 'whether or not to use ERC721C', true, types.boolean)
+  .addOptionalParam<boolean>('useerc2198', 'whether or not to use ERC2198', true, types.boolean)
+  .addOptionalParam('erc2198royaltyreceiver', 'erc2198 royalty receiver address')
+  .addOptionalParam('erc2198royaltyfeenumerator', 'erc2198 royalty fee numerator')
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')
@@ -332,5 +345,31 @@ task('sendOnft', 'Send tokens to target network')
 task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
   .addParam('newowner', 'new owner address', '0x0000000000000000000000000000000000000000')
   .setAction(deployOwnedRegistrant);
+
+task('getContractCodehash', 'Get the code hash of a contract')
+  .addParam('contract', 'contract address')
+  .setAction(getContractCodehash);
+
+task('deploy721BatchTransfer', 'Deploy ERC721BatchTransfer')
+  .setAction(deploy721BatchTransfer);
+
+task('send721Batch', 'Send ERC721 tokens in batch')
+  .addParam('contract', 'contract address')
+  .addOptionalParam('transferfile', 'path to the file with the transfer details')
+  .addOptionalParam('to', 'recipient address (if not using transferFile)')
+  .addOptionalParam('tokenids', 'token ids (if not using transferFile), separate with comma')
+  .setAction(send721Batch);
+
+task('freezeTrading', 'Freeze trading for 721Cv2')
+  .addParam('contract', 'contract address')
+  .addOptionalParam('validator', 'security validator')
+  .addOptionalParam('level', 'security level')
+  .addOptionalParam('whitelistid', 'whitelist id')
+  .addOptionalParam('permittedreceiverid', 'permitted receiver list id')
+  .setAction(freezeTrading);
+
+task('thawTrading', 'Thaw trading for 721Cv2')
+  .addParam('contract', 'contract address')
+  .setAction(thawTrading);
 
 export default config;
