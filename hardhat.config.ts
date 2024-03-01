@@ -40,6 +40,8 @@ import { deployOwnedRegistrant } from './scripts/deployOwnedRegistrant';
 import { getContractCodehash } from './scripts/dev/getContractCodehash';
 import { deploy721BatchTransfer } from './scripts/dev/deploy721BatchTransfer';
 import { send721Batch } from './scripts/send721Batch';
+import { freezeTrading } from './scripts/freezeTrading';
+import { thawTrading } from './scripts/thawTrading';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -77,7 +79,7 @@ const config: HardhatUserConfig = {
     },
     sepolia: {
       url:
-        process.env.SEPOLIA_URL || 'https://ethereum-sepolia.publicnode.com',
+        process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -98,11 +100,6 @@ const config: HardhatUserConfig = {
     },
     fuji: {
       url: process.env.FUJI_URL || 'https://api.avax-test.network/ext/bc/C/rpc',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    sepolia: {
-      url: process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     }
@@ -362,5 +359,17 @@ task('send721Batch', 'Send ERC721 tokens in batch')
   .addOptionalParam('to', 'recipient address (if not using transferFile)')
   .addOptionalParam('tokenids', 'token ids (if not using transferFile), separate with comma')
   .setAction(send721Batch);
+
+task('freezeTrading', 'Freeze trading for 721Cv2')
+  .addParam('contract', 'contract address')
+  .addOptionalParam('validator', 'security validator')
+  .addOptionalParam('level', 'security level')
+  .addOptionalParam('whitelistid', 'whitelist id')
+  .addOptionalParam('permittedreceiverid', 'permitted receiver list id')
+  .setAction(freezeTrading);
+
+task('thawTrading', 'Thaw trading for 721Cv2')
+  .addParam('contract', 'contract address')
+  .setAction(thawTrading);
 
 export default config;
