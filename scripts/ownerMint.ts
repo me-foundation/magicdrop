@@ -21,7 +21,7 @@ export const ownerMint = async (
   const to = args.to ?? (await contract.signer.getAddress());
 
   const tx = await contract.populateTransaction.ownerMint(qty, to);
-  estimateGas(hre, tx);
+  await estimateGas(hre, tx);
   console.log(`Going to mint ${qty.toNumber()} token(s) to ${to}`);
   if (!await confirm({ message: 'Continue?' })) return;
 
