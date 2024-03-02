@@ -13,8 +13,9 @@ We'd like to introduce the standard of "minting stages". At each stage, the crea
 
 The composability of the stages is generic enough to enable flexible and complicated EVM minting contracts.
 
-![](https://bafkreid7sfgi5tycdvbdtobl3mqnwjlrlawdgioaj6vxvtcmmda74doh7q.ipfs.nftstorage.link/)
-
+<p align="center">
+<img src="https://bafkreid7sfgi5tycdvbdtobl3mqnwjlrlawdgioaj6vxvtcmmda74doh7q.ipfs.nftstorage.link/" width="50%" >
+</p>
 
 ## Build status
 ![github ci status](https://github.com/magiceden-oss/erc721m/actions/workflows/ci.yml/badge.svg?branch=main)
@@ -27,6 +28,7 @@ The composability of the stages is generic enough to enable flexible and complic
 <b>Built with</b>
 - [hardhat](https://hardhat.org)
 - [ERC721A](https://github.com/chiru-labs/ERC721A), ERC721M is based on the popular ERC721A contract.
+- [ERC721C](https://github.com/limitbreakinc/creator-token-standards), extends ERC721 and add creator-definable transfer security profiles that are the foundation for enforceable, programmable royalties
 
 ## Features
 
