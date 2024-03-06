@@ -168,6 +168,7 @@ task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')
   .addParam('contract', 'contract address')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction', 500000, types.int)
   .setAction(setBaseURI);
 
 task('setCrossmintAddress', 'Set crossmint address')
