@@ -159,6 +159,8 @@ task('deploy', 'Deploy ERC721M')
   .addOptionalParam<boolean>('useerc2198', 'whether or not to use ERC2198', true, types.boolean)
   .addOptionalParam('erc2198royaltyreceiver', 'erc2198 royalty receiver address')
   .addOptionalParam('erc2198royaltyfeenumerator', 'erc2198 royalty fee numerator')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')

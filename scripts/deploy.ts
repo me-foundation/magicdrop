@@ -8,6 +8,7 @@ import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
 import { checkCodeVersion, estimateGas } from './utils/helper';
+import { Overrides } from 'ethers';
 
 export interface IDeployParams {
   name: string;
@@ -25,8 +26,10 @@ export interface IDeployParams {
   mintcurrency?: string;
   useerc721c?: boolean;
   useerc2198?: boolean;
-  erc2198royaltyreceiver?: string,
-  erc2198royaltyfeenumerator?: number,
+  erc2198royaltyreceiver?: string;
+  erc2198royaltyfeenumerator?: number;
+  gaspricegwei?: number;
+  gaslimit?: number;
 }
 
 export const deploy = async (
@@ -71,6 +74,14 @@ export const deploy = async (
     maxsupply = hre.ethers.BigNumber.from('999999999');
   }
 
+  const overrides: Overrides = {};
+  if (args.gaspricegwei) {
+    overrides.gasPrice = hre.ethers.BigNumber.from(args.gaspricegwei * 1e9);
+  }
+  if (args.gaslimit) {
+    overrides.gasLimit = hre.ethers.BigNumber.from(args.gaslimit);
+  }
+
   const contractFactory = await hre.ethers.getContractFactory(contractName);
 
   const params = [
@@ -100,11 +111,18 @@ export const deploy = async (
     JSON.stringify(args, null, 2),
   );
 
-  await estimateGas(hre, contractFactory.getDeployTransaction(...params));
+  if (
+    !(await estimateGas(
+      hre,
+      contractFactory.getDeployTransaction(...params),
+      overrides,
+    ))
+  )
+    return;
 
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
-  const contract = await contractFactory.deploy(...params);
+  const contract = await contractFactory.deploy(...params, overrides);
   console.log('Deploying contract... ');
   console.log('tx:', contract.deployTransaction.hash);
 
