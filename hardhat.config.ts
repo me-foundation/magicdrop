@@ -185,6 +185,8 @@ task('ownerMint', 'Mint token(s) as owner')
   .addParam('contract', 'contract address')
   .addParam('qty', 'quantity to mint', '1')
   .addOptionalParam('to', 'recipient address')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(ownerMint);
 
 task('setGlobalWalletLimit', 'Set the global wallet limit')
