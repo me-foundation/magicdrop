@@ -4,11 +4,13 @@ import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
 import { estimateGas } from './utils/helper';
+import { Overrides } from 'ethers';
 
 export interface ISetStagesParams {
   stages: string;
   contract: string;
   gaspricegwei?: number;
+  gaslimit?: number;
 }
 
 interface StageConfig {
@@ -29,13 +31,15 @@ export const setStages = async (
     fs.readFileSync(args.stages, 'utf-8'),
   ) as StageConfig[];
 
-  const overrides: any = { gasLimit: 500_000 };
-
   const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
 
+  const overrides: Overrides = {};
   if (args.gaspricegwei) {
-    overrides.gasPrice = args.gaspricegwei * 1e9;
+    overrides.gasPrice = ethers.BigNumber.from(args.gaspricegwei * 1e9);
+  }
+  if (args.gaslimit) {
+    overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
   }
   const merkleRoots = await Promise.all(
     stagesConfig.map((stage) => {
@@ -85,8 +89,8 @@ export const setStages = async (
     ),
   );
 
-  const tx = await contract.populateTransaction.setStages(stages, overrides);
-  estimateGas(hre, tx);
+  const tx = await contract.populateTransaction.setStages(stages);
+  if (!(await estimateGas(hre, tx, overrides))) return;
 
   if (!await confirm({ message: 'Continue to set stages?' })) return;
 

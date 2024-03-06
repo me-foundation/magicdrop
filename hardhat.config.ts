@@ -117,6 +117,7 @@ task('setStages', 'Set stages for ERC721M')
   .addParam('contract', 'contract address')
   .addParam('stages', 'stages json file')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction', 500000, types.int)
   .setAction(setStages);
 
 task('setMintable', 'Set mintable state for ERC721M')
