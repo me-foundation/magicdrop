@@ -117,6 +117,7 @@ task('setStages', 'Set stages for ERC721M')
   .addParam('contract', 'contract address')
   .addParam('stages', 'stages json file')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction', 500000, types.int)
   .setAction(setStages);
 
 task('setMintable', 'Set mintable state for ERC721M')
@@ -159,12 +160,15 @@ task('deploy', 'Deploy ERC721M')
   .addOptionalParam<boolean>('useerc2198', 'whether or not to use ERC2198', true, types.boolean)
   .addOptionalParam('erc2198royaltyreceiver', 'erc2198 royalty receiver address')
   .addOptionalParam('erc2198royaltyfeenumerator', 'erc2198 royalty fee numerator')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(deploy);
 
 task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')
   .addParam('contract', 'contract address')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction', 500000, types.int)
   .setAction(setBaseURI);
 
 task('setCrossmintAddress', 'Set crossmint address')
@@ -182,6 +186,8 @@ task('ownerMint', 'Mint token(s) as owner')
   .addParam('contract', 'contract address')
   .addParam('qty', 'quantity to mint', '1')
   .addOptionalParam('to', 'recipient address')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(ownerMint);
 
 task('setGlobalWalletLimit', 'Set the global wallet limit')
