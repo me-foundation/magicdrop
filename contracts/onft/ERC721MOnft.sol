@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.4;
 
-import {IONFT721Core, ONFT721CoreLite} from "./onft/ONFT721CoreLite.sol";
+import {IONFT721Core, ONFT721CoreLite} from "./ONFT721CoreLite.sol";
 import {ERC721MLite, ERC721A, ERC721A__IERC721Receiver, IERC721A, Ownable} from "./ERC721MLite.sol";
 import {IONFT721} from "@layerzerolabs/solidity-examples/contracts/token/onft/IONFT721.sol";
 

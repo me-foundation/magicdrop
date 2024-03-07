@@ -3,6 +3,7 @@
 [![NPM][npm-shield]][npm-url]
 [![CI][ci-shield]][ci-url]
 [![MIT License][license-shield]][license-url]
+[![Coverage][coverage-shield]][coverage-url]
 
 ERC721M is a EVM minting protocol that enables the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.
 
@@ -115,3 +116,5 @@ MIT © [MagicEden Open Source](https://github.com/magiceden-oss)
 [npm-url]: https://www.npmjs.com/package/@magiceden-oss/erc721m
 [license-shield]: https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge
 [license-url]: https://github.com/magiceden-oss/erc721m/blob/main/LICENSE.txt
+[coverage-shield]: https://img.shields.io/codecov/c/gh/magicoss/erc721m?style=for-the-badge
+[coverage-url]: https://codecov.io/gh/magicoss/erc721m
