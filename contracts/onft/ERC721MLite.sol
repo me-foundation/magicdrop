@@ -8,9 +8,9 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {ERC721A, ERC721AQueryable, ERC721A__IERC721Receiver} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
-import {IERC721A, IERC721M} from "./IERC721M.sol";
+import {IERC721A, IERC721M} from "../IERC721M.sol";
 import {UpdatableOperatorFilterer} from "operator-filter-registry/src/UpdatableOperatorFilterer.sol";
-import {CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION} from "./utils/Constants.sol";
+import {CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION} from "../utils/Constants.sol";
 
 /**
  * @title ERC721MLite

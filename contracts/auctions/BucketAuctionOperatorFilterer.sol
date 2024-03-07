@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 
 import "./BucketAuction.sol";
 import {UpdatableOperatorFilterer} from "operator-filter-registry/src/UpdatableOperatorFilterer.sol";
-import {CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION} from "./utils/Constants.sol";
+import {CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION} from "../utils/Constants.sol";
 
 contract BucketAuctionOperatorFilterer is
     BucketAuction,

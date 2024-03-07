@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "erc721a/contracts/ERC721A.sol";
 
 import "./IDutchAuction.sol";
-import "./ERC721M.sol";
+import "../ERC721M.sol";
 
 contract DutchAuction is IDutchAuction, ERC721M {
     bool private immutable _refundable;
