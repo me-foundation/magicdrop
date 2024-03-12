@@ -307,7 +307,7 @@ contract ERC721MLite is
             if (
                 MerkleProof.processProof(
                     proof,
-                    keccak256(abi.encodePacked(msg.sender))
+                    keccak256(abi.encodePacked(msg.sender, uint32(0)))  // limit = 0 for consistency
                 ) != stage.merkleRoot
             ) revert InvalidProof();
         }
@@ -315,6 +315,28 @@ contract ERC721MLite is
         _stageMintedCountsPerWallet[activeStage][msg.sender] += qty;
         _stageMintedCounts[activeStage] += qty;
         _safeMint(msg.sender, qty);
+    }
+
+    /** NOT SUPPORTED */
+    function mintWithLimit(
+        uint32 qty,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable virtual nonReentrant {
+        revert NotSupported();
+    }
+
+    /** NOT SUPPORTED */
+    function crossmint(
+        uint32 qty,
+        address to,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable nonReentrant {
+        revert NotSupported();
     }
 
     /**

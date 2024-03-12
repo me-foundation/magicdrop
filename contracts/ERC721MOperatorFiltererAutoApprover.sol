@@ -40,7 +40,7 @@ contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
         uint64 timestamp,
         bytes calldata signature
     ) external payable override nonReentrant {
-        _mintInternal(qty, msg.sender, proof, timestamp, signature);
+        _mintInternal(qty, msg.sender, 0, proof, timestamp, signature);
 
         // if auto approve address is not all zero, check if the address is already approved
         if (

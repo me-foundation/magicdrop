@@ -26,6 +26,7 @@ interface IERC721M is IERC721AQueryable {
     error WalletStageLimitExceeded();
     error WithdrawFailed();
     error WrongMintCurrency();
+    error NotSupported();
 
     struct MintStageInfo {
         uint80 price;
@@ -75,4 +76,10 @@ interface IERC721M is IERC721AQueryable {
             uint32,
             uint256
         );
+    
+    function mint(uint32 qty, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
+
+    function mintWithLimit(uint32 qty, uint32 limit, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
+
+    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
 }

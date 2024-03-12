@@ -367,7 +367,26 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(qty, msg.sender, proof, timestamp, signature);
+        _mintInternal(qty, msg.sender, 0, proof, timestamp, signature);
+    }
+
+    /**
+     * @dev Mints token(s) with limit.
+     *
+     * qty - number of tokens to mint
+     * limit - limit for the given minter
+     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner.
+     */
+    function mintWithLimit(
+        uint32 qty,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable virtual nonReentrant {
+        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
     }
 
     /**
@@ -391,7 +410,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         // Check the caller is Crossmint
         if (msg.sender != _crossmintAddress) revert CrossmintOnly();
 
-        _mintInternal(qty, to, proof, timestamp, signature);
+        _mintInternal(qty, to, 0, proof, timestamp, signature);
     }
 
     /**
@@ -400,6 +419,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function _mintInternal(
         uint32 qty,
         address to,
+        uint32 limit,
         bytes32[] calldata proof,
         uint64 timestamp,
         bytes calldata signature
