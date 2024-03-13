@@ -466,9 +466,14 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
             if (
                 MerkleProof.processProof(
                     proof,
-                    keccak256(abi.encodePacked(to))
+                    keccak256(abi.encodePacked(to, limit))
                 ) != stage.merkleRoot
             ) revert InvalidProof();
+
+            // Verify merkle proof mint limit
+            if (limit > 0 && _stageMintedCountsPerWallet[activeStage][to] + qty > limit) {
+                revert WalletStageLimitExceeded();
+            }
         }
 
         if (_mintCurrency != address(0)) {

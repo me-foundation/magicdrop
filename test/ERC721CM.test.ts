@@ -4,9 +4,8 @@ import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
 import { ERC721CM } from '../typechain-types';
-import { setMintable } from '../scripts/setMintable';
 
-const { keccak256, getAddress } = ethers.utils;
+const { getAddress } = ethers.utils;
 
 chai.use(chaiAsPromised);
 
@@ -1197,16 +1196,19 @@ describe('ERC721CM', function () {
 
     it('enforces Merkle proof if required', async () => {
       const accounts = (await ethers.getSigners()).map((signer) =>
-        getAddress(signer.address),
+        getAddress(signer.address).toLowerCase().trim(),
       );
+      const leaves = accounts.map(account => 
+        ethers.utils.solidityKeccak256(['address', 'uint32'], [account, 0]));
       const signerAddress = await ethers.provider.getSigner().getAddress();
-
-      const merkleTree = new MerkleTree(accounts, keccak256, {
+      const merkleTree = new MerkleTree(leaves, ethers.utils.keccak256, {
         sortPairs: true,
-        hashLeaves: true,
+        hashLeaves: false,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(keccak256(signerAddress));
+
+      const leaf = ethers.utils.solidityKeccak256(['address', 'uint32'], [signerAddress.toLowerCase().trim(), 0]);
+      const proof = merkleTree.getHexProof(leaf);
 
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
@@ -1271,6 +1273,97 @@ describe('ERC721CM', function () {
         value: ethers.utils.parseEther('0.5'),
       });
       await expect(mint).to.be.revertedWith('InvalidProof');
+    });
+
+    it('mint with limit', async () => {
+      const ownerAddress = await owner.getAddress();
+      const readerAddress = await readonly.getAddress()
+      const leaves = [
+        ethers.utils.solidityKeccak256(['address', 'uint32'], [ownerAddress, 2]),
+        ethers.utils.solidityKeccak256(['address', 'uint32'], [readerAddress, 5])
+      ];
+
+      const merkleTree = new MerkleTree(leaves, ethers.utils.keccak256, {
+        sortPairs: true,
+        hashLeaves: false,
+      });
+      const root = merkleTree.getHexRoot();
+      const ownerLeaf = ethers.utils.solidityKeccak256(['address', 'uint32'], [ownerAddress, 2]);
+      const readerLeaf = ethers.utils.solidityKeccak256(['address', 'uint32'], [readerAddress, 5]);
+      const ownerProof = merkleTree.getHexProof(ownerLeaf);
+      const readerProof = merkleTree.getHexProof(readerLeaf);
+
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
+      await contract.setStages([
+        {
+          price: ethers.utils.parseEther('0.5'),
+          walletLimit: 10,
+          merkleRoot: root,
+          maxStageSupply: 100,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 100,
+        },
+      ]);
+      await contract.setMintable(true);
+
+      // Setup the test context: Update block.timestamp to comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
+      // Owner mints 1 token with valid proof
+      await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
+        value: ethers.utils.parseEther('0.5'),
+      });
+      expect((await contract.totalMintedByAddress(owner.getAddress())).toNumber()).to.equal(1);
+
+      // Owner mints 1 token with wrong limit and should be reverted.
+      await expect(
+        contract.mintWithLimit(1, 3, ownerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.5'),
+        }),
+      ).to.be.rejectedWith('InvalidProof');
+
+      // Owner mints 2 tokens with valid proof and reverts.
+      await expect(
+        contract.mintWithLimit(2, 2, ownerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('1.0'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
+      
+      // Owner mints 1 token with valid proof. Now owner reaches the limit.
+      await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
+        value: ethers.utils.parseEther('0.5'),
+      });
+      expect((await contract.totalMintedByAddress(owner.getAddress())).toNumber()).to.equal(2);
+
+      // Owner tries to mint more and reverts.
+      await expect(
+        contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.5'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
+
+      // Reader mints 6 tokens with valid proof and reverts.
+      await expect(
+        readonlyContract.mintWithLimit(6, 5, readerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('3.0'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
+
+      // Reader mints 5 tokens with valid proof.
+      await readonlyContract.mintWithLimit(5, 5, readerProof, 0, '0x00', {
+        value: ethers.utils.parseEther('2.5'),
+      });
+
+      // Reader mints 1 token with valid proof and reverts.
+      await expect(
+        readonlyContract.mintWithLimit(1, 5, readerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.5'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
     });
 
     it('crossmint', async () => {
@@ -1425,12 +1518,12 @@ describe('ERC721CM', function () {
       );
       const [_, recipient] = await ethers.getSigners();
 
-      const merkleTree = new MerkleTree(accounts, keccak256, {
+      const merkleTree = new MerkleTree(accounts, ethers.utils.keccak256, {
         sortPairs: true,
         hashLeaves: true,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(keccak256(recipient.address));
+      const proof = merkleTree.getHexProof(ethers.utils.keccak256(recipient.address));
 
       await contract.setStages([
         {
@@ -1464,12 +1557,12 @@ describe('ERC721CM', function () {
       );
       const [_, recipient] = await ethers.getSigners();
 
-      const merkleTree = new MerkleTree(accounts, keccak256, {
+      const merkleTree = new MerkleTree(accounts, ethers.utils.keccak256, {
         sortPairs: true,
         hashLeaves: true,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(keccak256(recipient.address));
+      const proof = merkleTree.getHexProof(ethers.utils.keccak256(recipient.address));
 
       await contract.setStages([
         {
