@@ -78,14 +78,20 @@ export const setStages = async (
           .filter((line) => line)
           .forEach((line) => {
             const [addressStr, limitStr] = line.split(',');
-            const limit = parseInt(limitStr, 10);
 
-            if (!ethers.utils.isAddress(addressStr.trim().toLowerCase()) && limit < 0) {
-              console.log(`Filtered address: ${addressStr}`);
+            if (!ethers.utils.isAddress(addressStr.trim().toLowerCase())) {
+              console.log(`Ignored invalid address: ${addressStr}`);
               return;
             }
 
             const address = ethers.utils.getAddress(addressStr.trim().toLowerCase());
+            const limit = parseInt(limitStr, 10);
+
+            if (!Number.isInteger(limit)) {
+              console.log(`Ignored invalid limit for address: ${addressStr}`);
+              return;
+            }
+
             const digest = ethers.utils.solidityKeccak256(['address', 'uint32'], [address, limit]);
             leaves.push(digest);
           });
