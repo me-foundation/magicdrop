@@ -34,7 +34,9 @@ contract ERC721CMBasicRoyalties is ERC721CM, BasicRoyalties {
         BasicRoyalties(royaltyReceiver, royaltyFeeNumerator)
     {}
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual

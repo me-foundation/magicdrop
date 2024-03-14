@@ -27,19 +27,17 @@ contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
         // do nothing
     }
 
-    function getInboundNonce(uint16 _srcChainId, bytes calldata _srcAddress)
-        external
-        view
-        returns (uint64)
-    {
+    function getInboundNonce(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external view returns (uint64) {
         return 0;
     }
 
-    function getOutboundNonce(uint16 _dstChainId, address _srcAddress)
-        external
-        view
-        returns (uint64)
-    {
+    function getOutboundNonce(
+        uint16 _dstChainId,
+        address _srcAddress
+    ) external view returns (uint64) {
         return 0;
     }
 
@@ -65,27 +63,22 @@ contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
         // do nothing
     }
 
-    function hasStoredPayload(uint16 _srcChainId, bytes calldata _srcAddress)
-        external
-        view
-        returns (bool)
-    {
+    function hasStoredPayload(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external view returns (bool) {
         return false;
     }
 
-    function getSendLibraryAddress(address _userApplication)
-        external
-        view
-        returns (address)
-    {
+    function getSendLibraryAddress(
+        address _userApplication
+    ) external view returns (address) {
         return address(0);
     }
 
-    function getReceiveLibraryAddress(address _userApplication)
-        external
-        view
-        returns (address)
-    {
+    function getReceiveLibraryAddress(
+        address _userApplication
+    ) external view returns (address) {
         return address(0);
     }
 
@@ -106,19 +99,15 @@ contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
         return "";
     }
 
-    function getSendVersion(address _userApplication)
-        external
-        view
-        returns (uint16)
-    {
+    function getSendVersion(
+        address _userApplication
+    ) external view returns (uint16) {
         return 0;
     }
 
-    function getReceiveVersion(address _userApplication)
-        external
-        view
-        returns (uint16)
-    {
+    function getReceiveVersion(
+        address _userApplication
+    ) external view returns (uint16) {
         return 0;
     }
 
@@ -139,9 +128,10 @@ contract MockLayerZeroEndpoint is ILayerZeroEndpoint {
         // do nothing
     }
 
-    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress)
-        external
-    {
+    function forceResumeReceive(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external {
         // do nothing
     }
 }

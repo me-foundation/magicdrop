@@ -1310,9 +1310,8 @@ describe('ERC721CM', function () {
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
 
       // Impersonate Crossmint wallet
-      const crossmintSigner = await ethers.getImpersonatedSigner(
-        crossmintAddressStr,
-      );
+      const crossmintSigner =
+        await ethers.getImpersonatedSigner(crossmintAddressStr);
       const crossmintAddress = await crossmintSigner.getAddress();
 
       // Send some wei to impersonated account
@@ -1377,9 +1376,8 @@ describe('ERC721CM', function () {
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
 
       // Impersonate Crossmint wallet
-      const crossmintSigner = await ethers.getImpersonatedSigner(
-        crossmintAddressStr,
-      );
+      const crossmintSigner =
+        await ethers.getImpersonatedSigner(crossmintAddressStr);
       const crossmintAddress = await crossmintSigner.getAddress();
 
       // Send some wei to impersonated account
@@ -1865,9 +1863,11 @@ describe('ERC721CM', function () {
     });
   });
 
-  describe('Contract URI', function() {
+  describe('Contract URI', function () {
     it('can set contract URI', async () => {
-      await contract.setContractURI('ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4');
+      await contract.setContractURI(
+        'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4',
+      );
       const contractURI = await contract.contractURI();
       expect(contractURI).to.equal(
         'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4',
@@ -1875,9 +1875,11 @@ describe('ERC721CM', function () {
     });
   });
 
-  describe('Transfer validator', function() {
+  describe('Transfer validator', function () {
     it('default validator settings', async () => {
-      expect(await contract.getTransferValidator()).to.equal('0x0000000000000000000000000000000000000000');
+      expect(await contract.getTransferValidator()).to.equal(
+        '0x0000000000000000000000000000000000000000',
+      );
     });
 
     // TODO: figure out a way to mock the validator contract

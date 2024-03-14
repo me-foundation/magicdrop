@@ -17,7 +17,10 @@ export const setPrice = async (
   );
   const contract = ERC721M.attach(args.contract);
 
-  const tx = await contract.setPrice(ethers.BigNumber.from(args.priceinwei), overrides);
+  const tx = await contract.setPrice(
+    ethers.BigNumber.from(args.priceinwei),
+    overrides,
+  );
   console.log(`Result: ${tx.hash}`);
 
   await tx.wait();

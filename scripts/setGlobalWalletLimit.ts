@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
 
-export interface ISetBaseURIParams {
+interface ISetBaseURIParams {
   limit: string;
   contract: string;
 }

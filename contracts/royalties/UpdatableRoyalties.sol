@@ -19,10 +19,10 @@ abstract contract UpdatableRoyalties is ERC2981, Ownable {
         _setDefaultRoyalty(receiver, feeNumerator);
     }
 
-    function setDefaultRoyalty(address receiver, uint96 feeNumerator)
-        public
-        onlyOwner
-    {
+    function setDefaultRoyalty(
+        address receiver,
+        uint96 feeNumerator
+    ) public onlyOwner {
         super._setDefaultRoyalty(receiver, feeNumerator);
         emit DefaultRoyaltySet(receiver, feeNumerator);
     }

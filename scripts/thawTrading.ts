@@ -12,13 +12,15 @@ export const thawTrading = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const factory = await ethers.getContractFactory(ContractDetails.ERC721CM.name);
+  const factory = await ethers.getContractFactory(
+    ContractDetails.ERC721CM.name,
+  );
   const contract = factory.attach(args.contract);
 
   const tx = await contract.populateTransaction.setToDefaultSecurityPolicy();
   await estimateGas(hre, tx);
   console.log(`Going to thaw contract: ${args.contract}`);
-  if (!await confirm({ message: 'Continue?' })) return;
+  if (!(await confirm({ message: 'Continue?' }))) return;
 
   const submittedTx = await contract.setToDefaultSecurityPolicy();
 

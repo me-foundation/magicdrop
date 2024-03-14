@@ -33,7 +33,7 @@ export const ownerMint = async (
   const tx = await contract.populateTransaction.ownerMint(qty, to);
   if (!(await estimateGas(hre, tx, overrides))) return;
   console.log(`Going to mint ${qty.toNumber()} token(s) to ${to}`);
-  if (!await confirm({ message: 'Continue?' })) return;
+  if (!(await confirm({ message: 'Continue?' }))) return;
 
   const submittedTx = await contract.ownerMint(qty, to, overrides);
 
