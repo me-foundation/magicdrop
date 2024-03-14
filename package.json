@@ -4,9 +4,10 @@
   "description": "erc721m contract for Solidity",
   "files": [
     "/contracts/**/*.sol",
-    "/build/contracts/*.json",
+    "/artifacts/contracts/**/*.json",
+    "/dist/**/*",
     "!/contracts/mocks/**/*",
-    "/dist/**/*"
+    "!/artifacts/contracts/mocks"
   ],
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
