@@ -34,7 +34,9 @@ contract ERC721CMRoyalties is ERC721CM, UpdatableRoyalties {
         UpdatableRoyalties(royaltyReceiver, royaltyFeeNumerator)
     {}
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual

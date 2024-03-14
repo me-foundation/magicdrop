@@ -21,7 +21,9 @@ contract ONFT721Lite is ONFT721CoreLite, ERC721, IONFT721 {
         address _lzEndpoint
     ) ERC721(_name, _symbol) ONFT721CoreLite(_minGasToTransfer, _lzEndpoint) {}
 
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual
@@ -80,12 +82,9 @@ contract ONFT721Lite is ONFT721CoreLite, ERC721, IONFT721 {
     /**
      * @dev Returns token URI for a given token id.
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override returns (string memory) {
         require(_exists(tokenId), "token not exist");
 
         string memory baseURI = _currentBaseURI;
@@ -104,12 +103,9 @@ contract ONFT721Lite is ONFT721CoreLite, ERC721, IONFT721 {
     /**
      * @dev Converts a uint256 to its ASCII string decimal representation.
      */
-    function _toString(uint256 value)
-        internal
-        pure
-        virtual
-        returns (string memory str)
-    {
+    function _toString(
+        uint256 value
+    ) internal pure virtual returns (string memory str) {
         assembly {
             // The maximum value of a uint256 contains 78 digits (1 byte per digit), but
             // we allocate 0xa0 bytes to keep the free memory pointer 32-byte word aligned.

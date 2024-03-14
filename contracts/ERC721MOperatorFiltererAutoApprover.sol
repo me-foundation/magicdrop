@@ -56,10 +56,9 @@ contract ERC721MOperatorFiltererAutoApprover is ERC721MOperatorFilterer {
         return _autoApproveAddress;
     }
 
-    function setAutoApproveAddress(address autoApproveAddress)
-        external
-        onlyOwner
-    {
+    function setAutoApproveAddress(
+        address autoApproveAddress
+    ) external onlyOwner {
         _autoApproveAddress = autoApproveAddress;
         emit SetAutoApproveAddress(autoApproveAddress);
     }

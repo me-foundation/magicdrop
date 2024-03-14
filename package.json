@@ -90,7 +90,7 @@
       "prettier --write scripts cosign-server test hardhat.config.ts"
     ],
     "*.sol": [
-      "prettier --write contracts"
+      "prettier --write --plugin=prettier-plugin-solidity contracts"
     ]
   }
 }
