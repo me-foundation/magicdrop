@@ -20,6 +20,7 @@ interface StageConfig {
   walletLimit?: number;
   maxSupply?: number;
   whitelistPath?: string;
+  variableWalletLimitPath?: string;
 }
 
 export const setStages = async (
@@ -41,46 +42,94 @@ export const setStages = async (
   if (args.gaslimit) {
     overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
   }
+
+  /*
+   * Merkle root generation logic:
+   * - for `whitelist`, leaves are `solidityKeccak256(['address', 'uint32'], [address, 0])`
+   * - for `variable wallet limit list`, leaves are `solidityKeccak256(['address', 'uint32'], [address, limit])`
+   */
   const merkleRoots = await Promise.all(
     stagesConfig.map((stage) => {
-      if (!stage.whitelistPath) {
-        return ethers.utils.hexZeroPad('0x', 32);
-      }
-      const whitelist = JSON.parse(
-        fs.readFileSync(stage.whitelistPath, 'utf-8'),
-      );
-
-      // Clean up whitelist
-      const filteredWhitelist = whitelist.filter((address: string) =>
-        ethers.utils.isAddress(address),
-      );
-      console.log(
-        `Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`,
-      );
-      const invalidWhitelist = whitelist.filter(
-        (address: string) => !ethers.utils.isAddress(address),
-      );
-      console.log(
-        `❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`,
-      );
-
-      if (invalidWhitelist.length > 0) {
-        console.log(`🔄 🚨 updating whitelist file: ${stage.whitelistPath}`);
-        fs.writeFileSync(
-          stage.whitelistPath,
-          JSON.stringify(filteredWhitelist, null, 2),
+      if (stage.whitelistPath) {
+        const whitelist = JSON.parse(
+          fs.readFileSync(stage.whitelistPath, 'utf-8'),
         );
+
+        // Clean up whitelist
+        const filteredWhitelist = whitelist.filter((address: string) =>
+          ethers.utils.isAddress(address),
+        );
+        console.log(
+          `Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`,
+        );
+        const invalidWhitelist = whitelist.filter(
+          (address: string) => !ethers.utils.isAddress(address),
+        );
+        console.log(
+          `❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`,
+        );
+
+        if (invalidWhitelist.length > 0) {
+          console.log(`🔄 🚨 updating whitelist file: ${stage.whitelistPath}`);
+          fs.writeFileSync(
+            stage.whitelistPath,
+            JSON.stringify(filteredWhitelist, null, 2),
+          );
+        }
+
+        const mt = new MerkleTree(
+          filteredWhitelist.map((address: string) =>
+            ethers.utils.solidityKeccak256(
+              ['address', 'uint32'],
+              [ethers.utils.getAddress(address), 0],
+            ),
+          ),
+          ethers.utils.keccak256,
+          {
+            sortPairs: true,
+            hashLeaves: true,
+          },
+        );
+        return mt.getHexRoot();
+      } else if (stage.variableWalletLimitPath) {
+        const leaves: any[] = [];
+        const file = fs.readFileSync(stage.variableWalletLimitPath, 'utf-8');
+        file
+          .split('\n')
+          .filter((line) => line)
+          .forEach((line) => {
+            const [addressStr, limitStr] = line.split(',');
+
+            if (!ethers.utils.isAddress(addressStr.trim().toLowerCase())) {
+              console.log(`Ignored invalid address: ${addressStr}`);
+              return;
+            }
+
+            const address = ethers.utils.getAddress(
+              addressStr.trim().toLowerCase(),
+            );
+            const limit = parseInt(limitStr, 10);
+
+            if (!Number.isInteger(limit)) {
+              console.log(`Ignored invalid limit for address: ${addressStr}`);
+              return;
+            }
+
+            const digest = ethers.utils.solidityKeccak256(
+              ['address', 'uint32'],
+              [address, limit],
+            );
+            leaves.push(digest);
+          });
+
+        const mt = new MerkleTree(leaves, ethers.utils.keccak256, {
+          sortPairs: true,
+          hashLeaves: false,
+        });
+        return mt.getHexRoot();
       }
 
-      const mt = new MerkleTree(
-        filteredWhitelist.map(ethers.utils.getAddress),
-        ethers.utils.keccak256,
-        {
-          sortPairs: true,
-          hashLeaves: true,
-        },
-      );
-      return mt.getHexRoot();
+      return ethers.utils.hexZeroPad('0x', 32);
     }),
   );
 
