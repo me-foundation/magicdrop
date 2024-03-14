@@ -43,6 +43,11 @@ export const setStages = async (
     overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
   }
 
+  /*
+   * Merkle root generation logic:
+   * - for `whitelist`, leaves are `solidityKeccak256(['address', 'uint32'], [address, 0])`
+   * - for `variable wallet limit list`, leaves are `solidityKeccak256(['address', 'uint32'], [address, limit])`
+   */
   const merkleRoots = await Promise.all(
     stagesConfig.map((stage) => {
       if (stage.whitelistPath) {
@@ -62,7 +67,7 @@ export const setStages = async (
         }
 
         const mt = new MerkleTree(
-          filteredWhitelist.map(ethers.utils.getAddress),
+          filteredWhitelist.map((address: string) => ethers.utils.solidityKeccak256(['address', 'uint32'], [ethers.utils.getAddress(address), 0])),
           ethers.utils.keccak256,
           {
             sortPairs: true,
