@@ -1198,8 +1198,9 @@ describe('ERC721CM', function () {
       const accounts = (await ethers.getSigners()).map((signer) =>
         getAddress(signer.address).toLowerCase().trim(),
       );
-      const leaves = accounts.map(account => 
-        ethers.utils.solidityKeccak256(['address', 'uint32'], [account, 0]));
+      const leaves = accounts.map((account) =>
+        ethers.utils.solidityKeccak256(['address', 'uint32'], [account, 0]),
+      );
       const signerAddress = await ethers.provider.getSigner().getAddress();
       const merkleTree = new MerkleTree(leaves, ethers.utils.keccak256, {
         sortPairs: true,
@@ -1207,7 +1208,10 @@ describe('ERC721CM', function () {
       });
       const root = merkleTree.getHexRoot();
 
-      const leaf = ethers.utils.solidityKeccak256(['address', 'uint32'], [signerAddress.toLowerCase().trim(), 0]);
+      const leaf = ethers.utils.solidityKeccak256(
+        ['address', 'uint32'],
+        [signerAddress.toLowerCase().trim(), 0],
+      );
       const proof = merkleTree.getHexProof(leaf);
 
       const block = await ethers.provider.getBlock(
@@ -1277,10 +1281,16 @@ describe('ERC721CM', function () {
 
     it('mint with limit', async () => {
       const ownerAddress = await owner.getAddress();
-      const readerAddress = await readonly.getAddress()
+      const readerAddress = await readonly.getAddress();
       const leaves = [
-        ethers.utils.solidityKeccak256(['address', 'uint32'], [ownerAddress, 2]),
-        ethers.utils.solidityKeccak256(['address', 'uint32'], [readerAddress, 5])
+        ethers.utils.solidityKeccak256(
+          ['address', 'uint32'],
+          [ownerAddress, 2],
+        ),
+        ethers.utils.solidityKeccak256(
+          ['address', 'uint32'],
+          [readerAddress, 5],
+        ),
       ];
 
       const merkleTree = new MerkleTree(leaves, ethers.utils.keccak256, {
@@ -1288,8 +1298,14 @@ describe('ERC721CM', function () {
         hashLeaves: false,
       });
       const root = merkleTree.getHexRoot();
-      const ownerLeaf = ethers.utils.solidityKeccak256(['address', 'uint32'], [ownerAddress, 2]);
-      const readerLeaf = ethers.utils.solidityKeccak256(['address', 'uint32'], [readerAddress, 5]);
+      const ownerLeaf = ethers.utils.solidityKeccak256(
+        ['address', 'uint32'],
+        [ownerAddress, 2],
+      );
+      const readerLeaf = ethers.utils.solidityKeccak256(
+        ['address', 'uint32'],
+        [readerAddress, 5],
+      );
       const ownerProof = merkleTree.getHexProof(ownerLeaf);
       const readerProof = merkleTree.getHexProof(readerLeaf);
 
@@ -1317,7 +1333,9 @@ describe('ERC721CM', function () {
       await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
         value: ethers.utils.parseEther('0.5'),
       });
-      expect((await contract.totalMintedByAddress(owner.getAddress())).toNumber()).to.equal(1);
+      expect(
+        (await contract.totalMintedByAddress(owner.getAddress())).toNumber(),
+      ).to.equal(1);
 
       // Owner mints 1 token with wrong limit and should be reverted.
       await expect(
@@ -1332,12 +1350,14 @@ describe('ERC721CM', function () {
           value: ethers.utils.parseEther('1.0'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
-      
+
       // Owner mints 1 token with valid proof. Now owner reaches the limit.
       await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
         value: ethers.utils.parseEther('0.5'),
       });
-      expect((await contract.totalMintedByAddress(owner.getAddress())).toNumber()).to.equal(2);
+      expect(
+        (await contract.totalMintedByAddress(owner.getAddress())).toNumber(),
+      ).to.equal(2);
 
       // Owner tries to mint more and reverts.
       await expect(
@@ -1521,7 +1541,9 @@ describe('ERC721CM', function () {
         hashLeaves: true,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(ethers.utils.keccak256(recipient.address));
+      const proof = merkleTree.getHexProof(
+        ethers.utils.keccak256(recipient.address),
+      );
 
       await contract.setStages([
         {
@@ -1560,7 +1582,9 @@ describe('ERC721CM', function () {
         hashLeaves: true,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(ethers.utils.keccak256(recipient.address));
+      const proof = merkleTree.getHexProof(
+        ethers.utils.keccak256(recipient.address),
+      );
 
       await contract.setStages([
         {
