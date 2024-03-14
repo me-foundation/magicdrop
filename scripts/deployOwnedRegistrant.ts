@@ -15,9 +15,7 @@ export const deployOwnedRegistrant = async (
 
   const OwnedRegistrant = await hre.ethers.getContractFactory(contractName);
 
-  const params = [
-    args.newowner
-  ] as const;
+  const params = [args.newowner] as const;
 
   console.log(
     `Constructor params: `,

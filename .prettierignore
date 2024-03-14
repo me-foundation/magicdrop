@@ -1,5 +1,7 @@
 node_modules
 artifacts
 cache
-coverage*
+coverage
 gasReporterOutput.json
+dist
+rollup.cache

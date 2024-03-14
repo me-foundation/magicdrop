@@ -4,10 +4,13 @@ import { estimateGas } from '../utils/helper';
 
 export const deploy721BatchTransfer = async (
   args: {},
-  hre: HardhatRuntimeEnvironment
+  hre: HardhatRuntimeEnvironment,
 ) => {
   const [signer] = await hre.ethers.getSigners();
-  const factory = await hre.ethers.getContractFactory('ERC721BatchTransfer', signer);
+  const factory = await hre.ethers.getContractFactory(
+    'ERC721BatchTransfer',
+    signer,
+  );
 
   await estimateGas(hre, factory.getDeployTransaction());
 
@@ -16,6 +19,4 @@ export const deploy721BatchTransfer = async (
   const contract = await factory.deploy();
   await contract.deployed();
   console.log('ERC721BatchTransfer deployed to:', contract.address);
-}
-
-
+};

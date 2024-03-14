@@ -103,23 +103,19 @@ abstract contract LzAppLite is
         require(providedGasLimit >= minGasLimit, "gas limit too low");
     }
 
-    function _getGasLimit(bytes memory _adapterParams)
-        internal
-        pure
-        virtual
-        returns (uint256 gasLimit)
-    {
+    function _getGasLimit(
+        bytes memory _adapterParams
+    ) internal pure virtual returns (uint256 gasLimit) {
         require(_adapterParams.length >= 34, "invalid adapterParams");
         assembly {
             gasLimit := mload(add(_adapterParams, 34))
         }
     }
 
-    function _checkPayloadSize(uint16 _dstChainId, uint256 _payloadSize)
-        internal
-        view
-        virtual
-    {
+    function _checkPayloadSize(
+        uint16 _dstChainId,
+        uint256 _payloadSize
+    ) internal view virtual {
         uint256 payloadSizeLimit = payloadSizeLimitLookup[_dstChainId];
         if (payloadSizeLimit == 0) {
             // use default if not set
@@ -146,20 +142,19 @@ abstract contract LzAppLite is
         lzEndpoint.setReceiveVersion(_version);
     }
 
-    function forceResumeReceive(uint16 _srcChainId, bytes calldata _srcAddress)
-        external
-        override
-        onlyOwner
-    {
+    function forceResumeReceive(
+        uint16 _srcChainId,
+        bytes calldata _srcAddress
+    ) external override onlyOwner {
         lzEndpoint.forceResumeReceive(_srcChainId, _srcAddress);
     }
 
     // _path = abi.encodePacked(remoteAddress, localAddress)
     // this function set the trusted path for the cross-chain communication
-    function setTrustedRemote(uint16 _remoteChainId, bytes calldata _path)
-        external
-        onlyOwner
-    {
+    function setTrustedRemote(
+        uint16 _remoteChainId,
+        bytes calldata _path
+    ) external onlyOwner {
         trustedRemoteLookup[_remoteChainId] = _path;
         emit SetTrustedRemote(_remoteChainId, _path);
     }
@@ -180,10 +175,10 @@ abstract contract LzAppLite is
     }
 
     // if the size is 0, it means default size limit
-    function setPayloadSizeLimit(uint16 _dstChainId, uint256 _size)
-        external
-        onlyOwner
-    {
+    function setPayloadSizeLimit(
+        uint16 _dstChainId,
+        uint256 _size
+    ) external onlyOwner {
         payloadSizeLimitLookup[_dstChainId] = _size;
     }
 }

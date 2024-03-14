@@ -8,18 +8,14 @@ import "erc721a/contracts/extensions/ERC721AQueryable.sol";
  * @title ERC721ACQueryable
  */
 abstract contract ERC721ACQueryable is ERC721AQueryable, CreatorTokenBase {
-    constructor(string memory name_, string memory symbol_)
-        CreatorTokenBase()
-        ERC721A(name_, symbol_)
-    {}
+    constructor(
+        string memory name_,
+        string memory symbol_
+    ) CreatorTokenBase() ERC721A(name_, symbol_) {}
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC721A, IERC721A)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC721A, IERC721A) returns (bool) {
         return
             interfaceId == type(ICreatorToken).interfaceId ||
             ERC721A.supportsInterface(interfaceId);

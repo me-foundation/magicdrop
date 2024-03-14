@@ -1405,9 +1405,8 @@ describe('ERC721M', function () {
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
 
       // Impersonate Crossmint wallet
-      const crossmintSigner = await ethers.getImpersonatedSigner(
-        crossmintAddressStr,
-      );
+      const crossmintSigner =
+        await ethers.getImpersonatedSigner(crossmintAddressStr);
       const crossmintAddress = await crossmintSigner.getAddress();
 
       // Send some wei to impersonated account
@@ -1472,9 +1471,8 @@ describe('ERC721M', function () {
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
 
       // Impersonate Crossmint wallet
-      const crossmintSigner = await ethers.getImpersonatedSigner(
-        crossmintAddressStr,
-      );
+      const crossmintSigner =
+        await ethers.getImpersonatedSigner(crossmintAddressStr);
       const crossmintAddress = await crossmintSigner.getAddress();
 
       // Send some wei to impersonated account

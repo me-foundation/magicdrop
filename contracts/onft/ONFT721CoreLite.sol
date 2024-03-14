@@ -27,9 +27,10 @@ abstract contract ONFT721CoreLite is
     mapping(uint16 => uint256) public dstChainIdToTransferGas; // per transfer amount of gas required to mint/transfer on the dst
     mapping(bytes32 => StoredCredit) public storedCredits;
 
-    constructor(uint256 _minGasToTransferAndStore, address _lzEndpoint)
-        NonblockingLzAppLite(_lzEndpoint)
-    {
+    constructor(
+        uint256 _minGasToTransferAndStore,
+        address _lzEndpoint
+    ) NonblockingLzAppLite(_lzEndpoint) {
         require(
             _minGasToTransferAndStore > 0,
             "minGasToTransferAndStore must be > 0"
@@ -37,13 +38,9 @@ abstract contract ONFT721CoreLite is
         minGasToTransferAndStore = _minGasToTransferAndStore;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC165, IERC165)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165, IERC165) returns (bool) {
         return
             interfaceId == type(IONFT721Core).interfaceId ||
             super.supportsInterface(interfaceId);
@@ -167,7 +164,7 @@ abstract contract ONFT721CoreLite is
     function _nonblockingLzReceive(
         uint16 _srcChainId,
         bytes memory _srcAddress,
-        uint64, /*_nonce*/
+        uint64 /*_nonce*/,
         bytes memory _payload
     ) internal virtual override {
         // decode and load the toAddress
@@ -258,10 +255,9 @@ abstract contract ONFT721CoreLite is
         return i;
     }
 
-    function setMinGasToTransferAndStore(uint256 _minGasToTransferAndStore)
-        external
-        onlyOwner
-    {
+    function setMinGasToTransferAndStore(
+        uint256 _minGasToTransferAndStore
+    ) external onlyOwner {
         require(_minGasToTransferAndStore > 0, "must be > 0");
         minGasToTransferAndStore = _minGasToTransferAndStore;
         emit SetMinGasToTransferAndStore(_minGasToTransferAndStore);
@@ -300,11 +296,9 @@ abstract contract ONFT721CoreLite is
         uint256 _tokenId
     ) internal virtual;
 
-    function _toSingletonArray(uint256 element)
-        internal
-        pure
-        returns (uint256[] memory)
-    {
+    function _toSingletonArray(
+        uint256 element
+    ) internal pure returns (uint256[] memory) {
         uint256[] memory array = new uint256[](1);
         array[0] = element;
         return array;

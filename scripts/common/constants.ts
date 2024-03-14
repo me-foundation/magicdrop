@@ -61,7 +61,8 @@ export const ChainIds: Record<string, number> = {
   'zksync-testnet': 10165,
 };
 
-export const ERC721BatchTransferContract = '0x38F7ba911f7efc434D29D6E39c814E9d4De3FEef';
+export const ERC721BatchTransferContract =
+  '0x38F7ba911f7efc434D29D6E39c814E9d4De3FEef';
 
 export const ERC721CV2_VALIDATOR = '0x721C00182a990771244d7A71B9FA2ea789A3b433';
 export const ERC721CV2_FREEZE_LEVEL = 4;

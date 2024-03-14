@@ -12,7 +12,7 @@ const addresses = {
   addr3: '0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB',
   addr4: '0x617F2E2fD72FD9D5503197092aC168c91465E7f2',
   addr5: '0x17F6AD8Ef982297579C203069C1DbfFE4348c372',
-}
+};
 
 describe('ERC721BatchTransfer', function () {
   let transferContract: ERC721BatchTransfer;
@@ -22,11 +22,15 @@ describe('ERC721BatchTransfer', function () {
   beforeEach(async () => {
     [owner] = await ethers.getSigners();
 
-    const batchTransfer = await (await ethers.getContractFactory('ERC721BatchTransfer')).deploy();
+    const batchTransfer = await (
+      await ethers.getContractFactory('ERC721BatchTransfer')
+    ).deploy();
     await batchTransfer.deployed();
     transferContract = batchTransfer.connect(owner);
 
-    const erc721a = await (await ethers.getContractFactory('MockERC721A')).deploy();
+    const erc721a = await (
+      await ethers.getContractFactory('MockERC721A')
+    ).deploy();
     await erc721a.deployed();
     nftContract = erc721a.connect(owner);
 
@@ -41,7 +45,11 @@ describe('ERC721BatchTransfer', function () {
   });
 
   it('batchTransferToSingleWallet', async () => {
-    await transferContract.batchTransferToSingleWallet(nftContract.address, addresses.addr1, [0, 1, 2, 3, 4]);
+    await transferContract.batchTransferToSingleWallet(
+      nftContract.address,
+      addresses.addr1,
+      [0, 1, 2, 3, 4],
+    );
     for (let i = 0; i < 5; i++) {
       const tokenOwner = await nftContract.ownerOf(i);
       expect(tokenOwner).to.equal(addresses.addr1);
@@ -50,7 +58,11 @@ describe('ERC721BatchTransfer', function () {
 
   it('safeBatchTransferToSingleWallet', async () => {
     const tokenIds = [0, 1, 2, 3, 4];
-    await transferContract.safeBatchTransferToSingleWallet(nftContract.address, addresses.addr1, [0, 1, 2, 3, 4]);
+    await transferContract.safeBatchTransferToSingleWallet(
+      nftContract.address,
+      addresses.addr1,
+      [0, 1, 2, 3, 4],
+    );
     for (let i = 0; i < tokenIds.length; i++) {
       const tokenOwner = await nftContract.ownerOf(tokenIds[i]);
       expect(tokenOwner).to.equal(addresses.addr1);
@@ -59,8 +71,18 @@ describe('ERC721BatchTransfer', function () {
 
   it('batchTransferToMultipleWallets', async () => {
     const tokenIds = [0, 1, 2, 3, 4];
-    const tos = [addresses.addr1, addresses.addr2, addresses.addr3, addresses.addr4, addresses.addr5];
-    await transferContract.batchTransferToMultipleWallets(nftContract.address, tos, tokenIds);
+    const tos = [
+      addresses.addr1,
+      addresses.addr2,
+      addresses.addr3,
+      addresses.addr4,
+      addresses.addr5,
+    ];
+    await transferContract.batchTransferToMultipleWallets(
+      nftContract.address,
+      tos,
+      tokenIds,
+    );
     for (let i = 0; i < tokenIds.length; i++) {
       const tokenOwner = await nftContract.ownerOf(tokenIds[i]);
       expect(tokenOwner).to.equal(tos[i]);
@@ -69,8 +91,18 @@ describe('ERC721BatchTransfer', function () {
 
   it('safeBatchTransferToMultipleWallets', async () => {
     const tokenIds = [4, 1, 2, 0, 3];
-    const tos = [addresses.addr1, addresses.addr2, addresses.addr2, addresses.addr2, addresses.addr4];
-    await transferContract.safeBatchTransferToMultipleWallets(nftContract.address, tos, tokenIds);
+    const tos = [
+      addresses.addr1,
+      addresses.addr2,
+      addresses.addr2,
+      addresses.addr2,
+      addresses.addr4,
+    ];
+    await transferContract.safeBatchTransferToMultipleWallets(
+      nftContract.address,
+      tos,
+      tokenIds,
+    );
     for (let i = 0; i < tokenIds.length; i++) {
       const tokenOwner = await nftContract.ownerOf(tokenIds[i]);
       expect(tokenOwner).to.equal(tos[i]);
@@ -79,20 +111,44 @@ describe('ERC721BatchTransfer', function () {
 
   it('revert if tokens not owned', async () => {
     const tokenIds = [0, 1, 2, 3, 4];
-    const tos = [addresses.addr1, addresses.addr2, addresses.addr3, addresses.addr4, addresses.addr5];
-    await transferContract.batchTransferToMultipleWallets(nftContract.address, tos, tokenIds);
+    const tos = [
+      addresses.addr1,
+      addresses.addr2,
+      addresses.addr3,
+      addresses.addr4,
+      addresses.addr5,
+    ];
+    await transferContract.batchTransferToMultipleWallets(
+      nftContract.address,
+      tos,
+      tokenIds,
+    );
 
     await expect(
-      transferContract.batchTransferToMultipleWallets(nftContract.address, tos, tokenIds)
-      ).to.be.revertedWith('NotOwnerOfToken');
+      transferContract.batchTransferToMultipleWallets(
+        nftContract.address,
+        tos,
+        tokenIds,
+      ),
+    ).to.be.revertedWith('NotOwnerOfToken');
   });
 
   it('revert if invalid arguments', async () => {
-    const tokenIds = [0, 1, 2, 3, ];
-    const tos = [addresses.addr1, addresses.addr2, addresses.addr3, addresses.addr4, addresses.addr5];
+    const tokenIds = [0, 1, 2, 3];
+    const tos = [
+      addresses.addr1,
+      addresses.addr2,
+      addresses.addr3,
+      addresses.addr4,
+      addresses.addr5,
+    ];
 
     await expect(
-      transferContract.batchTransferToMultipleWallets(nftContract.address, tos, tokenIds)
-      ).to.be.revertedWith('InvalidArguments');
+      transferContract.batchTransferToMultipleWallets(
+        nftContract.address,
+        tos,
+        tokenIds,
+      ),
+    ).to.be.revertedWith('InvalidArguments');
   });
 });

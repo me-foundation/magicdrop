@@ -236,11 +236,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      *
      * New supply cannot be larger than the old.
      */
-    function setMaxMintableSupply(uint256 maxMintableSupply)
-        external
-        virtual
-        onlyOwner
-    {
+    function setMaxMintableSupply(
+        uint256 maxMintableSupply
+    ) external virtual onlyOwner {
         if (maxMintableSupply > _maxMintableSupply) {
             revert CannotIncreaseMaxMintableSupply();
         }
@@ -258,10 +256,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Sets global wallet limit.
      */
-    function setGlobalWalletLimit(uint256 globalWalletLimit)
-        external
-        onlyOwner
-    {
+    function setGlobalWalletLimit(
+        uint256 globalWalletLimit
+    ) external onlyOwner {
         if (globalWalletLimit > _maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _globalWalletLimit = globalWalletLimit;
@@ -271,29 +268,18 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns number of minted token for a given address.
      */
-    function totalMintedByAddress(address a)
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function totalMintedByAddress(
+        address a
+    ) external view virtual override returns (uint256) {
         return _numberMinted(a);
     }
 
     /**
      * @dev Returns info for one stage specified by index (starting from 0).
      */
-    function getStageInfo(uint256 index)
-        external
-        view
-        override
-        returns (
-            MintStageInfo memory,
-            uint32,
-            uint256
-        )
-    {
+    function getStageInfo(
+        uint256 index
+    ) external view override returns (MintStageInfo memory, uint32, uint256) {
         if (index >= _mintStages.length) {
             revert("InvalidStage");
         }
@@ -495,11 +481,10 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      * NOTE: This function bypasses validations thus only available for owner.
      * This is typically used for owner to  pre-mint or mint the remaining of the supply.
      */
-    function ownerMint(uint32 qty, address to)
-        external
-        onlyOwner
-        hasSupply(qty)
-    {
+    function ownerMint(
+        uint32 qty,
+        address to
+    ) external onlyOwner hasSupply(qty) {
         _safeMint(to, qty);
     }
 
@@ -550,12 +535,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns token URI for a given token id.
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721A, IERC721A)
-        returns (string memory)
-    {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721A, IERC721A) returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _currentBaseURI;
@@ -629,11 +611,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns the current active stage based on timestamp.
      */
-    function getActiveStageFromTimestamp(uint64 timestamp)
-        public
-        view
-        returns (uint256)
-    {
+    function getActiveStageFromTimestamp(
+        uint64 timestamp
+    ) public view returns (uint256) {
         for (uint256 i = 0; i < _mintStages.length; i++) {
             if (
                 timestamp >= _mintStages[i].startTimeUnixSeconds &&
@@ -656,10 +636,10 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
      */
-    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end)
-        internal
-        pure
-    {
+    function _assertValidStartAndEndTimestamp(
+        uint64 start,
+        uint64 end
+    ) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 

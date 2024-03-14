@@ -9,7 +9,7 @@ import { ContractDetails } from './common/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { estimateGas } from './utils/helper';
 
-export interface IDeployParams {
+interface IDeployParams {
   name: string;
   symbol: string;
   tokenurisuffix: string;
@@ -73,7 +73,7 @@ export const deployBA = async (
 
   await estimateGas(hre, contractFactory.getDeployTransaction(...params));
 
-  if (!await confirm({ message: 'Continue to deploy?' })) return;
+  if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
   const contract = await contractFactory.deploy(...params);
   await contract.deployed();

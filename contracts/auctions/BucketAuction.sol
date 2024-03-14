@@ -101,15 +101,10 @@ contract BucketAuction is IBucketAuction, ERC721M {
         return _userData[user];
     }
 
-    function getUserDataPage(uint256 limit, uint256 offset)
-        external
-        view
-        returns (
-            User[] memory,
-            address[] memory,
-            uint256 total
-        )
-    {
+    function getUserDataPage(
+        uint256 limit,
+        uint256 offset
+    ) external view returns (User[] memory, address[] memory, uint256 total) {
         uint256 numUsers = _users.length();
         uint256 pageSize = limit;
         if (pageSize > numUsers - offset) {
@@ -147,10 +142,10 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @param startTime set to unix timestamp for the auction start time.
      * @param endTime set to unix timestamp for the auction end time.
      */
-    function setStartAndEndTimeUnixSeconds(uint64 startTime, uint64 endTime)
-        external
-        onlyOwner
-    {
+    function setStartAndEndTimeUnixSeconds(
+        uint64 startTime,
+        uint64 endTime
+    ) external onlyOwner {
         if (_price != 0) revert PriceHasBeenSet();
         if (endTime <= startTime) revert InvalidStartAndEndTimestamp();
 
@@ -184,10 +179,9 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @dev set this price in wei, not eth!
      * @param minimumContributionInWei new price, set in wei
      */
-    function setMinimumContribution(uint256 minimumContributionInWei)
-        external
-        onlyOwner
-    {
+    function setMinimumContribution(
+        uint256 minimumContributionInWei
+    ) external onlyOwner {
         _minimumContributionInWei = minimumContributionInWei;
         emit SetMinimumContribution(minimumContributionInWei);
     }
@@ -212,10 +206,10 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @param to address to mint tokens to.
      * @param numberOfTokens number of tokens to mint.
      */
-    function _internalMint(address to, uint256 numberOfTokens)
-        internal
-        hasSupply(numberOfTokens)
-    {
+    function _internalMint(
+        address to,
+        uint256 numberOfTokens
+    ) internal hasSupply(numberOfTokens) {
         _safeMint(to, numberOfTokens);
         if (!_firstTokenSent && numberOfTokens > 0) _firstTokenSent = true;
     }
@@ -361,10 +355,9 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @notice send refunds and tokens to a batch of addresses.
      * @param addresses array of addresses to send tokens to.
      */
-    function sendTokensAndRefundBatch(address[] calldata addresses)
-        external
-        onlyOwner
-    {
+    function sendTokensAndRefundBatch(
+        address[] calldata addresses
+    ) external onlyOwner {
         for (uint256 i; i < addresses.length; i++) {
             sendTokensAndRefund(addresses[i]);
         }

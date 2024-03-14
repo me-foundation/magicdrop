@@ -3,7 +3,7 @@ import { ContractDetails } from './common/constants';
 import { Overrides } from 'ethers';
 import { estimateGas } from './utils/helper';
 
-export interface ISetBaseURIParams {
+interface ISetBaseURIParams {
   uri: string;
   contract: string;
   gaspricegwei?: number;

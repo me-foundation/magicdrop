@@ -68,14 +68,9 @@ interface IERC721M is IERC721AQueryable {
 
     function totalMintedByAddress(address a) external view returns (uint256);
 
-    function getStageInfo(uint256 index)
-        external
-        view
-        returns (
-            MintStageInfo memory,
-            uint32,
-            uint256
-        );
+    function getStageInfo(
+        uint256 index
+    ) external view returns (MintStageInfo memory, uint32, uint256);
     
     function mint(uint32 qty, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
 

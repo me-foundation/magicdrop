@@ -10,7 +10,7 @@ import { ContractDetails } from './common/constants';
 import { checkCodeVersion, estimateGas } from './utils/helper';
 import { Overrides } from 'ethers';
 
-export interface IDeployParams {
+interface IDeployParams {
   name: string;
   symbol: string;
   tokenurisuffix: string;
@@ -36,7 +36,7 @@ export const deploy = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-  if (!await checkCodeVersion()) {
+  if (!(await checkCodeVersion())) {
     return;
   }
 
@@ -130,19 +130,25 @@ export const deploy = async (
 
   console.log(`${contractName} deployed to:`, contract.address);
   console.log('run the following command to verify the contract:');
-  const paramsStr = params.map((param) => {
-    if (hre.ethers.BigNumber.isBigNumber(param)) {
-      return `"${param.toString()}"`;
-    }
-    return `"${param}"`;
-  }).join(' ');
+  const paramsStr = params
+    .map((param) => {
+      if (hre.ethers.BigNumber.isBigNumber(param)) {
+        return `"${param.toString()}"`;
+      }
+      return `"${param}"`;
+    })
+    .join(' ');
 
-  console.log(`npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`);
+  console.log(
+    `npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`,
+  );
 
   // Set security policy to ME default
   if (args.useerc721c) {
     console.log('[ERC721CM] Setting security policy to ME default...');
-    const ERC721CM = await hre.ethers.getContractFactory(ContractDetails.ERC721CM.name);
+    const ERC721CM = await hre.ethers.getContractFactory(
+      ContractDetails.ERC721CM.name,
+    );
     const erc721cm = ERC721CM.attach(contract.address);
     const tx = await erc721cm.setToDefaultSecurityPolicy();
     console.log('[ERC721CM] Security policy set');

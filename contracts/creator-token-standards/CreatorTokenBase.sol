@@ -256,12 +256,9 @@ abstract contract CreatorTokenBase is
      * @notice Checks if an operator is whitelisted for this token contract.
      * @param operator The address of the operator to check.
      */
-    function isOperatorWhitelisted(address operator)
-        public
-        view
-        override
-        returns (bool)
-    {
+    function isOperatorWhitelisted(
+        address operator
+    ) public view override returns (bool) {
         if (address(transferValidator) != address(0)) {
             return
                 transferValidator.isOperatorWhitelisted(
@@ -279,12 +276,9 @@ abstract contract CreatorTokenBase is
      * @notice Checks if a contract receiver is permitted for this token contract.
      * @param receiver The address of the receiver to check.
      */
-    function isContractReceiverPermitted(address receiver)
-        public
-        view
-        override
-        returns (bool)
-    {
+    function isContractReceiverPermitted(
+        address receiver
+    ) public view override returns (bool) {
         if (address(transferValidator) != address(0)) {
             return
                 transferValidator.isContractReceiverPermitted(
@@ -348,7 +342,7 @@ abstract contract CreatorTokenBase is
         address caller,
         address from,
         address to,
-        uint256, /*tokenId*/
+        uint256 /*tokenId*/,
         uint256 /*value*/
     ) internal virtual override {
         if (address(transferValidator) != address(0)) {

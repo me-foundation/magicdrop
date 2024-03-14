@@ -56,18 +56,34 @@ export const setStages = async (
         );
 
         // Clean up whitelist
-        const filteredWhitelist=  whitelist.filter((address: string) => ethers.utils.isAddress(address));
-        console.log(`Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`);
-        const invalidWhitelist=  whitelist.filter((address: string) => !ethers.utils.isAddress(address));
-        console.log(`❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`);
+        const filteredWhitelist = whitelist.filter((address: string) =>
+          ethers.utils.isAddress(address),
+        );
+        console.log(
+          `Filtered whitelist: ${filteredWhitelist.length} addresses. ${whitelist.length - filteredWhitelist.length} invalid addresses removed.`,
+        );
+        const invalidWhitelist = whitelist.filter(
+          (address: string) => !ethers.utils.isAddress(address),
+        );
+        console.log(
+          `❌ Invalid whitelist: ${invalidWhitelist.length} addresses.\r\n${invalidWhitelist.join(', \r\n')}`,
+        );
 
         if (invalidWhitelist.length > 0) {
           console.log(`🔄 🚨 updating whitelist file: ${stage.whitelistPath}`);
-          fs.writeFileSync(stage.whitelistPath, JSON.stringify(filteredWhitelist, null, 2))
+          fs.writeFileSync(
+            stage.whitelistPath,
+            JSON.stringify(filteredWhitelist, null, 2),
+          );
         }
 
         const mt = new MerkleTree(
-          filteredWhitelist.map((address: string) => ethers.utils.solidityKeccak256(['address', 'uint32'], [ethers.utils.getAddress(address), 0])),
+          filteredWhitelist.map((address: string) =>
+            ethers.utils.solidityKeccak256(
+              ['address', 'uint32'],
+              [ethers.utils.getAddress(address), 0],
+            ),
+          ),
           ethers.utils.keccak256,
           {
             sortPairs: true,
@@ -89,7 +105,9 @@ export const setStages = async (
               return;
             }
 
-            const address = ethers.utils.getAddress(addressStr.trim().toLowerCase());
+            const address = ethers.utils.getAddress(
+              addressStr.trim().toLowerCase(),
+            );
             const limit = parseInt(limitStr, 10);
 
             if (!Number.isInteger(limit)) {
@@ -97,7 +115,10 @@ export const setStages = async (
               return;
             }
 
-            const digest = ethers.utils.solidityKeccak256(['address', 'uint32'], [address, limit]);
+            const digest = ethers.utils.solidityKeccak256(
+              ['address', 'uint32'],
+              [address, limit],
+            );
             leaves.push(digest);
           });
 
@@ -124,14 +145,16 @@ export const setStages = async (
   console.log(
     `Stage params: `,
     JSON.stringify(
-      stages.map(stage => hre.ethers.BigNumber.isBigNumber(stage)? stage.toString() : stage)
+      stages.map((stage) =>
+        hre.ethers.BigNumber.isBigNumber(stage) ? stage.toString() : stage,
+      ),
     ),
   );
 
   const tx = await contract.populateTransaction.setStages(stages);
   if (!(await estimateGas(hre, tx, overrides))) return;
 
-  if (!await confirm({ message: 'Continue to set stages?' })) return;
+  if (!(await confirm({ message: 'Continue to set stages?' }))) return;
 
   const submittedTx = await contract.setStages(stages, overrides);
 

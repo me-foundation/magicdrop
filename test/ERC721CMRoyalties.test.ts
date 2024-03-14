@@ -15,7 +15,8 @@ describe('ERC721CMRoyalties', function () {
   let owner: SignerWithAddress;
 
   beforeEach(async () => {
-    const ERC721CMRoyalties = await ethers.getContractFactory('ERC721CMRoyalties');
+    const ERC721CMRoyalties =
+      await ethers.getContractFactory('ERC721CMRoyalties');
     erc721cmRoyalties = await ERC721CMRoyalties.deploy(
       'Test',
       'TEST',
@@ -47,7 +48,7 @@ describe('ERC721CMRoyalties', function () {
     expect(royaltyInfo[0]).to.equal(WALLET_1);
     expect(royaltyInfo[1].toNumber()).to.equal(9999999);
 
-    await connection.setDefaultRoyalty(WALLET_2, 0)
+    await connection.setDefaultRoyalty(WALLET_2, 0);
 
     royaltyInfo = await connection.royaltyInfo(0, 1000);
     expect(royaltyInfo[0]).to.equal(WALLET_2);
@@ -75,7 +76,7 @@ describe('ERC721CMRoyalties', function () {
     expect(royaltyInfo[0]).to.equal(WALLET_1);
     expect(royaltyInfo[1].toNumber()).to.equal(9999999);
 
-    await connection.setTokenRoyalty(1, WALLET_2, 100)
+    await connection.setTokenRoyalty(1, WALLET_2, 100);
 
     royaltyInfo = await connection.royaltyInfo(0, 1000);
     expect(royaltyInfo[0]).to.equal(WALLET_1);
@@ -95,12 +96,12 @@ describe('ERC721CMRoyalties', function () {
     const nonOwnerConnection = erc721cmRoyalties.connect(nonOwner);
 
     await expect(
-      nonOwnerConnection.setTokenRoyalty(1, WALLET_2, 100)
-      ).to.be.revertedWith('Ownable: caller is not the owner');
+      nonOwnerConnection.setTokenRoyalty(1, WALLET_2, 100),
+    ).to.be.revertedWith('Ownable: caller is not the owner');
 
     await expect(
-      nonOwnerConnection.setDefaultRoyalty(WALLET_2, 0)
-      ).to.be.revertedWith('Ownable: caller is not the owner');
+      nonOwnerConnection.setDefaultRoyalty(WALLET_2, 0),
+    ).to.be.revertedWith('Ownable: caller is not the owner');
   });
 
   it('Supports the right interfaces', async () => {
