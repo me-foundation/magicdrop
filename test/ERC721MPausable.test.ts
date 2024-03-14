@@ -8,9 +8,8 @@ describe('ERC721MPausable', function () {
   let receiver: any;
 
   beforeEach(async function () {
-    const ERC721MPausableFactory = await ethers.getContractFactory(
-      'ERC721MPausable',
-    );
+    const ERC721MPausableFactory =
+      await ethers.getContractFactory('ERC721MPausable');
     [owner, receiver] = await ethers.getSigners();
 
     erc721MPausable = await ERC721MPausableFactory.deploy(

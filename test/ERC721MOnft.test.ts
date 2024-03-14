@@ -10,13 +10,15 @@ describe('ERC721MOnft Test', () => {
   let minter: Signer;
 
   const mintPrice = 50;
-  const targetChainId = 10109;  // mumbnai
-  const targetAddress = '0x15f963ae86e562535a1546f9417b604e29fe78f6';  // a random address 
+  const targetChainId = 10109; // mumbnai
+  const targetAddress = '0x15f963ae86e562535a1546f9417b604e29fe78f6'; // a random address
 
   describe('mint and bridge', function () {
     beforeEach(async function () {
       // Deploy the mock LayerZero endpoint contract that will be used for minting
-      const MockLayerZeroEndpoint = await ethers.getContractFactory('MockLayerZeroEndpoint');
+      const MockLayerZeroEndpoint = await ethers.getContractFactory(
+        'MockLayerZeroEndpoint',
+      );
       lzEndpoint = await MockLayerZeroEndpoint.deploy();
       await lzEndpoint.deployed();
 
@@ -31,7 +33,7 @@ describe('ERC721MOnft Test', () => {
         ethers.constants.AddressZero,
         60,
         15000,
-        lzEndpoint.address
+        lzEndpoint.address,
       );
       await erc721MOnft.deployed();
 
@@ -67,7 +69,7 @@ describe('ERC721MOnft Test', () => {
 
       const remoteAndLocal = ethers.utils.solidityPack(
         ['address', 'address'],
-        [targetAddress, contract.address]
+        [targetAddress, contract.address],
       );
       await contract.setTrustedRemote(targetChainId, remoteAndLocal);
 
@@ -80,11 +82,29 @@ describe('ERC721MOnft Test', () => {
       expect(walletMintedCount).to.equal(2);
       expect(stagedMintedCount.toNumber()).to.equal(2);
 
-      const adapterParams = ethers.utils.solidityPack(["uint16", "uint256"], [1, 200000]) // default adapterParams example
-      const fees = await contract.estimateSendFee(targetChainId, owner.getAddress(), 0, /* useZro= */false, adapterParams);
+      const adapterParams = ethers.utils.solidityPack(
+        ['uint16', 'uint256'],
+        [1, 200000],
+      ); // default adapterParams example
+      const fees = await contract.estimateSendFee(
+        targetChainId,
+        owner.getAddress(),
+        0,
+        /* useZro= */ false,
+        adapterParams,
+      );
       const nativeFee = fees[0];
 
-      await contract.sendFrom(owner.getAddress(), targetChainId, owner.getAddress(), 0, owner.getAddress(), ethers.constants.AddressZero, adapterParams, { value: nativeFee.mul(5).div(4) })
+      await contract.sendFrom(
+        owner.getAddress(),
+        targetChainId,
+        owner.getAddress(),
+        0,
+        owner.getAddress(),
+        ethers.constants.AddressZero,
+        adapterParams,
+        { value: nativeFee.mul(5).div(4) },
+      );
     });
 
     it('bridge fails if min destination gas not set', async function () {
@@ -92,23 +112,60 @@ describe('ERC721MOnft Test', () => {
         value: ethers.utils.parseEther('50'),
       });
 
-      const adapterParams = ethers.utils.solidityPack(["uint16", "uint256"], [1, 200000]) // default adapterParams example
-      const fees = await contract.estimateSendFee(targetChainId, owner.getAddress(), 0, /* useZro= */false, adapterParams);
+      const adapterParams = ethers.utils.solidityPack(
+        ['uint16', 'uint256'],
+        [1, 200000],
+      ); // default adapterParams example
+      const fees = await contract.estimateSendFee(
+        targetChainId,
+        owner.getAddress(),
+        0,
+        /* useZro= */ false,
+        adapterParams,
+      );
       const nativeFee = fees[0];
 
-      await expect(contract.sendFrom(owner.getAddress(), targetChainId, owner.getAddress(), 0, owner.getAddress(), ethers.constants.AddressZero, adapterParams, { value: nativeFee.mul(5).div(4) })
+      await expect(
+        contract.sendFrom(
+          owner.getAddress(),
+          targetChainId,
+          owner.getAddress(),
+          0,
+          owner.getAddress(),
+          ethers.constants.AddressZero,
+          adapterParams,
+          { value: nativeFee.mul(5).div(4) },
+        ),
       ).to.be.revertedWith('minGasLimit not set');
     });
 
     it('bridge fails if the token not exist', async function () {
-      const adapterParams = ethers.utils.solidityPack(["uint16", "uint256"], [1, 200000]) // default adapterParams example
-      const fees = await contract.estimateSendFee(targetChainId, owner.getAddress(), 0, /* useZro= */false, adapterParams);
+      const adapterParams = ethers.utils.solidityPack(
+        ['uint16', 'uint256'],
+        [1, 200000],
+      ); // default adapterParams example
+      const fees = await contract.estimateSendFee(
+        targetChainId,
+        owner.getAddress(),
+        0,
+        /* useZro= */ false,
+        adapterParams,
+      );
       const nativeFee = fees[0];
 
-      await expect(contract.sendFrom(owner.getAddress(), targetChainId, owner.getAddress(), 0, owner.getAddress(), ethers.constants.AddressZero, adapterParams, { value: nativeFee.mul(5).div(4) })
+      await expect(
+        contract.sendFrom(
+          owner.getAddress(),
+          targetChainId,
+          owner.getAddress(),
+          0,
+          owner.getAddress(),
+          ethers.constants.AddressZero,
+          adapterParams,
+          { value: nativeFee.mul(5).div(4) },
+        ),
       ).to.be.revertedWith('OwnerQueryForNonexistentToken');
     });
-
 
     it('bridge fails if the destination chain not trusted', async function () {
       await contract.setMinDstGas(targetChainId, 1, 15000);
@@ -117,11 +174,30 @@ describe('ERC721MOnft Test', () => {
         value: ethers.utils.parseEther('50'),
       });
 
-      const adapterParams = ethers.utils.solidityPack(["uint16", "uint256"], [1, 200000]) // default adapterParams example
-      const fees = await contract.estimateSendFee(targetChainId, owner.getAddress(), 0, /* useZro= */false, adapterParams);
+      const adapterParams = ethers.utils.solidityPack(
+        ['uint16', 'uint256'],
+        [1, 200000],
+      ); // default adapterParams example
+      const fees = await contract.estimateSendFee(
+        targetChainId,
+        owner.getAddress(),
+        0,
+        /* useZro= */ false,
+        adapterParams,
+      );
       const nativeFee = fees[0];
 
-      await expect(contract.sendFrom(owner.getAddress(), targetChainId, owner.getAddress(), 0, owner.getAddress(), ethers.constants.AddressZero, adapterParams, { value: nativeFee.mul(5).div(4) })
+      await expect(
+        contract.sendFrom(
+          owner.getAddress(),
+          targetChainId,
+          owner.getAddress(),
+          0,
+          owner.getAddress(),
+          ethers.constants.AddressZero,
+          adapterParams,
+          { value: nativeFee.mul(5).div(4) },
+        ),
       ).to.be.revertedWith('destination chain not a trusted source');
     });
   });

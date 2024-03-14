@@ -18,13 +18,20 @@ export const send721Batch = async (
   // check if the BatchTransfer721 contract has the approval to transfer the tokens
   const [signer] = await hre.ethers.getSigners();
 
-  const erc721Contract = (await hre.ethers.getContractFactory('ERC721A')).attach(args.contract);
-  const approved = await erc721Contract.isApprovedForAll(signer.address , ERC721BatchTransferContract);
+  const erc721Contract = (
+    await hre.ethers.getContractFactory('ERC721A')
+  ).attach(args.contract);
+  const approved = await erc721Contract.isApprovedForAll(
+    signer.address,
+    ERC721BatchTransferContract,
+  );
   if (!approved) {
-    console.warn('ERC721BatchTransfer contract is not approved to transfer tokens. Approving...');
-    await erc721Contract.setApprovalForAll(ERC721BatchTransferContract, true );
+    console.warn(
+      'ERC721BatchTransfer contract is not approved to transfer tokens. Approving...',
+    );
+    await erc721Contract.setApprovalForAll(ERC721BatchTransferContract, true);
     console.log('Approved');
-  }  
+  }
 
   const tokenids = args.tokenids?.split(',').map((id) => parseInt(id));
   const factory = await hre.ethers.getContractFactory('ERC721BatchTransfer');
@@ -35,18 +42,31 @@ export const send721Batch = async (
       console.error('Missing required arguments: to, tokenIds');
       return;
     }
-    const tx = await batchTransferContract.populateTransaction.safeBatchTransferToSingleWallet(args.contract, args.to, tokenids!);
+    const tx =
+      await batchTransferContract.populateTransaction.safeBatchTransferToSingleWallet(
+        args.contract,
+        args.to,
+        tokenids!,
+      );
     await estimateGas(hre, tx);
 
     if (!(await confirm({ message: 'Continue to transfer?' }))) return;
     console.log(`Transferring tokens to ${args.to}...`);
-    const submittedTx = await batchTransferContract.safeBatchTransferToSingleWallet(args.contract, args.to, tokenids!);
+    const submittedTx =
+      await batchTransferContract.safeBatchTransferToSingleWallet(
+        args.contract,
+        args.to,
+        tokenids!,
+      );
 
     console.log(`Submitted tx ${submittedTx.hash}`);
     await submittedTx.wait();
     console.log('Tokens transferred');
   } else {
-    const lines = fs.readFileSync(args.transferfile, 'utf-8').split('\n').filter(Boolean);
+    const lines = fs
+      .readFileSync(args.transferfile, 'utf-8')
+      .split('\n')
+      .filter(Boolean);
     const tos = [];
     const tokenIds = [];
 
@@ -66,13 +86,23 @@ export const send721Batch = async (
       return;
     }
 
-    const tx = await batchTransferContract.populateTransaction.safeBatchTransferToMultipleWallets(args.contract, tos, tokenIds);
+    const tx =
+      await batchTransferContract.populateTransaction.safeBatchTransferToMultipleWallets(
+        args.contract,
+        tos,
+        tokenIds,
+      );
     await estimateGas(hre, tx);
 
     if (!(await confirm({ message: 'Continue to transfer?' }))) return;
 
     console.log(`Transferring tokens...`);
-    const submittedTx = await batchTransferContract.safeBatchTransferToMultipleWallets(args.contract, tos, tokenIds);  
+    const submittedTx =
+      await batchTransferContract.safeBatchTransferToMultipleWallets(
+        args.contract,
+        tos,
+        tokenIds,
+      );
     console.log(`Submitted tx ${submittedTx.hash}`);
     await submittedTx.wait();
     console.log('Tokens transferred');
