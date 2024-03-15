@@ -87,7 +87,7 @@ export const setStages = async (
           ethers.utils.keccak256,
           {
             sortPairs: true,
-            hashLeaves: true,
+            hashLeaves: false,
           },
         );
         return mt.getHexRoot();
