@@ -19,9 +19,9 @@
   "scripts": {
     "node": "hardhat node",
     "build": "npm run build:contracts && npm run build:typescript",
-    "build:contracts": "hardhat compile",
+    "build:contracts": "hardhat clean && hardhat compile",
     "build:typescript": "npx rollup -c --bundleConfigAsCjs && tsc -d -p tsconfig.build.json",
-    "clean": "rm -rf dist node_modules/.cache typechain-types dist artifacts cache",
+    "clean": "rm -rf dist node_modules typechain-types dist artifacts cache coverage coverage.json",
     "test": "hardhat test",
     "test:gas": "REPORT_GAS=true hardhat test",
     "coverage": "REPORT_COVERAGE=true hardhat coverage",

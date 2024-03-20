@@ -23,7 +23,7 @@ export const checkCodeVersion = async () => {
 
   if (localLatestCommit !== remoteLatestCommit) {
     console.log(
-      '🟡 Warning: you are NOT using the latest version of the code. Please run `git pull` on main branch to update the code.',
+      '🟡 Warning: you are NOT using the latest version of the code. Please run `git pull` on main branch to update the code. Then run `npm run clean && npm run install && npm run build`',
     );
     if (!(await confirm({ message: 'Proceed anyway?', default: false }))) {
       return false;
