@@ -194,7 +194,14 @@ task('deploy', 'Deploy ERC721M')
   )
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
-  .setAction(deploy);
+  .setAction(async (tasksArgs, hre) => {
+    console.log('Cleaning...');
+    await hre.run('clean');
+    console.log('Compiling...');
+    await hre.run('compile');
+    console.log('Deploying...');
+    await deploy(tasksArgs, hre);
+  });
 
 task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')
