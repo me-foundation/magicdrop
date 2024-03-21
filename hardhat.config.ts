@@ -42,6 +42,7 @@ import {
   send721Batch,
   freezeTrading,
   thawTrading,
+  cleanWhitelist,
 } from './scripts';
 
 const config: HardhatUserConfig = {
@@ -432,5 +433,10 @@ task('freezeTrading', 'Freeze trading for 721Cv2')
 task('thawTrading', 'Thaw trading for 721Cv2')
   .addParam('contract', 'contract address')
   .setAction(thawTrading);
+
+task('cleanWhitelist', 'Clean up whitelist')
+  .addOptionalParam('whitelistpath', 'plain whitelist path')
+  .addOptionalParam('variablewalletlimitpath', 'variable wallet limit whitelist path')
+  .setAction(cleanWhitelist)
 
 export default config;
