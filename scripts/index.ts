@@ -31,3 +31,4 @@ export * from './dev/deploy721BatchTransfer';
 export * from './send721Batch';
 export * from './freezeTrading';
 export * from './thawTrading';
+export * from './cleanWhitelist';

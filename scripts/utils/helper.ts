@@ -1,5 +1,7 @@
+import fs from 'fs';
+import path from 'path';
 import { confirm } from '@inquirer/prompts';
-import { Deferrable } from 'ethers/lib/utils';
+import { Deferrable, getAddress, isAddress } from 'ethers/lib/utils';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TransactionRequest } from '@ethersproject/abstract-provider';
 import * as child from 'child_process';
@@ -119,3 +121,87 @@ const getTokenName = (hre: HardhatRuntimeEnvironment) => {
       return 'ETH';
   }
 };
+
+export const cleanVariableWalletLimit = async (variableWalletLimitPath: string, writeToFile: boolean) => {
+  console.log(`=========================================`);
+  console.log(`Cleaning variable wallet limit file: ${variableWalletLimitPath}`);
+  const file = fs.readFileSync(variableWalletLimitPath, 'utf-8');
+  const walletsWithLimit = new Map<string, number>();
+  let invalidNum = 0;
+
+  file
+    .split('\n')
+    .filter((line) => line)
+    .forEach((line) => {
+      const [addressStr, limitStr] = line.split(',');
+
+      if (!isAddress(addressStr.trim().toLowerCase())) {
+        console.log(`Ignored invalid address: ${addressStr}`);
+        invalidNum++;
+        return;
+      }
+      const address = getAddress(
+        addressStr.trim().toLowerCase(),
+      );
+      const limit = parseInt(limitStr, 10);
+
+      if (!Number.isInteger(limit)) {
+        console.log(`Ignored invalid limit for address: ${addressStr}`);
+        invalidNum++;
+        return;
+      }
+      walletsWithLimit.set(address, (walletsWithLimit.get(address) ?? 0) + limit)
+    });
+
+  console.log(`Cleaned whitelist:\t${walletsWithLimit.size}`);
+  console.log(`Invalid entries:\t${invalidNum}`);
+
+  if (writeToFile) {
+    const fileName = path.basename(variableWalletLimitPath);
+    const cleanedFileName = `cleaned-${fileName}`;
+    fs.closeSync(fs.openSync(cleanedFileName, 'w'));
+
+    for (const [address, limit] of walletsWithLimit.entries()) {
+      fs.appendFileSync(cleanedFileName, `${address},${limit}\n`);
+    }
+    console.log(`Cleaned file: ${cleanedFileName}`);
+  }
+  console.log(`=========================================`);
+  return walletsWithLimit;
+}
+
+export const cleanWhitelist = async (whitelistPath: string, writeToFile: boolean) => {
+  console.log(`=========================================`);
+  console.log(`Cleaning whitelist file: ${whitelistPath}`);
+
+  let invalidNum = 0;
+  const whitelist = JSON.parse(
+    fs.readFileSync(whitelistPath, 'utf-8'),
+  );
+  const wallets = new Set<string>();
+
+  whitelist.forEach((address: string) => {
+    if (!isAddress(address)) {
+      console.log(`Ignored invalid address: ${address}`);
+      invalidNum++;
+      return;
+    }
+    wallets.add(getAddress(address))
+  });
+
+  console.log(`Cleaned whitelist:\t${wallets.size}`);
+  console.log(`Invalid addresses:\t${invalidNum}`);
+
+  if (writeToFile) {
+    const fileName = path.basename(whitelistPath);
+    const cleanedFileName = `cleaned-${fileName}`;
+
+    fs.writeFileSync(
+      cleanedFileName,
+      JSON.stringify(Array.from(wallets.values()), null, 2),
+    );
+    console.log(`Cleaned file: ${cleanedFileName}`);
+  }
+  console.log(`=========================================`);
+  return wallets;
+}
