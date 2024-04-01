@@ -32,10 +32,6 @@ import {
   getEndTimeBA,
   getPrice,
   setPrice,
-  deployOnft,
-  setTrustedRemote,
-  setOnftMinDstGas,
-  sendOnft,
   deployOwnedRegistrant,
   getContractCodehash,
   deploy721BatchTransfer,
@@ -148,22 +144,9 @@ task('deploy', 'Deploy ERC721M')
     'ERC-20 contract address (if minting with ERC-20)',
     '0x0000000000000000000000000000000000000000',
   )
-  .addOptionalParam('autoapproveaddress', 'auto approve address')
-  .addParam<boolean>(
-    'increasesupply',
-    'whether or not to enable increasing supply behavior',
-    false,
-    types.boolean,
-  )
-  .addParam<boolean>(
-    'pausable',
-    'whether to allow transfers to be paused',
-    false,
-    types.boolean,
-  )
   .addParam<boolean>(
     'useoperatorfilterer',
-    'whether or not to use operator filterer',
+    'whether or not to use operator filterer, used with legacy 721M contract',
     false,
     types.boolean,
   )
@@ -262,7 +245,6 @@ task('deployBA', 'Deploy BucketAuction')
   )
   .addParam('auctionstarttime', 'The start time of the bucket auction')
   .addParam('auctionendtime', 'The end time of the bucket auction')
-  .addFlag('useoperatorfilterer', 'whether or not to use operator filterer')
   .setAction(deployBA);
 
 task('setTimestampExpirySeconds', 'Set the timestamp expiry seconds')
@@ -341,57 +323,6 @@ task('setPrice', 'set the price set for BA')
   .addParam('contract', 'contract address')
   .addParam('priceinwei', 'price in wei')
   .setAction(setPrice);
-
-task('deployOnft', 'Deploy ERC721MOnft')
-  .addFlag('ismintingcontract', 'whether or not this is a minting contract')
-  .addParam('name', 'name')
-  .addParam('symbol', 'symbol')
-  .addParam('maxsupply', 'max supply')
-  .addParam('tokenurisuffix', 'token uri suffix', '.json')
-  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
-  .addParam('globalwalletlimit', 'global wallet limit', '0')
-  .addOptionalParam(
-    'cosigner',
-    'cosigner address (0x00...000 if not using cosign)',
-    '0x0000000000000000000000000000000000000000',
-  )
-  .addOptionalParam(
-    'mingastostore',
-    'minimum gas to store default 15000',
-    '15000',
-  )
-  .setAction(deployOnft);
-
-task('setTrustedRemote', 'Set trusted remote for ERC721MOnft')
-  .addParam(
-    'sourceaddress',
-    'the contract address you are setting the remote on',
-  )
-  .addParam('targetnetwork', 'the network you are setting the remote to')
-  .addParam(
-    'targetaddress',
-    'the address of the contract on the target network',
-  )
-  .setAction(setTrustedRemote);
-
-task('setOnftMinDstGas', 'Set min destination gas for ERC721MOnft')
-  .addParam('contract', 'the contract address')
-  .addParam('targetnetwork', 'the network you plan to send the tokens to')
-  .addOptionalParam('packettype', 'package type. default to 1', '1')
-  .addOptionalParam('mingas', 'min gas. default to 200000', '200000')
-  .setAction(setOnftMinDstGas);
-
-task('sendOnft', 'Send tokens to target network')
-  .addParam('contract', 'the contract address you are sending tokens from')
-  .addParam('targetnetwork', 'the network you are sending the tokens to')
-  .addParam('tokenid', 'the token id you are sending')
-  .addOptionalParam('tokenowner', 'the owner of the tokens')
-  .addOptionalParam('refundaddress', 'the address you want to refund to')
-  .addOptionalParam(
-    'zeropaymentaddress',
-    'the address you want to send a zero payment to',
-  )
-  .setAction(sendOnft);
 
 task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
   .addParam(

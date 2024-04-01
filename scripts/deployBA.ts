@@ -19,21 +19,13 @@ interface IDeployParams {
   mincontributioninwei: number;
   auctionstarttime: string;
   auctionendtime: string;
-  useoperatorfilterer?: boolean;
 }
 
 export const deployBA = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-  // Set the contract name
-  let contractName: string;
-
-  if (args.useoperatorfilterer) {
-    contractName = ContractDetails.BucketAuctionOperatorFilterer.name;
-  } else {
-    contractName = ContractDetails.BucketAuction.name;
-  }
+  const contractName = ContractDetails.BucketAuction.name;
 
   console.log(
     `Going to deploy ${contractName} with params`,

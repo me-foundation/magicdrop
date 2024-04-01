@@ -47,10 +47,8 @@ The composability of the stages is generic enough to enable flexible and complic
 | ERC721M                 | The basic minting contract based on ERC721A.                                          |
 | ERC721CM                | The basic minting contract based on ERC721C and ERC721M.                                         |
 | ERC721CMRoyalties       | Based on ERC721CM, implementing ERC2981 for on-chain royalty.                         |
-| ERC721MLite             | The lite version of ERC721M                                                           |
 | ERC721MOperatorFilterer | ERC721M with OpenSea Operator Filterer                                                |
 | BucketAuction           | Bucket auction style minting contract. The contract is on beta. Use at your own risk. |
-| DutchAuction            | Dutch auction style minting contract. The contract is on beta. Use at your own risk.  |
 
 Please read [ERC721M Contract Usage Guide](./docs/ContractUsageGuide.md) for more details.
 
