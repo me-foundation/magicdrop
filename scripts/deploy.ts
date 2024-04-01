@@ -18,11 +18,8 @@ interface IDeployParams {
   globalwalletlimit: string;
   cosigner?: string;
   timestampexpiryseconds?: number;
-  increasesupply?: boolean;
   useoperatorfilterer?: boolean;
   openedition?: boolean;
-  autoapproveaddress?: string;
-  pausable?: boolean;
   mintcurrency?: string;
   useerc721c?: boolean;
   useerc2198?: boolean;
@@ -49,23 +46,7 @@ export const deploy = async (
   } else if (args.useerc721c) {
     contractName = ContractDetails.ERC721CM.name;
   } else if (args.useoperatorfilterer) {
-    if (args.increasesupply) {
-      contractName = ContractDetails.ERC721MIncreasableOperatorFilterer.name;
-    } else if (args.autoapproveaddress) {
-      contractName = ContractDetails.ERC721MOperatorFiltererAutoApprover.name;
-    } else if (args.pausable) {
-      contractName = ContractDetails.ERC721MPausableOperatorFilterer.name;
-    } else {
-      contractName = ContractDetails.ERC721MOperatorFilterer.name;
-    }
-  } else {
-    if (args.increasesupply) {
-      contractName = ContractDetails.ERC721MIncreasableSupply.name;
-    } else if (args.autoapproveaddress) {
-      contractName = ContractDetails.ERC721MAutoApprover.name;
-    } else if (args.pausable) {
-      contractName = ContractDetails.ERC721MPausable.name;
-    }
+    contractName = ContractDetails.ERC721MOperatorFilterer.name;
   }
 
   let maxsupply = hre.ethers.BigNumber.from(args.maxsupply);
@@ -94,10 +75,6 @@ export const deploy = async (
     args.timestampexpiryseconds ?? 300,
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
   ] as any[];
-
-  if (args.autoapproveaddress) {
-    params.push(args.autoapproveaddress);
-  }
 
   if (args.useerc2198) {
     params.push(
