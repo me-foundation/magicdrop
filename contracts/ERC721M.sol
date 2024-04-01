@@ -285,50 +285,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Updates info for one stage specified by index (starting from 0).
-     */
-    function updateStage(
-        uint256 index,
-        uint80 price,
-        uint32 walletLimit,
-        bytes32 merkleRoot,
-        uint24 maxStageSupply,
-        uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
-    ) external onlyOwner {
-        if (index >= _mintStages.length) revert InvalidStage();
-        if (index >= 1) {
-            if (
-                startTimeUnixSeconds <
-                _mintStages[index - 1].endTimeUnixSeconds +
-                    _timestampExpirySeconds
-            ) {
-                revert InsufficientStageTimeGap();
-            }
-        }
-        _assertValidStartAndEndTimestamp(
-            startTimeUnixSeconds,
-            endTimeUnixSeconds
-        );
-        _mintStages[index].price = price;
-        _mintStages[index].walletLimit = walletLimit;
-        _mintStages[index].merkleRoot = merkleRoot;
-        _mintStages[index].maxStageSupply = maxStageSupply;
-        _mintStages[index].startTimeUnixSeconds = startTimeUnixSeconds;
-        _mintStages[index].endTimeUnixSeconds = endTimeUnixSeconds;
-
-        emit UpdateStage(
-            index,
-            price,
-            walletLimit,
-            merkleRoot,
-            maxStageSupply,
-            startTimeUnixSeconds,
-            endTimeUnixSeconds
-        );
-    }
-
-    /**
      * @dev Returns mint currency address.
      */
     function getMintCurrency() external view returns (address) {
@@ -508,17 +464,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      * @dev Sets token base URI.
      */
     function setBaseURI(string calldata baseURI) external onlyOwner {
-        if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
-    }
-
-    /**
-     * @dev Sets token base URI permanent. Cannot revert.
-     */
-    function setBaseURIPermanent() external onlyOwner {
-        _baseURIPermanent = true;
-        emit PermanentBaseURI(_currentBaseURI);
     }
 
     /**
