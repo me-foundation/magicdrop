@@ -1317,7 +1317,7 @@ describe('ERC721CM', function () {
       // Set stages
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0.5'),
+          price: ethers.utils.parseEther('0.1'),
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 100,
@@ -1331,7 +1331,7 @@ describe('ERC721CM', function () {
       await ethers.provider.send('evm_mine', [stageStart - 1]);
       // Owner mints 1 token with valid proof
       await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
-        value: ethers.utils.parseEther('0.5'),
+        value: ethers.utils.parseEther('0.1'),
       });
       expect(
         (await contract.totalMintedByAddress(owner.getAddress())).toNumber(),
@@ -1340,20 +1340,20 @@ describe('ERC721CM', function () {
       // Owner mints 1 token with wrong limit and should be reverted.
       await expect(
         contract.mintWithLimit(1, 3, ownerProof, 0, '0x00', {
-          value: ethers.utils.parseEther('0.5'),
+          value: ethers.utils.parseEther('0.1'),
         }),
       ).to.be.rejectedWith('InvalidProof');
 
       // Owner mints 2 tokens with valid proof and reverts.
       await expect(
         contract.mintWithLimit(2, 2, ownerProof, 0, '0x00', {
-          value: ethers.utils.parseEther('1.0'),
+          value: ethers.utils.parseEther('0.2'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Owner mints 1 token with valid proof. Now owner reaches the limit.
       await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
-        value: ethers.utils.parseEther('0.5'),
+        value: ethers.utils.parseEther('0.1'),
       });
       expect(
         (await contract.totalMintedByAddress(owner.getAddress())).toNumber(),
@@ -1362,26 +1362,26 @@ describe('ERC721CM', function () {
       // Owner tries to mint more and reverts.
       await expect(
         contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
-          value: ethers.utils.parseEther('0.5'),
+          value: ethers.utils.parseEther('0.1'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Reader mints 6 tokens with valid proof and reverts.
       await expect(
         readonlyContract.mintWithLimit(6, 5, readerProof, 0, '0x00', {
-          value: ethers.utils.parseEther('3.0'),
+          value: ethers.utils.parseEther('0.6'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Reader mints 5 tokens with valid proof.
       await readonlyContract.mintWithLimit(5, 5, readerProof, 0, '0x00', {
-        value: ethers.utils.parseEther('2.5'),
+        value: ethers.utils.parseEther('0.5'),
       });
 
       // Reader mints 1 token with valid proof and reverts.
       await expect(
         readonlyContract.mintWithLimit(1, 5, readerProof, 0, '0x00', {
-          value: ethers.utils.parseEther('0.5'),
+          value: ethers.utils.parseEther('0.1'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
     });
