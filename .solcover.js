@@ -3,6 +3,5 @@ module.exports = {
     "auctions/",
     "creator-token-standards/",
     "mocks/",
-    "onft/",
   ],
 };
