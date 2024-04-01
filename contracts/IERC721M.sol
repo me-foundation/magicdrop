@@ -5,7 +5,6 @@ import "erc721a/contracts/extensions/IERC721AQueryable.sol";
 
 interface IERC721M is IERC721AQueryable {
     error CannotIncreaseMaxMintableSupply();
-    error CannotUpdatePermanentBaseURI();
     error CosignerNotSet();
     error CrossmintAddressNotSet();
     error CrossmintOnly();
@@ -56,7 +55,6 @@ interface IERC721M is IERC721AQueryable {
     event SetBaseURI(string baseURI);
     event SetTimestampExpirySeconds(uint64 expiry);
     event SetMintCurrency(address mintCurrency);
-    event PermanentBaseURI(string baseURI);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
 

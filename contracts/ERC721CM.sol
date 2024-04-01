@@ -29,9 +29,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     // Whether this contract is mintable.
     bool private _mintable;
 
-    // Whether base URI is permanent. Once set, base URI is immutable.
-    bool private _baseURIPermanent;
-
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
     uint64 private _timestampExpirySeconds;
 
@@ -161,12 +158,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      * ]
      */
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
-        uint256 originalSize = _mintStages.length;
-        for (uint256 i = 0; i < originalSize; i++) {
-            _mintStages.pop();
-        }
+        delete _mintStages;
 
-        for (uint256 i = 0; i < newStages.length; i++) {
+        for (uint256 i = 0; i < newStages.length;) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
@@ -199,6 +193,8 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
                 newStages[i].startTimeUnixSeconds,
                 newStages[i].endTimeUnixSeconds
             );
+
+            unchecked { ++i; }
         }
     }
 
@@ -286,50 +282,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
         uint256 stageMinted = _stageMintedCounts[index];
         return (_mintStages[index], walletMinted, stageMinted);
-    }
-
-    /**
-     * @dev Updates info for one stage specified by index (starting from 0).
-     */
-    function updateStage(
-        uint256 index,
-        uint80 price,
-        uint32 walletLimit,
-        bytes32 merkleRoot,
-        uint24 maxStageSupply,
-        uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
-    ) external onlyOwner {
-        if (index >= _mintStages.length) revert InvalidStage();
-        if (index >= 1) {
-            if (
-                startTimeUnixSeconds <
-                _mintStages[index - 1].endTimeUnixSeconds +
-                    _timestampExpirySeconds
-            ) {
-                revert InsufficientStageTimeGap();
-            }
-        }
-        _assertValidStartAndEndTimestamp(
-            startTimeUnixSeconds,
-            endTimeUnixSeconds
-        );
-        _mintStages[index].price = price;
-        _mintStages[index].walletLimit = walletLimit;
-        _mintStages[index].merkleRoot = merkleRoot;
-        _mintStages[index].maxStageSupply = maxStageSupply;
-        _mintStages[index].startTimeUnixSeconds = startTimeUnixSeconds;
-        _mintStages[index].endTimeUnixSeconds = endTimeUnixSeconds;
-
-        emit UpdateStage(
-            index,
-            price,
-            walletLimit,
-            merkleRoot,
-            maxStageSupply,
-            startTimeUnixSeconds,
-            endTimeUnixSeconds
-        );
     }
 
     /**
@@ -512,17 +464,8 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      * @dev Sets token base URI.
      */
     function setBaseURI(string calldata baseURI) external onlyOwner {
-        if (_baseURIPermanent) revert CannotUpdatePermanentBaseURI();
         _currentBaseURI = baseURI;
         emit SetBaseURI(baseURI);
-    }
-
-    /**
-     * @dev Sets token base URI permanent. Cannot revert.
-     */
-    function setBaseURIPermanent() external onlyOwner {
-        _baseURIPermanent = true;
-        emit PermanentBaseURI(_currentBaseURI);
     }
 
     /**
@@ -614,13 +557,14 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function getActiveStageFromTimestamp(
         uint64 timestamp
     ) public view returns (uint256) {
-        for (uint256 i = 0; i < _mintStages.length; i++) {
+        for (uint256 i = 0; i < _mintStages.length;) {
             if (
                 timestamp >= _mintStages[i].startTimeUnixSeconds &&
                 timestamp < _mintStages[i].endTimeUnixSeconds
             ) {
                 return i;
             }
+            unchecked { ++i; }
         }
         revert InvalidStage();
     }
