@@ -473,7 +473,7 @@ describe('ERC721CM', function () {
         reentrancyExploiter.exploit(1, [], stageStart, '0x', {
           value: ethers.utils.parseEther('0.2'),
         }),
-      ).to.be.revertedWith('ReentrancyGuard: reentrant call');
+      ).to.be.revertedWith('ReentrancyGuardReentrantCall');
     });
 
     it('can set max mintable supply', async () => {

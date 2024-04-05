@@ -77,7 +77,7 @@ describe('Mint Currency', () => {
           erc721M
             .connect(minter)
             .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith('ERC20: insufficient allowance');
+        ).to.be.revertedWith('ERC20InsufficientAllowance');
       });
 
       it('should revert mint if not enough token balance', async function () {
@@ -93,7 +93,7 @@ describe('Mint Currency', () => {
           erc721M
             .connect(minter)
             .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith('ERC20: transfer amount exceeds balanc');
+        ).to.be.revertedWith('ERC20InsufficientBalance');
       });
 
       it('should transfer the ERC20 tokens and mint when all conditions are met', async function () {
@@ -147,7 +147,7 @@ describe('Mint Currency', () => {
     it('should revert if a non-owner tries to withdraw', async function () {
       // Try to call withdrawERC20 from another account
       await expect(erc721M.connect(minter).withdrawERC20()).to.be.revertedWith(
-        'Ownable: caller is not the owner',
+        'OwnableUnauthorizedAccount',
       );
     });
   });

@@ -3,12 +3,13 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "contracts/creator-token-standards/ERC721ACQueryable.sol";
 import "./IERC721M.sol";
 
@@ -75,7 +76,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency
-    ) ERC721ACQueryable(collectionName, collectionSymbol) {
+    )
+    Ownable(msg.sender)
+    ERC721ACQueryable(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = true;
@@ -160,7 +163,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         delete _mintStages;
 
-        for (uint256 i = 0; i < newStages.length;) {
+        for (uint256 i = 0; i < newStages.length; ) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
@@ -194,7 +197,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
                 newStages[i].endTimeUnixSeconds
             );
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -409,7 +414,10 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
             ) revert InvalidProof();
 
             // Verify merkle proof mint limit
-            if (limit > 0 && _stageMintedCountsPerWallet[activeStage][to] + qty > limit) {
+            if (
+                limit > 0 &&
+                _stageMintedCountsPerWallet[activeStage][to] + qty > limit
+            ) {
                 revert WalletStageLimitExceeded();
             }
         }
@@ -520,17 +528,19 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     ) public view returns (bytes32) {
         if (_cosigner == address(0)) revert CosignerNotSet();
         return
-            keccak256(
-                abi.encodePacked(
-                    address(this),
-                    minter,
-                    qty,
-                    _cosigner,
-                    timestamp,
-                    _chainID(),
-                    getCosignNonce(minter)
+            MessageHashUtils.toEthSignedMessageHash(
+                keccak256(
+                    abi.encodePacked(
+                        address(this),
+                        minter,
+                        qty,
+                        _cosigner,
+                        timestamp,
+                        _chainID(),
+                        getCosignNonce(minter)
+                    )
                 )
-            ).toEthSignedMessageHash();
+            );
     }
 
     /**
@@ -557,14 +567,16 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function getActiveStageFromTimestamp(
         uint64 timestamp
     ) public view returns (uint256) {
-        for (uint256 i = 0; i < _mintStages.length;) {
+        for (uint256 i = 0; i < _mintStages.length; ) {
             if (
                 timestamp >= _mintStages[i].startTimeUnixSeconds &&
                 timestamp < _mintStages[i].endTimeUnixSeconds
             ) {
                 return i;
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
         revert InvalidStage();
     }
