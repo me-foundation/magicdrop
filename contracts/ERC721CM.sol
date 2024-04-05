@@ -76,9 +76,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency
-    )
-    Ownable(msg.sender)
-    ERC721ACQueryable(collectionName, collectionSymbol) {
+    ) Ownable(msg.sender) ERC721ACQueryable(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = true;
