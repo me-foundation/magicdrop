@@ -15,15 +15,10 @@ import "./IERC721MInitializable.sol";
 
 /**
  * @title ERC721CMInitializable
- *
- * @dev ERC721ACQueryable and ERC721C subclass with MagicEden launchpad features including
- *  - multiple minting stages with time-based auto stage switch
- *  - global and stage wallet-level minting limit
- *  - whitelist using merkle tree
- *  - crossmint support
- *  - anti-botting
+ * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
+ * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-contract ERC721CMInitializable is
+abstract contract ERC721CMInitializable is
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
     OwnableInitializable,
@@ -72,7 +67,7 @@ contract ERC721CMInitializable is
     // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
     address private _mintCurrency;
 
-    function __ERC721CMUpgradeable_init(
+    function __ERC721CMInitializable_init(
         string memory collectionName,
         string memory collectionSymbol,
         string memory tokenURISuffix,
@@ -81,7 +76,7 @@ contract ERC721CMInitializable is
         address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency
-    ) public initializer {
+    ) public onlyInitializing {
         initializeOwner(msg.sender);
         __ERC721ACQueryableInitializable_init(collectionName, collectionSymbol);
         if (globalWalletLimit > maxMintableSupply)
@@ -94,6 +89,7 @@ contract ERC721CMInitializable is
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
     }
+
     /**
      * @dev Returns whether mintable.
      */

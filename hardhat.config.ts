@@ -40,11 +40,13 @@ import {
   thawTrading,
   cleanWhitelist,
 } from './scripts';
+import { deployCloneFactory } from './scripts/deployCloneFactory';
 
 const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.20',
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
         runs: 200,
@@ -369,5 +371,10 @@ task('cleanWhitelist', 'Clean up whitelist')
   .addOptionalParam('whitelistpath', 'plain whitelist path')
   .addOptionalParam('variablewalletlimitpath', 'variable wallet limit whitelist path')
   .setAction(cleanWhitelist)
+
+task('deployCloneFactory', 'Deploy 721CMRoyalties clone factory')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
+  .setAction(deployCloneFactory)
 
 export default config;

@@ -3,6 +3,11 @@ pragma solidity ^0.8.4;
 
 import "erc721a-upgradeable/contracts/extensions/IERC721AQueryableUpgradeable.sol";
 
+/**
+ * @title IERC721MInitializable
+ * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
+ * contract is for use with EIP-1167 Minimal Proxies (Clones).
+ */
 interface IERC721MInitializable is IERC721AQueryableUpgradeable {
     error CannotIncreaseMaxMintableSupply();
     error CosignerNotSet();

@@ -6,7 +6,7 @@ import "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
- * @title ERC721ACQueryable
+ * @title ERC721ACQueryableInitializable
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
@@ -18,7 +18,7 @@ abstract contract ERC721ACQueryableInitializable is
     function __ERC721ACQueryableInitializable_init(
         string memory name_,
         string memory symbol_
-    ) public initializerERC721A initializer {
+    ) public onlyInitializing {
         __ERC721A_init_unchained(name_, symbol_);
         __ERC721AQueryable_init_unchained();
     }
@@ -34,7 +34,7 @@ abstract contract ERC721ACQueryableInitializable is
     {
         return
             interfaceId == type(ICreatorToken).interfaceId ||
-            super.supportsInterface(interfaceId);
+            ERC721AUpgradeable.supportsInterface(interfaceId);
     }
 
     /// @dev Ties the erc721a _beforeTokenTransfers hook to more granular transfer validation logic
