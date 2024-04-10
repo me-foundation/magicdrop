@@ -50,7 +50,7 @@ export const deployCloneFactory = async (
 
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
-  const contract = await contractFactory.deploy();
+  const contract = await contractFactory.deploy(overrides);
   console.log('Deploying contract... ');
   console.log('tx:', contract.deployTransaction.hash);
 
