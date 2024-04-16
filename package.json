@@ -44,8 +44,8 @@
   "devDependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.6",
+    "@nomicfoundation/hardhat-verify": "^2.0.5",
     "@nomiclabs/hardhat-ethers": "^2.1.1",
-    "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@rollup/plugin-json": "^5.0.1",
     "@rollup/plugin-typescript": "^9.0.2",
