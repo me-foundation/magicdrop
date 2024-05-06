@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
-export interface ISetBaseURIParams {
+interface ISetBaseURIParams {
   supply: string;
   contract: string;
 }

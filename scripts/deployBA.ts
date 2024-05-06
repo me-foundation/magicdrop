@@ -7,8 +7,9 @@
 import { confirm } from '@inquirer/prompts';
 import { ContractDetails } from './common/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { estimateGas } from './utils/helper';
 
-export interface IDeployParams {
+interface IDeployParams {
   name: string;
   symbol: string;
   tokenurisuffix: string;
@@ -18,21 +19,13 @@ export interface IDeployParams {
   mincontributioninwei: number;
   auctionstarttime: string;
   auctionendtime: string;
-  useoperatorfilterer?: boolean;
 }
 
 export const deployBA = async (
   args: IDeployParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
-  // Set the contract name
-  let contractName: string;
-
-  if (args.useoperatorfilterer) {
-    contractName = ContractDetails.BucketAuctionOperatorFilterer.name;
-  } else {
-    contractName = ContractDetails.BucketAuction.name;
-  }
+  const contractName = ContractDetails.BucketAuction.name;
 
   console.log(
     `Going to deploy ${contractName} with params`,
@@ -70,7 +63,9 @@ export const deployBA = async (
     ),
   );
 
-  if (!await confirm({ message: 'Continue to deploy?' })) return;
+  await estimateGas(hre, contractFactory.getDeployTransaction(...params));
+
+  if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
   const contract = await contractFactory.deploy(...params);
   await contract.deployed();

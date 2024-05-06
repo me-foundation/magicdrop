@@ -1,10 +1,13 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails } from './common/constants';
+import { Overrides } from 'ethers';
+import { estimateGas } from './utils/helper';
 
-export interface ISetBaseURIParams {
+interface ISetBaseURIParams {
   uri: string;
   contract: string;
   gaspricegwei?: number;
+  gaslimit?: number;
 }
 
 export const setBaseURI = async (
@@ -12,18 +15,22 @@ export const setBaseURI = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const overrides: any = {gasLimit: 500_000};
-
+  const overrides: Overrides = {};
   if (args.gaspricegwei) {
-    overrides.gasPrice = args.gaspricegwei * 1e9;
+    overrides.gasPrice = ethers.BigNumber.from(args.gaspricegwei * 1e9);
+  }
+  if (args.gaslimit) {
+    overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
   }
   const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
-  const tx = await contract.setBaseURI(args.uri, overrides);
+  const tx = await contract.populateTransaction.setBaseURI(args.uri);
+  if (!(await estimateGas(hre, tx, overrides))) return;
+  const submittedTx = await contract.setBaseURI(args.uri, overrides);
 
-  console.log(`Submitted tx ${tx.hash}`);
+  console.log(`Submitted tx ${submittedTx.hash}`);
 
-  await tx.wait();
+  await submittedTx.wait();
 
-  console.log('Set baseURI:', tx.hash);
+  console.log('Set baseURI:', submittedTx.hash);
 };

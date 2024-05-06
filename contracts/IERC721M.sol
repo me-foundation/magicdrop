@@ -5,7 +5,6 @@ import "erc721a/contracts/extensions/IERC721AQueryable.sol";
 
 interface IERC721M is IERC721AQueryable {
     error CannotIncreaseMaxMintableSupply();
-    error CannotUpdatePermanentBaseURI();
     error CosignerNotSet();
     error CrossmintAddressNotSet();
     error CrossmintOnly();
@@ -27,6 +26,7 @@ interface IERC721M is IERC721AQueryable {
     error WalletStageLimitExceeded();
     error WithdrawFailed();
     error WrongMintCurrency();
+    error NotSupported();
 
     struct MintStageInfo {
         uint80 price;
@@ -58,7 +58,6 @@ interface IERC721M is IERC721AQueryable {
     event SetBaseURI(string baseURI);
     event SetTimestampExpirySeconds(uint64 expiry);
     event SetMintCurrency(address mintCurrency);
-    event PermanentBaseURI(string baseURI);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
 
@@ -70,12 +69,13 @@ interface IERC721M is IERC721AQueryable {
 
     function totalMintedByAddress(address a) external view returns (uint256);
 
-    function getStageInfo(uint256 index)
-        external
-        view
-        returns (
-            MintStageInfo memory,
-            uint32,
-            uint256
-        );
+    function getStageInfo(
+        uint256 index
+    ) external view returns (MintStageInfo memory, uint32, uint256);
+    
+    function mint(uint32 qty, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
+
+    function mintWithLimit(uint32 qty, uint32 limit, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
+
+    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
 }

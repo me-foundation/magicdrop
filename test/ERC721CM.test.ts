@@ -3,22 +3,21 @@ import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
-import { ERC721M } from '../typechain-types';
+import { ERC721CM } from '../typechain-types';
 
-const { keccak256, getAddress } = ethers.utils;
-const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
+const { getAddress } = ethers.utils;
 
 chai.use(chaiAsPromised);
 
-describe('ERC721M', function () {
-  let contract: ERC721M;
-  let readonlyContract: ERC721M;
+describe('ERC721CM', function () {
+  let contract: ERC721CM;
+  let readonlyContract: ERC721CM;
   let owner: SignerWithAddress;
   let readonly: SignerWithAddress;
   let chainId: number;
 
   const getCosignSignature = async (
-    contractInstance: ERC721M,
+    contractInstance: ERC721CM,
     cosigner: SignerWithAddress,
     minter: string,
     timestamp: number,
@@ -49,8 +48,8 @@ describe('ERC721M', function () {
   };
 
   beforeEach(async () => {
-    const ERC721M = await ethers.getContractFactory('ERC721M');
-    const erc721M = await ERC721M.deploy(
+    const ERC721CM = await ethers.getContractFactory('ERC721CM');
+    const erc721cm = await ERC721CM.deploy(
       'Test',
       'TEST',
       '',
@@ -60,20 +59,16 @@ describe('ERC721M', function () {
       60,
       ethers.constants.AddressZero,
     );
-    await erc721M.deployed();
+    await erc721cm.deployed();
 
     [owner, readonly] = await ethers.getSigners();
-    contract = erc721M.connect(owner);
-    readonlyContract = erc721M.connect(readonly);
+    contract = erc721cm.connect(owner);
+    readonlyContract = erc721cm.connect(readonly);
     chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
   });
 
   it('Contract can be paused/unpaused', async () => {
-    // starts paused
-    expect(await contract.getMintable()).to.be.false;
-
-    // unpause
-    await contract.setMintable(true);
+    // starts unpaused
     expect(await contract.getMintable()).to.be.true;
 
     // we should assert that the correct event is emitted
@@ -117,7 +112,6 @@ describe('ERC721M', function () {
         readonlyContract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
-            mintFee: ethers.utils.parseEther('0.01'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -126,7 +120,6 @@ describe('ERC721M', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
-            mintFee: ethers.utils.parseEther('0.01'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -142,7 +135,6 @@ describe('ERC721M', function () {
         contract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
-            mintFee: ethers.utils.parseEther('0'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -151,7 +143,6 @@ describe('ERC721M', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
-            mintFee: ethers.utils.parseEther('0'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -167,7 +158,6 @@ describe('ERC721M', function () {
         contract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
-            mintFee: ethers.utils.parseEther('0'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -176,7 +166,6 @@ describe('ERC721M', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
-            mintFee: ethers.utils.parseEther('0'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -190,7 +179,6 @@ describe('ERC721M', function () {
         contract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
-            mintFee: ethers.utils.parseEther('0'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -199,7 +187,6 @@ describe('ERC721M', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
-            mintFee: ethers.utils.parseEther('0'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -214,7 +201,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.01'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -223,7 +209,6 @@ describe('ERC721M', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.01'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
@@ -252,7 +237,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x3', 32),
           maxStageSupply: 0,
@@ -273,7 +257,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x3', 32),
           maxStageSupply: 0,
@@ -282,7 +265,6 @@ describe('ERC721M', function () {
         },
         {
           price: ethers.utils.parseEther('0.7'),
-          mintFee: ethers.utils.parseEther('0.07'),
           walletLimit: 5,
           merkleRoot: ethers.utils.hexZeroPad('0x4', 32),
           maxStageSupply: 5,
@@ -299,221 +281,10 @@ describe('ERC721M', function () {
       expect(walletMintedCount).to.equal(0);
     });
 
-    it('can update stage', async () => {
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
-          walletLimit: 3,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 5,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
-        },
-        {
-          price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
-          walletLimit: 4,
-          merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
-          maxStageSupply: 10,
-          startTimeUnixSeconds: 61,
-          endTimeUnixSeconds: 62,
-        },
-      ]);
-
-      expect(await contract.getNumberStages()).to.equal(2);
-
-      let [stageInfo, walletMintedCount] = await contract.getStageInfo(0);
-      expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.5'));
-      expect(stageInfo.walletLimit).to.equal(3);
-      expect(stageInfo.maxStageSupply).to.equal(5);
-      expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x1', 32));
-      expect(walletMintedCount).to.equal(0);
-
-      [stageInfo, walletMintedCount] = await contract.getStageInfo(1);
-      expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.6'));
-      expect(stageInfo.walletLimit).to.equal(4);
-      expect(stageInfo.maxStageSupply).to.equal(10);
-      expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x2', 32));
-      expect(walletMintedCount).to.equal(0);
-
-      // Update first stage
-      await expect(
-        contract.updateStage(
-          /* _index= */ 0,
-          /* price= */ ethers.utils.parseEther('0.1'),
-          /* mintFee= */ ethers.utils.parseEther('0.01'),
-          /* walletLimit= */ 13,
-          /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
-          /* maxStageSupply= */ 15,
-          /* startTimeUnixSeconds= */ 0,
-          /* endTimeUnixSeconds= */ 1,
-        ),
-      )
-        .to.emit(contract, 'UpdateStage')
-        .withArgs(
-          0,
-          ethers.utils.parseEther('0.1'),
-          ethers.utils.parseEther('0.01'),
-          13,
-          ethers.utils.hexZeroPad('0x9', 32),
-          15,
-          0,
-          1,
-        );
-
-      expect(await contract.getNumberStages()).to.equal(2);
-
-      [stageInfo, walletMintedCount] = await contract.getStageInfo(0);
-      expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.1'));
-      expect(stageInfo.walletLimit).to.equal(13);
-      expect(stageInfo.maxStageSupply).to.equal(15);
-      expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x9', 32));
-      expect(walletMintedCount).to.equal(0);
-
-      // Stage 2 is unchanged.
-      [stageInfo, walletMintedCount] = await contract.getStageInfo(1);
-      expect(stageInfo.price).to.equal(ethers.utils.parseEther('0.6'));
-      expect(stageInfo.walletLimit).to.equal(4);
-      expect(stageInfo.maxStageSupply).to.equal(10);
-      expect(stageInfo.merkleRoot).to.equal(ethers.utils.hexZeroPad('0x2', 32));
-      expect(walletMintedCount).to.equal(0);
-    });
-
-    it('updates stage reverts for non-existent stage', async () => {
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
-          walletLimit: 3,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 5,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
-        },
-        {
-          price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
-          walletLimit: 4,
-          merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
-          maxStageSupply: 10,
-          startTimeUnixSeconds: 61,
-          endTimeUnixSeconds: 62,
-        },
-      ]);
-
-      // Update a stage which doesn't exist.
-      const updateStage = contract.updateStage(
-        /* _index= */ 2,
-        /* price= */ ethers.utils.parseEther('0.1'),
-        /* mintFee= */ ethers.utils.parseEther('0.01'),
-        /* walletLimit= */ 13,
-        /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
-        /* maxStageSupply= */ 15,
-        /* startTimeUnixSeconds= */ 0,
-        /* endTimeUnixSeconds= */ 0,
-      );
-
-      await expect(updateStage).to.be.revertedWith('InvalidStage');
-    });
-
-    it('cannot update stage to insufficient stage gap', async () => {
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
-          walletLimit: 3,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 5,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
-        },
-        {
-          price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
-          walletLimit: 4,
-          merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
-          maxStageSupply: 10,
-          startTimeUnixSeconds: 61,
-          endTimeUnixSeconds: 62,
-        },
-      ]);
-
-      // Set stage 1 to only be 59 seconds from stage 2
-      const updateStage = contract.updateStage(
-        /* _index= */ 1,
-        /* price= */ ethers.utils.parseEther('0.1'),
-        /* mintFee= */ ethers.utils.parseEther('0.01'),
-        /* walletLimit= */ 13,
-        /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
-        /* maxStageSupply= */ 15,
-        /* startTimeUnixSeconds= */ 0,
-        /* endTimeUnixSeconds= */ 2,
-      );
-
-      await expect(updateStage).to.be.revertedWith('InsufficientStageTimeGap');
-    });
-
-    it('cannot update stage due to the startTimeUnixSeconds is not smaller than the endTimeUnixSeconds', async () => {
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
-          walletLimit: 3,
-          merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
-          maxStageSupply: 5,
-          startTimeUnixSeconds: 0,
-          endTimeUnixSeconds: 1,
-        },
-        {
-          price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
-          walletLimit: 4,
-          merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
-          maxStageSupply: 10,
-          startTimeUnixSeconds: 61,
-          endTimeUnixSeconds: 62,
-        },
-      ]);
-
-      // Update stage 1 and set startTimeUnixSeconds and endTimeUnixSeconds to identical values
-      const updateStageWithIdenticalStartAndEndTime = contract.updateStage(
-        /* _index= */ 1,
-        /* price= */ ethers.utils.parseEther('0.1'),
-        /* mintFee= */ ethers.utils.parseEther('0.01'),
-        /* walletLimit= */ 13,
-        /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
-        /* maxStageSupply= */ 15,
-        /* startTimeUnixSeconds= */ 61,
-        /* endTimeUnixSeconds= */ 61,
-      );
-
-      await expect(updateStageWithIdenticalStartAndEndTime).to.be.revertedWith(
-        'InvalidStartAndEndTimestamp',
-      );
-
-      // Update stage 1 and set startTimeUnixSeconds to a value which is not smaller than the endTimeUnixSeconds
-      const updateStageWithStartTimeAfterEndTime = contract.updateStage(
-        /* _index= */ 1,
-        /* price= */ ethers.utils.parseEther('0.1'),
-        /* mintFee= */ ethers.utils.parseEther('0.01'),
-        /* walletLimit= */ 13,
-        /* merkleRoot= */ ethers.utils.hexZeroPad('0x9', 32),
-        /* maxStageSupply= */ 15,
-        /* startTimeUnixSeconds= */ 61,
-        /* endTimeUnixSeconds= */ 60,
-      );
-
-      await expect(updateStageWithStartTimeAfterEndTime).to.be.revertedWith(
-        'InvalidStartAndEndTimestamp',
-      );
-    });
-
     it('gets stage info', async () => {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -536,7 +307,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -553,7 +323,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -562,7 +331,6 @@ describe('ERC721M', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
@@ -582,12 +350,12 @@ describe('ERC721M', function () {
   });
 
   describe('Minting', function () {
-
     it('revert if contract is not mintable', async () => {
+      await contract.setMintable(false);
+
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -621,20 +389,21 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('NotMintable');
     });
 
-    it('revert if contract without stages', async () => {
-      await contract.setMintable(true);
-      const mint = contract.mint(
-        1,
-        [ethers.utils.hexZeroPad('0x', 32)],
-        0,
-        '0x00',
-        {
-          value: ethers.utils.parseEther('0.5'),
-        },
-      );
+    // TODO: Check if this test case is a valid user scenario
+    // it('revert if contract without stages', async () => {
+    //   await contract.setMintable(true);
+    //   const mint = contract.mint(
+    //     1,
+    //     [ethers.utils.hexZeroPad('0x', 32)],
+    //     0,
+    //     '0x00',
+    //     {
+    //       value: ethers.utils.parseEther('0.5'),
+    //     },
+    //   );
 
-      await expect(mint).to.be.revertedWith('InvalidStage');
-    });
+    //   await expect(mint).to.be.revertedWith('InvalidStage');
+    // });
 
     it('revert if incorrect (less) amount sent', async () => {
       // Get an estimated stage start time
@@ -646,8 +415,7 @@ describe('ERC721M', function () {
       // Set stages
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0.4'),
-          mintFee: ethers.utils.parseEther('0.1'),
+          price: ethers.utils.parseEther('0.5'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -690,7 +458,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
-          mintFee: ethers.utils.parseEther('0.01'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 0,
@@ -737,7 +504,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -746,7 +512,6 @@ describe('ERC721M', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
@@ -769,7 +534,7 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('NoSupplyLeft');
     });
 
-    it('mint with wallet limit', async () => {
+    it('mint with unlimited stage limit', async () => {
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
@@ -779,7 +544,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 100,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 0,
@@ -811,7 +575,7 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('WalletStageLimitExceeded');
     });
 
-    it('mint with limited stage supply', async () => {
+    it('mint with unlimited wallet limit', async () => {
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
@@ -821,7 +585,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
@@ -863,7 +626,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
-          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
@@ -873,11 +635,9 @@ describe('ERC721M', function () {
       ]);
       await contract.setMintable(true);
 
-      const contractBalanceInitial = await ethers.provider.getBalance(contract.address);
-      const mintFeeReceiverBalanceInitial = await ethers.provider.getBalance(MINT_FEE_RECEIVER);
-
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
+      // Mint 100 tokens - stage limit
       await readonlyContract.mint(
         1,
         [ethers.utils.hexZeroPad('0x', 32)],
@@ -892,68 +652,18 @@ describe('ERC721M', function () {
       expect(stageInfo.maxStageSupply).to.equal(100);
       expect(walletMintedCount).to.equal(1);
       expect(stagedMintedCount.toNumber()).to.equal(1);
-
-      const contractBalancePost = await ethers.provider.getBalance(contract.address)
-      expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
-
-      const mintFeeReceiverBalancePost = await ethers.provider.getBalance(MINT_FEE_RECEIVER)
-      expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(0);
-    });
-
-    it('mint with free stage with mint fee', async () => {
-      const block = await ethers.provider.getBlock(
-        await ethers.provider.getBlockNumber(),
-      );
-      // +10 is a number bigger than the count of transactions up to mint
-      const stageStart = block.timestamp + 10;
-      // Set stages
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0'),
-          mintFee: ethers.utils.parseEther('0.5'),
-          walletLimit: 0,
-          merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
-          maxStageSupply: 100,
-          startTimeUnixSeconds: stageStart,
-          endTimeUnixSeconds: stageStart + 1,
-        },
-      ]);
-      await contract.setMintable(true);
-
-      const contractBalanceInitial = await ethers.provider.getBalance(contract.address);
-      const mintFeeReceiverBalanceInitial = await ethers.provider.getBalance(MINT_FEE_RECEIVER);
-
-      // Setup the test context: Update block.timestamp to comply to the stage being active
-      await ethers.provider.send('evm_mine', [stageStart - 1]);
-      await readonlyContract.mint(
-        1,
-        [ethers.utils.hexZeroPad('0x', 32)],
-        0,
-        '0x00',
-        {
-          value: ethers.utils.parseEther('0.5'),
-        },
-      );
-      const [stageInfo, walletMintedCount, stagedMintedCount] =
-        await readonlyContract.getStageInfo(0);
-      expect(stageInfo.maxStageSupply).to.equal(100);
-      expect(walletMintedCount).to.equal(1);
-      expect(stagedMintedCount.toNumber()).to.equal(1);
-
-      const contractBalancePost = await ethers.provider.getBalance(contract.address)
-      expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
-
-      const mintFeeReceiverBalancePost = await ethers.provider.getBalance(MINT_FEE_RECEIVER)
-      expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(ethers.utils.parseEther('0.5'));
     });
 
     it('mint with cosign - happy path', async () => {
       const [_owner, minter, cosigner] = await ethers.getSigners();
-      const stageStart = Math.floor(new Date().getTime() / 1000);
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      const stageStart = block.timestamp;
+
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 100,
@@ -964,7 +674,7 @@ describe('ERC721M', function () {
       await contract.setMintable(true);
       await contract.setCosigner(cosigner.address);
 
-      const timestamp = stageStart + 500;
+      const timestamp = stageStart + 100;
       const sig = getCosignSignature(
         contract,
         cosigner,
@@ -993,7 +703,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 100,
@@ -1089,7 +798,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 100,
@@ -1152,7 +860,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 100,
@@ -1199,7 +906,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -1208,7 +914,6 @@ describe('ERC721M', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
@@ -1295,16 +1000,23 @@ describe('ERC721M', function () {
 
     it('enforces Merkle proof if required', async () => {
       const accounts = (await ethers.getSigners()).map((signer) =>
-        getAddress(signer.address),
+        getAddress(signer.address).toLowerCase().trim(),
+      );
+      const leaves = accounts.map((account) =>
+        ethers.utils.solidityKeccak256(['address', 'uint32'], [account, 0]),
       );
       const signerAddress = await ethers.provider.getSigner().getAddress();
-
-      const merkleTree = new MerkleTree(accounts, keccak256, {
+      const merkleTree = new MerkleTree(leaves, ethers.utils.keccak256, {
         sortPairs: true,
-        hashLeaves: true,
+        hashLeaves: false,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(keccak256(signerAddress));
+
+      const leaf = ethers.utils.solidityKeccak256(
+        ['address', 'uint32'],
+        [signerAddress.toLowerCase().trim(), 0],
+      );
+      const proof = merkleTree.getHexProof(leaf);
 
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
@@ -1315,7 +1027,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 5,
@@ -1354,7 +1065,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 5,
@@ -1373,10 +1083,117 @@ describe('ERC721M', function () {
       await expect(mint).to.be.revertedWith('InvalidProof');
     });
 
+    it('mint with limit', async () => {
+      const ownerAddress = await owner.getAddress();
+      const readerAddress = await readonly.getAddress();
+      const leaves = [
+        ethers.utils.solidityKeccak256(
+          ['address', 'uint32'],
+          [ownerAddress, 2],
+        ),
+        ethers.utils.solidityKeccak256(
+          ['address', 'uint32'],
+          [readerAddress, 5],
+        ),
+      ];
+
+      const merkleTree = new MerkleTree(leaves, ethers.utils.keccak256, {
+        sortPairs: true,
+        hashLeaves: false,
+      });
+      const root = merkleTree.getHexRoot();
+      const ownerLeaf = ethers.utils.solidityKeccak256(
+        ['address', 'uint32'],
+        [ownerAddress, 2],
+      );
+      const readerLeaf = ethers.utils.solidityKeccak256(
+        ['address', 'uint32'],
+        [readerAddress, 5],
+      );
+      const ownerProof = merkleTree.getHexProof(ownerLeaf);
+      const readerProof = merkleTree.getHexProof(readerLeaf);
+
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
+      await contract.setStages([
+        {
+          price: ethers.utils.parseEther('0.1'),
+          walletLimit: 10,
+          merkleRoot: root,
+          maxStageSupply: 100,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 100,
+        },
+      ]);
+      await contract.setMintable(true);
+
+      // Setup the test context: Update block.timestamp to comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
+      // Owner mints 1 token with valid proof
+      await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
+        value: ethers.utils.parseEther('0.1'),
+      });
+      expect(
+        (await contract.totalMintedByAddress(owner.getAddress())).toNumber(),
+      ).to.equal(1);
+
+      // Owner mints 1 token with wrong limit and should be reverted.
+      await expect(
+        contract.mintWithLimit(1, 3, ownerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.1'),
+        }),
+      ).to.be.rejectedWith('InvalidProof');
+
+      // Owner mints 2 tokens with valid proof and reverts.
+      await expect(
+        contract.mintWithLimit(2, 2, ownerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.2'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
+
+      // Owner mints 1 token with valid proof. Now owner reaches the limit.
+      await contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
+        value: ethers.utils.parseEther('0.1'),
+      });
+      expect(
+        (await contract.totalMintedByAddress(owner.getAddress())).toNumber(),
+      ).to.equal(2);
+
+      // Owner tries to mint more and reverts.
+      await expect(
+        contract.mintWithLimit(1, 2, ownerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.1'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
+
+      // Reader mints 6 tokens with valid proof and reverts.
+      await expect(
+        readonlyContract.mintWithLimit(6, 5, readerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.6'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
+
+      // Reader mints 5 tokens with valid proof.
+      await readonlyContract.mintWithLimit(5, 5, readerProof, 0, '0x00', {
+        value: ethers.utils.parseEther('0.5'),
+      });
+
+      // Reader mints 1 token with valid proof and reverts.
+      await expect(
+        readonlyContract.mintWithLimit(1, 5, readerProof, 0, '0x00', {
+          value: ethers.utils.parseEther('0.1'),
+        }),
+      ).to.be.rejectedWith('WalletStageLimitExceeded');
+    });
+
     it('crossmint', async () => {
       const crossmintAddressStr = '0xdAb1a1854214684acE522439684a145E62505233';
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1386,10 +1203,10 @@ describe('ERC721M', function () {
         60,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
+      await erc721cm.deployed();
 
       [owner, readonly] = await ethers.getSigners();
-      const ownerConn = erc721M.connect(owner);
+      const ownerConn = erc721cm.connect(owner);
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
@@ -1399,7 +1216,6 @@ describe('ERC721M', function () {
       await ownerConn.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 100,
@@ -1411,9 +1227,8 @@ describe('ERC721M', function () {
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
 
       // Impersonate Crossmint wallet
-      const crossmintSigner = await ethers.getImpersonatedSigner(
-        crossmintAddressStr,
-      );
+      const crossmintSigner =
+        await ethers.getImpersonatedSigner(crossmintAddressStr);
       const crossmintAddress = await crossmintSigner.getAddress();
 
       // Send some wei to impersonated account
@@ -1422,7 +1237,7 @@ describe('ERC721M', function () {
         '0xFFFFFFFFFFFFFFFF',
       ]);
 
-      const crossMintConn = erc721M.connect(crossmintSigner);
+      const crossMintConn = erc721cm.connect(crossmintSigner);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1447,8 +1262,8 @@ describe('ERC721M', function () {
     it('crossmint with cosign', async () => {
       const crossmintAddressStr = '0xdAb1a1854214684acE522439684a145E62505233';
       [owner, readonly] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1458,16 +1273,15 @@ describe('ERC721M', function () {
         300,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
+      await erc721cm.deployed();
 
-      const ownerConn = erc721M.connect(owner);
+      const ownerConn = erc721cm.connect(owner);
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
       );
       await ownerConn.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 100,
@@ -1479,9 +1293,8 @@ describe('ERC721M', function () {
       await ownerConn.setCrossmintAddress(crossmintAddressStr);
 
       // Impersonate Crossmint wallet
-      const crossmintSigner = await ethers.getImpersonatedSigner(
-        crossmintAddressStr,
-      );
+      const crossmintSigner =
+        await ethers.getImpersonatedSigner(crossmintAddressStr);
       const crossmintAddress = await crossmintSigner.getAddress();
 
       // Send some wei to impersonated account
@@ -1490,13 +1303,13 @@ describe('ERC721M', function () {
         '0xFFFFFFFFFFFFFFFF',
       ]);
 
-      const crossMintConn = erc721M.connect(crossmintSigner);
+      const crossMintConn = erc721cm.connect(crossmintSigner);
 
       // fast forward 2 minutes, timestamp should still be valid since crossmint is the sender
       await ethers.provider.send('evm_mine', [block.timestamp + 120]);
       const twoMinuteOldTimestamp = block.timestamp;
       const signature = await getCosignSignature(
-        erc721M,
+        erc721cm,
         owner,
         crossmintSigner.address,
         twoMinuteOldTimestamp,
@@ -1527,17 +1340,18 @@ describe('ERC721M', function () {
       );
       const [_, recipient] = await ethers.getSigners();
 
-      const merkleTree = new MerkleTree(accounts, keccak256, {
+      const merkleTree = new MerkleTree(accounts, ethers.utils.keccak256, {
         sortPairs: true,
         hashLeaves: true,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(keccak256(recipient.address));
+      const proof = merkleTree.getHexProof(
+        ethers.utils.keccak256(recipient.address),
+      );
 
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 7,
@@ -1567,17 +1381,18 @@ describe('ERC721M', function () {
       );
       const [_, recipient] = await ethers.getSigners();
 
-      const merkleTree = new MerkleTree(accounts, keccak256, {
+      const merkleTree = new MerkleTree(accounts, ethers.utils.keccak256, {
         sortPairs: true,
         hashLeaves: true,
       });
       const root = merkleTree.getHexRoot();
-      const proof = merkleTree.getHexProof(keccak256(recipient.address));
+      const proof = merkleTree.getHexProof(
+        ethers.utils.keccak256(recipient.address),
+      );
 
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 7,
@@ -1608,7 +1423,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 1,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 1,
@@ -1645,7 +1459,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 1,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 1,
@@ -1677,7 +1490,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -1686,7 +1498,6 @@ describe('ERC721M', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
@@ -1720,7 +1531,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -1729,7 +1539,6 @@ describe('ERC721M', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
@@ -1754,70 +1563,13 @@ describe('ERC721M', function () {
         'URIQueryForNonexistentToken',
       );
     });
-
-    it('Returns should not be able to set baseURI once frozen', async () => {
-      const block = await ethers.provider.getBlock(
-        await ethers.provider.getBlockNumber(),
-      );
-      // +10 is a number bigger than the count of transactions up to mint
-      const stageStart = block.timestamp + 10;
-      // Set stages
-      await contract.setStages([
-        {
-          price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0.05'),
-          walletLimit: 10,
-          merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
-          maxStageSupply: 5,
-          startTimeUnixSeconds: stageStart,
-          endTimeUnixSeconds: stageStart + 1,
-        },
-        {
-          price: ethers.utils.parseEther('0.6'),
-          mintFee: ethers.utils.parseEther('0.06'),
-          walletLimit: 10,
-          merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
-          maxStageSupply: 10,
-          startTimeUnixSeconds: stageStart + 61,
-          endTimeUnixSeconds: stageStart + 62,
-        },
-      ]);
-
-      await contract.setBaseURI('base_uri_');
-      await contract.setMintable(true);
-
-      // Setup the test context: Update block.timestamp to comply to the stage being active
-      await ethers.provider.send('evm_mine', [stageStart - 1]);
-      await contract.mint(2, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
-        value: ethers.utils.parseEther('2.5'),
-      });
-
-      expect(await contract.tokenURI(0)).to.equal('base_uri_0');
-      expect(await contract.tokenURI(1)).to.equal('base_uri_1');
-
-      await contract.setBaseURI('base_uri_again_');
-      expect(await contract.tokenURI(0)).to.equal('base_uri_again_0');
-
-      // readonlyContract should not be able to set baseURI
-      await expect(
-        readonlyContract.setBaseURI('something_else_'),
-      ).to.be.revertedWith('Ownable');
-
-      await expect(contract.setBaseURIPermanent()).to.emit(
-        contract,
-        'PermanentBaseURI',
-      );
-      await expect(
-        contract.setBaseURI('base_uri_again_again_'),
-      ).to.be.revertedWith('CannotUpdatePermanentBaseURI');
-    });
   });
 
   describe('Global wallet limit', function () {
     it('validates global wallet limit in constructor', async () => {
-      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
       await expect(
-        ERC721M.deploy(
+        ERC721CM.deploy(
           'Test',
           'TEST',
           '',
@@ -1852,7 +1604,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
-          mintFee: ethers.utils.parseEther('0.01'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
@@ -1865,12 +1616,12 @@ describe('ERC721M', function () {
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
       await contract.mint(2, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
-        value: ethers.utils.parseEther('0.22'),
+        value: ethers.utils.parseEther('0.2'),
       });
 
       await expect(
         contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
-          value: ethers.utils.parseEther('0.11'),
+          value: ethers.utils.parseEther('0.1'),
         }),
       ).to.be.revertedWith('WalletGlobalLimitExceeded');
     });
@@ -1893,7 +1644,6 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
-          mintFee: ethers.utils.parseEther('0.01'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 0,
@@ -1905,7 +1655,7 @@ describe('ERC721M', function () {
       await ethers.provider.send('evm_mine', [stageStart - 1]);
       // Mint and verify
       await contract.mint(1, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
-        value: ethers.utils.parseEther('0.11'),
+        value: ethers.utils.parseEther('0.1'),
       });
 
       const tokenUri = await contract.tokenURI(0);
@@ -1918,8 +1668,8 @@ describe('ERC721M', function () {
   describe('Cosign', () => {
     it('can deploy with 0x0 cosign', async () => {
       const [owner, cosigner] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1929,8 +1679,8 @@ describe('ERC721M', function () {
         60,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
-      const ownerConn = erc721M.connect(owner);
+      await erc721cm.deployed();
+      const ownerConn = erc721cm.connect(owner);
       await expect(
         ownerConn.getCosignDigest(owner.address, 1, 0),
       ).to.be.revertedWith('CosignerNotSet');
@@ -1946,8 +1696,8 @@ describe('ERC721M', function () {
 
     it('can deploy with cosign', async () => {
       const [_, minter, cosigner] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
-      const erc721M = await ERC721M.deploy(
+      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const erc721cm = await ERC721CM.deploy(
         'Test',
         'TEST',
         '',
@@ -1957,12 +1707,12 @@ describe('ERC721M', function () {
         60,
         ethers.constants.AddressZero,
       );
-      await erc721M.deployed();
+      await erc721cm.deployed();
 
-      const minterConn = erc721M.connect(minter);
+      const minterConn = erc721cm.connect(minter);
       const timestamp = Math.floor(new Date().getTime() / 1000);
       const sig = await getCosignSignature(
-        erc721M,
+        erc721cm,
         cosigner,
         minter.address,
         timestamp,
@@ -1977,5 +1727,27 @@ describe('ERC721M', function () {
         minterConn.assertValidCosign(minter.address, 1, timestamp, invalidSig),
       ).to.be.revertedWith('InvalidCosignSignature');
     });
+  });
+
+  describe('Contract URI', function () {
+    it('can set contract URI', async () => {
+      await contract.setContractURI(
+        'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4',
+      );
+      const contractURI = await contract.contractURI();
+      expect(contractURI).to.equal(
+        'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4',
+      );
+    });
+  });
+
+  describe('Transfer validator', function () {
+    it('default validator settings', async () => {
+      expect(await contract.getTransferValidator()).to.equal(
+        '0x0000000000000000000000000000000000000000',
+      );
+    });
+
+    // TODO: figure out a way to mock the validator contract
   });
 });

@@ -13,11 +13,10 @@ contract TestStaking {
         _nft = IERC721A(nft);
     }
 
-    function isStaked(address staker, uint256 tokenId)
-        public
-        view
-        returns (bool)
-    {
+    function isStaked(
+        address staker,
+        uint256 tokenId
+    ) public view returns (bool) {
         return _stakers[staker].contains(tokenId);
     }
 

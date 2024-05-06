@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import '@nomiclabs/hardhat-etherscan';
+import "@nomicfoundation/hardhat-verify";
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import 'hardhat-contract-sizer';
@@ -8,35 +8,38 @@ import 'hardhat-gas-reporter';
 import 'hardhat-watcher';
 import { HardhatUserConfig, task, types } from 'hardhat/config';
 import 'solidity-coverage';
-
-import { deploy } from './scripts/deploy';
-import { deployBA } from './scripts/deployBA';
-import { mint } from './scripts/mint';
-import { ownerMint } from './scripts/ownerMint';
-import { setBaseURI } from './scripts/setBaseURI';
-import { setCrossmintAddress } from './scripts/setCrossmintAddress';
-import { setGlobalWalletLimit } from './scripts/setGlobalWalletLimit';
-import { setMaxMintableSupply } from './scripts/setMaxMintableSupply';
-import { setMintable } from './scripts/setMintable';
-import { setStages } from './scripts/setStages';
-import { setTimestampExpirySeconds } from './scripts/setTimestampExpirySeconds';
-import { transferOwnership } from './scripts/transferOwnership';
-import { setStartAndEndTimeUnixSeconds } from './scripts/setStartAndEndTimeUnixSeconds';
-import { setMinContributionInWei } from './scripts/setMinContributionInWei';
-import { sendRefund } from './scripts/sendRefund';
-import { sendRefundBatch } from './scripts/sendRefundBatch';
-import { sendTokensAndRefund } from './scripts/sendTokensAndRefund';
-import { sendTokensAndRefundBatch } from './scripts/sendTokensAndRefundBatch';
-import { setPrice } from './scripts/setPrice';
-import { getPrice } from './scripts/dev/getPrice';
-import { getStartTimeBA } from './scripts/dev/getStartTimeBA';
-import { getEndTimeBA } from './scripts/dev/getEndTimeBA';
-import { getMinContributionInWei } from './scripts/dev/getMinContributionInWei';
-import { deployOnft } from './scripts/deployOnft';
-import { setOnftMinDstGas } from './scripts/setOnftMinDstGas';
-import { setTrustedRemote } from './scripts/setTrustedRemote';
-import { sendOnft } from './scripts/sendOnft';
-import { deployOwnedRegistrant } from './scripts/deployOwnedRegistrant';
+import {
+  setStages,
+  setMintable,
+  deploy,
+  setBaseURI,
+  setCrossmintAddress,
+  mint,
+  ownerMint,
+  setGlobalWalletLimit,
+  setMaxMintableSupply,
+  deployBA,
+  setTimestampExpirySeconds,
+  transferOwnership,
+  setStartAndEndTimeUnixSeconds,
+  setMinContributionInWei,
+  sendRefund,
+  sendRefundBatch,
+  sendTokensAndRefund,
+  sendTokensAndRefundBatch,
+  getMinContributionInWei,
+  getStartTimeBA,
+  getEndTimeBA,
+  getPrice,
+  setPrice,
+  deployOwnedRegistrant,
+  getContractCodehash,
+  deploy721BatchTransfer,
+  send721Batch,
+  freezeTrading,
+  thawTrading,
+  cleanWhitelist,
+} from './scripts';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -61,6 +64,11 @@ const config: HardhatUserConfig = {
     tests: './test',
   },
   networks: {
+    base: {
+      url: process.env.BASE_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     ropsten: {
       url: process.env.ROPSTEN_URL || '',
       accounts:
@@ -69,6 +77,11 @@ const config: HardhatUserConfig = {
     goerli: {
       url:
         process.env.GOERLI_URL || 'https://eth-goerli.api.onfinality.io/public',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -92,11 +105,6 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
-    sepolia: {
-      url: process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    }
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -105,12 +113,21 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
+  sourcify: {
+    enabled: true
+  }
 };
 
 task('setStages', 'Set stages for ERC721M')
   .addParam('contract', 'contract address')
   .addParam('stages', 'stages json file')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam(
+    'gaslimit',
+    'Set maximum gas units to spend on transaction',
+    500000,
+    types.int,
+  )
   .setAction(setStages);
 
 task('setMintable', 'Set mintable state for ERC721M')
@@ -135,23 +152,59 @@ task('deploy', 'Deploy ERC721M')
     'ERC-20 contract address (if minting with ERC-20)',
     '0x0000000000000000000000000000000000000000',
   )
-  .addOptionalParam('autoapproveaddress', 'auto approve address')
-  .addFlag(
-    'increasesupply',
-    'whether or not to enable increasing supply behavior',
+  .addParam<boolean>(
+    'useoperatorfilterer',
+    'whether or not to use operator filterer, used with legacy 721M contract',
+    false,
+    types.boolean,
   )
-  .addFlag('pausable', 'whether to allow transfers to be paused')
-  .addFlag('useoperatorfilterer', 'whether or not to use operator filterer')
-  .addFlag(
+  .addParam<boolean>(
     'openedition',
     'whether or not a open edition mint (unlimited supply, 999,999,999)',
+    false,
+    types.boolean,
   )
-  .setAction(deploy);
+  .addOptionalParam<boolean>(
+    'useerc721c',
+    'whether or not to use ERC721C',
+    true,
+    types.boolean,
+  )
+  .addOptionalParam<boolean>(
+    'useerc2198',
+    'whether or not to use ERC2198',
+    true,
+    types.boolean,
+  )
+  .addOptionalParam(
+    'erc2198royaltyreceiver',
+    'erc2198 royalty receiver address',
+  )
+  .addOptionalParam(
+    'erc2198royaltyfeenumerator',
+    'erc2198 royalty fee numerator',
+  )
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
+  .setAction(async (tasksArgs, hre) => {
+    console.log('Cleaning...');
+    await hre.run('clean');
+    console.log('Compiling...');
+    await hre.run('compile');
+    console.log('Deploying...');
+    await deploy(tasksArgs, hre);
+  });
 
 task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')
   .addParam('contract', 'contract address')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam(
+    'gaslimit',
+    'Set maximum gas units to spend on transaction',
+    500000,
+    types.int,
+  )
   .setAction(setBaseURI);
 
 task('setCrossmintAddress', 'Set crossmint address')
@@ -169,6 +222,8 @@ task('ownerMint', 'Mint token(s) as owner')
   .addParam('contract', 'contract address')
   .addParam('qty', 'quantity to mint', '1')
   .addOptionalParam('to', 'recipient address')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(ownerMint);
 
 task('setGlobalWalletLimit', 'Set the global wallet limit')
@@ -198,7 +253,6 @@ task('deployBA', 'Deploy BucketAuction')
   )
   .addParam('auctionstarttime', 'The start time of the bucket auction')
   .addParam('auctionendtime', 'The end time of the bucket auction')
-  .addFlag('useoperatorfilterer', 'whether or not to use operator filterer')
   .setAction(deployBA);
 
 task('setTimestampExpirySeconds', 'Set the timestamp expiry seconds')
@@ -278,59 +332,50 @@ task('setPrice', 'set the price set for BA')
   .addParam('priceinwei', 'price in wei')
   .setAction(setPrice);
 
-task('deployOnft', 'Deploy ERC721MOnft')
-  .addFlag('ismintingcontract', 'whether or not this is a minting contract')
-  .addParam('name', 'name')
-  .addParam('symbol', 'symbol')
-  .addParam('maxsupply', 'max supply')
-  .addParam('tokenurisuffix', 'token uri suffix', '.json')
-  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
-  .addParam('globalwalletlimit', 'global wallet limit', '0')
-  .addOptionalParam(
-    'cosigner',
-    'cosigner address (0x00...000 if not using cosign)',
+task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
+  .addParam(
+    'newowner',
+    'new owner address',
     '0x0000000000000000000000000000000000000000',
   )
-  .addOptionalParam(
-    'mingastostore',
-    'minimum gas to store default 15000',
-    '15000',
-  )
-  .setAction(deployOnft);
-
-task('setTrustedRemote', 'Set trusted remote for ERC721MOnft')
-  .addParam(
-    'sourceaddress',
-    'the contract address you are setting the remote on',
-  )
-  .addParam('targetnetwork', 'the network you are setting the remote to')
-  .addParam(
-    'targetaddress',
-    'the address of the contract on the target network',
-  )
-  .setAction(setTrustedRemote);
-
-task('setOnftMinDstGas', 'Set min destination gas for ERC721MOnft')
-  .addParam('contract', 'the contract address')
-  .addParam('targetnetwork', 'the network you plan to send the tokens to')
-  .addOptionalParam('packettype', 'package type. default to 1', '1')
-  .addOptionalParam('mingas', 'min gas. default to 200000', '200000')
-  .setAction(setOnftMinDstGas);
-
-task('sendOnft', 'Send tokens to target network')
-  .addParam('contract', 'the contract address you are sending tokens from')
-  .addParam('targetnetwork', 'the network you are sending the tokens to')
-  .addParam('tokenid', 'the token id you are sending')
-  .addOptionalParam('tokenowner', 'the owner of the tokens')
-  .addOptionalParam('refundaddress', 'the address you want to refund to')
-  .addOptionalParam(
-    'zeropaymentaddress',
-    'the address you want to send a zero payment to',
-  )
-  .setAction(sendOnft);
-
-task('deployOwnedRegistrant', 'Deploy OwnedRegistrant')
-  .addParam('newowner', 'new owner address', '0x0000000000000000000000000000000000000000')
   .setAction(deployOwnedRegistrant);
+
+task('getContractCodehash', 'Get the code hash of a contract')
+  .addParam('contract', 'contract address')
+  .setAction(getContractCodehash);
+
+task('deploy721BatchTransfer', 'Deploy ERC721BatchTransfer').setAction(
+  deploy721BatchTransfer,
+);
+
+task('send721Batch', 'Send ERC721 tokens in batch')
+  .addParam('contract', 'contract address')
+  .addOptionalParam(
+    'transferfile',
+    'path to the file with the transfer details',
+  )
+  .addOptionalParam('to', 'recipient address (if not using transferFile)')
+  .addOptionalParam(
+    'tokenids',
+    'token ids (if not using transferFile), separate with comma',
+  )
+  .setAction(send721Batch);
+
+task('freezeTrading', 'Freeze trading for 721Cv2')
+  .addParam('contract', 'contract address')
+  .addOptionalParam('validator', 'security validator')
+  .addOptionalParam('level', 'security level')
+  .addOptionalParam('whitelistid', 'whitelist id')
+  .addOptionalParam('permittedreceiverid', 'permitted receiver list id')
+  .setAction(freezeTrading);
+
+task('thawTrading', 'Thaw trading for 721Cv2')
+  .addParam('contract', 'contract address')
+  .setAction(thawTrading);
+
+task('cleanWhitelist', 'Clean up whitelist')
+  .addOptionalParam('whitelistpath', 'plain whitelist path')
+  .addOptionalParam('variablewalletlimitpath', 'variable wallet limit whitelist path')
+  .setAction(cleanWhitelist)
 
 export default config;

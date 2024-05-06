@@ -3,11 +3,14 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
+import { cleanVariableWalletLimit, cleanWhitelist, estimateGas } from './utils/helper';
+import { Overrides } from 'ethers';
 
 export interface ISetStagesParams {
   stages: string;
   contract: string;
   gaspricegwei?: number;
+  gaslimit?: number;
 }
 
 interface StageConfig {
@@ -18,6 +21,7 @@ interface StageConfig {
   walletLimit?: number;
   maxSupply?: number;
   whitelistPath?: string;
+  variableWalletLimitPath?: string;
 }
 
 export const setStages = async (
@@ -29,31 +33,61 @@ export const setStages = async (
     fs.readFileSync(args.stages, 'utf-8'),
   ) as StageConfig[];
 
-  const overrides: any = { gasLimit: 500_000 };
-
   const ERC721M = await ethers.getContractFactory(ContractDetails.ERC721M.name);
   const contract = ERC721M.attach(args.contract);
 
+  const overrides: Overrides = {};
   if (args.gaspricegwei) {
-    overrides.gasPrice = args.gaspricegwei * 1e9;
+    overrides.gasPrice = ethers.BigNumber.from(args.gaspricegwei * 1e9);
   }
+  if (args.gaslimit) {
+    overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
+  }
+
+  /*
+   * Merkle root generation logic:
+   * - for `whitelist`, leaves are `solidityKeccak256(['address', 'uint32'], [address, 0])`
+   * - for `variable wallet limit list`, leaves are `solidityKeccak256(['address', 'uint32'], [address, limit])`
+   */
   const merkleRoots = await Promise.all(
-    stagesConfig.map((stage) => {
-      if (!stage.whitelistPath) {
-        return ethers.utils.hexZeroPad('0x', 32);
-      }
-      const whitelist = JSON.parse(
-        fs.readFileSync(stage.whitelistPath, 'utf-8'),
-      );
-      const mt = new MerkleTree(
-        whitelist.map(ethers.utils.getAddress),
-        ethers.utils.keccak256,
-        {
+    stagesConfig.map(async (stage) => {
+      if (stage.whitelistPath) {
+        const filteredSet = await cleanWhitelist(stage.whitelistPath, true);
+        const filteredWhitelist = Array.from(filteredSet.values());
+
+        const mt = new MerkleTree(
+          filteredWhitelist.map((address: string) =>
+            ethers.utils.solidityKeccak256(
+              ['address', 'uint32'],
+              [ethers.utils.getAddress(address), 0],
+            ),
+          ),
+          ethers.utils.keccak256,
+          {
+            sortPairs: true,
+            hashLeaves: false,
+          },
+        );
+        return mt.getHexRoot();
+      } else if (stage.variableWalletLimitPath) {
+        const filteredMap = await cleanVariableWalletLimit(stage.variableWalletLimitPath, true);
+        const leaves: any[] = [];
+        for (const [address, limit] of filteredMap.entries()) {
+          const digest = ethers.utils.solidityKeccak256(
+            ['address', 'uint32'],
+            [address, limit],
+          );
+          leaves.push(digest);
+        }
+
+        const mt = new MerkleTree(leaves, ethers.utils.keccak256, {
           sortPairs: true,
-          hashLeaves: true,
-        },
-      );
-      return mt.getHexRoot();
+          hashLeaves: false,
+        });
+        return mt.getHexRoot();
+      }
+
+      return ethers.utils.hexZeroPad('0x', 32);
     }),
   );
 
@@ -70,19 +104,22 @@ export const setStages = async (
   console.log(
     `Stage params: `,
     JSON.stringify(
-      stages.map(stage => hre.ethers.BigNumber.isBigNumber(stage)? stage.toString() : stage)
+      stages.map((stage) =>
+        hre.ethers.BigNumber.isBigNumber(stage) ? stage.toString() : stage,
+      ),
     ),
   );
 
-  if (!await confirm({ message: 'Continue to set stages?' })) return;
+  const tx = await contract.populateTransaction.setStages(stages);
+  if (!(await estimateGas(hre, tx, overrides))) return;
 
-  const tx = await contract.setStages(stages, overrides);
+  if (!(await confirm({ message: 'Continue to set stages?' }))) return;
 
-  console.log(`Submitted tx ${tx.hash}`);
+  const submittedTx = await contract.setStages(stages, overrides);
 
-  await tx.wait();
-
-  console.log('Set stages:', tx.hash);
+  console.log(`Submitted tx ${submittedTx.hash}`);
+  await submittedTx.wait();
+  console.log('Stages set');
 
   for (let i = 0; i < stagesConfig.length; i++) {
     const [stage] = await contract.getStageInfo(i);
