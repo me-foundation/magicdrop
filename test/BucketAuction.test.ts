@@ -38,7 +38,6 @@ describe('BucketAuction', function () {
     await ownerConn.setStages([
       {
         price: ethers.utils.parseEther('0.1'),
-        mintFee: 0,
         walletLimit: 0,
         merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
         maxStageSupply: 100,
@@ -47,7 +46,6 @@ describe('BucketAuction', function () {
       },
       {
         price: ethers.utils.parseEther('0.2'),
-        mintFee: 0,
         walletLimit: 0,
         merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
         maxStageSupply: 100,
