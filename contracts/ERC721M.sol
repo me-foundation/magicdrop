@@ -66,10 +66,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     address private _mintCurrency;
 
     // Total mint fee
-    uint256 private totalMintFee;
+    uint256 private _totalMintFee;
 
     address public constant MINT_FEE_RECEIVER =
-        address(0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc);
+        0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc;
 
     constructor(
         string memory collectionName,
@@ -426,14 +426,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
-            IERC20(_mintCurrency).transferFrom(
+            IERC20(_mintCurrency).safeTransferFrom(
                 msg.sender,
                 address(this),
                 (stage.price + stage.mintFee) * qty
             );
         }
 
-        totalMintFee += stage.mintFee * qty;
+        _totalMintFee += stage.mintFee * qty;
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
         _stageMintedCounts[activeStage] += qty;
@@ -457,14 +457,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      * @dev Withdraws funds by owner.
      */
     function withdraw() external onlyOwner {
-        (bool success, ) = MINT_FEE_RECEIVER.call{value: totalMintFee}("");
+        (bool success, ) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
 
         uint256 remainingValue = address(this).balance;
         (success, ) = msg.sender.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
-        emit Withdraw(totalMintFee + remainingValue);
+        emit Withdraw(_totalMintFee + remainingValue);
     }
 
     /**
@@ -473,12 +473,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function withdrawERC20() external onlyOwner {
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
-        IERC20(_mintCurrency).transfer(MINT_FEE_RECEIVER, totalMintFee);
+        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
 
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).transfer(msg.sender, remaining);
+        IERC20(_mintCurrency).safeTransfer(msg.sender, remaining);
 
-        emit WithdrawERC20(_mintCurrency, totalMintFee + remaining);
+        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
 
     /**
