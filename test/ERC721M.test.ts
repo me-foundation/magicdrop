@@ -702,7 +702,7 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0'),
-          mintFee: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
@@ -723,9 +723,12 @@ describe('ERC721M', function () {
         0,
         '0x00',
         {
-          value: ethers.utils.parseEther('0.5'),
+          value: ethers.utils.parseEther('0.1'),
         },
       );
+
+      await contract.withdraw();
+
       const [stageInfo, walletMintedCount, stagedMintedCount] =
         await readonlyContract.getStageInfo(0);
       expect(stageInfo.maxStageSupply).to.equal(100);
@@ -736,7 +739,7 @@ describe('ERC721M', function () {
       expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
 
       const mintFeeReceiverBalancePost = await ethers.provider.getBalance(MINT_FEE_RECEIVER)
-      expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(ethers.utils.parseEther('0.5'));
+      expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(ethers.utils.parseEther('0.1'));
     });
 
     it('mint with cosign - happy path', async () => {
@@ -1117,8 +1120,8 @@ describe('ERC721M', function () {
       // Set stages
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0.5'),
-          mintFee: ethers.utils.parseEther('0'),
+          price: ethers.utils.parseEther('0.1'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 5,
@@ -1215,6 +1218,7 @@ describe('ERC721M', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 100,

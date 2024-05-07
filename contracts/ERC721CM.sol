@@ -66,6 +66,12 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
     address private _mintCurrency;
 
+    // Total mint fee
+    uint256 private totalMintFee;
+
+    address public constant MINT_FEE_RECEIVER =
+        address(0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc);
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -160,7 +166,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         delete _mintStages;
 
-        for (uint256 i = 0; i < newStages.length;) {
+        for (uint256 i = 0; i < newStages.length; ) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
@@ -196,7 +202,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
                 newStages[i].endTimeUnixSeconds
             );
 
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -378,8 +386,10 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         stage = _mintStages[activeStage];
 
         // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < stage.price * qty)
-            revert NotEnoughValue();
+        if (
+            _mintCurrency == address(0) &&
+            msg.value < (stage.price + stage.mintFee) * qty
+        ) revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
@@ -411,7 +421,10 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
             ) revert InvalidProof();
 
             // Verify merkle proof mint limit
-            if (limit > 0 && _stageMintedCountsPerWallet[activeStage][to] + qty > limit) {
+            if (
+                limit > 0 &&
+                _stageMintedCountsPerWallet[activeStage][to] + qty > limit
+            ) {
                 revert WalletStageLimitExceeded();
             }
         }
@@ -420,9 +433,11 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
             IERC20(_mintCurrency).safeTransferFrom(
                 msg.sender,
                 address(this),
-                stage.price * qty
+                (stage.price + stage.mintFee) * qty
             );
         }
+
+        totalMintFee += stage.mintFee * qty;
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
         _stageMintedCounts[activeStage] += qty;
@@ -446,10 +461,14 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      * @dev Withdraws funds by owner.
      */
     function withdraw() external onlyOwner {
-        uint256 value = address(this).balance;
-        (bool success, ) = msg.sender.call{value: value}("");
+        (bool success, ) = MINT_FEE_RECEIVER.call{value: totalMintFee}("");
+        if (!success) revert TransferFailed();
+
+        uint256 remainingValue = address(this).balance;
+        (success, ) = msg.sender.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
-        emit Withdraw(value);
+
+        emit Withdraw(totalMintFee + remainingValue);
     }
 
     /**
@@ -457,9 +476,13 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      */
     function withdrawERC20() external onlyOwner {
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
-        uint256 value = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(msg.sender, value);
-        emit WithdrawERC20(_mintCurrency, value);
+
+        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, totalMintFee);
+
+        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
+        IERC20(_mintCurrency).safeTransfer(msg.sender, remaining);
+
+        emit WithdrawERC20(_mintCurrency, totalMintFee + remaining);
     }
 
     /**
@@ -559,14 +582,16 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function getActiveStageFromTimestamp(
         uint64 timestamp
     ) public view returns (uint256) {
-        for (uint256 i = 0; i < _mintStages.length;) {
+        for (uint256 i = 0; i < _mintStages.length; ) {
             if (
                 timestamp >= _mintStages[i].startTimeUnixSeconds &&
                 timestamp < _mintStages[i].endTimeUnixSeconds
             ) {
                 return i;
             }
-            unchecked { ++i; }
+            unchecked {
+                ++i;
+            }
         }
         revert InvalidStage();
     }
