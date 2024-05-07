@@ -21,7 +21,6 @@ interface IERC721M is IERC721AQueryable {
     error Mintable();
     error StageSupplyExceeded();
     error TimestampExpired();
-    error TransferFailed();
     error WalletGlobalLimitExceeded();
     error WalletStageLimitExceeded();
     error WithdrawFailed();
@@ -30,7 +29,6 @@ interface IERC721M is IERC721AQueryable {
 
     struct MintStageInfo {
         uint80 price;
-        uint80 mintFee;
         uint32 walletLimit; // 0 for unlimited
         bytes32 merkleRoot; // 0x0 for no presale enforced
         uint24 maxStageSupply; // 0 for unlimited
@@ -41,7 +39,6 @@ interface IERC721M is IERC721AQueryable {
     event UpdateStage(
         uint256 stage,
         uint80 price,
-        uint80 mintFee,
         uint32 walletLimit,
         bytes32 merkleRoot,
         uint24 maxStageSupply,
@@ -72,27 +69,10 @@ interface IERC721M is IERC721AQueryable {
     function getStageInfo(
         uint256 index
     ) external view returns (MintStageInfo memory, uint32, uint256);
+    
+    function mint(uint32 qty, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
 
-    function mint(
-        uint32 qty,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable;
+    function mintWithLimit(uint32 qty, uint32 limit, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
 
-    function mintWithLimit(
-        uint32 qty,
-        uint32 limit,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable;
-
-    function crossmint(
-        uint32 qty,
-        address to,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable;
+    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
 }

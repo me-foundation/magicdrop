@@ -12,6 +12,7 @@ interface IBucketAuction {
     error NotClaimable();
     error PriceHasBeenSet();
     error PriceNotSet();
+    error TransferFailed();
     error UserAlreadyClaimed();
 
     struct User {
