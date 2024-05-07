@@ -163,10 +163,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      * ]
      */
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
-        uint256 originalSize = _mintStages.length;
-        for (uint256 i = 0; i < originalSize; i++) {
-            _mintStages.pop();
-        }
+        delete _mintStages;
 
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
@@ -429,7 +426,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
-            IERC20(_mintCurrency).safeTransferFrom(
+            IERC20(_mintCurrency).transferFrom(
                 msg.sender,
                 address(this),
                 (stage.price + stage.mintFee) * qty
@@ -476,10 +473,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function withdrawERC20() external onlyOwner {
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
-        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, totalMintFee);
+        IERC20(_mintCurrency).transfer(MINT_FEE_RECEIVER, totalMintFee);
 
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(msg.sender, remaining);
+        IERC20(_mintCurrency).transfer(msg.sender, remaining);
 
         emit WithdrawERC20(_mintCurrency, totalMintFee + remaining);
     }
