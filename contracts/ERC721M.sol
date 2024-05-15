@@ -69,9 +69,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Total mint fee
     uint256 private _totalMintFee;
 
-    address public constant MINT_FEE_RECEIVER =
-        0x11d168d51aa436880F5F99B37e2A1C6A31DE8754;
-
     constructor(
         string memory collectionName,
         string memory collectionSymbol,

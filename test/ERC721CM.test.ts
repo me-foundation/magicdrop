@@ -6,6 +6,7 @@ import { MerkleTree } from 'merkletreejs';
 import { ERC721CM } from '../typechain-types';
 
 const { getAddress } = ethers.utils;
+const MINT_FEE_RECEIVER = '0x11d168d51aa436880F5F99B37e2A1C6A31DE8754';
 
 chai.use(chaiAsPromised);
 
@@ -677,6 +678,56 @@ describe('ERC721CM', function () {
       expect(stageInfo.maxStageSupply).to.equal(100);
       expect(walletMintedCount).to.equal(1);
       expect(stagedMintedCount.toNumber()).to.equal(1);
+    });
+
+    it('mint with free stage with mint fee', async () => {
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
+      await contract.setStages([
+        {
+          price: 0,
+          mintFee: ethers.utils.parseEther('0.1'),
+          walletLimit: 0,
+          merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
+          maxStageSupply: 100,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1,
+        },
+      ]);
+      await contract.setMintable(true);
+
+      const contractBalanceInitial = await ethers.provider.getBalance(contract.address);
+      const mintFeeReceiverBalanceInitial = await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+
+      // Setup the test context: Update block.timestamp to comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
+      await readonlyContract.mint(
+        1,
+        [ethers.utils.hexZeroPad('0x', 32)],
+        0,
+        '0x00',
+        {
+          value: ethers.utils.parseEther('0.1'),
+        },
+      );
+
+      await contract.withdraw();
+
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await readonlyContract.getStageInfo(0);
+      expect(stageInfo.maxStageSupply).to.equal(100);
+      expect(walletMintedCount).to.equal(1);
+      expect(stagedMintedCount.toNumber()).to.equal(1);
+
+      const contractBalancePost = await ethers.provider.getBalance(contract.address)
+      expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
+
+      const mintFeeReceiverBalancePost = await ethers.provider.getBalance(MINT_FEE_RECEIVER)
+      expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(ethers.utils.parseEther('0.1'));
     });
 
     it('mint with cosign - happy path', async () => {

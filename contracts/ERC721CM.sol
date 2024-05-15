@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "contracts/creator-token-standards/ERC721ACQueryable.sol";
 import "./IERC721M.sol";
+import "./utils/Constants.sol";
 
 /**
  * @title ERC721CM
@@ -68,9 +69,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
 
     // Total mint fee
     uint256 private _totalMintFee;
-
-    address public constant MINT_FEE_RECEIVER =
-        0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc;
 
     constructor(
         string memory collectionName,
