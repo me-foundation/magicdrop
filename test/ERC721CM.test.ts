@@ -6,7 +6,7 @@ import { MerkleTree } from 'merkletreejs';
 import { ERC721CM } from '../typechain-types';
 
 const { getAddress } = ethers.utils;
-const MINT_FEE_RECEIVER = '0x11d168d51aa436880F5F99B37e2A1C6A31DE8754';
+const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
 
 chai.use(chaiAsPromised);
 
