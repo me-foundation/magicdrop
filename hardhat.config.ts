@@ -152,6 +152,10 @@ task('deploy', 'Deploy ERC721M')
     'ERC-20 contract address (if minting with ERC-20)',
     '0x0000000000000000000000000000000000000000',
   )
+  .addOptionalParam(
+    'fundreceiver',
+    'The treasury wallet to receive mint fund',
+  )
   .addParam<boolean>(
     'useoperatorfilterer',
     'whether or not to use operator filterer, used with legacy 721M contract',

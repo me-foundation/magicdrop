@@ -15,6 +15,8 @@ describe('ERC721CMRoyalties', function () {
   let owner: SignerWithAddress;
 
   beforeEach(async () => {
+    [owner] = await ethers.getSigners();
+
     const ERC721CMRoyalties =
       await ethers.getContractFactory('ERC721CMRoyalties');
     erc721cmRoyalties = await ERC721CMRoyalties.deploy(
@@ -26,12 +28,12 @@ describe('ERC721CMRoyalties', function () {
       ethers.constants.AddressZero,
       60,
       ethers.constants.AddressZero,
+      owner.address,
       WALLET_1, // erc2198royaltyreceiver
       10, // erc2198royaltyfeenumerator
     );
     await erc721cmRoyalties.deployed();
 
-    [owner] = await ethers.getSigners();
     connection = erc721cmRoyalties.connect(owner);
   });
 

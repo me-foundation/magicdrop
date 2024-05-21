@@ -16,6 +16,7 @@ describe('ERC721M', function () {
   let contract: ERC721M;
   let readonlyContract: ERC721M;
   let owner: SignerWithAddress;
+  let fundReceiver: SignerWithAddress;
   let readonly: SignerWithAddress;
   let chainId: number;
 
@@ -51,6 +52,8 @@ describe('ERC721M', function () {
   };
 
   beforeEach(async () => {
+    [owner, readonly, fundReceiver] = await ethers.getSigners();
+
     const ERC721M = await ethers.getContractFactory('ERC721M');
     const erc721M = await ERC721M.deploy(
       'Test',
@@ -61,10 +64,10 @@ describe('ERC721M', function () {
       ethers.constants.AddressZero,
       60,
       ethers.constants.AddressZero,
+      fundReceiver.address,
     );
     await erc721M.deployed();
 
-    [owner, readonly] = await ethers.getSigners();
     contract = erc721M.connect(owner);
     readonlyContract = erc721M.connect(readonly);
     chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
@@ -101,8 +104,8 @@ describe('ERC721M', function () {
     ).to.equal(100);
 
     await expect(() => contract.withdraw()).to.changeEtherBalances(
-      [contract, owner],
-      [-100, 100],
+      [contract, owner, fundReceiver],
+      [-100, 0, 100],
     );
 
     expect(
@@ -1310,6 +1313,7 @@ describe('ERC721M', function () {
         ethers.constants.AddressZero,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721M.deployed();
 
@@ -1370,7 +1374,7 @@ describe('ERC721M', function () {
 
     it('crossmint with cosign', async () => {
       const crossmintAddressStr = '0xdAb1a1854214684acE522439684a145E62505233';
-      [owner, readonly] = await ethers.getSigners();
+      [owner, readonly, fundReceiver] = await ethers.getSigners();
       const ERC721M = await ethers.getContractFactory('ERC721M');
       const erc721M = await ERC721M.deploy(
         'Test',
@@ -1381,6 +1385,7 @@ describe('ERC721M', function () {
         owner.address,
         300,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721M.deployed();
 
@@ -1692,6 +1697,7 @@ describe('ERC721M', function () {
           ethers.constants.AddressZero,
           60,
           ethers.constants.AddressZero,
+          fundReceiver.address,
         ),
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
@@ -1783,7 +1789,7 @@ describe('ERC721M', function () {
 
   describe('Cosign', () => {
     it('can deploy with 0x0 cosign', async () => {
-      const [owner, cosigner] = await ethers.getSigners();
+      const [owner, cosigner, fundReceiver] = await ethers.getSigners();
       const ERC721M = await ethers.getContractFactory('ERC721M');
       const erc721M = await ERC721M.deploy(
         'Test',
@@ -1794,6 +1800,7 @@ describe('ERC721M', function () {
         ethers.constants.AddressZero,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721M.deployed();
       const ownerConn = erc721M.connect(owner);
@@ -1811,7 +1818,7 @@ describe('ERC721M', function () {
     });
 
     it('can deploy with cosign', async () => {
-      const [_, minter, cosigner] = await ethers.getSigners();
+      const [_, minter, cosigner, fundReceiver] = await ethers.getSigners();
       const ERC721M = await ethers.getContractFactory('ERC721M');
       const erc721M = await ERC721M.deploy(
         'Test',
@@ -1822,6 +1829,7 @@ describe('ERC721M', function () {
         cosigner.address,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721M.deployed();
 

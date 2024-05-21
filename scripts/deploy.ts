@@ -21,6 +21,7 @@ interface IDeployParams {
   useoperatorfilterer?: boolean;
   openedition?: boolean;
   mintcurrency?: string;
+  fundreceiver?: string;
   useerc721c?: boolean;
   useerc2198?: boolean;
   erc2198royaltyreceiver?: string;
@@ -63,7 +64,8 @@ export const deploy = async (
     overrides.gasLimit = hre.ethers.BigNumber.from(args.gaslimit);
   }
 
-  const contractFactory = await hre.ethers.getContractFactory(contractName);
+  const [signer] = await hre.ethers.getSigners();
+  const contractFactory = await hre.ethers.getContractFactory(contractName, signer);
 
   const params = [
     args.name,
@@ -74,6 +76,7 @@ export const deploy = async (
     args.cosigner ?? hre.ethers.constants.AddressZero,
     args.timestampexpiryseconds ?? 300,
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
+    args.fundreceiver ?? signer.address,
   ] as any[];
 
   if (args.useerc2198) {

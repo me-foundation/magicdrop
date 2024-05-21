@@ -18,6 +18,7 @@ contract ERC721CMBasicRoyalties is ERC721CM, BasicRoyalties {
         address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency,
+        address fundReceiver,
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     )
@@ -29,7 +30,8 @@ contract ERC721CMBasicRoyalties is ERC721CM, BasicRoyalties {
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            fundReceiver
         )
         BasicRoyalties(royaltyReceiver, royaltyFeeNumerator)
     {}
