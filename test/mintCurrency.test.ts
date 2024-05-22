@@ -4,11 +4,12 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 
 describe('ERC721M: Mint Currency', () => {
-  let erc721M: ERC721M,
-    contract: ERC721M,
-    erc20: Contract,
-    owner: Signer,
-    minter: Signer;
+  let erc721M: ERC721M;
+  let contract: ERC721M;
+  let erc20: Contract;
+  let owner: Signer;
+  let fundReceiver: Signer;
+  let minter: Signer;
   const mintPrice = 50;
   const mintFee = 10;
   const mintQty = 3;
@@ -16,6 +17,8 @@ describe('ERC721M: Mint Currency', () => {
 
   describe('deployed with ERC-20 token as mint currency', function () {
     beforeEach(async function () {
+      [owner, minter, fundReceiver] = await ethers.getSigners();
+
       // Deploy the ERC20 token contract that will be used for minting
       const Token = await ethers.getContractFactory('MockERC20');
       erc20 = await Token.deploy(10000);
@@ -32,10 +35,10 @@ describe('ERC721M: Mint Currency', () => {
         ethers.constants.AddressZero,
         60,
         erc20.address,
+        fundReceiver.getAddress(),
       );
       await erc721M.deployed();
 
-      [owner, minter] = await ethers.getSigners();
 
       contract = erc721M.connect(owner);
 
@@ -138,11 +141,10 @@ describe('ERC721M: Mint Currency', () => {
         // Then, call the withdrawERC20 function from the owner's account
         await erc721M.connect(owner).withdrawERC20();
 
-        // Get the owner's balance
-        const ownerBalance = await erc20.balanceOf(await owner.getAddress());
+        // Get the balance of fundReceiver
+        const fundReceiverBalance = await erc20.balanceOf(await fundReceiver.getAddress());
 
-        // The owner's balance should now be equal to the initial amount
-        expect(ownerBalance).to.equal(initialAmount);
+        expect(fundReceiverBalance).to.equal(initialAmount);
       });
     });
 
@@ -167,6 +169,7 @@ describe('ERC721M: Mint Currency', () => {
         ethers.constants.AddressZero,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.getAddress(),
       );
       await erc721M.deployed();
 
@@ -198,11 +201,12 @@ describe('ERC721M: Mint Currency', () => {
 });
 
 describe('ERC721CM: Mint Currency', () => {
-  let erc721CM: ERC721CM,
-    contract: ERC721CM,
-    erc20: Contract,
-    owner: Signer,
-    minter: Signer;
+  let erc721CM: ERC721CM;
+  let contract: ERC721CM;
+  let erc20: Contract;
+  let owner: Signer;
+  let fundReceiver: Signer;
+  let minter: Signer;
   const mintPrice = 50;
   const mintFee = 10;
   const mintQty = 3;
@@ -210,6 +214,8 @@ describe('ERC721CM: Mint Currency', () => {
 
   describe('deployed with ERC-20 token as mint currency', function () {
     beforeEach(async function () {
+      [owner, minter, fundReceiver] = await ethers.getSigners();
+
       // Deploy the ERC20 token contract that will be used for minting
       const Token = await ethers.getContractFactory('MockERC20');
       erc20 = await Token.deploy(10000);
@@ -226,10 +232,9 @@ describe('ERC721CM: Mint Currency', () => {
         ethers.constants.AddressZero,
         60,
         erc20.address,
+        fundReceiver.getAddress(),
       );
       await erc721CM.deployed();
-
-      [owner, minter] = await ethers.getSigners();
 
       contract = erc721CM.connect(owner);
 
@@ -332,11 +337,10 @@ describe('ERC721CM: Mint Currency', () => {
         // Then, call the withdrawERC20 function from the owner's account
         await erc721CM.connect(owner).withdrawERC20();
 
-        // Get the owner's balance
-        const ownerBalance = await erc20.balanceOf(await owner.getAddress());
+        // Get the fundReceiver's balance
+        const fundReceiverBalance = await erc20.balanceOf(await fundReceiver.getAddress());
 
-        // The owner's balance should now be equal to the initial amount
-        expect(ownerBalance).to.equal(initialAmount);
+        expect(fundReceiverBalance).to.equal(initialAmount);
       });
     });
 
@@ -350,6 +354,8 @@ describe('ERC721CM: Mint Currency', () => {
 
   describe('deployed with zero address as mint currency', function () {
     beforeEach(async function () {
+      [owner, minter, fundReceiver] = await ethers.getSigners();
+
       // Deploy the ERC721M contract
       const ERC721CM = await ethers.getContractFactory('ERC721CM');
       erc721CM = await ERC721CM.deploy(
@@ -361,10 +367,9 @@ describe('ERC721CM: Mint Currency', () => {
         ethers.constants.AddressZero,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.getAddress(),
       );
       await erc721CM.deployed();
-
-      [owner, minter] = await ethers.getSigners();
 
       contract = erc721CM.connect(owner);
     });

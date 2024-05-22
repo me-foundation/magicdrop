@@ -18,6 +18,7 @@ contract ERC721CMRoyalties is ERC721CM, UpdatableRoyalties {
         address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency,
+        address fundReceiver,
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     )
@@ -29,7 +30,8 @@ contract ERC721CMRoyalties is ERC721CM, UpdatableRoyalties {
             globalWalletLimit,
             cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            fundReceiver
         )
         UpdatableRoyalties(royaltyReceiver, royaltyFeeNumerator)
     {}

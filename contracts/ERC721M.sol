@@ -69,6 +69,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Total mint fee
     uint256 private _totalMintFee;
 
+    // Fund receiver
+    address immutable public FUND_RECEIVER;
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -77,7 +80,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint256 globalWalletLimit,
         address cosigner,
         uint64 timestampExpirySeconds,
-        address mintCurrency
+        address mintCurrency,
+        address fundReceiver
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -88,6 +92,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
+        FUND_RECEIVER = fundReceiver;
     }
 
     /**
@@ -459,7 +464,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         if (!success) revert TransferFailed();
 
         uint256 remainingValue = address(this).balance;
-        (success, ) = msg.sender.call{value: remainingValue}("");
+        (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -474,7 +479,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
 
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(msg.sender, remaining);
+        IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
 
         emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
