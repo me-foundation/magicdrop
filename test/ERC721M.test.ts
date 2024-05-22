@@ -615,7 +615,7 @@ describe('ERC721M', function () {
       // Set stages
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0.5'),
+          price: ethers.utils.parseEther('0.05'),
           mintFee: ethers.utils.parseEther('0'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),

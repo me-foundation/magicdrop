@@ -74,15 +74,16 @@ describe('ERC721M: Mint Currency', () => {
       it('should revert mint if not enough token allowance', async function () {
         // Give minter some mock tokens
         const minterBalance = 1000;
+        const minterAddress = await minter.getAddress();
 
-        await erc20.mint(await minter.getAddress(), minterBalance);
+        await erc20.mint(minterAddress, minterBalance);
 
         // mint should revert
         await expect(
           erc721M
             .connect(minter)
             .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith('ERC20InsufficientAllowance');
+        ).to.be.revertedWith(`ERC20InsufficientAllowance("${erc721M.address}", 0, ${mintCost})`);
       });
 
       it('should revert mint if not enough token balance', async function () {
@@ -150,8 +151,9 @@ describe('ERC721M: Mint Currency', () => {
 
     it('should revert if a non-owner tries to withdraw', async function () {
       // Try to call withdrawERC20 from another account
+      const mintAddress = await minter.getAddress();
       await expect(erc721M.connect(minter).withdrawERC20()).to.be.revertedWith(
-        'OwnableUnauthorizedAccount',
+        `OwnableUnauthorizedAccount("${mintAddress}")`,
       );
     });
   });
@@ -270,21 +272,24 @@ describe('ERC721CM: Mint Currency', () => {
       it('should revert mint if not enough token allowance', async function () {
         // Give minter some mock tokens
         const minterBalance = 1000;
+        const minterAddress = await minter.getAddress();
 
-        await erc20.mint(await minter.getAddress(), minterBalance);
+        await erc20.mint(minterAddress, minterBalance);
 
         // mint should revert
         await expect(
           erc721CM
             .connect(minter)
             .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith('ERC20: insufficient allowance');
+        ).to.be.revertedWith(`ERC20InsufficientAllowance("${erc721CM.address}", 0, ${mintCost})`);
       });
 
       it('should revert mint if not enough token balance', async function () {
         // Give minter some mock tokens
         const minterBalance = 1;
-        await erc20.mint(await minter.getAddress(), minterBalance);
+        const minterAddress = await minter.getAddress();
+
+        await erc20.mint(minterAddress, minterBalance);
 
         // approve contract for erc-20 transfer
         await erc20.connect(minter).approve(erc721CM.address, mintCost);
@@ -294,7 +299,7 @@ describe('ERC721CM: Mint Currency', () => {
           erc721CM
             .connect(minter)
             .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith('ERC20: transfer amount exceeds balanc');
+        ).to.be.revertedWith(`ERC20InsufficientBalance("${minterAddress}", ${minterBalance}, ${mintCost})`);
       });
 
       it('should transfer the ERC20 tokens and mint when all conditions are met', async function () {
@@ -346,8 +351,9 @@ describe('ERC721CM: Mint Currency', () => {
 
     it('should revert if a non-owner tries to withdraw', async function () {
       // Try to call withdrawERC20 from another account
+      const mintAddress = await minter.getAddress();
       await expect(erc721CM.connect(minter).withdrawERC20()).to.be.revertedWith(
-        'Ownable: caller is not the owner',
+        `OwnableUnauthorizedAccount("${mintAddress}")`,
       );
     });
   });
