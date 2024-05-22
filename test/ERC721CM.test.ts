@@ -6,6 +6,7 @@ import { MerkleTree } from 'merkletreejs';
 import { ERC721CM } from '../typechain-types';
 
 const { getAddress } = ethers.utils;
+const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
 
 chai.use(chaiAsPromised);
 
@@ -13,6 +14,7 @@ describe('ERC721CM', function () {
   let contract: ERC721CM;
   let readonlyContract: ERC721CM;
   let owner: SignerWithAddress;
+  let fundReceiver: SignerWithAddress;
   let readonly: SignerWithAddress;
   let chainId: number;
 
@@ -48,6 +50,8 @@ describe('ERC721CM', function () {
   };
 
   beforeEach(async () => {
+    [owner, readonly, fundReceiver] = await ethers.getSigners();
+
     const ERC721CM = await ethers.getContractFactory('ERC721CM');
     const erc721cm = await ERC721CM.deploy(
       'Test',
@@ -58,10 +62,10 @@ describe('ERC721CM', function () {
       ethers.constants.AddressZero,
       60,
       ethers.constants.AddressZero,
+      fundReceiver.address,
     );
     await erc721cm.deployed();
 
-    [owner, readonly] = await ethers.getSigners();
     contract = erc721cm.connect(owner);
     readonlyContract = erc721cm.connect(readonly);
     chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
@@ -94,8 +98,8 @@ describe('ERC721CM', function () {
     ).to.equal(100);
 
     await expect(() => contract.withdraw()).to.changeEtherBalances(
-      [contract, owner],
-      [-100, 100],
+      [contract, owner, fundReceiver],
+      [-100, 0, 100],
     );
 
     expect(
@@ -112,6 +116,7 @@ describe('ERC721CM', function () {
         readonlyContract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -120,6 +125,7 @@ describe('ERC721CM', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -135,6 +141,7 @@ describe('ERC721CM', function () {
         contract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -143,6 +150,7 @@ describe('ERC721CM', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -158,6 +166,7 @@ describe('ERC721CM', function () {
         contract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -166,6 +175,7 @@ describe('ERC721CM', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -179,6 +189,7 @@ describe('ERC721CM', function () {
         contract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,
@@ -187,6 +198,7 @@ describe('ERC721CM', function () {
           },
           {
             price: ethers.utils.parseEther('0.6'),
+            mintFee: ethers.utils.parseEther('0.1'),
             walletLimit: 4,
             merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
             maxStageSupply: 10,
@@ -201,6 +213,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -209,6 +222,7 @@ describe('ERC721CM', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
@@ -237,6 +251,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x3', 32),
           maxStageSupply: 0,
@@ -257,6 +272,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x3', 32),
           maxStageSupply: 0,
@@ -265,6 +281,7 @@ describe('ERC721CM', function () {
         },
         {
           price: ethers.utils.parseEther('0.7'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 5,
           merkleRoot: ethers.utils.hexZeroPad('0x4', 32),
           maxStageSupply: 5,
@@ -285,6 +302,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -307,6 +325,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -323,6 +342,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 3,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -331,6 +351,7 @@ describe('ERC721CM', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 4,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
@@ -356,6 +377,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -416,6 +438,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -458,6 +481,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 0,
@@ -504,6 +528,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 5,
@@ -512,6 +537,7 @@ describe('ERC721CM', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: ethers.utils.parseEther('0.1'),
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x2', 32),
           maxStageSupply: 10,
@@ -544,6 +570,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 100,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 0,
@@ -585,6 +612,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
@@ -625,7 +653,8 @@ describe('ERC721CM', function () {
       // Set stages
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0'),
+          price: 0,
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
@@ -654,6 +683,56 @@ describe('ERC721CM', function () {
       expect(stagedMintedCount.toNumber()).to.equal(1);
     });
 
+    it('mint with free stage with mint fee', async () => {
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      // +10 is a number bigger than the count of transactions up to mint
+      const stageStart = block.timestamp + 10;
+      // Set stages
+      await contract.setStages([
+        {
+          price: 0,
+          mintFee: ethers.utils.parseEther('0.1'),
+          walletLimit: 0,
+          merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
+          maxStageSupply: 100,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1,
+        },
+      ]);
+      await contract.setMintable(true);
+
+      const contractBalanceInitial = await ethers.provider.getBalance(contract.address);
+      const mintFeeReceiverBalanceInitial = await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+
+      // Setup the test context: Update block.timestamp to comply to the stage being active
+      await ethers.provider.send('evm_mine', [stageStart - 1]);
+      await readonlyContract.mint(
+        1,
+        [ethers.utils.hexZeroPad('0x', 32)],
+        0,
+        '0x00',
+        {
+          value: ethers.utils.parseEther('0.1'),
+        },
+      );
+
+      await contract.withdraw();
+
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await readonlyContract.getStageInfo(0);
+      expect(stageInfo.maxStageSupply).to.equal(100);
+      expect(walletMintedCount).to.equal(1);
+      expect(stagedMintedCount.toNumber()).to.equal(1);
+
+      const contractBalancePost = await ethers.provider.getBalance(contract.address)
+      expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
+
+      const mintFeeReceiverBalancePost = await ethers.provider.getBalance(MINT_FEE_RECEIVER)
+      expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(ethers.utils.parseEther('0.1'));
+    });
+
     it('mint with cosign - happy path', async () => {
       const [_owner, minter, cosigner] = await ethers.getSigners();
       const block = await ethers.provider.getBlock(
@@ -663,7 +742,8 @@ describe('ERC721CM', function () {
 
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0'),
+          price: 0,
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 100,
@@ -702,7 +782,8 @@ describe('ERC721CM', function () {
       const [_owner, minter, cosigner] = await ethers.getSigners();
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0'),
+          price: 0,
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 100,
@@ -797,7 +878,8 @@ describe('ERC721CM', function () {
       const stageStart = block.timestamp;
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0'),
+          price: 0,
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 100,
@@ -859,7 +941,8 @@ describe('ERC721CM', function () {
       const stageStart = block.timestamp;
       await contract.setStages([
         {
-          price: ethers.utils.parseEther('0'),
+          price: 0,
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 100,
@@ -906,6 +989,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -914,6 +998,7 @@ describe('ERC721CM', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
@@ -1027,6 +1112,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 5,
@@ -1065,6 +1151,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 5,
@@ -1122,6 +1209,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 100,
@@ -1192,6 +1280,8 @@ describe('ERC721CM', function () {
 
     it('crossmint', async () => {
       const crossmintAddressStr = '0xdAb1a1854214684acE522439684a145E62505233';
+      [owner, readonly, fundReceiver] = await ethers.getSigners();
+
       const ERC721CM = await ethers.getContractFactory('ERC721CM');
       const erc721cm = await ERC721CM.deploy(
         'Test',
@@ -1202,10 +1292,10 @@ describe('ERC721CM', function () {
         ethers.constants.AddressZero,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721cm.deployed();
 
-      [owner, readonly] = await ethers.getSigners();
       const ownerConn = erc721cm.connect(owner);
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
@@ -1216,6 +1306,7 @@ describe('ERC721CM', function () {
       await ownerConn.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 100,
@@ -1261,7 +1352,7 @@ describe('ERC721CM', function () {
 
     it('crossmint with cosign', async () => {
       const crossmintAddressStr = '0xdAb1a1854214684acE522439684a145E62505233';
-      [owner, readonly] = await ethers.getSigners();
+      [owner, readonly, fundReceiver] = await ethers.getSigners();
       const ERC721CM = await ethers.getContractFactory('ERC721CM');
       const erc721cm = await ERC721CM.deploy(
         'Test',
@@ -1272,6 +1363,7 @@ describe('ERC721CM', function () {
         owner.address,
         300,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721cm.deployed();
 
@@ -1282,6 +1374,7 @@ describe('ERC721CM', function () {
       await ownerConn.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x', 32),
           maxStageSupply: 100,
@@ -1352,6 +1445,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 7,
@@ -1393,6 +1487,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: root,
           maxStageSupply: 7,
@@ -1423,6 +1518,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 1,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 1,
@@ -1459,6 +1555,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 1,
           merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
           maxStageSupply: 1,
@@ -1490,6 +1587,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -1498,6 +1596,7 @@ describe('ERC721CM', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
@@ -1531,6 +1630,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -1539,6 +1639,7 @@ describe('ERC721CM', function () {
         },
         {
           price: ethers.utils.parseEther('0.6'),
+          mintFee: 0,
           walletLimit: 10,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 10,
@@ -1578,6 +1679,7 @@ describe('ERC721CM', function () {
           ethers.constants.AddressZero,
           60,
           ethers.constants.AddressZero,
+          fundReceiver.address,
         ),
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
@@ -1604,6 +1706,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 100,
@@ -1644,6 +1747,7 @@ describe('ERC721CM', function () {
       await contract.setStages([
         {
           price: ethers.utils.parseEther('0.1'),
+          mintFee: 0,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 0,
@@ -1667,7 +1771,7 @@ describe('ERC721CM', function () {
 
   describe('Cosign', () => {
     it('can deploy with 0x0 cosign', async () => {
-      const [owner, cosigner] = await ethers.getSigners();
+      const [owner, cosigner, fundReceiver] = await ethers.getSigners();
       const ERC721CM = await ethers.getContractFactory('ERC721CM');
       const erc721cm = await ERC721CM.deploy(
         'Test',
@@ -1678,6 +1782,7 @@ describe('ERC721CM', function () {
         ethers.constants.AddressZero,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721cm.deployed();
       const ownerConn = erc721cm.connect(owner);
@@ -1695,7 +1800,7 @@ describe('ERC721CM', function () {
     });
 
     it('can deploy with cosign', async () => {
-      const [_, minter, cosigner] = await ethers.getSigners();
+      const [_, minter, cosigner, fundReceiver] = await ethers.getSigners();
       const ERC721CM = await ethers.getContractFactory('ERC721CM');
       const erc721cm = await ERC721CM.deploy(
         'Test',
@@ -1706,6 +1811,7 @@ describe('ERC721CM', function () {
         cosigner.address,
         60,
         ethers.constants.AddressZero,
+        fundReceiver.address,
       );
       await erc721cm.deployed();
 

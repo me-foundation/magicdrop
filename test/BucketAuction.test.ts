@@ -18,6 +18,8 @@ describe('BucketAuction', function () {
   let auctionEndTimestamp = 1;
 
   beforeEach(async () => {
+    [owner, readonly] = await ethers.getSigners();
+
     const BA = await ethers.getContractFactory('BucketAuction');
     ba = await BA.deploy(
       'Test',
@@ -29,15 +31,16 @@ describe('BucketAuction', function () {
       /* minimumContributionInWei= */ 100,
       0, // Placeholder; startTimeUnixSeconds will be overwritten later
       1, // Placeholder; endTimeUnixSeconds will be overwritten later
+      owner.address,
     );
     await ba.deployed();
 
-    [owner, readonly] = await ethers.getSigners();
     ownerConn = ba.connect(owner);
     await ownerConn.setTimestampExpirySeconds(60);
     await ownerConn.setStages([
       {
         price: ethers.utils.parseEther('0.1'),
+        mintFee: 0,
         walletLimit: 0,
         merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
         maxStageSupply: 100,
@@ -46,6 +49,7 @@ describe('BucketAuction', function () {
       },
       {
         price: ethers.utils.parseEther('0.2'),
+        mintFee: 0,
         walletLimit: 0,
         merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
         maxStageSupply: 100,

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import '@nomiclabs/hardhat-etherscan';
+import "@nomicfoundation/hardhat-verify";
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import 'hardhat-contract-sizer';
@@ -66,6 +66,11 @@ const config: HardhatUserConfig = {
     tests: './test',
   },
   networks: {
+    base: {
+      url: process.env.BASE_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     ropsten: {
       url: process.env.ROPSTEN_URL || '',
       accounts:
@@ -110,6 +115,9 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
+  sourcify: {
+    enabled: true
+  }
 };
 
 task('setStages', 'Set stages for ERC721M')
@@ -145,6 +153,10 @@ task('deploy', 'Deploy ERC721M')
     'mintcurrency',
     'ERC-20 contract address (if minting with ERC-20)',
     '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
+    'fundreceiver',
+    'The treasury wallet to receive mint fund',
   )
   .addParam<boolean>(
     'useoperatorfilterer',
