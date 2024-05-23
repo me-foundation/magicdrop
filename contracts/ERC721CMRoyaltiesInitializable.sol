@@ -14,6 +14,10 @@ contract ERC721CMRoyaltiesInitializable is
     ERC721CMInitializable,
     UpdatableRoyaltiesInitializable
 {
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(
         string memory collectionName,
         string memory collectionSymbol,

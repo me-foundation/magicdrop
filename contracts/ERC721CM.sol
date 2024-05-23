@@ -72,7 +72,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     uint256 private _totalMintFee;
 
     // Fund receiver
-    address immutable public FUND_RECEIVER;
+    address public immutable FUND_RECEIVER;
 
     constructor(
         string memory collectionName,
