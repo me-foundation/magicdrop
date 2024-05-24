@@ -24,9 +24,9 @@ contract ERC721CMRoyaltiesCloneFactory {
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency,
+        address fundReceiver,
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     ) external returns (address) {
@@ -37,9 +37,9 @@ contract ERC721CMRoyaltiesCloneFactory {
             tokenURISuffix,
             maxMintableSupply,
             globalWalletLimit,
-            cosigner,
             timestampExpirySeconds,
             mintCurrency,
+            fundReceiver,
             royaltyReceiver,
             royaltyFeeNumerator
         );

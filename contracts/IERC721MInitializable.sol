@@ -26,6 +26,7 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable {
     error Mintable();
     error StageSupplyExceeded();
     error TimestampExpired();
+    error TransferFailed();
     error WalletGlobalLimitExceeded();
     error WalletStageLimitExceeded();
     error WithdrawFailed();
@@ -34,6 +35,7 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable {
 
     struct MintStageInfo {
         uint80 price;
+        uint80 mintFee;
         uint32 walletLimit; // 0 for unlimited
         bytes32 merkleRoot; // 0x0 for no presale enforced
         uint24 maxStageSupply; // 0 for unlimited
@@ -44,6 +46,7 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable {
     event UpdateStage(
         uint256 stage,
         uint80 price,
+        uint80 mintFee,
         uint32 walletLimit,
         bytes32 merkleRoot,
         uint24 maxStageSupply,
@@ -58,7 +61,6 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable {
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
-    event SetTimestampExpirySeconds(uint64 expiry);
     event SetMintCurrency(address mintCurrency);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);

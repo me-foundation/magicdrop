@@ -24,9 +24,9 @@ contract ERC721CMRoyaltiesInitializable is
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency,
+        address fundReceiver,
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     ) public initializerERC721A initializer {
@@ -36,9 +36,9 @@ contract ERC721CMRoyaltiesInitializable is
             tokenURISuffix,
             maxMintableSupply,
             globalWalletLimit,
-            cosigner,
             timestampExpirySeconds,
-            mintCurrency
+            mintCurrency,
+            fundReceiver
         );
         setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
