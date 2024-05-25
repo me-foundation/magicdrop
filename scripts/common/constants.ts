@@ -17,3 +17,6 @@ export const ERC721BatchTransferContract =
 export const ERC721CV2_VALIDATOR = '0x721C00182a990771244d7A71B9FA2ea789A3b433';
 export const ERC721CV2_FREEZE_LEVEL = 4;
 export const ERC721CV2_EMPTY_LIST = 4;
+
+// Mainnet, Polygon, Base
+export const ERC721CMRoyaltiesCloneFactoryContract = '0x7cEEd7215D71393d56966dA48C5727851326e101';
