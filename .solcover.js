@@ -3,5 +3,6 @@ module.exports = {
     "auctions/",
     "creator-token-standards/",
     "mocks/",
+    'operator-filter/',
   ],
 };

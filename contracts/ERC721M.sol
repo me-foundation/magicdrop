@@ -3,11 +3,12 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "./IERC721M.sol";
 import "./utils/Constants.sol";
@@ -70,7 +71,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     uint256 private _totalMintFee;
 
     // Fund receiver
-    address immutable public FUND_RECEIVER;
+    address public immutable FUND_RECEIVER;
 
     constructor(
         string memory collectionName,
@@ -82,7 +83,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint64 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver
-    ) ERC721A(collectionName, collectionSymbol) {
+    ) Ownable(msg.sender) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = false;
@@ -530,17 +531,19 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     ) public view returns (bytes32) {
         if (_cosigner == address(0)) revert CosignerNotSet();
         return
-            keccak256(
-                abi.encodePacked(
-                    address(this),
-                    minter,
-                    qty,
-                    _cosigner,
-                    timestamp,
-                    _chainID(),
-                    getCosignNonce(minter)
+            MessageHashUtils.toEthSignedMessageHash(
+                keccak256(
+                    abi.encodePacked(
+                        address(this),
+                        minter,
+                        qty,
+                        _cosigner,
+                        timestamp,
+                        _chainID(),
+                        getCosignNonce(minter)
+                    )
                 )
-            ).toEthSignedMessageHash();
+            );
     }
 
     /**

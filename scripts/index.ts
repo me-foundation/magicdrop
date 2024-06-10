@@ -1,5 +1,6 @@
 export { deploy } from './deploy';
 export * from './deployBA';
+export * from './deployClone';
 export * from './mint';
 export * from './ownerMint';
 export * from './setBaseURI';

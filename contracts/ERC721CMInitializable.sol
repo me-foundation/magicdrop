@@ -2,29 +2,29 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "contracts/creator-token-standards/ERC721ACQueryable.sol";
-import "./IERC721M.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "contracts/creator-token-standards/ERC721ACQueryableInitializable.sol";
+import "./access/OwnableInitializable.sol";
+import "./IERC721MInitializable.sol";
 import "./utils/Constants.sol";
 
 /**
- * @title ERC721CM
- *
- * @dev ERC721ACQueryable and ERC721C subclass with MagicEden launchpad features including
- *  - multiple minting stages with time-based auto stage switch
- *  - global and stage wallet-level minting limit
- *  - whitelist using merkle tree
- *  - crossmint support
- *  - anti-botting
+ * @title ERC721CMInitializable
+ * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
+ * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
+abstract contract ERC721CMInitializable is
+    IERC721MInitializable,
+    ERC721ACQueryableInitializable,
+    OwnableInitializable,
+    ReentrancyGuard
+{
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -33,9 +33,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
 
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
     uint64 private _timestampExpirySeconds;
-
-    // The address of the cosigner server.
-    address private _cosigner;
 
     // The crossmint address. Need to set if using crossmint.
     address private _crossmintAddress;
@@ -72,26 +69,26 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     uint256 private _totalMintFee;
 
     // Fund receiver
-    address public immutable FUND_RECEIVER;
+    address public FUND_RECEIVER;
 
-    constructor(
+    function __ERC721CMInitializable_init(
         string memory collectionName,
         string memory collectionSymbol,
         string memory tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver
-    ) Ownable(msg.sender) ERC721ACQueryable(collectionName, collectionSymbol) {
+    ) public onlyInitializing {
+        initializeOwner(msg.sender);
+        __ERC721ACQueryableInitializable_init(collectionName, collectionSymbol);
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
-        _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         FUND_RECEIVER = fundReceiver;
@@ -121,22 +118,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Sets cosigner.
-     */
-    function setCosigner(address cosigner) external onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
-    }
-
-    /**
-     * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
-     */
-    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
-        _timestampExpirySeconds = expiry;
-        emit SetTimestampExpirySeconds(expiry);
-    }
-
-    /**
      * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
      */
     function setCrossmintAddress(address crossmintAddress) external onlyOwner {
@@ -151,6 +132,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      * specified by merkle root.
      *    [{
      *      price: 10000000000000000000,
+     *      mintFee: 1000000000000000000,
      *      maxStageSupply: 2000,
      *      walletLimit: 1,
      *      merkleRoot: 0x559fadeb887449800b7b320bf1e92d309f329b9641ac238bebdb74e15c0a5218,
@@ -159,6 +141,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      *     },
      *     {
      *      price: 20000000000000000000,
+     *      mintFee: 0,
      *      maxStageSupply: 3000,
      *      walletLimit: 2,
      *      merkleRoot: 0,
@@ -319,7 +302,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(qty, msg.sender, 0, proof, timestamp, signature);
+        _mintInternal(qty, msg.sender, 0, proof);
     }
 
     /**
@@ -338,7 +321,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
+        _mintInternal(qty, msg.sender, limit, proof);
     }
 
     /**
@@ -362,7 +345,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         // Check the caller is Crossmint
         if (msg.sender != _crossmintAddress) revert CrossmintOnly();
 
-        _mintInternal(qty, to, 0, proof, timestamp, signature);
+        _mintInternal(qty, to, 0, proof);
     }
 
     /**
@@ -372,18 +355,11 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint32 qty,
         address to,
         uint32 limit,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
+        bytes32[] calldata proof
     ) internal canMint hasSupply(qty) {
         uint64 stageTimestamp = uint64(block.timestamp);
 
         MintStageInfo memory stage;
-        if (_cosigner != address(0)) {
-            assertValidCosign(msg.sender, qty, timestamp, signature);
-            _assertValidTimestamp(timestamp);
-            stageTimestamp = timestamp;
-        }
 
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
@@ -509,7 +485,12 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      */
     function tokenURI(
         uint256 tokenId
-    ) public view override(ERC721A, IERC721A) returns (string memory) {
+    )
+        public
+        view
+        override(ERC721AUpgradeable, IERC721AUpgradeable)
+        returns (string memory)
+    {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _currentBaseURI;
@@ -540,49 +521,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns data hash for the given minter, qty and timestamp.
-     */
-    function getCosignDigest(
-        address minter,
-        uint32 qty,
-        uint64 timestamp
-    ) public view returns (bytes32) {
-        if (_cosigner == address(0)) revert CosignerNotSet();
-        return
-            MessageHashUtils.toEthSignedMessageHash(
-                keccak256(
-                    abi.encodePacked(
-                        address(this),
-                        minter,
-                        qty,
-                        _cosigner,
-                        timestamp,
-                        _chainID(),
-                        getCosignNonce(minter)
-                    )
-                )
-            );
-    }
-
-    /**
-     * @dev Validates the the given signature.
-     */
-    function assertValidCosign(
-        address minter,
-        uint32 qty,
-        uint64 timestamp,
-        bytes memory signature
-    ) public view {
-        if (
-            !SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(minter, qty, timestamp),
-                signature
-            )
-        ) revert InvalidCosignSignature();
-    }
-
-    /**
      * @dev Returns the current active stage based on timestamp.
      */
     function getActiveStageFromTimestamp(
@@ -600,14 +538,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
             }
         }
         revert InvalidStage();
-    }
-
-    /**
-     * @dev Validates the timestamp is not expired.
-     */
-    function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - _timestampExpirySeconds)
-            revert TimestampExpired();
     }
 
     /**
@@ -631,7 +561,12 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         return chainID;
     }
 
-    function _requireCallerIsContractOwner() internal view virtual override {
+    function _requireCallerIsContractOwner()
+        internal
+        view
+        virtual
+        override(OwnableInitializable, OwnablePermissions)
+    {
         _checkOwner();
     }
 }
