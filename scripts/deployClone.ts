@@ -73,5 +73,5 @@ export const deployClone = async (
 
   console.log(`Submitted tx ${signedTx.hash}`);
   const receipt = await signedTx.wait();
-  console.log(`Clone deployed at ${receipt.logs}`);
+  console.log(`Clone deployed at ${receipt.logs[0].address}`);
 };
