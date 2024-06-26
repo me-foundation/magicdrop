@@ -67,6 +67,11 @@ const config: HardhatUserConfig = {
     tests: './test',
   },
   networks: {
+    hardhat: {
+      accounts: {
+        accountsBalance: '1000000000000000000000'
+      }
+    },
     base: {
       url: process.env.BASE_URL || '',
       accounts:
