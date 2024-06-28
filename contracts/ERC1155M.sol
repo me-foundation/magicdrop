@@ -5,6 +5,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./utils/Constants.sol";
@@ -22,7 +23,7 @@ import "./IERC1155M.sol";
  *  - whitelist
  *  - variable wallet limit
  */
-contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
+contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -70,7 +71,9 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
         address mintCurrency,
-        address fundReceiver
+        address fundReceiver,
+        address royaltyReceiver,
+        uint96 royaltyFeeNumerator
     ) Ownable(msg.sender) ERC1155(uri) {
         if (maxMintableSupply.length != globalWalletLimit.length) {
             revert InvalidLimitArgsLength();
@@ -90,6 +93,8 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
         _mintCurrency = mintCurrency;
         _transferable = true;
         FUND_RECEIVER = fundReceiver;
+
+        _setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
 
     /**
@@ -461,6 +466,37 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
             }
         }
         revert InvalidStage();
+    }
+
+    /**
+     * @dev Set default royalty for all tokens
+     */
+    function setDefaultRoyalty(
+        address receiver,
+        uint96 feeNumerator
+    ) public onlyOwner {
+        super._setDefaultRoyalty(receiver, feeNumerator);
+        emit DefaultRoyaltySet(receiver, feeNumerator);
+    }
+
+    /**
+     * @dev Set default royalty for individual token
+     */
+    function setTokenRoyalty(
+        uint256 tokenId,
+        address receiver,
+        uint96 feeNumerator
+    ) public onlyOwner {
+        super._setTokenRoyalty(tokenId, receiver, feeNumerator);
+        emit TokenRoyaltySet(tokenId, receiver, feeNumerator);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC2981, ERC1155) returns (bool) {
+        return
+            ERC1155.supportsInterface(interfaceId) ||
+            ERC2981.supportsInterface(interfaceId);
     }
 
     /**

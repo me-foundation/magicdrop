@@ -10,6 +10,8 @@ const { getAddress, parseEther } = ethers.utils;
 const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
 const ZERO_PROOF = ethers.utils.hexZeroPad('0x0', 32);
 const PAYMENT_ADDRESS = '0x0000000000000000000000000000000000000000';
+const WALLET_1 = '0x0764844ac95ABCa4F6306E592c7D9C9f3615f590';
+const WALLET_2 = '0xef59F379B48f2E92aBD94ADcBf714D170967925D';
 
 chai.use(chaiAsPromised);
 
@@ -36,6 +38,8 @@ describe('ERC1155M', function () {
       [0],
       PAYMENT_ADDRESS,
       fundReceiver.address,
+      WALLET_1,
+      10,
     );
     await erc1155M.deployed();
 
@@ -839,6 +843,8 @@ describe('ERC1155M', function () {
         [0, 0, 10],
         PAYMENT_ADDRESS,
         fundReceiver.address,
+        WALLET_1,
+        10,
       );
       await erc1155M.deployed();
 
@@ -1244,6 +1250,8 @@ describe('ERC1155M', function () {
           [101],
           PAYMENT_ADDRESS,
           fundReceiver.address,
+          WALLET_1,
+          10,
         ),
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
@@ -1292,7 +1300,7 @@ describe('ERC1155M', function () {
     });
   });
 
-  describe.only('Enforce transferablity', function () {
+  describe('Enforce transferablity', function () {
     it('set transferable', async () => {
       await expect(contract.setTransferable(false))
         .to.emit(contract, 'SetTransferable')
@@ -1354,6 +1362,84 @@ describe('ERC1155M', function () {
       expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(1));
       expect(await contract.balanceOf(readonly.address, 0)).to.eql(BigNumber.from(4));
     });
+  });
+
+  describe('Royalty info', function () {
+    beforeEach(async () => {
+      const factory = await ethers.getContractFactory('ERC1155M');
+      const erc1155M = await factory.deploy(
+        'collection',
+        'symbol',
+        'https://example/{id}.json',
+        [100, 200],
+        [0, 0],
+        PAYMENT_ADDRESS,
+        fundReceiver.address,
+        WALLET_1,
+        10,
+      );
+      await erc1155M.deployed();
+
+      contract = erc1155M.connect(owner);
+      readonlyContract = erc1155M.connect(readonly);
+    });
+
+    it('Set default royalty', async () => {
+      let royaltyInfo = await contract.royaltyInfo(0, 1000);
+      expect(royaltyInfo[0]).to.equal(WALLET_1);
+      expect(royaltyInfo[1].toNumber()).to.equal(1);
+  
+      royaltyInfo = await contract.royaltyInfo(1, 9999);
+      expect(royaltyInfo[0]).to.equal(WALLET_1);
+      expect(royaltyInfo[1].toNumber()).to.equal(9);
+  
+      await contract.setDefaultRoyalty(WALLET_2, 0);
+  
+      royaltyInfo = await contract.royaltyInfo(0, 1000);
+      expect(royaltyInfo[0]).to.equal(WALLET_2);
+      expect(royaltyInfo[1].toNumber()).to.equal(0);
+  
+      royaltyInfo = await contract.royaltyInfo(1, 9999);
+      expect(royaltyInfo[0]).to.equal(WALLET_2);
+      expect(royaltyInfo[1].toNumber()).to.equal(0);
+    });
+  
+    it('Set token royalty', async () => {
+      let royaltyInfo = await contract.royaltyInfo(0, 1000);
+      expect(royaltyInfo[0]).to.equal(WALLET_1);
+      expect(royaltyInfo[1].toNumber()).to.equal(1);
+  
+      royaltyInfo = await contract.royaltyInfo(1, 9999);
+      expect(royaltyInfo[0]).to.equal(WALLET_1);
+      expect(royaltyInfo[1].toNumber()).to.equal(9);
+  
+      await contract.setTokenRoyalty(1, WALLET_2, 100);
+  
+      royaltyInfo = await contract.royaltyInfo(0, 1000);
+      expect(royaltyInfo[0]).to.equal(WALLET_1);
+      expect(royaltyInfo[1].toNumber()).to.equal(1);
+  
+      royaltyInfo = await contract.royaltyInfo(1, 9999);
+      expect(royaltyInfo[0]).to.equal(WALLET_2);
+      expect(royaltyInfo[1].toNumber()).to.equal(99);
+    });
+  
+    it('Non-owner update reverts', async () => {
+      await expect(
+        readonlyContract.setTokenRoyalty(1, WALLET_2, 100),
+      ).to.be.revertedWith('OwnableUnauthorizedAccount');
+  
+      await expect(
+        readonlyContract.setDefaultRoyalty(WALLET_2, 0),
+      ).to.be.revertedWith('OwnableUnauthorizedAccount');
+    });
+  });
+
+  it('Supports the right interfaces', async () => {
+    expect(await contract.supportsInterface('0x01ffc9a7')).to.be.true; // IERC165
+    expect(await contract.supportsInterface('0x2a55205a')).to.be.true; // IERC2981
+    expect(await contract.supportsInterface('0xd9b67a26')).to.be.true; // IERC1155
+    expect(await contract.supportsInterface('0x0e89341c')).to.be.true; // IERC1155MetadataURI
 
   });
 });

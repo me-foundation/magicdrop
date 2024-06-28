@@ -48,6 +48,8 @@ interface IERC1155M {
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
     event SetTransferable(bool transferable);
+    event DefaultRoyaltySet(address receiver, uint96 feeNumerator);
+    event TokenRoyaltySet(uint256 tokenId, address receiver, uint96 feeNumerator);
 
     function getNumberStages() external view returns (uint256);
 
