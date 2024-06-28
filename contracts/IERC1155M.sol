@@ -13,6 +13,7 @@ interface IERC1155M {
     error InvalidStartAndEndTimestamp();
     error NoSupplyLeft();
     error NotEnoughValue();
+    error NotTransferable();
     error StageSupplyExceeded();
     error TimestampExpired();
     error TransferFailed();
@@ -44,10 +45,9 @@ interface IERC1155M {
     );
     event SetMaxMintableSupply(uint256 tokenId, uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 tokenId, uint256 globalWalletLimit);
-    event SetBaseURI(string baseURI);
-    event SetMintCurrency(address mintCurrency);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
+    event SetTransferable(bool transferable);
 
     function getNumberStages() external view returns (uint256);
 

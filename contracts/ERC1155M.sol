@@ -44,6 +44,9 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
     // Mint stage infomation. See MintStageInfo for details.
     MintStageInfo[] private _mintStages;
 
+    // Whether the token can be transferred.
+    bool private _transferable;
+
     // Minted count per stage per token per wallet
     mapping(uint256 => mapping(uint256 => mapping(address => uint32)))
         private _stageMintedCountsPerTokenPerWallet;
@@ -85,6 +88,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _mintCurrency = mintCurrency;
+        _transferable = true;
         FUND_RECEIVER = fundReceiver;
     }
 
@@ -263,7 +267,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
         uint256 stage
     ) external view override returns (MintStageInfo memory, uint256[] memory, uint256[] memory) {
         if (stage >= _mintStages.length) {
-            revert("InvalidStage");
+            revert InvalidStage();
         }
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
         uint256[] memory stageMinted = totalMintedByStageByAddress(stage, msg.sender);
@@ -435,6 +439,14 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Sets transferable of the tokens.
+     */
+    function setTransferable(bool transferable) external onlyOwner {
+        _transferable = transferable;
+        emit SetTransferable(transferable);
+    }
+
+    /**
      * @dev Returns the current active stage based on timestamp.
      */
     function getActiveStageFromTimestamp(
@@ -449,6 +461,25 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
             }
         }
         revert InvalidStage();
+    }
+
+    /**
+     * @dev The hook of token transfer to validate the transfer.
+     */
+    function _update(
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory values
+    ) internal virtual override {
+        super._update(from, to, ids, values);
+
+        bool fromZeroAddress = from == address(0);
+        bool toZeroAddress = to == address(0);
+
+        if (!fromZeroAddress && !toZeroAddress && !_transferable) {
+            revert NotTransferable();
+        }
     }
 
     /**
@@ -470,16 +501,5 @@ contract ERC1155M is IERC1155M, ERC1155Supply, Ownable, ReentrancyGuard {
         ) {
             revert InvalidStageArgsLength();
         }
-    }
-
-    /**
-     * @dev Returns chain id.
-     */
-    function _chainID() private view returns (uint256) {
-        uint256 chainID;
-        assembly {
-            chainID := chainid()
-        }
-        return chainID;
     }
 }

@@ -19,7 +19,7 @@ describe('ERC1155M', function () {
   let owner: SignerWithAddress;
   let fundReceiver: SignerWithAddress;
   let readonly: SignerWithAddress;
-  
+
   this.beforeAll(async () => {
     [owner, readonly, fundReceiver] = await ethers.getSigners();
   })
@@ -844,7 +844,7 @@ describe('ERC1155M', function () {
 
       contract = erc1155M.connect(owner);
       readonlyContract = erc1155M.connect(readonly);
-      
+
       // Get an estimated stage start time
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
@@ -884,8 +884,8 @@ describe('ERC1155M', function () {
 
       // Mint one more should fail
       await expect(contract.mint(0, 1, [ZERO_PROOF], {
-          value: parseEther('0.2'),
-        },
+        value: parseEther('0.2'),
+      },
       )).to.be.revertedWith('WalletStageLimitExceeded');
 
       await expect(contract.mint(1, 1, [ZERO_PROOF], {
@@ -961,15 +961,15 @@ describe('ERC1155M', function () {
       const mintFeeReceiverBalanceInitial = await ethers.provider.getBalance(MINT_FEE_RECEIVER);
 
       await readonlyContract.mint(1, 5, [ZERO_PROOF], {
-          value: parseEther('0'),
-        },
+        value: parseEther('0'),
+      },
       );
 
       await readonlyContract.mint(2, 10, [ZERO_PROOF], {
-          value: parseEther('0'),
-        },
+        value: parseEther('0'),
+      },
       );
-      
+
       const [stageInfo, walletMintedCount, stagedMintedCount] =
         await readonlyContract.getStageInfo(0);
       expect(stageInfo.maxStageSupply).to.eql([10, 10, 0]);
@@ -1290,5 +1290,70 @@ describe('ERC1155M', function () {
         }),
       ).to.be.revertedWith('WalletGlobalLimitExceeded');
     });
+  });
+
+  describe.only('Enforce transferablity', function () {
+    it('set transferable', async () => {
+      await expect(contract.setTransferable(false))
+        .to.emit(contract, 'SetTransferable')
+        .withArgs(false);
+
+      await expect(contract.setTransferable(true))
+        .to.emit(contract, 'SetTransferable')
+        .withArgs(true);
+    });
+
+    it('can mint and burn when not transferable', async () => {
+      await expect(contract.setTransferable(false))
+        .to.emit(contract, 'SetTransferable')
+        .withArgs(false);
+
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      const stageStart = block.timestamp;
+      const stageEnd = stageStart + 100;
+
+      await contract.setStages([
+        {
+          price: [parseEther('0.1')],
+          mintFee: [parseEther('0.01')],
+          walletLimit: [0],
+          merkleRoot: [ZERO_PROOF],
+          maxStageSupply: [100],
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageEnd,
+        },
+      ]);
+
+      // Can mint
+      await contract.mint(0, 3, [ZERO_PROOF], {
+        value: parseEther('0.33'),
+      });
+
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(3));
+
+      // Cannot transfer
+      await expect(contract.safeTransferFrom(owner.address, readonly.address, 0, 1, '0x00')).to.be.revertedWith('NotTransferable');
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(3));
+
+      // Open transfer
+      await expect(contract.setTransferable(true))
+        .to.emit(contract, 'SetTransferable')
+        .withArgs(true);
+
+      // Can mint
+      await contract.mint(0, 2, [ZERO_PROOF], {
+        value: parseEther('0.22'),
+      });
+
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(5));
+
+      // Can transfer
+      await contract.safeTransferFrom(owner.address, readonly.address, 0, 4, '0x00');
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(1));
+      expect(await contract.balanceOf(readonly.address, 0)).to.eql(BigNumber.from(4));
+    });
+
   });
 });
