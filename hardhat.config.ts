@@ -10,8 +10,10 @@ import { HardhatUserConfig, task, types } from 'hardhat/config';
 import 'solidity-coverage';
 import {
   setStages,
+  set1155Stages,
   setMintable,
   deploy,
+  deploy1155,
   deployClone,
   setBaseURI,
   setCrossmintAddress,
@@ -143,6 +145,19 @@ task('setStages', 'Set stages for ERC721M')
   )
   .setAction(setStages);
 
+
+task('set1155Stages', 'Set stages for ERC721M')
+  .addParam('contract', 'contract address')
+  .addParam('stages', 'stages json file')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam(
+    'gaslimit',
+    'Set maximum gas units to spend on transaction',
+    500000,
+    types.int,
+  )
+  .setAction(set1155Stages);
+
 task('setMintable', 'Set mintable state for ERC721M')
   .addParam('contract', 'contract address')
   .addParam('mintable', 'mintable state', 'true', types.boolean)
@@ -211,6 +226,47 @@ task('deploy', 'Deploy ERC721M')
     console.log('Deploying...');
     await deploy(tasksArgs, hre);
   });
+
+
+task('deploy1155', 'Deploy ERC1155M')
+  .addParam('name', 'name')
+  .addParam('symbol', 'symbol')
+  .addParam('uri', 'token uri')
+  .addParam('maxsupply', 'max supply')
+  .addParam('globalwalletlimit', 'global wallet limit')
+  .addOptionalParam(
+    'mintcurrency',
+    'ERC-20 contract address (if minting with ERC-20)',
+    '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
+    'fundreceiver',
+    'The treasury wallet to receive mint fund',
+  )
+  .addParam<boolean>(
+    'openedition',
+    'whether or not a open edition mint (unlimited supply, 999,999,999)',
+    false,
+    types.boolean,
+  )
+  .addOptionalParam(
+    'erc2198royaltyreceiver',
+    'erc2198 royalty receiver address',
+  )
+  .addOptionalParam(
+    'erc2198royaltyfeenumerator',
+    'erc2198 royalty fee numerator',
+  )
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
+  .setAction(async (tasksArgs, hre) => {
+    // console.log('Cleaning...');
+    // await hre.run('clean');
+    // console.log('Compiling...');
+    // await hre.run('compile');
+    console.log('Deploying...');
+    await deploy1155(tasksArgs, hre);
+});
 
 task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')

@@ -101,7 +101,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
      * @dev Returns whether it has enough supply for the given qty.
      */
     modifier hasSupply(uint256 tokenId, uint256 qty) {
-        if (totalSupply(tokenId) + qty > _maxMintableSupply[tokenId]) revert NoSupplyLeft();
+        if (_maxMintableSupply[tokenId] > 0 && totalSupply(tokenId) + qty > _maxMintableSupply[tokenId]) revert NoSupplyLeft();
         _;
     }
 
