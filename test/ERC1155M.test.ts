@@ -4,7 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
 import { ERC1155M } from '../typechain-types';
-import { BigNumber } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 
 const { getAddress, parseEther } = ethers.utils;
 const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
@@ -1432,6 +1432,145 @@ describe('ERC1155M', function () {
       await expect(
         readonlyContract.setDefaultRoyalty(WALLET_2, 0),
       ).to.be.revertedWith('OwnableUnauthorizedAccount');
+    });
+  });
+
+  describe('ERC20 minting', () => {
+    let erc20: Contract;
+
+    const mintPrice = 50;
+    const mintFee = 10;
+    const mintQty = 3;
+    const mintCost = (mintPrice + mintFee) * mintQty;
+
+    beforeEach(async () => {
+      // Deploy the ERC20 token contract that will be used for minting
+      const Token = await ethers.getContractFactory('MockERC20');
+      erc20 = await Token.deploy(10000);
+      await erc20.deployed();
+
+      const factory = await ethers.getContractFactory('ERC1155M');
+      const erc1155M = await factory.deploy(
+        'collection',
+        'symbol',
+        'https://example/{id}.json',
+        [10],
+        [0],
+        erc20.address,
+        fundReceiver.address,
+        WALLET_1,
+        10,
+      );
+      await erc1155M.deployed();
+
+      contract = erc1155M.connect(owner);
+      readonlyContract = erc1155M.connect(readonly);
+
+      // Get an estimated stage start time
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      const stageStart = block.timestamp;
+      // +100 is a number bigger than the count of transactions needed for this test
+      const stageEnd = stageStart + 100;
+
+      await contract.setStages([
+        {
+          price: [mintPrice],
+          mintFee: [mintFee],
+          walletLimit: [0],
+          merkleRoot: [ZERO_PROOF],
+          maxStageSupply: [0],
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageEnd,
+        },
+      ]);
+    });
+
+    it('should read the correct erc20 token address', async function () {
+      expect(await contract.getMintCurrency()).to.equal(erc20.address);
+    });
+
+    it('should revert mint if not enough token allowance', async function () {
+      // Give minter some mock tokens
+      const minterBalance = 1000;
+      const minterAddress = await owner.getAddress();
+
+      await erc20.mint(minterAddress, minterBalance);
+
+      // mint should revert
+      await expect(
+          contract
+          .mint(0, mintQty, [ethers.utils.hexZeroPad('0x', 32)]),
+      ).to.be.revertedWith(`ERC20InsufficientAllowance("${contract.address}", 0, ${mintCost})`);
+    });
+
+    it('should revert mint if not enough token balance', async function () {
+      // Give minter some mock tokens
+      const minterBalance = 1;
+      const minterAddress = await owner.getAddress();
+
+      await erc20.mint(minterAddress, minterBalance);
+
+      // approve contract for erc-20 transfer
+      await erc20.connect(owner).approve(contract.address, mintCost);
+
+      // mint should revert
+      await expect(
+        contract
+          .mint(0, mintQty, [ethers.utils.hexZeroPad('0x', 32)]),
+      ).to.be.revertedWith(`ERC20InsufficientBalance("${minterAddress}", ${minterBalance}, ${mintCost})`);
+    });
+
+    it('should transfer the ERC20 tokens and mint when all conditions are met', async function () {
+      // Give minter some mock tokens
+      const minterBalance = 1000;
+      await erc20.mint(await readonly.getAddress(), minterBalance);
+
+      // approve contract for erc-20 transfer
+      await erc20.connect(readonly).approve(readonlyContract.address, mintCost);
+
+      // Mint tokens
+      await readonlyContract
+        .mint(0, mintQty, [ethers.utils.hexZeroPad('0x', 32)]);
+
+      const postMintBalance = await erc20.balanceOf(
+        await readonly.getAddress(),
+      );
+      expect(postMintBalance).to.equal(minterBalance - mintCost);
+
+      const contractBalance = await erc20.balanceOf(contract.address);
+      expect(contractBalance).to.equal(mintCost);
+
+      const totalMintedByMinter = await contract.totalMintedByAddress(
+        await readonly.getAddress(),
+      );
+      expect(totalMintedByMinter[0].toNumber()).to.equal(mintQty);
+
+      const totalSupply = await contract["totalSupply()"]();
+      expect(totalSupply.toNumber()).to.equal(mintQty);
+    });
+
+    it('should transfer the correct amount of ERC20 tokens to the owner', async function () {
+      // First, send some ERC20 tokens to the contract
+      const initialAmount = 10;
+      await erc20.mint(contract.address, initialAmount);
+
+      // Then, call the withdrawERC20 function from the owner's account
+      await contract.withdrawERC20();
+
+      // Get the fundReceiver's balance
+      const fundReceiverBalance = await erc20.balanceOf(await fundReceiver.getAddress());
+
+      expect(fundReceiverBalance).to.equal(initialAmount);
+    });
+
+    it('should revert if a non-owner tries to withdraw', async function () {
+      // Try to call withdrawERC20 from another account
+      const nonOwnerAddress = await readonly.getAddress();
+      await expect(readonlyContract.withdrawERC20()).to.be.revertedWith(
+        `OwnableUnauthorizedAccount("${nonOwnerAddress}")`,
+      );
     });
   });
 
