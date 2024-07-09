@@ -1256,6 +1256,23 @@ describe('ERC1155M', function () {
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
 
+    it('validates the size of global wallet limit of max mintable supply in constructor', async () => {
+      const factory = await ethers.getContractFactory('ERC1155M');
+      await expect(
+        factory.deploy(
+          'collection',
+          'symbol',
+          'https://example/{id}.json',
+          [100],
+          [0, 0],
+          PAYMENT_ADDRESS,
+          fundReceiver.address,
+          WALLET_1,
+          10,
+        ),
+      ).to.be.revertedWith('InvalidLimitArgsLength');
+    });
+    
     it('sets global wallet limit', async () => {
       await contract.setGlobalWalletLimit(0, 2);
       expect((await contract.getGlobalWalletLimit(0)).toNumber()).to.equal(2);
@@ -1579,6 +1596,5 @@ describe('ERC1155M', function () {
     expect(await contract.supportsInterface('0x2a55205a')).to.be.true; // IERC2981
     expect(await contract.supportsInterface('0xd9b67a26')).to.be.true; // IERC1155
     expect(await contract.supportsInterface('0x0e89341c')).to.be.true; // IERC1155MetadataURI
-
   });
 });
