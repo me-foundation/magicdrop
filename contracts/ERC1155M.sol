@@ -418,6 +418,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
+        _totalMintFee = 0;
         emit Withdraw(_totalMintFee + remainingValue);
     }
 
@@ -432,6 +433,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
         IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
 
+        _totalMintFee = 0;
         emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
 
