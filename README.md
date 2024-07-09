@@ -1,11 +1,11 @@
-# ERC721M
+# MagicDrop
 
 [![NPM][npm-shield]][npm-url]
 [![CI][ci-shield]][ci-url]
 [![MIT License][license-shield]][license-url]
 [![Coverage][coverage-shield]][coverage-url]
 
-ERC721M is a EVM minting protocol that enables the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.
+MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.
 
 ## Motivation
 
