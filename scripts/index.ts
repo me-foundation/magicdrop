@@ -4,6 +4,7 @@ export * from './deployBA';
 export * from './deployClone';
 export * from './mint';
 export * from './ownerMint';
+export * from './ownerMint1155';
 export * from './setBaseURI';
 export * from './setCrossmintAddress';
 export * from './setGlobalWalletLimit';

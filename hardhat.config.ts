@@ -42,6 +42,7 @@ import {
   freezeTrading,
   thawTrading,
   cleanWhitelist,
+  ownerMint1155,
 } from './scripts';
 import { deployCloneFactory } from './scripts/deployCloneFactory';
 
@@ -291,13 +292,23 @@ task('mint', 'Mint token(s)')
   .addParam('minttime', 'time of the mint')
   .setAction(mint);
 
-task('ownerMint', 'Mint token(s) as owner')
+task('ownerMint', 'Mint token(s) as owner for ERC721M')
   .addParam('contract', 'contract address')
   .addParam('qty', 'quantity to mint', '1')
   .addOptionalParam('to', 'recipient address')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(ownerMint);
+
+task('ownerMint1155', 'Mint token(s) as owner for ERC1155M')
+  .addParam('contract', 'contract address')
+  .addOptionalParam('to', 'recipient address')
+  .addParam('id', 'tokenId to mint', '0')
+  .addParam('qty', 'quantity to mint', '1')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
+  .setAction(ownerMint1155);
+
 
 task('setGlobalWalletLimit', 'Set the global wallet limit')
   .addParam('contract', 'contract address')
