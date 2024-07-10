@@ -10,8 +10,10 @@ import { HardhatUserConfig, task, types } from 'hardhat/config';
 import 'solidity-coverage';
 import {
   setStages,
+  set1155Stages,
   setMintable,
   deploy,
+  deploy1155,
   deployClone,
   setBaseURI,
   setCrossmintAddress,
@@ -40,6 +42,7 @@ import {
   freezeTrading,
   thawTrading,
   cleanWhitelist,
+  ownerMint1155,
 } from './scripts';
 import { deployCloneFactory } from './scripts/deployCloneFactory';
 
@@ -50,7 +53,12 @@ const config: HardhatUserConfig = {
       viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 20,
+        details: {
+          yulDetails: {
+            optimizerSteps: "dhfoD[xarrscLMcCTU]uljmul",
+          },
+        },
       },
     },
   },
@@ -67,6 +75,11 @@ const config: HardhatUserConfig = {
     tests: './test',
   },
   networks: {
+    hardhat: {
+      accounts: {
+        accountsBalance: '1000000000000000000000'
+      }
+    },
     base: {
       url: process.env.BASE_URL || '',
       accounts:
@@ -132,6 +145,19 @@ task('setStages', 'Set stages for ERC721M')
     types.int,
   )
   .setAction(setStages);
+
+
+task('set1155Stages', 'Set stages for ERC721M')
+  .addParam('contract', 'contract address')
+  .addParam('stages', 'stages json file')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam(
+    'gaslimit',
+    'Set maximum gas units to spend on transaction',
+    500000,
+    types.int,
+  )
+  .setAction(set1155Stages);
 
 task('setMintable', 'Set mintable state for ERC721M')
   .addParam('contract', 'contract address')
@@ -202,6 +228,47 @@ task('deploy', 'Deploy ERC721M')
     await deploy(tasksArgs, hre);
   });
 
+
+task('deploy1155', 'Deploy ERC1155M')
+  .addParam('name', 'name')
+  .addParam('symbol', 'symbol')
+  .addParam('uri', 'token uri')
+  .addParam('maxsupply', 'max supply')
+  .addParam('globalwalletlimit', 'global wallet limit')
+  .addOptionalParam(
+    'mintcurrency',
+    'ERC-20 contract address (if minting with ERC-20)',
+    '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
+    'fundreceiver',
+    'The treasury wallet to receive mint fund',
+  )
+  .addParam<boolean>(
+    'openedition',
+    'whether or not a open edition mint (unlimited supply, 999,999,999)',
+    false,
+    types.boolean,
+  )
+  .addOptionalParam(
+    'erc2198royaltyreceiver',
+    'erc2198 royalty receiver address',
+  )
+  .addOptionalParam(
+    'erc2198royaltyfeenumerator',
+    'erc2198 royalty fee numerator',
+  )
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
+  .setAction(async (tasksArgs, hre) => {
+    console.log('Cleaning...');
+    await hre.run('clean');
+    console.log('Compiling...');
+    await hre.run('compile');
+    console.log('Deploying...');
+    await deploy1155(tasksArgs, hre);
+});
+
 task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')
   .addParam('contract', 'contract address')
@@ -225,13 +292,23 @@ task('mint', 'Mint token(s)')
   .addParam('minttime', 'time of the mint')
   .setAction(mint);
 
-task('ownerMint', 'Mint token(s) as owner')
+task('ownerMint', 'Mint token(s) as owner for ERC721M')
   .addParam('contract', 'contract address')
   .addParam('qty', 'quantity to mint', '1')
   .addOptionalParam('to', 'recipient address')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(ownerMint);
+
+task('ownerMint1155', 'Mint token(s) as owner for ERC1155M')
+  .addParam('contract', 'contract address')
+  .addOptionalParam('to', 'recipient address')
+  .addParam('id', 'tokenId to mint', '0')
+  .addParam('qty', 'quantity to mint', '1')
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
+  .setAction(ownerMint1155);
+
 
 task('setGlobalWalletLimit', 'Set the global wallet limit')
   .addParam('contract', 'contract address')
