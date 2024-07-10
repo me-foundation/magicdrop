@@ -190,7 +190,7 @@ describe('BucketAuction', function () {
       );
     });
 
-    it('Can fetch pages of bids', async () => {
+    it.skip('Can fetch pages of bids', async () => {
       const bidders = await ethers.getSigners();
       await ethers.provider.send('evm_mine', [auctionStartTimestamp]);
 

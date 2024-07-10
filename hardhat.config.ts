@@ -261,10 +261,10 @@ task('deploy1155', 'Deploy ERC1155M')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(async (tasksArgs, hre) => {
-    // console.log('Cleaning...');
-    // await hre.run('clean');
-    // console.log('Compiling...');
-    // await hre.run('compile');
+    console.log('Cleaning...');
+    await hre.run('clean');
+    console.log('Compiling...');
+    await hre.run('compile');
     console.log('Deploying...');
     await deploy1155(tasksArgs, hre);
 });
