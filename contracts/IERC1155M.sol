@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 
 interface IERC1155M {
     error CannotIncreaseMaxMintableSupply();
+    error NewSupplyLessThanTotalSupply();
     error GlobalWalletLimitOverflow();
     error InsufficientStageTimeGap();
     error InvalidLimitArgsLength();

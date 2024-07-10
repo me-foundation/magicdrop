@@ -444,7 +444,7 @@ describe('ERC1155M', function () {
       ).to.be.revertedWith('ReentrancyGuardReentrantCall');
     });
 
-    it('can set max mintable supply', async () => {
+    it('set max mintable supply', async () => {
       await contract.setMaxMintableSupply(0, 99);
       expect(await contract.getMaxMintableSupply(0)).to.equal(99);
 
@@ -464,12 +464,18 @@ describe('ERC1155M', function () {
       // can not set the mintable supply for a non-existent token
       await expect(contract.setMaxMintableSupply(1, 100)).to.be.rejectedWith(
         'InvalidTokenId',
-      )
+      );
 
       // readonlyContract should not be able to set max mintable supply
       await expect(
         readonlyContract.setMaxMintableSupply(0, 99),
       ).to.be.revertedWith('Ownable');
+
+      // can not set the mintable supply lower than the total supply
+      await contract.ownerMint(owner.address, 0, 10);
+      await expect(contract.setMaxMintableSupply(0, 9)).to.be.rejectedWith(
+        'NewSupplyLessThanTotalSupply',
+      );
     });
 
     it('enforces max mintable supply', async () => {

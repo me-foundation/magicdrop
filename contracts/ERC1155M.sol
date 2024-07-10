@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
@@ -23,7 +23,7 @@ import "./IERC1155M.sol";
  *  - whitelist
  *  - variable wallet limit
  */
-contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard {
+contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, ReentrancyGuard {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -179,9 +179,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
     }
 
     /**
-     * @dev Sets maximum mintable supply.
-     *
-     * New supply cannot be larger than the old.
+     * @dev Sets maximum mintable supply. New supply cannot be larger than the old or the supply alraedy minted.
      */
     function setMaxMintableSupply(
         uint256 tokenId,
@@ -192,6 +190,9 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         }
         if (_maxMintableSupply[tokenId] != 0 && maxMintableSupply > _maxMintableSupply[tokenId]) {
             revert CannotIncreaseMaxMintableSupply();
+        }
+        if (maxMintableSupply < totalSupply(tokenId)) {
+            revert NewSupplyLessThanTotalSupply();
         }
         _maxMintableSupply[tokenId] = maxMintableSupply;
         emit SetMaxMintableSupply(tokenId, maxMintableSupply);
@@ -419,12 +420,12 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
     function withdraw() external onlyOwner {
         (bool success, ) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
+        _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
         (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
-        _totalMintFee = 0;
         emit Withdraw(_totalMintFee + remainingValue);
     }
 
@@ -435,11 +436,11 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
         IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        _totalMintFee = 0;
 
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
         IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
 
-        _totalMintFee = 0;
         emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
 
