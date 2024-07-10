@@ -1,7 +1,7 @@
 {
-  "name": "@magiceden-oss/erc721m",
-  "version": "0.1.2",
-  "description": "erc721m contract for Solidity",
+  "name": "@me-foundation/magicdrop",
+  "version": "0.1.3",
+  "description": "MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.",
   "files": [
     "/contracts/**/*.sol",
     "/artifacts/contracts/**/*.json",
