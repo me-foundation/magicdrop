@@ -10,6 +10,7 @@ interface IERC1155M {
     error InvalidProof();
     error InvalidStage();
     error InvalidStageArgsLength();
+    error InvalidTokenId();
     error InvalidStartAndEndTimestamp();
     error NoSupplyLeft();
     error NotEnoughValue();

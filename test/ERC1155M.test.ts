@@ -461,6 +461,11 @@ describe('ERC1155M', function () {
         'CannotIncreaseMaxMintableSupply',
       );
 
+      // can not set the mintable supply for a non-existent token
+      await expect(contract.setMaxMintableSupply(1, 100)).to.be.rejectedWith(
+        'InvalidTokenId',
+      )
+
       // readonlyContract should not be able to set max mintable supply
       await expect(
         readonlyContract.setMaxMintableSupply(0, 99),
@@ -1280,6 +1285,10 @@ describe('ERC1155M', function () {
       await expect(contract.setGlobalWalletLimit(0, 101)).to.be.revertedWith(
         'GlobalWalletLimitOverflow',
       );
+
+      await expect(contract.setGlobalWalletLimit(1, 100)).to.be.rejectedWith(
+        'InvalidTokenId',
+      )
     });
 
     it('enforces global wallet limit', async () => {

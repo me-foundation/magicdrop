@@ -39,9 +39,6 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
     // Global wallet limit, across all stages, per token.
     uint256[] private _globalWalletLimit;
 
-    // Number of tokens.
-    uint256 private _numTokens;
-
     // Mint stage infomation. See MintStageInfo for details.
     MintStageInfo[] private _mintStages;
 
@@ -60,6 +57,9 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
 
     // Total mint fee
     uint256 private _totalMintFee;
+
+    // Number of tokens.
+    uint256 private immutable NUM_TOKENS;
 
     // Fund receiver
     address public immutable FUND_RECEIVER;
@@ -80,14 +80,14 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         }
 
         for (uint256 i = 0; i < globalWalletLimit.length; i++) {
-            if (globalWalletLimit[i] > maxMintableSupply[i]) {
+            if (maxMintableSupply[i] > 0 && globalWalletLimit[i] > maxMintableSupply[i]) {
                 revert GlobalWalletLimitOverflow();
             }
         }
 
         name = collectionName;
         symbol = collectionSymbol;
-        _numTokens = globalWalletLimit.length;
+        NUM_TOKENS = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _mintCurrency = mintCurrency;
@@ -187,7 +187,10 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         uint256 tokenId,
         uint256 maxMintableSupply
     ) external virtual onlyOwner {
-        if (maxMintableSupply > _maxMintableSupply[tokenId]) {
+        if (tokenId >= NUM_TOKENS) {
+            revert InvalidTokenId();
+        }
+        if (_maxMintableSupply[tokenId] != 0 && maxMintableSupply > _maxMintableSupply[tokenId]) {
             revert CannotIncreaseMaxMintableSupply();
         }
         _maxMintableSupply[tokenId] = maxMintableSupply;
@@ -208,7 +211,10 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         uint256 tokenId,
         uint256 globalWalletLimit
     ) external onlyOwner {
-        if (globalWalletLimit > _maxMintableSupply[tokenId]) {
+        if (tokenId >= NUM_TOKENS) {
+            revert InvalidTokenId();
+        }
+        if (_maxMintableSupply[tokenId] > 0 && globalWalletLimit > _maxMintableSupply[tokenId]) {
             revert GlobalWalletLimitOverflow();
         }
         _globalWalletLimit[tokenId] = globalWalletLimit;
@@ -221,8 +227,8 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
     function totalMintedByAddress(
         address account
     ) public view virtual override returns (uint256[] memory) {
-        uint256[] memory totalMinted = new uint256[](_numTokens);
-        for (uint256 token = 0; token < _numTokens; token++ ) {
+        uint256[] memory totalMinted = new uint256[](NUM_TOKENS);
+        for (uint256 token = 0; token < NUM_TOKENS; token++ ) {
             for (uint256 stage = 0; stage < _mintStages.length; stage++) {
                 totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][token][account];
             }
@@ -251,8 +257,8 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
         uint256 stage,
         address account
     ) internal view virtual returns (uint256[] memory) {
-        uint256[] memory totalMinted = new uint256[](_numTokens);
-        for (uint256 token = 0; token < _numTokens; token++ ) {
+        uint256[] memory totalMinted = new uint256[](NUM_TOKENS);
+        for (uint256 token = 0; token < NUM_TOKENS; token++ ) {
             totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][token][account];
         }
         return totalMinted;
@@ -531,11 +537,11 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable, ReentrancyGuard
     }
 
     function _assertValidStageArgsLength(MintStageInfo calldata stageInfo) internal {
-        if (stageInfo.price.length != _numTokens ||
-        stageInfo.mintFee.length != _numTokens ||
-        stageInfo.walletLimit.length != _numTokens ||
-        stageInfo.merkleRoot.length != _numTokens ||
-        stageInfo.maxStageSupply.length != _numTokens
+        if (stageInfo.price.length != NUM_TOKENS ||
+        stageInfo.mintFee.length != NUM_TOKENS ||
+        stageInfo.walletLimit.length != NUM_TOKENS ||
+        stageInfo.merkleRoot.length != NUM_TOKENS ||
+        stageInfo.maxStageSupply.length != NUM_TOKENS
         ) {
             revert InvalidStageArgsLength();
         }
