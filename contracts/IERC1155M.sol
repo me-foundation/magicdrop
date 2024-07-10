@@ -35,7 +35,7 @@ interface IERC1155M {
     }
 
     event UpdateStage(
-        uint256 stage,
+        uint256 indexed stage,
         uint80[] price,
         uint80[] mintFee,
         uint32[] walletLimit,
@@ -44,13 +44,13 @@ interface IERC1155M {
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds
     );
-    event SetMaxMintableSupply(uint256 tokenId, uint256 maxMintableSupply);
-    event SetGlobalWalletLimit(uint256 tokenId, uint256 globalWalletLimit);
+    event SetMaxMintableSupply(uint256 indexed tokenId, uint256 maxMintableSupply);
+    event SetGlobalWalletLimit(uint256 indexed tokenId, uint256 globalWalletLimit);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
     event SetTransferable(bool transferable);
     event DefaultRoyaltySet(address receiver, uint96 feeNumerator);
-    event TokenRoyaltySet(uint256 tokenId, address receiver, uint96 feeNumerator);
+    event TokenRoyaltySet(uint256 indexed tokenId, address receiver, uint96 feeNumerator);
 
     function getNumberStages() external view returns (uint256);
 
