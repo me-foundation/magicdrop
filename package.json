@@ -73,7 +73,7 @@
     "ethereum-waffle": "^3.4.4",
     "hardhat": "^2.22.2",
     "hardhat-contract-sizer": "^2.10.0",
-    "hardhat-gas-reporter": "^1.0.8",
+    "hardhat-gas-reporter": "^1.0.10",
     "hardhat-watcher": "^2.5.0",
     "lint-staged": "^12.4.1",
     "merkletreejs": "^0.2.32",
