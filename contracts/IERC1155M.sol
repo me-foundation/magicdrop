@@ -48,7 +48,7 @@ interface IERC1155M {
     event SetMaxMintableSupply(uint256 indexed tokenId, uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 indexed tokenId, uint256 globalWalletLimit);
     event Withdraw(uint256 value);
-    event WithdrawERC20(address mintCurrency, uint256 value);
+    event WithdrawERC20(address indexed mintCurrency, uint256 value);
     event SetTransferable(bool transferable);
     event DefaultRoyaltySet(address receiver, uint96 feeNumerator);
     event TokenRoyaltySet(uint256 indexed tokenId, address receiver, uint96 feeNumerator);

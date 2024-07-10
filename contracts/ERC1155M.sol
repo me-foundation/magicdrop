@@ -39,7 +39,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
     // Global wallet limit, across all stages, per token.
     uint256[] private _globalWalletLimit;
 
-    // Mint stage infomation. See MintStageInfo for details.
+    // Mint stage information. See MintStageInfo for details.
     MintStageInfo[] private _mintStages;
 
     // Whether the token can be transferred.
@@ -52,11 +52,11 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
     // Minted count per stage per token.
     mapping(uint256 => mapping(uint256 => uint256)) private _stageMintedCountsPerToken;
 
-    // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
-    address private _mintCurrency;
-
     // Total mint fee
     uint256 private _totalMintFee;
+
+    // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
+    address private immutable MINT_CURRENCY;
 
     // Number of tokens.
     uint256 private immutable NUM_TOKENS;
@@ -90,7 +90,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         NUM_TOKENS = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
-        _mintCurrency = mintCurrency;
+        MINT_CURRENCY = mintCurrency;
         _transferable = true;
         FUND_RECEIVER = fundReceiver;
 
@@ -229,8 +229,9 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         address account
     ) public view virtual override returns (uint256[] memory) {
         uint256[] memory totalMinted = new uint256[](NUM_TOKENS);
+        uint256 numStages = _mintStages.length;
         for (uint256 token = 0; token < NUM_TOKENS; token++ ) {
-            for (uint256 stage = 0; stage < _mintStages.length; stage++) {
+            for (uint256 stage = 0; stage < numStages; stage++) {
                 totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][token][account];
             }
         }
@@ -245,7 +246,8 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         uint256 tokenId
     ) internal view virtual returns (uint256) {
         uint256 totalMinted = 0;
-        for (uint256 i = 0; i < _mintStages.length; i++) {
+        uint256 numStages = _mintStages.length;
+        for (uint256 i = 0; i < numStages; i++) {
             totalMinted += _stageMintedCountsPerTokenPerWallet[i][tokenId][account];
         }
         return totalMinted;
@@ -290,7 +292,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
      * @dev Returns mint currency address.
      */
     function getMintCurrency() external view returns (address) {
-        return _mintCurrency;
+        return MINT_CURRENCY;
     }
 
     /**
@@ -342,7 +344,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
 
         // Check value if minting with ETH
         if (
-            _mintCurrency == address(0) &&
+            MINT_CURRENCY == address(0) &&
             msg.value < (stage.price[tokenId] + stage.mintFee[tokenId]) * qty
         ) revert NotEnoughValue();
 
@@ -384,9 +386,9 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
             }
         }
 
-        if (_mintCurrency != address(0)) {
+        if (MINT_CURRENCY != address(0)) {
             // ERC20 mint payment
-            IERC20(_mintCurrency).safeTransferFrom(
+            IERC20(MINT_CURRENCY).safeTransferFrom(
                 msg.sender,
                 address(this),
                 (stage.price[tokenId] + stage.mintFee[tokenId]) * qty
@@ -433,19 +435,19 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
      * @dev Withdraws ERC-20 funds by owner.
      */
     function withdrawERC20() external onlyOwner {
-        if (_mintCurrency == address(0)) revert WrongMintCurrency();
+        if (MINT_CURRENCY == address(0)) revert WrongMintCurrency();
 
-        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        IERC20(MINT_CURRENCY).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
         _totalMintFee = 0;
 
-        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
+        uint256 remaining = IERC20(MINT_CURRENCY).balanceOf(address(this));
+        IERC20(MINT_CURRENCY).safeTransfer(FUND_RECEIVER, remaining);
 
-        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
+        emit WithdrawERC20(MINT_CURRENCY, _totalMintFee + remaining);
     }
 
     /**
-     * @dev Sets a new URI for all token types. The URI relys on token type ID
+     * @dev Sets a new URI for all token types. The URI relies on token type ID
      * substitution mechanism.
      */
     function setURI(string calldata newURI) external onlyOwner {
