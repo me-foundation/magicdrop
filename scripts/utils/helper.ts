@@ -16,7 +16,7 @@ export const checkCodeVersion = async () => {
     .trim();
   const remoteLatestCommit = child
     .execSync(
-      "git ls-remote https://github.com/magicoss/erc721m.git HEAD | awk '{ print $1}'",
+      "git ls-remote https://github.com/me-foundation/magicdrop.git HEAD | awk '{ print $1}'",
     )
     .toString()
     .trim();
