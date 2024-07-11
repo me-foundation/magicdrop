@@ -1,6 +1,6 @@
-# ERC721M Contract Usage Guide
+# Magicdrop Minting Contract Usage Guide
 ## Pre-requisites
-- To safely use the contract, you need to have a good understanding of the [ERC721](https://eips.ethereum.org/EIPS/eip-721) standard.
+- To safely use the contract, you need to have a good understanding of the [ERC721](https://eips.ethereum.org/EIPS/eip-721) and [ERC1155](https://eips.ethereum.org/EIPS/eip-1155) standard.
 - To use ERC-20 payment feature, you need to have a good understanding of the [ERC20](https://eips.ethereum.org/EIPS/eip-20) standard.
 - To use the whitelist feature, you need to have a good understanding of the [Merkle Tree](https://en.wikipedia.org/wiki/Merkle_tree) and [Merkle Proof](https://en.wikipedia.org/wiki/Merkle_tree#Merkle_proofs) concepts.
 - To use OpenSea's Operator Filterer feature, you need to have a good understanding of the [Operator Filter Registry](https://github.com/ProjectOpenSea/operator-filter-registry).
