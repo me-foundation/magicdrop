@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "contracts/creator-token-standards/ERC721ACQueryable.sol";
+import "./creator-token-standards/ERC721ACQueryable.sol";
 import "./IERC721M.sol";
 import "./utils/Constants.sol";
 

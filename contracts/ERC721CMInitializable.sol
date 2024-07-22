@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "contracts/creator-token-standards/ERC721ACQueryableInitializable.sol";
+import "./creator-token-standards/ERC721ACQueryableInitializable.sol";
 import "./access/OwnableInitializable.sol";
 import "./IERC721MInitializable.sol";
 import "./utils/Constants.sol";
