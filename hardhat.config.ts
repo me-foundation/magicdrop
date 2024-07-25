@@ -15,6 +15,7 @@ import {
   deploy,
   deploy1155,
   deployClone,
+  deployRandomGame,
   setBaseURI,
   setCrossmintAddress,
   mint,
@@ -228,6 +229,40 @@ task('deploy', 'Deploy ERC721M')
     await deploy(tasksArgs, hre);
   });
 
+task('deployRandomGame', 'Deploy RandomGrames')
+  .addParam('name', 'name')
+  .addParam('symbol', 'symbol')
+  .addParam('maxsupply', 'max supply')
+  .addParam('tokenurisuffix', 'token uri suffix', '.json')
+  .addParam('globalwalletlimit', 'global wallet limit', '0')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
+  .addParam('proxycontract', 'minting proxy contract')
+  .addParam<boolean>(
+    'openedition',
+    'whether or not a open edition mint (unlimited supply, 999,999,999)',
+    false,
+    types.boolean,
+  )
+  .addOptionalParam(
+    'cosigner',
+    'cosigner address (0x00...000 if not using cosign)',
+    '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
+    'mintcurrency',
+    'ERC-20 contract address (if minting with ERC-20)',
+    '0x0000000000000000000000000000000000000000',
+  )
+  .addOptionalParam(
+    'fundreceiver',
+    'The treasury wallet to receive mint fund',
+  )
+  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
+  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
+  .setAction(async (tasksArgs, hre) => {
+    console.log('Deploying random games...');
+    await deployRandomGame(tasksArgs, hre);
+  });
 
 task('deploy1155', 'Deploy ERC1155M')
   .addParam('name', 'name')
