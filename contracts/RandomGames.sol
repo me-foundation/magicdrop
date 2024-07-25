@@ -8,7 +8,7 @@ import {ERC721CM, ERC721ACQueryable, IERC721A} from "./ERC721CM.sol";
  * @title RandomGamesMinting
  */
 contract RandomGamesMinting is ERC721CM {
-    address immutable _proxyContract;
+    address private _proxyContract;
 
     constructor(
         string memory collectionName,
