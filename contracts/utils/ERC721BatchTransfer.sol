@@ -43,7 +43,11 @@ contract ERC721BatchTransfer {
                 ++i;
             }
         }
-        emit BatchTransferToSingle(address(erc721Contract), to, length);
+        emit BatchTransferToSingle(
+            address(erc721Contract),
+            to,
+            tokenIds.length
+        );
     }
 
     /**
@@ -63,7 +67,11 @@ contract ERC721BatchTransfer {
                 ++i;
             }
         }
-        emit BatchTransferToSingle(address(erc721Contract), to, length);
+        emit BatchTransferToSingle(
+            address(erc721Contract),
+            to,
+            tokenIds.length
+        );
     }
 
     /**
