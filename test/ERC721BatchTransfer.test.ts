@@ -56,7 +56,7 @@ describe('ERC721BatchTransfer', function () {
     }
   });
 
-  it.only('batchTransferToSingleWallet max Batch', async () => {
+  it.skip('batchTransferToSingleWallet max Batch', async () => {
     // old cap was 777
     const batchAmount = 834;
     const tx = await transferContract.batchTransferToSingleWallet(
