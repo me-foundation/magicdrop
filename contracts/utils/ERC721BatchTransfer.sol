@@ -37,14 +37,8 @@ contract ERC721BatchTransfer {
         address to,
         uint256[] calldata tokenIds
     ) external {
-        uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
-            uint256 tokenId = tokenIds[i];
-            address owner = erc721Contract.ownerOf(tokenId);
-            if (msg.sender != owner) {
-                revert NotOwnerOfToken();
-            }
-            erc721Contract.transferFrom(owner, to, tokenId);
+        for (uint256 i; i < tokenIds.length; ) {
+            erc721Contract.transferFrom(msg.sender, to, tokenIds[i]);
             unchecked {
                 ++i;
             }
@@ -63,14 +57,8 @@ contract ERC721BatchTransfer {
         address to,
         uint256[] calldata tokenIds
     ) external {
-        uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
-            uint256 tokenId = tokenIds[i];
-            address owner = erc721Contract.ownerOf(tokenId);
-            if (msg.sender != owner) {
-                revert NotOwnerOfToken();
-            }
-            erc721Contract.safeTransferFrom(owner, to, tokenId);
+        for (uint256 i; i < tokenIds.length; ) {
+            erc721Contract.safeTransferFrom(msg.sender, to, tokenIds[i]);
             unchecked {
                 ++i;
             }

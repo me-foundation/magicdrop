@@ -1,0 +1,908 @@
+INFO:Detectors:
+TestStaking.stakeFor(address,uint256) (contracts/mocks/TestStaking.sol#28-35) uses arbitrary from in transferFrom: _nft.transferFrom(staker,address(this),tokenId) (contracts/mocks/TestStaking.sol#33)
+ERC721BatchTransfer.batchTransferToSingleWallet(IERC721,address,uint256[]) (contracts/utils/ERC721BatchTransfer.sol#35-53) uses arbitrary from in transferFrom: erc721Contract.transferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#47)
+ERC721BatchTransfer.batchTransferToMultipleWallets(IERC721,address[],uint256[]) (contracts/utils/ERC721BatchTransfer.sol#93-115) uses arbitrary from in transferFrom: erc721Contract.transferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#108)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#arbitrary-from-in-transferfrom
+INFO:Detectors:
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) has bitwise-xor operator ^ instead of the exponentiation operator **: 
+         - inverse = (3 * denominator) ^ 2 (node_modules/@openzeppelin/contracts/utils/math/Math.sol#184)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-exponentiation
+INFO:Detectors:
+TransferValidation._validateBeforeTransfer(address,address,uint256) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#19-32) use msg.value in a loop: _preValidateMint(_msgSender(),to,tokenId,msg.value) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#26)
+TransferValidation._validateBeforeTransfer(address,address,uint256) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#19-32) use msg.value in a loop: _preValidateBurn(_msgSender(),from,tokenId,msg.value) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#28)
+TransferValidation._validateBeforeTransfer(address,address,uint256) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#19-32) use msg.value in a loop: _preValidateTransfer(_msgSender(),from,to,tokenId,msg.value) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#30)
+TransferValidation._validateAfterTransfer(address,address,uint256) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#35-48) use msg.value in a loop: _postValidateMint(_msgSender(),to,tokenId,msg.value) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#42)
+TransferValidation._validateAfterTransfer(address,address,uint256) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#35-48) use msg.value in a loop: _postValidateBurn(_msgSender(),from,tokenId,msg.value) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#44)
+TransferValidation._validateAfterTransfer(address,address,uint256) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#35-48) use msg.value in a loop: _postValidateTransfer(_msgSender(),from,to,tokenId,msg.value) (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#46)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#msgvalue-inside-a-loop
+INFO:Detectors:
+Reentrancy in BucketAuction._sendTokensAndRefund(address) (contracts/auctions/BucketAuction.sol#333-354):
+        External calls:
+        - (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#344)
+        State variables written after the call(s):
+        - user.tokensClaimed = uint32(n) (contracts/auctions/BucketAuction.sol#351)
+        BucketAuction._userData (contracts/auctions/BucketAuction.sol#23) can be used in cross function reentrancies:
+        - BucketAuction._sendTokens(address,uint256) (contracts/auctions/BucketAuction.sol#224-236)
+        - BucketAuction._sendTokensAndRefund(address) (contracts/auctions/BucketAuction.sol#333-354)
+        - BucketAuction.amountPurchased(address) (contracts/auctions/BucketAuction.sol#243-246)
+        - BucketAuction.getUserData(address) (contracts/auctions/BucketAuction.sol#102-104)
+        - BucketAuction.getUserDataPage(uint256,uint256) (contracts/auctions/BucketAuction.sol#106-126)
+        - BucketAuction.refundAmount(address) (contracts/auctions/BucketAuction.sol#253-256)
+        - BucketAuction.sendRefund(address) (contracts/auctions/BucketAuction.sol#287-298)
+Reentrancy in ERC1155M.withdraw() (contracts/ERC1155M.sol#422-432):
+        External calls:
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC1155M.sol#423)
+        State variables written after the call(s):
+        - _totalMintFee = 0 (contracts/ERC1155M.sol#425)
+        ERC1155M._totalMintFee (contracts/ERC1155M.sol#56) can be used in cross function reentrancies:
+        - ERC1155M.withdraw() (contracts/ERC1155M.sol#422-432)
+        - ERC1155M.withdrawERC20() (contracts/ERC1155M.sol#437-447)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities
+INFO:Detectors:
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - denominator = denominator / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#169)
+        - inverse = (3 * denominator) ^ 2 (node_modules/@openzeppelin/contracts/utils/math/Math.sol#184)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - denominator = denominator / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#169)
+        - inverse *= 2 - denominator * inverse (node_modules/@openzeppelin/contracts/utils/math/Math.sol#188)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - denominator = denominator / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#169)
+        - inverse *= 2 - denominator * inverse (node_modules/@openzeppelin/contracts/utils/math/Math.sol#189)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - denominator = denominator / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#169)
+        - inverse *= 2 - denominator * inverse (node_modules/@openzeppelin/contracts/utils/math/Math.sol#190)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - denominator = denominator / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#169)
+        - inverse *= 2 - denominator * inverse (node_modules/@openzeppelin/contracts/utils/math/Math.sol#191)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - denominator = denominator / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#169)
+        - inverse *= 2 - denominator * inverse (node_modules/@openzeppelin/contracts/utils/math/Math.sol#192)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - denominator = denominator / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#169)
+        - inverse *= 2 - denominator * inverse (node_modules/@openzeppelin/contracts/utils/math/Math.sol#193)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) performs a multiplication on the result of a division:
+        - prod0 = prod0 / twos (node_modules/@openzeppelin/contracts/utils/math/Math.sol#172)
+        - result = prod0 * inverse (node_modules/@openzeppelin/contracts/utils/math/Math.sol#199)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#divide-before-multiply
+INFO:Detectors:
+Contract locking ether found:
+        Contract MockERC721A (contracts/mocks/MockERC721A.sol#7-18) has payable functions:
+         - ERC721A.approve(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#425-435)
+         - ERC721A.transferFrom(address,address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#540-601)
+         - ERC721A.safeTransferFrom(address,address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#606-612)
+         - ERC721A.safeTransferFrom(address,address,uint256,bytes) (node_modules/erc721a/contracts/ERC721A.sol#629-640)
+         - IERC721A.safeTransferFrom(address,address,uint256,bytes) (node_modules/erc721a/contracts/IERC721A.sol#168-173)
+         - IERC721A.safeTransferFrom(address,address,uint256) (node_modules/erc721a/contracts/IERC721A.sol#178-182)
+         - IERC721A.transferFrom(address,address,uint256) (node_modules/erc721a/contracts/IERC721A.sol#200-204)
+         - IERC721A.approve(address,uint256) (node_modules/erc721a/contracts/IERC721A.sol#220)
+        But does not have a function to withdraw the ether
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#contracts-that-lock-ether
+INFO:Detectors:
+Reentrancy in ERC1155M._mintInternal(address,uint256,uint32,uint32,bytes32[]) (contracts/ERC1155M.sol#333-403):
+        External calls:
+        - IERC20(MINT_CURRENCY).safeTransferFrom(msg.sender,address(this),(stage.price[tokenId] + stage.mintFee[tokenId]) * qty) (contracts/ERC1155M.sol#391-395)
+        State variables written after the call(s):
+        - _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] += qty (contracts/ERC1155M.sol#400)
+        ERC1155M._stageMintedCountsPerTokenPerWallet (contracts/ERC1155M.sol#49-50) can be used in cross function reentrancies:
+        - ERC1155M.totalMintedByAddress(address) (contracts/ERC1155M.sol#228-239)
+        - ERC1155M.totalMintedByStageByAddress(uint256,address) (contracts/ERC1155M.sol#259-268)
+Reentrancy in ERC1155M._mintInternal(address,uint256,uint32,uint32,bytes32[]) (contracts/ERC1155M.sol#333-403):
+        External calls:
+        - IERC20(MINT_CURRENCY).safeTransferFrom(msg.sender,address(this),(stage.price[tokenId] + stage.mintFee[tokenId]) * qty) (contracts/ERC1155M.sol#391-395)
+        - _mint(to,tokenId,qty,) (contracts/ERC1155M.sol#402)
+                - response = IERC1155Receiver(to).onERC1155Received(operator,from,id,value,data) (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#390-405)
+                - response = IERC1155Receiver(to).onERC1155BatchReceived(operator,from,ids,values,data) (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#422-439)
+        State variables written after the call(s):
+        - _mint(to,tokenId,qty,) (contracts/ERC1155M.sol#402)
+                - _totalSupply[ids[i]] += value (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol#62)
+                - _totalSupply[ids[i_scope_0]] -= value_scope_1 (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol#76)
+        ERC1155Supply._totalSupply (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol#22) can be used in cross function reentrancies:
+        - ERC1155Supply._update(address,address,uint256[],uint256[]) (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol#49-86)
+        - ERC1155Supply.totalSupply(uint256) (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol#28-30)
+Reentrancy in ERC721CM._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721CM.sol#371-449):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721CM.sol#437-441)
+        State variables written after the call(s):
+        - _stageMintedCounts[activeStage] += qty (contracts/ERC721CM.sol#447)
+        ERC721CM._stageMintedCounts (contracts/ERC721CM.sol#66) can be used in cross function reentrancies:
+        - ERC721CM.getStageInfo(uint256) (contracts/ERC721CM.sol#290-299)
+        - _stageMintedCountsPerWallet[activeStage][to] += qty (contracts/ERC721CM.sol#446)
+        ERC721CM._stageMintedCountsPerWallet (contracts/ERC721CM.sol#62-63) can be used in cross function reentrancies:
+        - ERC721CM.getStageInfo(uint256) (contracts/ERC721CM.sol#290-299)
+Reentrancy in ERC721CM._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721CM.sol#371-449):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721CM.sol#437-441)
+        - _safeMint(to,qty) (contracts/ERC721CM.sol#448)
+                - retval = ERC721A__IERC721Receiver(to).onERC721Received(_msgSenderERC721A(),from,tokenId,_data) (node_modules/erc721a/contracts/ERC721A.sol#704-716)
+        State variables written after the call(s):
+        - _safeMint(to,qty) (contracts/ERC721CM.sol#448)
+                - _currentIndex = end (node_modules/erc721a/contracts/ERC721A.sol#794)
+        ERC721A._currentIndex (node_modules/erc721a/contracts/ERC721A.sol#98) can be used in cross function reentrancies:
+        - ERC721A._exists(uint256) (node_modules/erc721a/contracts/ERC721A.sol#482-487)
+        - ERC721A._mint(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#733-797)
+        - ERC721A._nextTokenId() (node_modules/erc721a/contracts/ERC721A.sol#161-163)
+        - ERC721A._packedOwnershipOf(uint256) (node_modules/erc721a/contracts/ERC721A.sol#346-372)
+        - ERC721A._safeMint(address,uint256,bytes) (node_modules/erc721a/contracts/ERC721A.sol#867-887)
+        - ERC721A.constructor(string,string) (node_modules/erc721a/contracts/ERC721A.sol#140-144)
+        - ERC721A.totalSupply() (node_modules/erc721a/contracts/ERC721A.sol#170-176)
+        - ERC721A.transferFrom(address,address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#540-601)
+        - _safeMint(to,qty) (contracts/ERC721CM.sol#448)
+                - _packedAddressData[to] += quantity * ((1 << _BITPOS_NUMBER_MINTED) | 1) (node_modules/erc721a/contracts/ERC721A.sol#748)
+        ERC721A._packedAddressData (node_modules/erc721a/contracts/ERC721A.sol#128) can be used in cross function reentrancies:
+        - ERC721A._mint(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#733-797)
+        - ERC721A._numberMinted(address) (node_modules/erc721a/contracts/ERC721A.sol#211-213)
+        - ERC721A.balanceOf(address) (node_modules/erc721a/contracts/ERC721A.sol#203-206)
+        - ERC721A.transferFrom(address,address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#540-601)
+Reentrancy in ERC721CMInitializable._mintInternal(uint32,address,uint32,bytes32[]) (contracts/ERC721CMInitializable.sol#354-425):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721CMInitializable.sol#413-417)
+        State variables written after the call(s):
+        - _stageMintedCounts[activeStage] += qty (contracts/ERC721CMInitializable.sol#423)
+        ERC721CMInitializable._stageMintedCounts (contracts/ERC721CMInitializable.sol#63) can be used in cross function reentrancies:
+        - ERC721CMInitializable.getStageInfo(uint256) (contracts/ERC721CMInitializable.sol#273-282)
+        - _stageMintedCountsPerWallet[activeStage][to] += qty (contracts/ERC721CMInitializable.sol#422)
+        ERC721CMInitializable._stageMintedCountsPerWallet (contracts/ERC721CMInitializable.sol#59-60) can be used in cross function reentrancies:
+        - ERC721CMInitializable.getStageInfo(uint256) (contracts/ERC721CMInitializable.sol#273-282)
+Reentrancy in ERC721M._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721M.sol#366-445):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721M.sol#433-437)
+        State variables written after the call(s):
+        - _stageMintedCounts[activeStage] += qty (contracts/ERC721M.sol#443)
+        ERC721M._stageMintedCounts (contracts/ERC721M.sol#65) can be used in cross function reentrancies:
+        - ERC721M.getStageInfo(uint256) (contracts/ERC721M.sol#285-294)
+        - _stageMintedCountsPerWallet[activeStage][to] += qty (contracts/ERC721M.sol#442)
+        ERC721M._stageMintedCountsPerWallet (contracts/ERC721M.sol#61-62) can be used in cross function reentrancies:
+        - ERC721M.getStageInfo(uint256) (contracts/ERC721M.sol#285-294)
+Reentrancy in ERC721M._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721M.sol#366-445):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721M.sol#433-437)
+        - _safeMint(to,qty) (contracts/ERC721M.sol#444)
+                - retval = ERC721A__IERC721Receiver(to).onERC721Received(_msgSenderERC721A(),from,tokenId,_data) (node_modules/erc721a/contracts/ERC721A.sol#704-716)
+        State variables written after the call(s):
+        - _safeMint(to,qty) (contracts/ERC721M.sol#444)
+                - _currentIndex = end (node_modules/erc721a/contracts/ERC721A.sol#794)
+        ERC721A._currentIndex (node_modules/erc721a/contracts/ERC721A.sol#98) can be used in cross function reentrancies:
+        - ERC721A._exists(uint256) (node_modules/erc721a/contracts/ERC721A.sol#482-487)
+        - ERC721A._mint(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#733-797)
+        - ERC721A._nextTokenId() (node_modules/erc721a/contracts/ERC721A.sol#161-163)
+        - ERC721A._packedOwnershipOf(uint256) (node_modules/erc721a/contracts/ERC721A.sol#346-372)
+        - ERC721A._safeMint(address,uint256,bytes) (node_modules/erc721a/contracts/ERC721A.sol#867-887)
+        - ERC721A.constructor(string,string) (node_modules/erc721a/contracts/ERC721A.sol#140-144)
+        - ERC721A.constructor(string,string) (node_modules/erc721a/contracts/ERC721A.sol#140-144)
+        - ERC721A.totalSupply() (node_modules/erc721a/contracts/ERC721A.sol#170-176)
+        - ERC721A.transferFrom(address,address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#540-601)
+        - _safeMint(to,qty) (contracts/ERC721M.sol#444)
+                - _packedAddressData[to] += quantity * ((1 << _BITPOS_NUMBER_MINTED) | 1) (node_modules/erc721a/contracts/ERC721A.sol#748)
+        ERC721A._packedAddressData (node_modules/erc721a/contracts/ERC721A.sol#128) can be used in cross function reentrancies:
+        - ERC721A._mint(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#733-797)
+        - ERC721A._numberMinted(address) (node_modules/erc721a/contracts/ERC721A.sol#211-213)
+        - ERC721A.balanceOf(address) (node_modules/erc721a/contracts/ERC721A.sol#203-206)
+        - ERC721A.transferFrom(address,address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#540-601)
+Reentrancy in ERC1155M.withdrawERC20() (contracts/ERC1155M.sol#437-447):
+        External calls:
+        - IERC20(MINT_CURRENCY).safeTransfer(MINT_FEE_RECEIVER,_totalMintFee) (contracts/ERC1155M.sol#440)
+        State variables written after the call(s):
+        - _totalMintFee = 0 (contracts/ERC1155M.sol#441)
+        ERC1155M._totalMintFee (contracts/ERC1155M.sol#56) can be used in cross function reentrancies:
+        - ERC1155M.withdraw() (contracts/ERC1155M.sol#422-432)
+        - ERC1155M.withdrawERC20() (contracts/ERC1155M.sol#437-447)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-1
+INFO:Detectors:
+ERC1155MTestReentrantExploit.onERC1155Received(address,address,uint256,uint256,bytes).proof (contracts/mocks/ERC1155MTestReentrantExploit.sol#33) is a local variable never initialized
+ERC721AQueryable.explicitOwnershipOf(uint256).ownership (node_modules/erc721a/contracts/extensions/ERC721AQueryable.sol#41) is a local variable never initialized
+ERC721AQueryable.tokensOfOwner(address).currOwnershipAddr (node_modules/erc721a/contracts/extensions/ERC721AQueryable.sol#159) is a local variable never initialized
+TestReentrantExploit.onERC721Received(address,address,uint256,bytes).proof (contracts/mocks/TestReentrantExploit.sol#33) is a local variable never initialized
+ERC721AQueryableUpgradeable.tokensOfOwner(address).tokenIds (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#145) is a local variable never initialized
+ERC721AQueryable.tokensOfOwner(address).tokenIdsIdx (node_modules/erc721a/contracts/extensions/ERC721AQueryable.sol#158) is a local variable never initialized
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#uninitialized-local-variables
+INFO:Detectors:
+SignatureChecker.isValidSignatureNow(address,bytes32,bytes) (node_modules/@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol#22-27) ignores return value by (recovered,error,None) = ECDSA.tryRecover(hash,signature) (node_modules/@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol#23)
+BucketAuction.bid() (contracts/auctions/BucketAuction.sol#163-177) ignores return value by _users.add(msg.sender) (contracts/auctions/BucketAuction.sol#174)
+TestStaking.stake(uint256) (contracts/mocks/TestStaking.sol#23-26) ignores return value by _stakers[msg.sender].add(tokenId) (contracts/mocks/TestStaking.sol#25)
+TestStaking.stakeFor(address,uint256) (contracts/mocks/TestStaking.sol#28-35) ignores return value by _stakers[staker].add(tokenId) (contracts/mocks/TestStaking.sol#34)
+TestStaking.unstake(uint256) (contracts/mocks/TestStaking.sol#37-41) ignores return value by _stakers[msg.sender].remove(tokenId) (contracts/mocks/TestStaking.sol#40)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+INFO:Detectors:
+ERC1155M.constructor(string,string,string,uint256[],uint256[],address,address,address,uint96).uri (contracts/ERC1155M.sol#70) shadows:
+        - ERC1155.uri(uint256) (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#57-59) (function)
+        - IERC1155MetadataURI.uri(uint256) (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol#19) (function)
+OwnedRegistrant.constructor(address)._owner (contracts/operator-filter/OwnedRegistrant.sol#16) shadows:
+        - Ownable._owner (node_modules/@openzeppelin/contracts/access/Ownable.sol#21) (state variable)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#local-variable-shadowing
+INFO:Detectors:
+BucketAuction.setStartAndEndTimeUnixSeconds(uint64,uint64) (contracts/auctions/BucketAuction.sol#147-156) should emit an event for: 
+        - _startTimeUnixSeconds = startTime (contracts/auctions/BucketAuction.sol#154) 
+        - _endTimeUnixSeconds = endTime (contracts/auctions/BucketAuction.sol#155) 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-events-arithmetic
+INFO:Detectors:
+Ownable2Step.transferOwnership(address).newOwner (node_modules/@openzeppelin/contracts/access/Ownable2Step.sol#35) lacks a zero-check on :
+                - _pendingOwner = newOwner (node_modules/@openzeppelin/contracts/access/Ownable2Step.sol#36)
+ERC1155M.constructor(string,string,string,uint256[],uint256[],address,address,address,uint96).mintCurrency (contracts/ERC1155M.sol#73) lacks a zero-check on :
+                - MINT_CURRENCY = mintCurrency (contracts/ERC1155M.sol#93)
+ERC1155M.constructor(string,string,string,uint256[],uint256[],address,address,address,uint96).fundReceiver (contracts/ERC1155M.sol#74) lacks a zero-check on :
+                - FUND_RECEIVER = fundReceiver (contracts/ERC1155M.sol#95)
+ERC721CM.constructor(string,string,string,uint256,uint256,address,uint64,address,address).cosigner (contracts/ERC721CM.sol#83) lacks a zero-check on :
+                - _cosigner = cosigner (contracts/ERC721CM.sol#94)
+ERC721CM.constructor(string,string,string,uint256,uint256,address,uint64,address,address).mintCurrency (contracts/ERC721CM.sol#85) lacks a zero-check on :
+                - _mintCurrency = mintCurrency (contracts/ERC721CM.sol#96)
+ERC721CM.constructor(string,string,string,uint256,uint256,address,uint64,address,address).fundReceiver (contracts/ERC721CM.sol#86) lacks a zero-check on :
+                - FUND_RECEIVER = fundReceiver (contracts/ERC721CM.sol#97)
+ERC721CM.setCosigner(address).cosigner (contracts/ERC721CM.sol#126) lacks a zero-check on :
+                - _cosigner = cosigner (contracts/ERC721CM.sol#127)
+ERC721CM.setCrossmintAddress(address).crossmintAddress (contracts/ERC721CM.sol#142) lacks a zero-check on :
+                - _crossmintAddress = crossmintAddress (contracts/ERC721CM.sol#143)
+ERC721CMInitializable.__ERC721CMInitializable_init(string,string,string,uint256,uint256,uint64,address,address).mintCurrency (contracts/ERC721CMInitializable.sol#81) lacks a zero-check on :
+                - _mintCurrency = mintCurrency (contracts/ERC721CMInitializable.sol#93)
+ERC721CMInitializable.__ERC721CMInitializable_init(string,string,string,uint256,uint256,uint64,address,address).fundReceiver (contracts/ERC721CMInitializable.sol#82) lacks a zero-check on :
+                - FUND_RECEIVER = fundReceiver (contracts/ERC721CMInitializable.sol#94)
+ERC721CMInitializable.setCrossmintAddress(address).crossmintAddress (contracts/ERC721CMInitializable.sol#123) lacks a zero-check on :
+                - _crossmintAddress = crossmintAddress (contracts/ERC721CMInitializable.sol#124)
+RandomGamesMinting.constructor(string,string,string,uint256,uint256,address,uint64,address,address,address).proxyContract (contracts/RandomGames.sol#23) lacks a zero-check on :
+                - _proxyContract = proxyContract (contracts/RandomGames.sol#37)
+RandomGamesMinting.setProxyContract(address).newProxyContract (contracts/RandomGames.sol#40) lacks a zero-check on :
+                - _proxyContract = newProxyContract (contracts/RandomGames.sol#41)
+ERC721M.constructor(string,string,string,uint256,uint256,address,uint64,address,address).cosigner (contracts/ERC721M.sol#82) lacks a zero-check on :
+                - _cosigner = cosigner (contracts/ERC721M.sol#93)
+ERC721M.constructor(string,string,string,uint256,uint256,address,uint64,address,address).mintCurrency (contracts/ERC721M.sol#84) lacks a zero-check on :
+                - _mintCurrency = mintCurrency (contracts/ERC721M.sol#95)
+ERC721M.constructor(string,string,string,uint256,uint256,address,uint64,address,address).fundReceiver (contracts/ERC721M.sol#85) lacks a zero-check on :
+                - FUND_RECEIVER = fundReceiver (contracts/ERC721M.sol#96)
+ERC721M.setCosigner(address).cosigner (contracts/ERC721M.sol#125) lacks a zero-check on :
+                - _cosigner = cosigner (contracts/ERC721M.sol#126)
+ERC721M.setCrossmintAddress(address).crossmintAddress (contracts/ERC721M.sol#141) lacks a zero-check on :
+                - _crossmintAddress = crossmintAddress (contracts/ERC721M.sol#142)
+BucketAuction.sendRefund(address).to (contracts/auctions/BucketAuction.sol#287) lacks a zero-check on :
+                - (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#296)
+ERC1155MTestReentrantExploit.constructor(address).target (contracts/mocks/ERC1155MTestReentrantExploit.sol#10) lacks a zero-check on :
+                - _targetContract = target (contracts/mocks/ERC1155MTestReentrantExploit.sol#11)
+TestReentrantExploit.constructor(address).target (contracts/mocks/TestReentrantExploit.sol#9) lacks a zero-check on :
+                - _targetContract = target (contracts/mocks/TestReentrantExploit.sol#10)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-zero-address-validation
+INFO:Detectors:
+BucketAuction.sendRefund(address) (contracts/auctions/BucketAuction.sol#287-298) has external calls inside a loop: (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#296)
+ERC721A._checkContractOnERC721Received(address,address,uint256,bytes) (node_modules/erc721a/contracts/ERC721A.sol#698-717) has external calls inside a loop: retval = ERC721A__IERC721Receiver(to).onERC721Received(_msgSenderERC721A(),from,tokenId,_data) (node_modules/erc721a/contracts/ERC721A.sol#704-716)
+BucketAuction._sendTokensAndRefund(address) (contracts/auctions/BucketAuction.sol#333-354) has external calls inside a loop: (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#344)
+ERC721BatchTransfer.batchTransferToSingleWallet(IERC721,address,uint256[]) (contracts/utils/ERC721BatchTransfer.sol#35-53) has external calls inside a loop: owner = erc721Contract.ownerOf(tokenId) (contracts/utils/ERC721BatchTransfer.sol#43)
+ERC721BatchTransfer.batchTransferToSingleWallet(IERC721,address,uint256[]) (contracts/utils/ERC721BatchTransfer.sol#35-53) has external calls inside a loop: erc721Contract.transferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#47)
+ERC721BatchTransfer.safeBatchTransferToSingleWallet(IERC721,address,uint256[]) (contracts/utils/ERC721BatchTransfer.sol#61-79) has external calls inside a loop: owner = erc721Contract.ownerOf(tokenId) (contracts/utils/ERC721BatchTransfer.sol#69)
+ERC721BatchTransfer.safeBatchTransferToSingleWallet(IERC721,address,uint256[]) (contracts/utils/ERC721BatchTransfer.sol#61-79) has external calls inside a loop: erc721Contract.safeTransferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#73)
+ERC721BatchTransfer.batchTransferToMultipleWallets(IERC721,address[],uint256[]) (contracts/utils/ERC721BatchTransfer.sol#93-115) has external calls inside a loop: owner = erc721Contract.ownerOf(tokenId) (contracts/utils/ERC721BatchTransfer.sol#103)
+ERC721BatchTransfer.batchTransferToMultipleWallets(IERC721,address[],uint256[]) (contracts/utils/ERC721BatchTransfer.sol#93-115) has external calls inside a loop: erc721Contract.transferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#108)
+ERC721BatchTransfer.safeBatchTransferToMultipleWallets(IERC721,address[],uint256[]) (contracts/utils/ERC721BatchTransfer.sol#128-150) has external calls inside a loop: owner = erc721Contract.ownerOf(tokenId) (contracts/utils/ERC721BatchTransfer.sol#138)
+ERC721BatchTransfer.safeBatchTransferToMultipleWallets(IERC721,address[],uint256[]) (contracts/utils/ERC721BatchTransfer.sol#128-150) has external calls inside a loop: erc721Contract.safeTransferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#143)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation/#calls-inside-a-loop
+INFO:Detectors:
+Reentrancy in BucketAuction._internalMint(address,uint256) (contracts/auctions/BucketAuction.sol#211-217):
+        External calls:
+        - _safeMint(to,numberOfTokens) (contracts/auctions/BucketAuction.sol#215)
+                - retval = ERC721A__IERC721Receiver(to).onERC721Received(_msgSenderERC721A(),from,tokenId,_data) (node_modules/erc721a/contracts/ERC721A.sol#704-716)
+        State variables written after the call(s):
+        - _firstTokenSent = true (contracts/auctions/BucketAuction.sol#216)
+Reentrancy in ERC1155M._mintInternal(address,uint256,uint32,uint32,bytes32[]) (contracts/ERC1155M.sol#333-403):
+        External calls:
+        - IERC20(MINT_CURRENCY).safeTransferFrom(msg.sender,address(this),(stage.price[tokenId] + stage.mintFee[tokenId]) * qty) (contracts/ERC1155M.sol#391-395)
+        State variables written after the call(s):
+        - _totalMintFee += stage.mintFee[tokenId] * qty (contracts/ERC1155M.sol#398)
+Reentrancy in ERC721CM._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721CM.sol#371-449):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721CM.sol#437-441)
+        State variables written after the call(s):
+        - _totalMintFee += stage.mintFee * qty (contracts/ERC721CM.sol#444)
+Reentrancy in ERC721CM._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721CM.sol#371-449):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721CM.sol#437-441)
+        - _safeMint(to,qty) (contracts/ERC721CM.sol#448)
+                - retval = ERC721A__IERC721Receiver(to).onERC721Received(_msgSenderERC721A(),from,tokenId,_data) (node_modules/erc721a/contracts/ERC721A.sol#704-716)
+        State variables written after the call(s):
+        - _safeMint(to,qty) (contracts/ERC721CM.sol#448)
+                - _packedOwnerships[startTokenId] = _packOwnershipData(to,_nextInitializedFlag(quantity) | _nextExtraData(address(0),to,0)) (node_modules/erc721a/contracts/ERC721A.sol#755-758)
+Reentrancy in ERC721CMInitializable._mintInternal(uint32,address,uint32,bytes32[]) (contracts/ERC721CMInitializable.sol#354-425):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721CMInitializable.sol#413-417)
+        State variables written after the call(s):
+        - _totalMintFee += stage.mintFee * qty (contracts/ERC721CMInitializable.sol#420)
+Reentrancy in ERC721M._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721M.sol#366-445):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721M.sol#433-437)
+        State variables written after the call(s):
+        - _totalMintFee += stage.mintFee * qty (contracts/ERC721M.sol#440)
+Reentrancy in ERC721M._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721M.sol#366-445):
+        External calls:
+        - IERC20(_mintCurrency).safeTransferFrom(msg.sender,address(this),(stage.price + stage.mintFee) * qty) (contracts/ERC721M.sol#433-437)
+        - _safeMint(to,qty) (contracts/ERC721M.sol#444)
+                - retval = ERC721A__IERC721Receiver(to).onERC721Received(_msgSenderERC721A(),from,tokenId,_data) (node_modules/erc721a/contracts/ERC721A.sol#704-716)
+        State variables written after the call(s):
+        - _safeMint(to,qty) (contracts/ERC721M.sol#444)
+                - _packedOwnerships[startTokenId] = _packOwnershipData(to,_nextInitializedFlag(quantity) | _nextExtraData(address(0),to,0)) (node_modules/erc721a/contracts/ERC721A.sol#755-758)
+Reentrancy in BucketAuction._sendTokensAndRefund(address) (contracts/auctions/BucketAuction.sol#333-354):
+        External calls:
+        - (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#344)
+        - _internalMint(to,n) (contracts/auctions/BucketAuction.sol#352)
+                - retval = ERC721A__IERC721Receiver(to).onERC721Received(_msgSenderERC721A(),from,tokenId,_data) (node_modules/erc721a/contracts/ERC721A.sol#704-716)
+        External calls sending eth:
+        - (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#344)
+        State variables written after the call(s):
+        - _internalMint(to,n) (contracts/auctions/BucketAuction.sol#352)
+                - _packedOwnerships[startTokenId] = _packOwnershipData(to,_nextInitializedFlag(quantity) | _nextExtraData(address(0),to,0)) (node_modules/erc721a/contracts/ERC721A.sol#755-758)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-2
+INFO:Detectors:
+Reentrancy in ERC721BatchTransfer.batchTransferToMultipleWallets(IERC721,address[],uint256[]) (contracts/utils/ERC721BatchTransfer.sol#93-115):
+        External calls:
+        - erc721Contract.transferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#108)
+        Event emitted after the call(s):
+        - BatchTransferToMultiple(address(erc721Contract),length) (contracts/utils/ERC721BatchTransfer.sol#114)
+Reentrancy in ERC721BatchTransfer.batchTransferToSingleWallet(IERC721,address,uint256[]) (contracts/utils/ERC721BatchTransfer.sol#35-53):
+        External calls:
+        - erc721Contract.transferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#47)
+        Event emitted after the call(s):
+        - BatchTransferToSingle(address(erc721Contract),to,length) (contracts/utils/ERC721BatchTransfer.sol#52)
+Reentrancy in ERC721CMRoyaltiesCloneFactory.create(string,string,string,uint256,uint256,uint64,address,address,address,uint96) (contracts/factory/ERC721CMRoyaltiesCloneFactory.sol#21-52):
+        External calls:
+        - ERC721CMRoyaltiesInitializable(clone).initialize(collectionName,collectionSymbol,tokenURISuffix,maxMintableSupply,globalWalletLimit,timestampExpirySeconds,mintCurrency,fundReceiver,royaltyReceiver,royaltyFeeNumerator) (contracts/factory/ERC721CMRoyaltiesCloneFactory.sol#34-45)
+        - ERC721CMRoyaltiesInitializable(clone).transferOwnership(msg.sender) (contracts/factory/ERC721CMRoyaltiesCloneFactory.sol#48)
+        Event emitted after the call(s):
+        - CreateClone(clone) (contracts/factory/ERC721CMRoyaltiesCloneFactory.sol#50)
+Reentrancy in ERC721BatchTransfer.safeBatchTransferToMultipleWallets(IERC721,address[],uint256[]) (contracts/utils/ERC721BatchTransfer.sol#128-150):
+        External calls:
+        - erc721Contract.safeTransferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#143)
+        Event emitted after the call(s):
+        - BatchTransferToMultiple(address(erc721Contract),length) (contracts/utils/ERC721BatchTransfer.sol#149)
+Reentrancy in ERC721BatchTransfer.safeBatchTransferToSingleWallet(IERC721,address,uint256[]) (contracts/utils/ERC721BatchTransfer.sol#61-79):
+        External calls:
+        - erc721Contract.safeTransferFrom(owner,to,tokenId) (contracts/utils/ERC721BatchTransfer.sol#73)
+        Event emitted after the call(s):
+        - BatchTransferToSingle(address(erc721Contract),to,length) (contracts/utils/ERC721BatchTransfer.sol#78)
+Reentrancy in ERC1155M.withdraw() (contracts/ERC1155M.sol#422-432):
+        External calls:
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC1155M.sol#423)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC1155M.sol#428)
+        Event emitted after the call(s):
+        - Withdraw(_totalMintFee + remainingValue) (contracts/ERC1155M.sol#431)
+Reentrancy in ERC721CM.withdraw() (contracts/ERC721CM.sol#467-476):
+        External calls:
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC721CM.sol#468)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC721CM.sol#472)
+        Event emitted after the call(s):
+        - Withdraw(_totalMintFee + remainingValue) (contracts/ERC721CM.sol#475)
+Reentrancy in ERC721CMInitializable.withdraw() (contracts/ERC721CMInitializable.sol#443-452):
+        External calls:
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC721CMInitializable.sol#444)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC721CMInitializable.sol#448)
+        Event emitted after the call(s):
+        - Withdraw(_totalMintFee + remainingValue) (contracts/ERC721CMInitializable.sol#451)
+Reentrancy in ERC721M.withdraw() (contracts/ERC721M.sol#463-472):
+        External calls:
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC721M.sol#464)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC721M.sol#468)
+        Event emitted after the call(s):
+        - Withdraw(_totalMintFee + remainingValue) (contracts/ERC721M.sol#471)
+Reentrancy in ERC1155M.withdrawERC20() (contracts/ERC1155M.sol#437-447):
+        External calls:
+        - IERC20(MINT_CURRENCY).safeTransfer(MINT_FEE_RECEIVER,_totalMintFee) (contracts/ERC1155M.sol#440)
+        - IERC20(MINT_CURRENCY).safeTransfer(FUND_RECEIVER,remaining) (contracts/ERC1155M.sol#444)
+        Event emitted after the call(s):
+        - WithdrawERC20(MINT_CURRENCY,_totalMintFee + remaining) (contracts/ERC1155M.sol#446)
+Reentrancy in ERC721CM.withdrawERC20() (contracts/ERC721CM.sol#481-490):
+        External calls:
+        - IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER,_totalMintFee) (contracts/ERC721CM.sol#484)
+        - IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER,remaining) (contracts/ERC721CM.sol#487)
+        Event emitted after the call(s):
+        - WithdrawERC20(_mintCurrency,_totalMintFee + remaining) (contracts/ERC721CM.sol#489)
+Reentrancy in ERC721CMInitializable.withdrawERC20() (contracts/ERC721CMInitializable.sol#457-466):
+        External calls:
+        - IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER,_totalMintFee) (contracts/ERC721CMInitializable.sol#460)
+        - IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER,remaining) (contracts/ERC721CMInitializable.sol#463)
+        Event emitted after the call(s):
+        - WithdrawERC20(_mintCurrency,_totalMintFee + remaining) (contracts/ERC721CMInitializable.sol#465)
+Reentrancy in ERC721M.withdrawERC20() (contracts/ERC721M.sol#477-486):
+        External calls:
+        - IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER,_totalMintFee) (contracts/ERC721M.sol#480)
+        - IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER,remaining) (contracts/ERC721M.sol#483)
+        Event emitted after the call(s):
+        - WithdrawERC20(_mintCurrency,_totalMintFee + remaining) (contracts/ERC721M.sol#485)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#reentrancy-vulnerabilities-3
+INFO:Detectors:
+ERC1155M.getActiveStageFromTimestamp(uint64) (contracts/ERC1155M.sol#468-480) uses timestamp for comparisons
+        Dangerous comparisons:
+        - timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds (contracts/ERC1155M.sol#473-474)
+ERC721CM.getActiveStageFromTimestamp(uint64) (contracts/ERC721CM.sol#588-603) uses timestamp for comparisons
+        Dangerous comparisons:
+        - timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds (contracts/ERC721CM.sol#593-594)
+ERC721CM._assertValidTimestamp(uint64) (contracts/ERC721CM.sol#608-611) uses timestamp for comparisons
+        Dangerous comparisons:
+        - timestamp < block.timestamp - _timestampExpirySeconds (contracts/ERC721CM.sol#609)
+ERC721CMInitializable.getActiveStageFromTimestamp(uint64) (contracts/ERC721CMInitializable.sol#526-541) uses timestamp for comparisons
+        Dangerous comparisons:
+        - timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds (contracts/ERC721CMInitializable.sol#531-532)
+ERC721M.getActiveStageFromTimestamp(uint64) (contracts/ERC721M.sol#570-582) uses timestamp for comparisons
+        Dangerous comparisons:
+        - timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds (contracts/ERC721M.sol#575-576)
+ERC721M._assertValidTimestamp(uint64) (contracts/ERC721M.sol#587-590) uses timestamp for comparisons
+        Dangerous comparisons:
+        - timestamp < block.timestamp - _timestampExpirySeconds (contracts/ERC721M.sol#588)
+BucketAuction.getAuctionActive() (contracts/auctions/BucketAuction.sol#96-100) uses timestamp for comparisons
+        Dangerous comparisons:
+        - _startTimeUnixSeconds <= block.timestamp && block.timestamp < _endTimeUnixSeconds (contracts/auctions/BucketAuction.sol#97-99)
+BucketAuction.setPrice(uint256) (contracts/auctions/BucketAuction.sol#196-204) uses timestamp for comparisons
+        Dangerous comparisons:
+        - block.timestamp <= _endTimeUnixSeconds (contracts/auctions/BucketAuction.sol#198)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+INFO:Detectors:
+Void constructor called in ERC721ACQueryable.constructor(string,string) (contracts/creator-token-standards/ERC721ACQueryable.sol#11-14):
+        - CreatorTokenBase() (contracts/creator-token-standards/ERC721ACQueryable.sol#14)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#void-constructor
+INFO:Detectors:
+Initializable._getInitializableStorage() (node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol#223-227) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol#224-226)
+Clones.clone(address) (node_modules/@openzeppelin/contracts/proxy/Clones.sol#28-41) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/proxy/Clones.sol#30-37)
+Clones.cloneDeterministic(address,bytes32) (node_modules/@openzeppelin/contracts/proxy/Clones.sol#50-63) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/proxy/Clones.sol#52-59)
+Clones.predictDeterministicAddress(address,bytes32,address) (node_modules/@openzeppelin/contracts/proxy/Clones.sol#68-84) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/proxy/Clones.sol#74-83)
+ERC1155._doSafeTransferAcceptanceCheck(address,address,address,uint256,uint256,bytes) (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#381-407) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#401-403)
+ERC1155._doSafeBatchTransferAcceptanceCheck(address,address,address,uint256[],uint256[],bytes) (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#413-441) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#435-437)
+ERC1155._asSingletonArrays(uint256,uint256) (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#446-467) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#451-466)
+Address._revert(bytes) (node_modules/@openzeppelin/contracts/utils/Address.sol#146-158) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Address.sol#151-154)
+Arrays.unsafeAccess(address[],uint256) (node_modules/@openzeppelin/contracts/utils/Arrays.sol#57-68) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Arrays.sol#63-66)
+Arrays.unsafeAccess(bytes32[],uint256) (node_modules/@openzeppelin/contracts/utils/Arrays.sol#75-86) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Arrays.sol#81-84)
+Arrays.unsafeAccess(uint256[],uint256) (node_modules/@openzeppelin/contracts/utils/Arrays.sol#93-104) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Arrays.sol#99-102)
+Arrays.unsafeMemoryAccess(uint256[],uint256) (node_modules/@openzeppelin/contracts/utils/Arrays.sol#111-115) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Arrays.sol#112-114)
+Arrays.unsafeMemoryAccess(address[],uint256) (node_modules/@openzeppelin/contracts/utils/Arrays.sol#122-126) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Arrays.sol#123-125)
+StorageSlot.getAddressSlot(bytes32) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#59-64) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#61-63)
+StorageSlot.getBooleanSlot(bytes32) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#69-74) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#71-73)
+StorageSlot.getBytes32Slot(bytes32) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#79-84) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#81-83)
+StorageSlot.getUint256Slot(bytes32) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#89-94) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#91-93)
+StorageSlot.getStringSlot(bytes32) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#99-104) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#101-103)
+StorageSlot.getStringSlot(string) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#109-114) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#111-113)
+StorageSlot.getBytesSlot(bytes32) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#119-124) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#121-123)
+StorageSlot.getBytesSlot(bytes) (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#129-134) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#131-133)
+Strings.toString(uint256) (node_modules/@openzeppelin/contracts/utils/Strings.sol#24-44) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Strings.sol#30-32)
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/Strings.sol#36-38)
+ECDSA.tryRecover(bytes32,bytes) (node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol#56-73) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol#64-68)
+MerkleProof._efficientHash(bytes32,bytes32) (node_modules/@openzeppelin/contracts/utils/cryptography/MerkleProof.sol#224-231) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/cryptography/MerkleProof.sol#226-230)
+MessageHashUtils.toEthSignedMessageHash(bytes32) (node_modules/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol#30-37) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol#32-36)
+MessageHashUtils.toTypedDataHash(bytes32,bytes32) (node_modules/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol#76-85) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol#78-84)
+Math.mulDiv(uint256,uint256,uint256) (node_modules/@openzeppelin/contracts/utils/math/Math.sol#123-202) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/math/Math.sol#130-133)
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/math/Math.sol#154-161)
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/math/Math.sol#167-176)
+EnumerableSet.values(EnumerableSet.Bytes32Set) (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#219-229) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#224-226)
+EnumerableSet.values(EnumerableSet.AddressSet) (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#293-303) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#298-300)
+EnumerableSet.values(EnumerableSet.UintSet) (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#367-377) uses assembly
+        - INLINE ASM (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#372-374)
+ERC721CM._chainID() (contracts/ERC721CM.sol#626-632) uses assembly
+        - INLINE ASM (contracts/ERC721CM.sol#628-630)
+ERC721CMInitializable._chainID() (contracts/ERC721CMInitializable.sol#556-562) uses assembly
+        - INLINE ASM (contracts/ERC721CMInitializable.sol#558-560)
+ERC721M._chainID() (contracts/ERC721M.sol#605-611) uses assembly
+        - INLINE ASM (contracts/ERC721M.sol#607-609)
+ERC721AStorage.layout() (node_modules/erc721a-upgradeable/contracts/ERC721AStorage.sol#54-59) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AStorage.sol#56-58)
+ERC721AUpgradeable._setAux(address,uint64) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#226-235) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#230-232)
+ERC721AUpgradeable._packOwnershipData(address,uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#402-409) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#403-408)
+ERC721AUpgradeable._nextInitializedFlag(uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#414-420) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#416-419)
+ERC721AUpgradeable._packedOwnershipExists(uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#498-504) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#499-503)
+ERC721AUpgradeable._isSenderApprovedOrOwner(address,address,address) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#509-522) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#514-521)
+ERC721AUpgradeable._getApprovedSlotAndAddress(uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#527-538) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#534-537)
+ERC721AUpgradeable.transferFrom(address,address,uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#557-633) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#578-583)
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#619-629)
+ERC721AUpgradeable._checkContractOnERC721Received(address,address,uint256,bytes) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#730-748) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#744-746)
+ERC721AUpgradeable._mint(address,uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#764-820) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#802-812)
+ERC721AUpgradeable._mintSpot(address,uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#935-984) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#968-978)
+ERC721AUpgradeable._burn(uint256,bool) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1089-1155) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1105-1110)
+ERC721AUpgradeable._setExtraDataAt(uint256,uint24) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1164-1174) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1169-1171)
+ERC721AUpgradeable._toString(uint256) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1225-1262) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1226-1261)
+ERC721AUpgradeable._revert(bytes4) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1267-1272) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#1268-1271)
+ERC721A__Initializable._isConstructor() (node_modules/erc721a-upgradeable/contracts/ERC721A__Initializable.sol#62-74) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721A__Initializable.sol#70-72)
+ERC721A__InitializableStorage.layout() (node_modules/erc721a-upgradeable/contracts/ERC721A__InitializableStorage.sol#23-28) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/ERC721A__InitializableStorage.sol#25-27)
+ERC721AQueryableUpgradeable.explicitOwnershipsOf(uint256[]) (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#76-108) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#85-94)
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#97-100)
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#102-105)
+ERC721AQueryableUpgradeable._tokensOfOwnerIn(address,uint256,uint256) (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#156-243) uses assembly
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#179-186)
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#207-235)
+        - INLINE ASM (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#238-240)
+ERC721A._setAux(address,uint64) (node_modules/erc721a/contracts/ERC721A.sol#233-242) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#237-239)
+ERC721A._packOwnershipData(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#387-394) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#388-393)
+ERC721A._nextInitializedFlag(uint256) (node_modules/erc721a/contracts/ERC721A.sol#399-405) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#401-404)
+ERC721A._isSenderApprovedOrOwner(address,address,address) (node_modules/erc721a/contracts/ERC721A.sol#492-505) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#497-504)
+ERC721A._getApprovedSlotAndAddress(uint256) (node_modules/erc721a/contracts/ERC721A.sol#510-521) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#517-520)
+ERC721A.transferFrom(address,address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#540-601) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#560-565)
+ERC721A._checkContractOnERC721Received(address,address,uint256,bytes) (node_modules/erc721a/contracts/ERC721A.sol#698-717) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#712-714)
+ERC721A._mint(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#733-797) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#767-791)
+ERC721A._burn(uint256,bool) (node_modules/erc721a/contracts/ERC721A.sol#917-983) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#933-938)
+ERC721A._setExtraDataAt(uint256,uint24) (node_modules/erc721a/contracts/ERC721A.sol#992-1002) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#997-999)
+ERC721A._toString(uint256) (node_modules/erc721a/contracts/ERC721A.sol#1053-1090) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/ERC721A.sol#1054-1089)
+ERC721AQueryable.tokensOfOwnerIn(address,uint256,uint256) (node_modules/erc721a/contracts/extensions/ERC721AQueryable.sol#85-144) uses assembly
+        - INLINE ASM (node_modules/erc721a/contracts/extensions/ERC721AQueryable.sol#139-141)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#assembly-usage
+INFO:Detectors:
+4 different versions of Solidity are used:
+        - Version constraint ^0.8.4 is used by:
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/access/OwnablePermissions.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ICreatorToken.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ICreatorTokenTransferValidator.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/IEOARegistry.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ITransferSecurityRegistry.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ITransferValidator.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/programmable-royalties/BasicRoyalties.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/utils/TransferPolicy.sol#2)
+                -^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#2)
+                -^0.8.4 (contracts/ERC721CM.sol#3)
+                -^0.8.4 (contracts/ERC721CMBasicRoyalties.sol#3)
+                -^0.8.4 (contracts/ERC721CMInitializable.sol#3)
+                -^0.8.4 (contracts/ERC721CMRoyalties.sol#3)
+                -^0.8.4 (contracts/ERC721CMRoyaltiesInitializable.sol#3)
+                -^0.8.4 (contracts/ERC721M.sol#3)
+                -^0.8.4 (contracts/IERC721M.sol#2)
+                -^0.8.4 (contracts/IERC721MInitializable.sol#2)
+                -^0.8.4 (contracts/RandomGames.sol#3)
+                -^0.8.4 (contracts/access/OwnableInitializable.sol#3)
+                -^0.8.4 (contracts/auctions/BucketAuction.sol#3)
+                -^0.8.4 (contracts/auctions/IBucketAuction.sol#2)
+                -^0.8.4 (contracts/creator-token-standards/CreatorTokenBase.sol#2)
+                -^0.8.4 (contracts/creator-token-standards/ERC721ACQueryable.sol#2)
+                -^0.8.4 (contracts/creator-token-standards/ERC721ACQueryableInitializable.sol#2)
+                -^0.8.4 (contracts/factory/ERC721CMRoyaltiesCloneFactory.sol#3)
+                -^0.8.4 (contracts/mocks/ERC1155MTestReentrantExploit.sol#2)
+                -^0.8.4 (contracts/mocks/MockERC721A.sol#3)
+                -^0.8.4 (contracts/mocks/TestReentrantExploit.sol#2)
+                -^0.8.4 (contracts/mocks/TestStaking.sol#2)
+                -^0.8.4 (contracts/operator-filter/ERC721MOperatorFilterer.sol#3)
+                -^0.8.4 (contracts/operator-filter/OwnedRegistrant.sol#2)
+                -^0.8.4 (contracts/royalties/UpdatableRoyalties.sol#2)
+                -^0.8.4 (contracts/royalties/UpdatableRoyaltiesInitializable.sol#2)
+                -^0.8.4 (contracts/utils/Constants.sol#2)
+                -^0.8.4 (contracts/utils/ERC721BatchTransfer.sol#3)
+                -^0.8.4 (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#5)
+                -^0.8.4 (node_modules/erc721a-upgradeable/contracts/IERC721AUpgradeable.sol#5)
+                -^0.8.4 (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#5)
+                -^0.8.4 (node_modules/erc721a-upgradeable/contracts/extensions/IERC721AQueryableUpgradeable.sol#5)
+                -^0.8.4 (node_modules/erc721a/contracts/ERC721A.sol#5)
+                -^0.8.4 (node_modules/erc721a/contracts/IERC721A.sol#5)
+                -^0.8.4 (node_modules/erc721a/contracts/extensions/ERC721AQueryable.sol#5)
+                -^0.8.4 (node_modules/erc721a/contracts/extensions/IERC721AQueryable.sol#5)
+        - Version constraint ^0.8.20 is used by:
+                -^0.8.20 (node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/access/AccessControl.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/access/IAccessControl.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/access/Ownable.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/access/Ownable2Step.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/IERC1271.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/IERC165.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/IERC2981.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/draft-IERC6093.sol#3)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/proxy/Clones.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/token/common/ERC2981.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/Address.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/Arrays.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/Context.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#5)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/Strings.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/MerkleProof.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/Math.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol#4)
+                -^0.8.20 (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#5)
+                -^0.8.20 (contracts/ERC1155M.sol#3)
+                -^0.8.20 (contracts/IERC1155M.sol#2)
+        - Version constraint ^0.8.0 is used by:
+                -^0.8.0 (contracts/mocks/MockERC20.sol#3)
+                -^0.8.0 (node_modules/erc721a-upgradeable/contracts/ERC721AStorage.sol#3)
+                -^0.8.0 (node_modules/erc721a-upgradeable/contracts/ERC721A__Initializable.sol#2)
+                -^0.8.0 (node_modules/erc721a-upgradeable/contracts/ERC721A__InitializableStorage.sol#3)
+        - Version constraint ^0.8.13 is used by:
+                -^0.8.13 (node_modules/operator-filter-registry/src/IOperatorFilterRegistry.sol#2)
+                -^0.8.13 (node_modules/operator-filter-registry/src/UpdatableOperatorFilterer.sol#2)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#different-pragma-directives-are-used
+INFO:Detectors:
+ERC721A._mint(address,uint256) (node_modules/erc721a/contracts/ERC721A.sol#733-797) has costly operations inside a loop:
+        - _currentIndex = end (node_modules/erc721a/contracts/ERC721A.sol#794)
+BucketAuction._internalMint(address,uint256) (contracts/auctions/BucketAuction.sol#211-217) has costly operations inside a loop:
+        - _firstTokenSent = true (contracts/auctions/BucketAuction.sol#216)
+ReentrancyGuard._nonReentrantBefore() (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#61-69) has costly operations inside a loop:
+        - _status = ENTERED (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#68)
+ReentrancyGuard._nonReentrantAfter() (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#71-75) has costly operations inside a loop:
+        - _status = NOT_ENTERED (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#74)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#costly-operations-inside-a-loop
+INFO:Detectors:
+ERC1155M._mintInternal(address,uint256,uint32,uint32,bytes32[]) (contracts/ERC1155M.sol#333-403) has a high cyclomatic complexity (12).
+ERC721CM._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721CM.sol#371-449) has a high cyclomatic complexity (13).
+ERC721CMInitializable._mintInternal(uint32,address,uint32,bytes32[]) (contracts/ERC721CMInitializable.sol#354-425) has a high cyclomatic complexity (12).
+ERC721M._mintInternal(uint32,address,uint32,bytes32[],uint64,bytes) (contracts/ERC721M.sol#366-445) has a high cyclomatic complexity (13).
+ERC721AQueryableUpgradeable._tokensOfOwnerIn(address,uint256,uint256) (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#156-243) has a high cyclomatic complexity (16).
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#cyclomatic-complexity
+INFO:Detectors:
+ERC721CMInitializable._chainID() (contracts/ERC721CMInitializable.sol#556-562) is never used and should be removed
+ERC721CMInitializable._requireCallerIsContractOwner() (contracts/ERC721CMInitializable.sol#564-571) is never used and should be removed
+OwnableInitializable._requireCallerIsContractOwner() (contracts/access/OwnableInitializable.sol#37-39) is never used and should be removed
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#dead-code
+INFO:Detectors:
+Version constraint ^0.8.4 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)
+        - FullInlinerNonExpressionSplitArgumentEvaluationOrder
+        - MissingSideEffectsOnSelectorAccess
+        - AbiReencodingHeadOverflowWithStaticArrayCleanup
+        - DirtyBytesArrayToStorage
+        - DataLocationChangeInInternalOverride
+        - NestedCalldataArrayAbiReencodingSizeValidation
+        - SignedImmutables.
+It is used by:
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/access/OwnablePermissions.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ICreatorToken.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ICreatorTokenTransferValidator.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/IEOARegistry.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ITransferSecurityRegistry.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/interfaces/ITransferValidator.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/programmable-royalties/BasicRoyalties.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/utils/TransferPolicy.sol#2)
+        - ^0.8.4 (node_modules/@limitbreak/creator-token-standards/src/utils/TransferValidation.sol#2)
+        - ^0.8.4 (contracts/ERC721CM.sol#3)
+        - ^0.8.4 (contracts/ERC721CMBasicRoyalties.sol#3)
+        - ^0.8.4 (contracts/ERC721CMInitializable.sol#3)
+        - ^0.8.4 (contracts/ERC721CMRoyalties.sol#3)
+        - ^0.8.4 (contracts/ERC721CMRoyaltiesInitializable.sol#3)
+        - ^0.8.4 (contracts/ERC721M.sol#3)
+        - ^0.8.4 (contracts/IERC721M.sol#2)
+        - ^0.8.4 (contracts/IERC721MInitializable.sol#2)
+        - ^0.8.4 (contracts/RandomGames.sol#3)
+        - ^0.8.4 (contracts/access/OwnableInitializable.sol#3)
+        - ^0.8.4 (contracts/auctions/BucketAuction.sol#3)
+        - ^0.8.4 (contracts/auctions/IBucketAuction.sol#2)
+        - ^0.8.4 (contracts/creator-token-standards/CreatorTokenBase.sol#2)
+        - ^0.8.4 (contracts/creator-token-standards/ERC721ACQueryable.sol#2)
+        - ^0.8.4 (contracts/creator-token-standards/ERC721ACQueryableInitializable.sol#2)
+        - ^0.8.4 (contracts/factory/ERC721CMRoyaltiesCloneFactory.sol#3)
+        - ^0.8.4 (contracts/mocks/ERC1155MTestReentrantExploit.sol#2)
+        - ^0.8.4 (contracts/mocks/MockERC721A.sol#3)
+        - ^0.8.4 (contracts/mocks/TestReentrantExploit.sol#2)
+        - ^0.8.4 (contracts/mocks/TestStaking.sol#2)
+        - ^0.8.4 (contracts/operator-filter/ERC721MOperatorFilterer.sol#3)
+        - ^0.8.4 (contracts/operator-filter/OwnedRegistrant.sol#2)
+        - ^0.8.4 (contracts/royalties/UpdatableRoyalties.sol#2)
+        - ^0.8.4 (contracts/royalties/UpdatableRoyaltiesInitializable.sol#2)
+        - ^0.8.4 (contracts/utils/Constants.sol#2)
+        - ^0.8.4 (contracts/utils/ERC721BatchTransfer.sol#3)
+        - ^0.8.4 (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#5)
+        - ^0.8.4 (node_modules/erc721a-upgradeable/contracts/IERC721AUpgradeable.sol#5)
+        - ^0.8.4 (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#5)
+        - ^0.8.4 (node_modules/erc721a-upgradeable/contracts/extensions/IERC721AQueryableUpgradeable.sol#5)
+        - ^0.8.4 (node_modules/erc721a/contracts/ERC721A.sol#5)
+        - ^0.8.4 (node_modules/erc721a/contracts/IERC721A.sol#5)
+        - ^0.8.4 (node_modules/erc721a/contracts/extensions/ERC721AQueryable.sol#5)
+        - ^0.8.4 (node_modules/erc721a/contracts/extensions/IERC721AQueryable.sol#5)
+Version constraint ^0.8.20 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)
+        - VerbatimInvalidDeduplication
+        - FullInlinerNonExpressionSplitArgumentEvaluationOrder
+        - MissingSideEffectsOnSelectorAccess.
+It is used by:
+        - ^0.8.20 (node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/access/AccessControl.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/access/IAccessControl.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/access/Ownable.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/access/Ownable2Step.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/IERC1271.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/IERC165.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/IERC2981.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/interfaces/draft-IERC6093.sol#3)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/proxy/Clones.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/ERC1155.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/token/common/ERC2981.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/Address.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/Arrays.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/Context.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/StorageSlot.sol#5)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/Strings.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/ECDSA.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/MerkleProof.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/introspection/ERC165.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/Math.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/math/SignedMath.sol#4)
+        - ^0.8.20 (node_modules/@openzeppelin/contracts/utils/structs/EnumerableSet.sol#5)
+        - ^0.8.20 (contracts/ERC1155M.sol#3)
+        - ^0.8.20 (contracts/IERC1155M.sol#2)
+Version constraint ^0.8.0 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)
+        - FullInlinerNonExpressionSplitArgumentEvaluationOrder
+        - MissingSideEffectsOnSelectorAccess
+        - AbiReencodingHeadOverflowWithStaticArrayCleanup
+        - DirtyBytesArrayToStorage
+        - DataLocationChangeInInternalOverride
+        - NestedCalldataArrayAbiReencodingSizeValidation
+        - SignedImmutables
+        - ABIDecodeTwoDimensionalArrayMemory
+        - KeccakCaching.
+It is used by:
+        - ^0.8.0 (contracts/mocks/MockERC20.sol#3)
+        - ^0.8.0 (node_modules/erc721a-upgradeable/contracts/ERC721AStorage.sol#3)
+        - ^0.8.0 (node_modules/erc721a-upgradeable/contracts/ERC721A__Initializable.sol#2)
+        - ^0.8.0 (node_modules/erc721a-upgradeable/contracts/ERC721A__InitializableStorage.sol#3)
+Version constraint ^0.8.13 contains known severe issues (https://solidity.readthedocs.io/en/latest/bugs.html)
+        - VerbatimInvalidDeduplication
+        - FullInlinerNonExpressionSplitArgumentEvaluationOrder
+        - MissingSideEffectsOnSelectorAccess
+        - StorageWriteRemovalBeforeConditionalTermination
+        - AbiReencodingHeadOverflowWithStaticArrayCleanup
+        - DirtyBytesArrayToStorage
+        - InlineAssemblyMemorySideEffects
+        - DataLocationChangeInInternalOverride
+        - NestedCalldataArrayAbiReencodingSizeValidation.
+It is used by:
+        - ^0.8.13 (node_modules/operator-filter-registry/src/IOperatorFilterRegistry.sol#2)
+        - ^0.8.13 (node_modules/operator-filter-registry/src/UpdatableOperatorFilterer.sol#2)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#incorrect-versions-of-solidity
+INFO:Detectors:
+Low level call in SafeERC20._callOptionalReturnBool(IERC20,bytes) (node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol#110-117):
+        - (success,returndata) = address(token).call(data) (node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol#115)
+Low level call in Address.sendValue(address,uint256) (node_modules/@openzeppelin/contracts/utils/Address.sol#41-50):
+        - (success,None) = recipient.call{value: amount}() (node_modules/@openzeppelin/contracts/utils/Address.sol#46)
+Low level call in Address.functionCallWithValue(address,bytes,uint256) (node_modules/@openzeppelin/contracts/utils/Address.sol#83-89):
+        - (success,returndata) = target.call{value: value}(data) (node_modules/@openzeppelin/contracts/utils/Address.sol#87)
+Low level call in Address.functionStaticCall(address,bytes) (node_modules/@openzeppelin/contracts/utils/Address.sol#95-98):
+        - (success,returndata) = target.staticcall(data) (node_modules/@openzeppelin/contracts/utils/Address.sol#96)
+Low level call in Address.functionDelegateCall(address,bytes) (node_modules/@openzeppelin/contracts/utils/Address.sol#104-107):
+        - (success,returndata) = target.delegatecall(data) (node_modules/@openzeppelin/contracts/utils/Address.sol#105)
+Low level call in SignatureChecker.isValidERC1271SignatureNow(address,bytes32,bytes) (node_modules/@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol#36-47):
+        - (success,result) = signer.staticcall(abi.encodeCall(IERC1271.isValidSignature,(hash,signature))) (node_modules/@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol#41-43)
+Low level call in ERC1155M.withdraw() (contracts/ERC1155M.sol#422-432):
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC1155M.sol#423)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC1155M.sol#428)
+Low level call in ERC721CM.withdraw() (contracts/ERC721CM.sol#467-476):
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC721CM.sol#468)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC721CM.sol#472)
+Low level call in ERC721CMInitializable.withdraw() (contracts/ERC721CMInitializable.sol#443-452):
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC721CMInitializable.sol#444)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC721CMInitializable.sol#448)
+Low level call in ERC721M.withdraw() (contracts/ERC721M.sol#463-472):
+        - (success,None) = MINT_FEE_RECEIVER.call{value: _totalMintFee}() (contracts/ERC721M.sol#464)
+        - (success,None) = FUND_RECEIVER.call{value: remainingValue}() (contracts/ERC721M.sol#468)
+Low level call in RandomGamesMinting.mint(uint32,bytes32[],uint64,bytes) (contracts/RandomGames.sol#44-59):
+        - (success,None) = _proxyContract.call(abi.encodeWithSignature(mint(address[]),minters)) (contracts/RandomGames.sol#56)
+Low level call in RandomGamesMinting.mintWithLimit(uint32,uint32,bytes32[],uint64,bytes) (contracts/RandomGames.sol#61-77):
+        - (success,None) = _proxyContract.call(abi.encodeWithSignature(mint(address[]),minters)) (contracts/RandomGames.sol#74)
+Low level call in BucketAuction.sendRefund(address) (contracts/auctions/BucketAuction.sol#287-298):
+        - (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#296)
+Low level call in BucketAuction._sendTokensAndRefund(address) (contracts/auctions/BucketAuction.sol#333-354):
+        - (success,None) = to.call{value: refundValue}() (contracts/auctions/BucketAuction.sol#344)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#low-level-calls
+INFO:Detectors:
+TestReentrantExploit (contracts/mocks/TestReentrantExploit.sol#6-37) should inherit from ERC721A__IERC721ReceiverUpgradeable (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#14-21)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#missing-inheritance
+INFO:Detectors:
+Function IERC20Permit.DOMAIN_SEPARATOR() (node_modules/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol#89) is not in mixedCase
+Variable ERC1155M.MINT_CURRENCY (contracts/ERC1155M.sol#59) is not in mixedCase
+Variable ERC1155M.NUM_TOKENS (contracts/ERC1155M.sol#62) is not in mixedCase
+Variable ERC1155M.FUND_RECEIVER (contracts/ERC1155M.sol#65) is not in mixedCase
+Variable ERC721CM.FUND_RECEIVER (contracts/ERC721CM.sol#75) is not in mixedCase
+Function ERC721CMInitializable.__ERC721CMInitializable_init(string,string,string,uint256,uint256,uint64,address,address) (contracts/ERC721CMInitializable.sol#74-95) is not in mixedCase
+Variable ERC721CMInitializable.FUND_RECEIVER (contracts/ERC721CMInitializable.sol#72) is not in mixedCase
+Variable ERC721M.FUND_RECEIVER (contracts/ERC721M.sol#74) is not in mixedCase
+Function ERC721ACQueryableInitializable.__ERC721ACQueryableInitializable_init(string,string) (contracts/creator-token-standards/ERC721ACQueryableInitializable.sol#18-24) is not in mixedCase
+Variable ERC721CMRoyaltiesCloneFactory.IMPLEMENTATION (contracts/factory/ERC721CMRoyaltiesCloneFactory.sol#15) is not in mixedCase
+Contract ERC721A__IERC721ReceiverUpgradeable (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#14-21) is not in CapWords
+Function ERC721AUpgradeable.__ERC721A_init(string,string) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#99-101) is not in mixedCase
+Function ERC721AUpgradeable.__ERC721A_init_unchained(string,string) (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#103-109) is not in mixedCase
+Parameter ERC721AUpgradeable.safeTransferFrom(address,address,uint256,bytes)._data (node_modules/erc721a-upgradeable/contracts/ERC721AUpgradeable.sol#665) is not in mixedCase
+Contract ERC721A__Initializable (node_modules/erc721a-upgradeable/contracts/ERC721A__Initializable.sol#19-75) is not in CapWords
+Contract ERC721A__InitializableStorage (node_modules/erc721a-upgradeable/contracts/ERC721A__InitializableStorage.sol#9-29) is not in CapWords
+Function ERC721AQueryableUpgradeable.__ERC721AQueryable_init() (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#21-23) is not in mixedCase
+Function ERC721AQueryableUpgradeable.__ERC721AQueryable_init_unchained() (node_modules/erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol#25) is not in mixedCase
+Contract ERC721A__IERC721Receiver (node_modules/erc721a/contracts/ERC721A.sol#12-19) is not in CapWords
+Parameter ERC721A.safeTransferFrom(address,address,uint256,bytes)._data (node_modules/erc721a/contracts/ERC721A.sol#633) is not in mixedCase
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#conformance-to-solidity-naming-conventions
+INFO:Detectors:
+Clones.clone(address) (node_modules/@openzeppelin/contracts/proxy/Clones.sol#28-41) uses literals with too many digits:
+        - mstore(uint256,uint256)(0x00,implementation << 0x60 >> 0xe8 | 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000) (node_modules/@openzeppelin/contracts/proxy/Clones.sol#33)
+Clones.cloneDeterministic(address,bytes32) (node_modules/@openzeppelin/contracts/proxy/Clones.sol#50-63) uses literals with too many digits:
+        - mstore(uint256,uint256)(0x00,implementation << 0x60 >> 0xe8 | 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000) (node_modules/@openzeppelin/contracts/proxy/Clones.sol#55)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#too-many-digits
+INFO:Detectors:
+The following unused import(s) in contracts/ERC721CM.sol should be removed:
+        -import "@openzeppelin/contracts/token/common/ERC2981.sol"; (contracts/ERC721CM.sol#6)
+The following unused import(s) in contracts/ERC721CMInitializable.sol should be removed:
+        -import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol"; (contracts/ERC721CMInitializable.sol#8)
+
+        -import "@openzeppelin/contracts/token/common/ERC2981.sol"; (contracts/ERC721CMInitializable.sol#5)
+The following unused import(s) in contracts/royalties/UpdatableRoyaltiesInitializable.sol should be removed:
+        -import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; (contracts/royalties/UpdatableRoyaltiesInitializable.sol#6)
+The following unused import(s) in contracts/auctions/BucketAuction.sol should be removed:
+        -import "erc721a/contracts/ERC721A.sol"; (contracts/auctions/BucketAuction.sol#9)
+
+        -import "@openzeppelin/contracts/access/AccessControl.sol"; (contracts/auctions/BucketAuction.sol#5)
+
+        -import "@openzeppelin/contracts/access/Ownable.sol"; (contracts/auctions/BucketAuction.sol#6)
+
+        -import "@openzeppelin/contracts/token/common/ERC2981.sol"; (contracts/auctions/BucketAuction.sol#7)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-imports
+INFO:Detectors:
+Loop condition i < _mintStages.length (contracts/ERC721M.sol#573) should use cached array length instead of referencing `length` member of the storage array.
+ Loop condition i < _mintStages.length (contracts/ERC1155M.sol#471) should use cached array length instead of referencing `length` member of the storage array.
+ Loop condition i < _mintStages.length (contracts/ERC721CM.sol#591) should use cached array length instead of referencing `length` member of the storage array.
+ Loop condition i < _mintStages.length (contracts/ERC721CMInitializable.sol#529) should use cached array length instead of referencing `length` member of the storage array.
+ Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#cache-array-length
+INFO:Detectors:
+ERC1155MTestReentrantExploit._targetContract (contracts/mocks/ERC1155MTestReentrantExploit.sol#8) should be immutable 
+TestReentrantExploit._targetContract (contracts/mocks/TestReentrantExploit.sol#7) should be immutable 
+TestStaking._nft (contracts/mocks/TestStaking.sol#9) should be immutable 
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#state-variables-that-could-be-declared-immutable
