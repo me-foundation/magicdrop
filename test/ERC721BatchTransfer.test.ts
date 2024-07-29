@@ -148,7 +148,7 @@ describe('ERC721BatchTransfer', function () {
         tos,
         tokenIds,
       ),
-    ).to.be.revertedWith('NotOwnerOfToken');
+    ).to.be.revertedWith('TransferFromIncorrectOwner()');
   });
 
   it('revert if invalid arguments', async () => {
