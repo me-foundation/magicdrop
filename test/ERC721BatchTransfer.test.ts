@@ -36,7 +36,7 @@ describe('ERC721BatchTransfer', function () {
 
     await nftContract.setApprovalForAll(transferContract.address, true);
 
-    await nftContract.mintBatch(owner.address, 5000);
+    await nftContract.mintBatch(owner.address, 1000);
 
     for (let i = 0; i < 5; i++) {
       const tokenOwner = await nftContract.ownerOf(i);
@@ -57,6 +57,7 @@ describe('ERC721BatchTransfer', function () {
   });
 
   it.skip('batchTransferToSingleWallet max Batch', async () => {
+    // old cap was 777
     const batchAmount = 833;
     const tx = await transferContract.batchTransferToSingleWallet(
       nftContract.address,
