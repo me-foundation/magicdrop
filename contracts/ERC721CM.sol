@@ -467,6 +467,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function withdraw() external onlyOwner {
         (bool success, ) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
+        _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
         (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
@@ -482,6 +483,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
         IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        _totalMintFee = 0;
 
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
         IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
