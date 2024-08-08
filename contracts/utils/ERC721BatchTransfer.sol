@@ -12,7 +12,6 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  */
 contract ERC721BatchTransfer {
     error InvalidArguments();
-    error NotOwnerOfToken();
 
     event BatchTransferToSingle(
         address indexed contractAddress,
@@ -37,19 +36,17 @@ contract ERC721BatchTransfer {
         address to,
         uint256[] calldata tokenIds
     ) external {
-        uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
-            uint256 tokenId = tokenIds[i];
-            address owner = erc721Contract.ownerOf(tokenId);
-            if (msg.sender != owner) {
-                revert NotOwnerOfToken();
-            }
-            erc721Contract.transferFrom(owner, to, tokenId);
+        for (uint256 i; i < tokenIds.length; ) {
+            erc721Contract.transferFrom(msg.sender, to, tokenIds[i]);
             unchecked {
                 ++i;
             }
         }
-        emit BatchTransferToSingle(address(erc721Contract), to, length);
+        emit BatchTransferToSingle(
+            address(erc721Contract),
+            to,
+            tokenIds.length
+        );
     }
 
     /**
@@ -63,19 +60,17 @@ contract ERC721BatchTransfer {
         address to,
         uint256[] calldata tokenIds
     ) external {
-        uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
-            uint256 tokenId = tokenIds[i];
-            address owner = erc721Contract.ownerOf(tokenId);
-            if (msg.sender != owner) {
-                revert NotOwnerOfToken();
-            }
-            erc721Contract.safeTransferFrom(owner, to, tokenId);
+        for (uint256 i; i < tokenIds.length; ) {
+            erc721Contract.safeTransferFrom(msg.sender, to, tokenIds[i]);
             unchecked {
                 ++i;
             }
         }
-        emit BatchTransferToSingle(address(erc721Contract), to, length);
+        emit BatchTransferToSingle(
+            address(erc721Contract),
+            to,
+            tokenIds.length
+        );
     }
 
     /**
@@ -95,23 +90,16 @@ contract ERC721BatchTransfer {
         address[] calldata tos,
         uint256[] calldata tokenIds
     ) external {
-        uint256 length = tokenIds.length;
-        if (tos.length != length) revert InvalidArguments();
+        if (tos.length != tokenIds.length) revert InvalidArguments();
 
-        for (uint256 i; i < length; ) {
-            uint256 tokenId = tokenIds[i];
-            address owner = erc721Contract.ownerOf(tokenId);
-            address to = tos[i];
-            if (msg.sender != owner) {
-                revert NotOwnerOfToken();
-            }
-            erc721Contract.transferFrom(owner, to, tokenId);
+        for (uint256 i; i < tokenIds.length; ) {
+            erc721Contract.transferFrom(msg.sender, tos[i], tokenIds[i]);
             unchecked {
                 ++i;
             }
         }
 
-        emit BatchTransferToMultiple(address(erc721Contract), length);
+        emit BatchTransferToMultiple(address(erc721Contract), tokenIds.length);
     }
 
     /**
@@ -130,22 +118,15 @@ contract ERC721BatchTransfer {
         address[] calldata tos,
         uint256[] calldata tokenIds
     ) external {
-        uint256 length = tokenIds.length;
-        if (tos.length != length) revert InvalidArguments();
+        if (tos.length != tokenIds.length) revert InvalidArguments();
 
-        for (uint256 i; i < length; ) {
-            uint256 tokenId = tokenIds[i];
-            address owner = erc721Contract.ownerOf(tokenId);
-            address to = tos[i];
-            if (msg.sender != owner) {
-                revert NotOwnerOfToken();
-            }
-            erc721Contract.safeTransferFrom(owner, to, tokenId);
+        for (uint256 i; i < tokenIds.length; ) {
+            erc721Contract.safeTransferFrom(msg.sender, tos[i], tokenIds[i]);
             unchecked {
                 ++i;
             }
         }
 
-        emit BatchTransferToMultiple(address(erc721Contract), length);
+        emit BatchTransferToMultiple(address(erc721Contract), tokenIds.length);
     }
 }
