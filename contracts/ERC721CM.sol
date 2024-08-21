@@ -74,6 +74,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     // Fund receiver
     address public immutable FUND_RECEIVER;
 
+    // Authorized minters
+    mapping(address => bool) private _authorizedMinters;
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -95,6 +98,8 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         FUND_RECEIVER = fundReceiver;
+
+        _authorizedMinters[RESERVOIR_RELAYER_EOA] = true;
     }
 
     /**
@@ -110,6 +115,14 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      */
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
+        _;
+    }
+
+    /**
+     * @dev Returns whether the msg sender is authorized to mint.
+     */
+    modifier onlyAuthorizedMinter() {
+        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
         _;
     }
 
@@ -363,6 +376,27 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         if (msg.sender != _crossmintAddress) revert CrossmintOnly();
 
         _mintInternal(qty, to, 0, proof, timestamp, signature);
+    }
+
+    /**
+     * @dev Authorized mints token(s) with limit
+     *
+     * qty - number of tokens to mint
+     * to - the address to mint tokens to
+     * limit - limit for the given minter
+     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner.
+     */
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable onlyAuthorizedMinter {
+        _mintInternal(qty, to, limit, proof, timestamp, signature);
     }
 
     /**

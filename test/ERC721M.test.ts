@@ -4,6 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
 import { ERC721M } from '../typechain-types';
+import { BigNumber } from 'ethers';
 
 const { keccak256, getAddress } = ethers.utils;
 const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
@@ -1573,6 +1574,63 @@ describe('ERC721M', function () {
       await expect(
         contract.ownerMint(1001, readonly.address),
       ).to.be.revertedWith('NoSupplyLeft');
+    });
+  });
+
+  describe('Authorized minter minting', function () {
+    let stageStart = 0;
+    let stageEnd = 0;
+
+    beforeEach(async () => {
+      // Get an estimated stage start time
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      stageStart = block.timestamp;
+      // +100 is a number bigger than the count of transactions needed for this test
+      stageEnd = stageStart + 100;
+
+      await contract.setStages([
+        {
+          price: ethers.utils.parseEther('0.5'),
+          mintFee: 0,
+          walletLimit: 1,
+          merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
+          maxStageSupply: 1,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageEnd,
+        },
+      ]);
+
+      await contract.setMintable(true);
+    });
+
+    it('revert if not authorized minter', async () => {
+      let mint = contract.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
+        value: ethers.utils.parseEther('0.5'),
+      });
+      await expect(mint).to.be.revertedWith('NotAuthorized');
+    });
+
+    it('authorized mint', async () => {
+      const recipient = '0xef59F379B48f2E92aBD94ADcBf714D170967925D';
+      const reservoirSigner = await ethers.getImpersonatedSigner('0xf70da97812CB96acDF810712Aa562db8dfA3dbEF');
+      const reservoirAddress = await reservoirSigner.getAddress();
+
+      // Send some wei to impersonated account
+      await ethers.provider.send('hardhat_setBalance', [
+        reservoirAddress,
+        '0xFFFFFFFFFFFFFFFF',
+      ]);
+
+      const reservoirConn = contract.connect(reservoirSigner);
+      
+      await reservoirConn.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
+        value: ethers.utils.parseEther('1'),
+      });
+
+      const totalMinted = await contract.totalMintedByAddress(recipient);
+      expect(totalMinted).to.eql(BigNumber.from(1));
     });
   });
 

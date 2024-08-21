@@ -1234,6 +1234,61 @@ describe('ERC1155M', function () {
     });
   });
 
+  describe('Authorized minter minting', function () {
+    let stageStart = 0;
+    let stageEnd = 0;
+
+    beforeEach(async () => {
+      // Get an estimated stage start time
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      stageStart = block.timestamp;
+      // +100 is a number bigger than the count of transactions needed for this test
+      stageEnd = stageStart + 100;
+
+      await contract.setStages([
+        {
+          price: [parseEther('0.4')],
+          mintFee: [parseEther('0.1')],
+          walletLimit: [10],
+          merkleRoot: [ZERO_PROOF],
+          maxStageSupply: [5],
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageEnd,
+        },
+      ]);
+    });
+
+    it('revert if not authorized minter', async () => {
+      let mint = contract.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
+        value: parseEther('1'),
+      });
+      await expect(mint).to.be.revertedWith('NotAuthorized');
+    });
+
+    it('authorized mint', async () => {
+      const recipient = '0xef59F379B48f2E92aBD94ADcBf714D170967925D';
+      const reservoirSigner = await ethers.getImpersonatedSigner('0xf70da97812CB96acDF810712Aa562db8dfA3dbEF');
+      const reservoirAddress = await reservoirSigner.getAddress();
+
+      // Send some wei to impersonated account
+      await ethers.provider.send('hardhat_setBalance', [
+        reservoirAddress,
+        '0xFFFFFFFFFFFFFFFF',
+      ]);
+
+      const reservoirConn = contract.connect(reservoirSigner);
+      
+      await reservoirConn.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
+        value: parseEther('1'),
+      });
+
+      const totalMinted = await contract.totalMintedByAddress(recipient);
+      expect(totalMinted).to.eql([BigNumber.from(1)]);
+    });
+  });
+
   describe('Token URI', function () {
     it('returns uri', async () => {
       expect(await contract.uri(0)).to.eql('https://example/{id}.json');
