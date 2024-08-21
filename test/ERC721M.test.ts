@@ -1625,12 +1625,24 @@ describe('ERC721M', function () {
 
       const reservoirConn = contract.connect(reservoirSigner);
       
+
+      await expect(reservoirConn.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
+        value: ethers.utils.parseEther('1'),
+      })).to.be.revertedWith('NotAuthorized');
+
+      await contract.addAuthorizedMinter(reservoirAddress);
+
       await reservoirConn.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
         value: ethers.utils.parseEther('1'),
       });
 
       const totalMinted = await contract.totalMintedByAddress(recipient);
       expect(totalMinted).to.eql(BigNumber.from(1));
+
+      await contract.removeAuthorizedMinter(reservoirAddress);
+      await expect(reservoirConn.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
+        value: ethers.utils.parseEther('1'),
+      })).to.be.revertedWith('NotAuthorized');
     });
   });
 

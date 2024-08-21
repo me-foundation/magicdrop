@@ -96,7 +96,6 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         MINT_CURRENCY = mintCurrency;
         _transferable = true;
         FUND_RECEIVER = fundReceiver;
-        _authorizedMinters[RESERVOIR_RELAYER_EOA] = true;
 
         _setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
@@ -115,6 +114,20 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
     modifier onlyAuthorizedMinter() {
         if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
         _;
+    }
+
+    /**
+     * @dev Add authorized minter. Can only be called by contract owner.
+     */
+    function addAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = true;
+    }
+
+    /**
+     * @dev Remove authorized minter. Can only be called by contract owner.
+     */
+    function removeAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = false;
     }
 
     /**

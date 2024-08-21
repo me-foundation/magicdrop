@@ -98,8 +98,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         FUND_RECEIVER = fundReceiver;
-
-        _authorizedMinters[RESERVOIR_RELAYER_EOA] = true;
     }
 
     /**
@@ -155,6 +153,20 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     function setCrossmintAddress(address crossmintAddress) external onlyOwner {
         _crossmintAddress = crossmintAddress;
         emit SetCrossmintAddress(crossmintAddress);
+    }
+
+    /**
+     * @dev Add authorized minter. Can only be called by contract owner.
+     */
+    function addAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = true;
+    }
+
+    /**
+     * @dev Remove authorized minter. Can only be called by contract owner.
+     */
+    function removeAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = false;
     }
 
     /**
