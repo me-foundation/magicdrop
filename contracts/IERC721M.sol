@@ -16,6 +16,7 @@ interface IERC721M is IERC721AQueryable {
     error InvalidStageArgsLength();
     error InvalidStartAndEndTimestamp();
     error NoSupplyLeft();
+    error NotAuthorized();
     error NotEnoughValue();
     error NotMintable();
     error Mintable();
@@ -91,6 +92,15 @@ interface IERC721M is IERC721AQueryable {
     function crossmint(
         uint32 qty,
         address to,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable;
+
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
         bytes32[] calldata proof,
         uint64 timestamp,
         bytes calldata signature
