@@ -1,6 +1,6 @@
 {
   "name": "@me-foundation/magicdrop",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.",
   "files": [
     "/contracts/**/*.sol",

@@ -6,7 +6,7 @@
 
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
+import { ContractDetails, RESERVOIR_RELAYER_EOA } from './common/constants';
 import { checkCodeVersion, estimateGas } from './utils/helper';
 import { Overrides } from 'ethers';
 
@@ -133,4 +133,13 @@ export const deploy = async (
     const tx = await erc721cm.setToDefaultSecurityPolicy();
     console.log('[ERC721CM] Security policy set');
   }
+
+  // Add reservoir relay as authorized minter by default
+  const ERC721CM = await hre.ethers.getContractFactory(
+    ContractDetails.ERC721CM.name,
+  );
+
+  const erc721cm = ERC721CM.attach(contract.address);
+  await erc721cm.addAuthorizedMinter(RESERVOIR_RELAYER_EOA);
+  console.log('[ERC721CM] Added Reservoir Relayer as authorized minter');
 };

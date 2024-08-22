@@ -73,6 +73,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Fund receiver
     address public immutable FUND_RECEIVER;
 
+    // Authorized minters
+    mapping(address => bool) private _authorizedMinters;
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -113,6 +116,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Returns whether the msg sender is authorized to mint.
+     */
+    modifier onlyAuthorizedMinter() {
+        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
+        _;
+    }
+
+    /**
      * @dev Returns cosign nonce.
      */
     function getCosignNonce(address minter) public view returns (uint256) {
@@ -141,6 +152,20 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function setCrossmintAddress(address crossmintAddress) external onlyOwner {
         _crossmintAddress = crossmintAddress;
         emit SetCrossmintAddress(crossmintAddress);
+    }
+
+    /**
+     * @dev Add authorized minter. Can only be called by contract owner.
+     */
+    function addAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = true;
+    }
+
+    /**
+     * @dev Remove authorized minter. Can only be called by contract owner.
+     */
+    function removeAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = false;
     }
 
     /**
@@ -358,6 +383,27 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         if (msg.sender != _crossmintAddress) revert CrossmintOnly();
 
         _mintInternal(qty, to, 0, proof, timestamp, signature);
+    }
+
+    /**
+     * @dev Authorized mints token(s) with limit
+     *
+     * qty - number of tokens to mint
+     * to - the address to mint tokens to
+     * limit - limit for the given minter
+     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner.
+     */
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable onlyAuthorizedMinter {
+        _mintInternal(qty, to, limit, proof, timestamp, signature);
     }
 
     /**

@@ -22,3 +22,6 @@ export const ERC721CV2_EMPTY_LIST = 4;
 // Mainnet, Polygon, Base
 export const ERC721CMRoyaltiesCloneFactoryContract =
   '0x7cEEd7215D71393d56966dA48C5727851326e101';
+
+export const RESERVOIR_RELAYER_EOA =
+  '0xf70da97812CB96acDF810712Aa562db8dfA3dbEF';

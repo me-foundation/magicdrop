@@ -64,6 +64,9 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
     // Fund receiver
     address public immutable FUND_RECEIVER;
 
+    // Authorized minters
+    mapping(address => bool) private _authorizedMinters;
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -103,6 +106,28 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
     modifier hasSupply(uint256 tokenId, uint256 qty) {
         if (_maxMintableSupply[tokenId] > 0 && totalSupply(tokenId) + qty > _maxMintableSupply[tokenId]) revert NoSupplyLeft();
         _;
+    }
+
+    /**
+     * @dev Returns whether the msg sender is authorized to mint.
+     */
+    modifier onlyAuthorizedMinter() {
+        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
+        _;
+    }
+
+    /**
+     * @dev Add authorized minter. Can only be called by contract owner.
+     */
+    function addAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = true;
+    }
+
+    /**
+     * @dev Remove authorized minter. Can only be called by contract owner.
+     */
+    function removeAuthorizedMinter(address minter) external onlyOwner {
+        _authorizedMinters[minter] = false;
     }
 
     /**
@@ -325,6 +350,25 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         bytes32[] calldata proof
     ) external payable virtual nonReentrant {
         _mintInternal(msg.sender, tokenId, qty, limit, proof);
+    }
+
+    /**
+     * @dev Authorized mints token(s) with limit
+     *
+     * to - the token recipient
+     * tokenId - token id
+     * qty - number of tokens to mint
+     * limit - limit for the given minter
+     * proof - the merkle proof generated on client side. This applies if using whitelist
+     */
+    function authorizedMint(
+        address to,
+        uint256 tokenId,
+        uint32 qty,
+        uint32 limit,
+        bytes32[] calldata proof
+    ) external payable onlyAuthorizedMinter {
+        _mintInternal(to, tokenId, qty, limit, proof);
     }
 
     /**

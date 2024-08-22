@@ -14,6 +14,7 @@ interface IERC1155M {
     error InvalidTokenId();
     error InvalidStartAndEndTimestamp();
     error NoSupplyLeft();
+    error NotAuthorized();
     error NotEnoughValue();
     error NotTransferable();
     error StageSupplyExceeded();
@@ -70,6 +71,14 @@ interface IERC1155M {
     ) external payable;
 
     function mintWithLimit(
+        uint256 tokenId,
+        uint32 qty,
+        uint32 limit,
+        bytes32[] calldata proof
+    ) external payable;
+
+    function authorizedMint(
+        address to,
         uint256 tokenId,
         uint32 qty,
         uint32 limit,

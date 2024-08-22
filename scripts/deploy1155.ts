@@ -1,6 +1,6 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
+import { ContractDetails, RESERVOIR_RELAYER_EOA } from './common/constants';
 import { checkCodeVersion, estimateGas } from './utils/helper';
 import { Overrides } from 'ethers';
 
@@ -101,4 +101,8 @@ export const deploy1155 = async (
   console.log(
     `npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`,
   );
+
+  // Add reservoir relay as authorized minter by default
+  await contract.addAuthorizedMinter(RESERVOIR_RELAYER_EOA);
+  console.log('[ERC721CM] Added Reservoir Relayer as authorized minter');
 };
