@@ -3,7 +3,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from './common/constants';
-import { cleanVariableWalletLimit, cleanWhitelist, estimateGas } from './utils/helper';
+import { cleanVariableWalletLimit, cleanWhitelist, ensureArray, estimateGas } from './utils/helper';
 import { Overrides } from 'ethers';
 
 export interface ISet1155StagesParams {
@@ -14,12 +14,12 @@ export interface ISet1155StagesParams {
 }
 
 interface StageConfig {
-  price: string;
-  mintFee?: string;
+  price: string | string[];
+  mintFee?: string | string[];
   startDate: number;
   endDate: number;
-  walletLimit?: number;
-  maxSupply?: number;
+  walletLimit?: number | number[];
+  maxSupply?: number | number[];
   whitelistPath?: string;
   variableWalletLimitPath?: string;
 }
@@ -91,15 +91,20 @@ export const set1155Stages = async (
     }),
   );
 
-  const stages = stagesConfig.map((s, i) => ({
-    price: [ethers.utils.parseEther(s.price)],
-    mintFee: [s.mintFee ? ethers.utils.parseEther(s.mintFee) : 0],
-    maxStageSupply: [s.maxSupply ?? 0],
-    walletLimit: [s.walletLimit ?? 0],
-    merkleRoot: [merkleRoots[i]],
-    startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
-    endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
-  }));
+  const stages = stagesConfig.map((s, i) => {
+    const price = ensureArray(s.price).map(p => ethers.utils.parseEther(p));
+    const tokenCount = price.length;
+
+    return {
+      price,
+      mintFee: s.mintFee ? ensureArray(s.mintFee).map(f => ethers.utils.parseEther(f)) : Array(tokenCount).fill(0),
+      maxStageSupply: s.maxSupply ? ensureArray(s.maxSupply) : Array(tokenCount).fill(0),
+      walletLimit: s.walletLimit ? ensureArray(s.walletLimit) : Array(tokenCount).fill(0),
+      merkleRoot: Array(tokenCount).fill(merkleRoots[i]),
+      startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
+      endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
+    };
+  });
 
   console.log(
     `Stage params: `,
