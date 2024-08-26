@@ -16,6 +16,7 @@
     "require": "./dist/index.cjs.js",
     "import": "./dist/index.esm.js"
   },
+  "sideEffects": false,
   "scripts": {
     "node": "hardhat node",
     "build": "npm run build:contracts && npm run build:typescript",
@@ -92,8 +93,6 @@
       "eslint --ext .ts,.js scripts test --fix",
       "prettier --write scripts cosign-server test hardhat.config.ts"
     ],
-    "*.sol": [
-      "prettier --write --plugin=prettier-plugin-solidity contracts"
-    ]
+    "*.sol": ["prettier --write --plugin=prettier-plugin-solidity contracts"]
   }
 }
