@@ -13,7 +13,7 @@ export const ContractDetails = {
 } as const;
 
 export const ERC721BatchTransferContract =
-  '0x38F7ba911f7efc434D29D6E39c814E9d4De3FEef';
+  '0x2d9082592Db4A7C2536A1cEDc33Cc2a53a75Bf27';
 
 export const ERC721CV2_VALIDATOR = '0x721C00182a990771244d7A71B9FA2ea789A3b433';
 export const ERC721CV2_FREEZE_LEVEL = 4;
@@ -23,3 +23,4 @@ export const ERC721CV2_EMPTY_LIST = 4;
 export const ERC721CMRoyaltiesCloneFactoryContract = '0x7cEEd7215D71393d56966dA48C5727851326e101';
 
 export const RESERVOIR_RELAYER_EOA = '0xf70da97812CB96acDF810712Aa562db8dfA3dbEF';
+

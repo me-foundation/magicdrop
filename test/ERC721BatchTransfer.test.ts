@@ -36,7 +36,7 @@ describe('ERC721BatchTransfer', function () {
 
     await nftContract.setApprovalForAll(transferContract.address, true);
 
-    await nftContract.mintBatch(owner.address, 5);
+    await nftContract.mintBatch(owner.address, 1000);
 
     for (let i = 0; i < 5; i++) {
       const tokenOwner = await nftContract.ownerOf(i);
@@ -51,6 +51,24 @@ describe('ERC721BatchTransfer', function () {
       [0, 1, 2, 3, 4],
     );
     for (let i = 0; i < 5; i++) {
+      const tokenOwner = await nftContract.ownerOf(i);
+      expect(tokenOwner).to.equal(addresses.addr1);
+    }
+  });
+
+  it.skip('batchTransferToSingleWallet max Batch', async () => {
+    // old cap was 777
+    const batchAmount = 834;
+    const tx = await transferContract.batchTransferToSingleWallet(
+      nftContract.address,
+      addresses.addr1,
+      Array.from({ length: batchAmount }, (_, i) => i),
+    );
+    const receipt = await tx.wait();
+
+    console.log(receipt.gasUsed);
+
+    for (let i = 0; i < batchAmount; i++) {
       const tokenOwner = await nftContract.ownerOf(i);
       expect(tokenOwner).to.equal(addresses.addr1);
     }
@@ -130,7 +148,7 @@ describe('ERC721BatchTransfer', function () {
         tos,
         tokenIds,
       ),
-    ).to.be.revertedWith('NotOwnerOfToken');
+    ).to.be.revertedWith('TransferFromIncorrectOwner()');
   });
 
   it('revert if invalid arguments', async () => {
