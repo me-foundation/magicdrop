@@ -140,6 +140,7 @@ export const deploy = async (
   );
 
   const erc721cm = ERC721CM.attach(contract.address);
-  await erc721cm.addAuthorizedMinter(RESERVOIR_RELAYER_EOA);
+  await erc721cm.addAuthorizedMinter(RESERVOIR_RELAYER_MUTLICALLER);
+  await erc721cm.addAuthorizedMinter(RESERVOIR_RELAYER_ROUTER);
   console.log('[ERC721CM] Added Reservoir Relayer as authorized minter');
 };
