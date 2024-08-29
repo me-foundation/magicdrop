@@ -6,7 +6,7 @@
 
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails, RESERVOIR_RELAYER_EOA } from './common/constants';
+import { ContractDetails, RESERVOIR_RELAYER_MUTLICALLER, RESERVOIR_RELAYER_ROUTER } from './common/constants';
 import { checkCodeVersion, estimateGas } from './utils/helper';
 import { Overrides } from 'ethers';
 
