@@ -12,8 +12,8 @@ interface IDeploy1155Params {
   globalwalletlimit: string;
   mintcurrency?: string;
   fundreceiver?: string;
-  erc2198royaltyreceiver?: string;
-  erc2198royaltyfeenumerator?: number;
+  erc2981royaltyreceiver?: string;
+  erc2981royaltyfeenumerator?: number;
   openedition?: boolean;
   gaspricegwei?: number;
   gaslimit?: number;
@@ -33,13 +33,17 @@ export const deploy1155 = async (
 
   console.log(args);
 
-  const maxsupply = args.maxsupply.split(',').map(supply => 
-    args.openedition? hre.ethers.BigNumber.from(0) : hre.ethers.BigNumber.from(supply.trim())
-  )
+  const maxsupply = args.maxsupply
+    .split(',')
+    .map((supply) =>
+      args.openedition
+        ? hre.ethers.BigNumber.from(0)
+        : hre.ethers.BigNumber.from(supply.trim()),
+    );
 
-  const globalwalletlimit = args.globalwalletlimit.split(',').map(limit =>
-    hre.ethers.BigNumber.from(limit.trim())
-  );
+  const globalwalletlimit = args.globalwalletlimit
+    .split(',')
+    .map((limit) => hre.ethers.BigNumber.from(limit.trim()));
 
   const overrides: Overrides = {};
   if (args.gaspricegwei) {
@@ -50,7 +54,10 @@ export const deploy1155 = async (
   }
 
   const [signer] = await hre.ethers.getSigners();
-  const contractFactory = await hre.ethers.getContractFactory(contractName, signer);
+  const contractFactory = await hre.ethers.getContractFactory(
+    contractName,
+    signer,
+  );
 
   const params = [
     args.name,
@@ -60,8 +67,8 @@ export const deploy1155 = async (
     globalwalletlimit,
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
     args.fundreceiver ?? signer.address,
-    args.erc2198royaltyreceiver,
-    args.erc2198royaltyfeenumerator 
+    args.erc2981royaltyreceiver,
+    args.erc2981royaltyfeenumerator,
   ] as any[];
 
   console.log(
@@ -78,7 +85,7 @@ export const deploy1155 = async (
   ) {
     return;
   }
-  
+
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
   const contract = await contractFactory.deploy(...params, overrides);

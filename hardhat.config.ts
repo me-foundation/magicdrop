@@ -56,7 +56,7 @@ const config: HardhatUserConfig = {
         runs: 20,
         details: {
           yulDetails: {
-            optimizerSteps: "dhfoD[xarrscLMcCTU]uljmul",
+            optimizerSteps: 'dhfoD[xarrscLMcCTU]uljmul',
           },
         },
       },
@@ -77,8 +77,8 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       accounts: {
-        accountsBalance: '1000000000000000000000'
-      }
+        accountsBalance: '1000000000000000000000',
+      },
     },
     base: {
       url: process.env.BASE_URL || '',
@@ -121,17 +121,46 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    sei: {
+      chainId: 1329,
+      url: process.env.SEI_URL || 'https://evm-rpc.sei-apis.com',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    arbitrum: {
+      chainId: 42161,
+      url: process.env.ARBITRUM_URL || 'https://arbitrum-one.publicnode.com/',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: 'USD',
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_API_KEY ?? '',
+      base: process.env.ETHERSCAN_API_KEY ?? '',
+      polygon: process.env.ETHERSCAN_API_KEY ?? '',
+      arbitrum: process.env.ETHERSCAN_API_KEY ?? '',
+
+      sei: process.env.SEITRACE_API_KEY ?? '',
+    },
+    customChains: [
+      {
+        network: 'sei',
+        chainId: 1329,
+        urls: {
+          apiURL: 'https://seitrace.com/arctic-1/api',
+          browserURL: 'https://seitrace.com/',
+        },
+      },
+    ],
   },
   sourcify: {
-    enabled: true
-  }
+    enabled: true,
+  },
 };
 
 task('setStages', 'Set stages for ERC721M')
@@ -145,7 +174,6 @@ task('setStages', 'Set stages for ERC721M')
     types.int,
   )
   .setAction(setStages);
-
 
 task('set1155Stages', 'Set stages for ERC721M')
   .addParam('contract', 'contract address')
@@ -181,10 +209,7 @@ task('deploy', 'Deploy ERC721M')
     'ERC-20 contract address (if minting with ERC-20)',
     '0x0000000000000000000000000000000000000000',
   )
-  .addOptionalParam(
-    'fundreceiver',
-    'The treasury wallet to receive mint fund',
-  )
+  .addOptionalParam('fundreceiver', 'The treasury wallet to receive mint fund')
   .addParam<boolean>(
     'useoperatorfilterer',
     'whether or not to use operator filterer, used with legacy 721M contract',
@@ -204,18 +229,18 @@ task('deploy', 'Deploy ERC721M')
     types.boolean,
   )
   .addOptionalParam<boolean>(
-    'useerc2198',
-    'whether or not to use ERC2198',
+    'useerc2981',
+    'whether or not to use ERC2981',
     true,
     types.boolean,
   )
   .addOptionalParam(
-    'erc2198royaltyreceiver',
-    'erc2198 royalty receiver address',
+    'erc2981royaltyreceiver',
+    'erc2981 royalty receiver address',
   )
   .addOptionalParam(
-    'erc2198royaltyfeenumerator',
-    'erc2198 royalty fee numerator',
+    'erc2981royaltyfeenumerator',
+    'erc2981 royalty fee numerator',
   )
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
@@ -228,7 +253,6 @@ task('deploy', 'Deploy ERC721M')
     await deploy(tasksArgs, hre);
   });
 
-
 task('deploy1155', 'Deploy ERC1155M')
   .addParam('name', 'name')
   .addParam('symbol', 'symbol')
@@ -240,10 +264,7 @@ task('deploy1155', 'Deploy ERC1155M')
     'ERC-20 contract address (if minting with ERC-20)',
     '0x0000000000000000000000000000000000000000',
   )
-  .addOptionalParam(
-    'fundreceiver',
-    'The treasury wallet to receive mint fund',
-  )
+  .addOptionalParam('fundreceiver', 'The treasury wallet to receive mint fund')
   .addParam<boolean>(
     'openedition',
     'whether or not a open edition mint (unlimited supply, 999,999,999)',
@@ -251,12 +272,12 @@ task('deploy1155', 'Deploy ERC1155M')
     types.boolean,
   )
   .addOptionalParam(
-    'erc2198royaltyreceiver',
-    'erc2198 royalty receiver address',
+    'erc2981royaltyreceiver',
+    'erc2981 royalty receiver address',
   )
   .addOptionalParam(
-    'erc2198royaltyfeenumerator',
-    'erc2198 royalty fee numerator',
+    'erc2981royaltyfeenumerator',
+    'erc2981 royalty fee numerator',
   )
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
@@ -267,7 +288,7 @@ task('deploy1155', 'Deploy ERC1155M')
     await hre.run('compile');
     console.log('Deploying...');
     await deploy1155(tasksArgs, hre);
-});
+  });
 
 task('setBaseURI', 'Set the base uri')
   .addParam('uri', 'uri')
@@ -308,7 +329,6 @@ task('ownerMint1155', 'Mint token(s) as owner for ERC1155M')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(ownerMint1155);
-
 
 task('setGlobalWalletLimit', 'Set the global wallet limit')
   .addParam('contract', 'contract address')
@@ -459,13 +479,16 @@ task('thawTrading', 'Thaw trading for 721Cv2')
 
 task('cleanWhitelist', 'Clean up whitelist')
   .addOptionalParam('whitelistpath', 'plain whitelist path')
-  .addOptionalParam('variablewalletlimitpath', 'variable wallet limit whitelist path')
-  .setAction(cleanWhitelist)
+  .addOptionalParam(
+    'variablewalletlimitpath',
+    'variable wallet limit whitelist path',
+  )
+  .setAction(cleanWhitelist);
 
 task('deployCloneFactory', 'Deploy 721CMRoyalties clone factory')
   .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
-  .setAction(deployCloneFactory)
+  .setAction(deployCloneFactory);
 
 task('deployClone', 'Create 721CMRoyalties cline')
   .addParam('name', 'name')
@@ -474,10 +497,14 @@ task('deployClone', 'Create 721CMRoyalties cline')
   .addParam('tokenurisuffix', 'token uri suffix', '.json')
   .addParam('globalwalletlimit', 'global wallet limit', '0')
   .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
-  .addParam('mintcurrency','ERC-20 contract address. 0x0 if using native token','0x0000000000000000000000000000000000000000')
+  .addParam(
+    'mintcurrency',
+    'ERC-20 contract address. 0x0 if using native token',
+    '0x0000000000000000000000000000000000000000',
+  )
   .addParam('fundreceiver', 'The treasury wallet to receive mint fund')
-  .addParam('royaltyreceiver', 'erc2198 royalty receiver address')
-  .addParam('royaltyfeenumerator', 'erc2198 royalty fee numerator')
+  .addParam('royaltyreceiver', 'erc2981 royalty receiver address')
+  .addParam('royaltyfeenumerator', 'erc2981 royalty fee numerator')
   .addParam<boolean>(
     'openedition',
     'whether or not a open edition mint (unlimited supply, 999,999,999)',

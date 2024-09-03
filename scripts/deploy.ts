@@ -23,9 +23,9 @@ interface IDeployParams {
   mintcurrency?: string;
   fundreceiver?: string;
   useerc721c?: boolean;
-  useerc2198?: boolean;
-  erc2198royaltyreceiver?: string;
-  erc2198royaltyfeenumerator?: number;
+  useerc2981?: boolean;
+  erc2981royaltyreceiver?: string;
+  erc2981royaltyfeenumerator?: number;
   gaspricegwei?: number;
   gaslimit?: number;
 }
@@ -42,7 +42,7 @@ export const deploy = async (
   await hre.run('compile');
   let contractName: string = ContractDetails.ERC721M.name;
 
-  if (args.useerc721c && args.useerc2198) {
+  if (args.useerc721c && args.useerc2981) {
     contractName = ContractDetails.ERC721CMRoyalties.name;
   } else if (args.useerc721c) {
     contractName = ContractDetails.ERC721CM.name;
@@ -65,7 +65,10 @@ export const deploy = async (
   }
 
   const [signer] = await hre.ethers.getSigners();
-  const contractFactory = await hre.ethers.getContractFactory(contractName, signer);
+  const contractFactory = await hre.ethers.getContractFactory(
+    contractName,
+    signer,
+  );
 
   const params = [
     args.name,
@@ -79,10 +82,10 @@ export const deploy = async (
     args.fundreceiver ?? signer.address,
   ] as any[];
 
-  if (args.useerc2198) {
+  if (args.useerc2981) {
     params.push(
-      args.erc2198royaltyreceiver ?? hre.ethers.constants.AddressZero,
-      args.erc2198royaltyfeenumerator ?? 0,
+      args.erc2981royaltyreceiver ?? hre.ethers.constants.AddressZero,
+      args.erc2981royaltyfeenumerator ?? 0,
     );
   }
 
