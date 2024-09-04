@@ -73,7 +73,10 @@ describe('ERC721M', function () {
   });
 
   it('Contract can be paused/unpaused', async () => {
-    // starts paused
+    // starts unpaused
+    expect(await contract.getMintable()).to.be.true;
+
+    await contract.setMintable(false);
     expect(await contract.getMintable()).to.be.false;
 
     // unpause
@@ -389,6 +392,7 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: 1,
         },
       ]);
+      await contract.setMintable(false);
 
       // not mintable by owner
       let mint = contract.mint(
@@ -416,7 +420,6 @@ describe('ERC721M', function () {
     });
 
     it('revert if contract without stages', async () => {
-      await contract.setMintable(true);
       const mint = contract.mint(
         1,
         [ethers.utils.hexZeroPad('0x', 32)],
@@ -449,7 +452,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 2,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: block.timestamp should comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -492,7 +494,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 100000,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: block.timestamp should comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -548,7 +549,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: 62,
         },
       ]);
-      await contract.setMintable(true);
 
       // Mint 100 tokens (1 over MaxMintableSupply)
       const mint = contract.mint(
@@ -582,7 +582,6 @@ describe('ERC721M', function () {
         },
       ]);
       await contract.setMaxMintableSupply(999);
-      await contract.setMintable(true);
 
       // Setup the test context: block.timestamp should comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -624,7 +623,6 @@ describe('ERC721M', function () {
         },
       ]);
       await contract.setMaxMintableSupply(999);
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -665,7 +663,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 1,
         },
       ]);
-      await contract.setMintable(true);
 
       const contractBalanceInitial = await ethers.provider.getBalance(contract.address);
       const mintFeeReceiverBalanceInitial = await ethers.provider.getBalance(MINT_FEE_RECEIVER);
@@ -712,7 +709,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 1,
         },
       ]);
-      await contract.setMintable(true);
 
       const contractBalanceInitial = await ethers.provider.getBalance(contract.address);
       const mintFeeReceiverBalanceInitial = await ethers.provider.getBalance(MINT_FEE_RECEIVER);
@@ -762,7 +758,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 1000,
         },
       ]);
-      await contract.setMintable(true);
       await contract.setCosigner(cosigner.address);
 
       const timestamp = stageStart + 200;
@@ -802,7 +797,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: 1,
         },
       ]);
-      await contract.setMintable(true);
       await contract.setCosigner(cosigner.address);
 
       const timestamp = Math.floor(new Date().getTime() / 1000);
@@ -898,7 +892,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 1000,
         },
       ]);
-      await contract.setMintable(true);
       await contract.setCosigner(cosigner.address);
 
       const earlyTimestamp = stageStart - 1;
@@ -961,7 +954,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 1000,
         },
       ]);
-      await contract.setMintable(true);
       await contract.setCosigner(cosigner.address);
 
       const timestamp = stageStart;
@@ -1017,7 +1009,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 66,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1131,7 +1122,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 3,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1170,7 +1160,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 1,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1228,7 +1217,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 100,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1462,7 +1450,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: 1,
         },
       ]);
-      await contract.setMintable(true);
 
       const crossmint = contract.crossmint(
         7,
@@ -1502,7 +1489,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: 1,
         },
       ]);
-      await contract.setMintable(true);
       await contract.setCrossmintAddress(
         '0xdAb1a1854214684acE522439684a145E62505233',
       );
@@ -1533,7 +1519,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: 1,
         },
       ]);
-      await contract.setMintable(true);
 
       const [owner, address1] = await ethers.getSigners();
 
@@ -1570,7 +1555,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: 1,
         },
       ]);
-      await contract.setMintable(true);
       await expect(
         contract.ownerMint(1001, readonly.address),
       ).to.be.revertedWith('NoSupplyLeft');
@@ -1601,8 +1585,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageEnd,
         },
       ]);
-
-      await contract.setMintable(true);
     });
 
     it('revert if not authorized minter', async () => {
@@ -1680,7 +1662,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 62,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1725,7 +1706,6 @@ describe('ERC721M', function () {
       ]);
 
       await contract.setBaseURI('base_uri_');
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1790,7 +1770,6 @@ describe('ERC721M', function () {
           endTimeUnixSeconds: stageStart + 2,
         },
       ]);
-      await contract.setMintable(true);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -1808,7 +1787,6 @@ describe('ERC721M', function () {
 
   describe('Token URI suffix', () => {
     it('can set tokenURI suffix', async () => {
-      await contract.setMintable(true);
       await contract.setTokenURISuffix('.json');
       await contract.setBaseURI(
         'ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4/',
