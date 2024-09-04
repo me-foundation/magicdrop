@@ -89,7 +89,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     ) Ownable(msg.sender) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
-        _mintable = false;
+        _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
