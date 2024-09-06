@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./utils/Constants.sol";
 
@@ -55,6 +57,12 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
     // Total mint fee
     uint256 private _totalMintFee;
 
+    // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
+    uint64 private _timestampExpirySeconds;
+
+    // The address of the cosigner server.
+    address private _cosigner;
+
     // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
     address private immutable MINT_CURRENCY;
 
@@ -73,6 +81,8 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         string memory uri,
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
+        address cosigner,
+        uint64 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
         address royaltyReceiver,
@@ -93,8 +103,11 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         NUM_TOKENS = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
-        MINT_CURRENCY = mintCurrency;
+        _cosigner = cosigner;
+        _timestampExpirySeconds = timestampExpirySeconds;
         _transferable = true;
+
+        MINT_CURRENCY = mintCurrency;
         FUND_RECEIVER = fundReceiver;
 
         _setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
@@ -128,6 +141,21 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
      */
     function removeAuthorizedMinter(address minter) external onlyOwner {
         _authorizedMinters[minter] = false;
+    }
+
+    /**
+     * @dev Returns cosign nonce.
+     */
+    function getCosignNonce(address minter, uint256 tokenId) public view returns (uint256) {
+        return totalMintedByAddress(minter)[tokenId];
+    }
+
+    /**
+     * @dev Sets cosigner.
+     */
+    function setCosigner(address cosigner) external onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
     }
 
     /**
@@ -325,14 +353,18 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
      *
      * tokenId - token id 
      * qty - number of tokens to mint
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * proof - the merkle proof generated on client side. This applies if using whitelist
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner
      */
     function mint(
         uint256 tokenId,
         uint32 qty,
-        bytes32[] calldata proof
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(msg.sender, tokenId, qty, 0, proof);
+        _mintInternal(msg.sender, tokenId, qty, 0, proof, timestamp, signature);
     }
 
     /**
@@ -341,15 +373,19 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
      * tokenId - token id 
      * qty - number of tokens to mint
      * limit - limit for the given minter
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * proof - the merkle proof generated on client side. This applies if using whitelist
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner
      */
     function mintWithLimit(
         uint256 tokenId,
         uint32 qty,
         uint32 limit,
-        bytes32[] calldata proof
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(msg.sender, tokenId, qty, limit, proof);
+        _mintInternal(msg.sender, tokenId, qty, limit, proof, timestamp, signature);
     }
 
     /**
@@ -368,7 +404,7 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         uint32 limit,
         bytes32[] calldata proof
     ) external payable onlyAuthorizedMinter {
-        _mintInternal(to, tokenId, qty, limit, proof);
+        _mintInternal(to, tokenId, qty, limit, proof, 0, bytes("0"));
     }
 
     /**
@@ -379,9 +415,18 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         uint256 tokenId,
         uint32 qty,
         uint32 limit,
-        bytes32[] calldata proof
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes memory signature
     ) internal hasSupply(tokenId, qty) {
         uint64 stageTimestamp = uint64(block.timestamp);
+
+        if (_cosigner != address(0)) {
+            assertValidCosign(msg.sender, tokenId, qty, timestamp, signature);
+            _assertValidTimestamp(timestamp);
+            stageTimestamp = timestamp;
+        }
+
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
         MintStageInfo memory stage = _mintStages[activeStage];
@@ -523,6 +568,53 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         revert InvalidStage();
     }
 
+     /**
+     * @dev Returns data hash for the given minter, qty and timestamp.
+     */
+    function getCosignDigest(
+        address minter,
+        uint256 tokenId,
+        uint32 qty,
+        uint64 timestamp
+    ) public view returns (bytes32) {
+        if (_cosigner == address(0)) revert CosignerNotSet();
+
+        return
+            MessageHashUtils.toEthSignedMessageHash(
+                keccak256(
+                    abi.encodePacked(
+                        address(this),
+                        minter,
+                        tokenId,
+                        qty,
+                        _cosigner,
+                        timestamp,
+                        block.chainid,
+                        getCosignNonce(minter, tokenId)
+                    )
+                )
+            );
+    }
+
+    /**
+     * @dev Validates the the given signature.
+     */
+    function assertValidCosign(
+        address minter,
+        uint256 tokenId,
+        uint32 qty,
+        uint64 timestamp,
+        bytes memory signature
+    ) public view {
+        if (
+            !SignatureChecker.isValidSignatureNow(
+                _cosigner,
+                getCosignDigest(minter, tokenId, qty, timestamp),
+                signature
+            )
+        ) revert InvalidCosignSignature();
+    }
+
     /**
      * @dev Set default royalty for all tokens
      */
@@ -581,6 +673,14 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
         uint64 end
     ) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
+    }
+
+    /**
+     * @dev Validates the timestamp is not expired.
+     */
+    function _assertValidTimestamp(uint64 timestamp) internal view {
+        if (timestamp < block.timestamp - _timestampExpirySeconds)
+            revert TimestampExpired();
     }
 
     function _assertValidStageArgsLength(MintStageInfo calldata stageInfo) internal {
