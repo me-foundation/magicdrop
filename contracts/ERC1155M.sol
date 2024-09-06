@@ -585,7 +585,6 @@ contract ERC1155M is IERC1155M, ERC1155Supply, ERC2981, Ownable2Step, Reentrancy
                     abi.encodePacked(
                         address(this),
                         minter,
-                        tokenId,
                         qty,
                         _cosigner,
                         timestamp,

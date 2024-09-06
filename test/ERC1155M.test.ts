@@ -41,7 +41,6 @@ describe('ERC1155M', function () {
       [
         'address',
         'address',
-        'uint256',
         'uint32',
         'address',
         'uint64',
@@ -51,7 +50,6 @@ describe('ERC1155M', function () {
       [
         contractInstance.address,
         minter,
-        tokenId,
         qty,
         cosigner.address,
         timestamp,
@@ -889,7 +887,7 @@ describe('ERC1155M', function () {
       ).to.be.revertedWith('NoSupplyLeft');
     });
 
-    it('mint with cosign - happy path', async () => {
+    it('mint with cosigner signature', async () => {
       const [_owner, minter, cosigner] = await ethers.getSigners();
       const block = await ethers.provider.getBlock(
         await ethers.provider.getBlockNumber(),
