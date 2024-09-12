@@ -418,22 +418,28 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
         uint64 stageTimestamp = uint64(block.timestamp);
+        bool waiveMintFee = false;
 
-        MintStageInfo memory stage;
         if (_cosigner != address(0)) {
-            assertValidCosign(msg.sender, qty, timestamp, signature);
+            waiveMintFee = assertValidCosign(
+                msg.sender,
+                qty,
+                timestamp,
+                signature
+            );
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;
         }
 
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
+        MintStageInfo memory stage = _mintStages[activeStage];
 
-        stage = _mintStages[activeStage];
+        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee;
 
         // Check value if minting with ETH
         if (
             _mintCurrency == address(0) &&
-            msg.value < (stage.price + stage.mintFee) * qty
+            msg.value < (stage.price + adjustedMintFee) * qty
         ) revert NotEnoughValue();
 
         // Check stage supply if applicable
@@ -479,11 +485,11 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             IERC20(_mintCurrency).safeTransferFrom(
                 msg.sender,
                 address(this),
-                (stage.price + stage.mintFee) * qty
+                (stage.price + adjustedMintFee) * qty
             );
         }
 
-        _totalMintFee += stage.mintFee * qty;
+        _totalMintFee += adjustedMintFee * qty;
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
         _stageMintedCounts[activeStage] += qty;
@@ -570,11 +576,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns data hash for the given minter, qty and timestamp.
+     * @dev Returns data hash for the given minter, qty, waiveMintFee and timestamp.
      */
     function getCosignDigest(
         address minter,
         uint32 qty,
+        bool waiveMintFee,
         uint64 timestamp
     ) public view returns (bytes32) {
         if (_cosigner == address(0)) revert CosignerNotSet();
@@ -585,6 +592,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                         address(this),
                         minter,
                         qty,
+                        waiveMintFee,
                         _cosigner,
                         timestamp,
                         _chainID(),
@@ -595,21 +603,45 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Validates the the given signature.
+     * @dev Validates the the given signature. Returns whether mint fee is waived.
      */
     function assertValidCosign(
         address minter,
         uint32 qty,
         uint64 timestamp,
         bytes memory signature
-    ) public view {
+    ) public view returns (bool) {
         if (
-            !SignatureChecker.isValidSignatureNow(
+            SignatureChecker.isValidSignatureNow(
                 _cosigner,
-                getCosignDigest(minter, qty, timestamp),
+                getCosignDigest(
+                    minter,
+                    qty,
+                    /* waiveMintFee= */ true,
+                    timestamp
+                ),
                 signature
             )
-        ) revert InvalidCosignSignature();
+        ) {
+            return true;
+        }
+
+        if (
+            SignatureChecker.isValidSignatureNow(
+                _cosigner,
+                getCosignDigest(
+                    minter,
+                    qty,
+                    /* waiveMintFee= */ false,
+                    timestamp
+                ),
+                signature
+            )
+        ) {
+            return false;
+        }
+
+        revert InvalidCosignSignature();
     }
 
     /**

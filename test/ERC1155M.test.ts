@@ -33,6 +33,7 @@ describe('ERC1155M', function () {
     timestamp: number,
     tokenId: number,
     qty: number,
+    waiveMintFee: boolean,
   ) => {
     const nonce = await contractInstance.getCosignNonce(minter, tokenId);
     const chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
@@ -42,6 +43,7 @@ describe('ERC1155M', function () {
         'address',
         'address',
         'uint32',
+        'bool',
         'address',
         'uint64',
         'uint256',
@@ -51,6 +53,7 @@ describe('ERC1155M', function () {
         contractInstance.address,
         minter,
         qty,
+        waiveMintFee,
         cosigner.address,
         timestamp,
         chainId,
@@ -688,6 +691,61 @@ describe('ERC1155M', function () {
       expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(parseEther('0.1'));
     });
 
+    it('mint with mint fee waived', async () => {
+      const [_owner, minter, cosigner] = await ethers.getSigners();
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      await contract.setCosigner(cosigner.address);
+
+      const timestamp = stageStart + 1;
+
+      let sig = getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        0,
+        1,
+        false,
+      );
+
+      await expect(readonlyContract.mint(
+        0,
+        1,
+        [ethers.utils.hexZeroPad('0x', 32)],
+        timestamp,
+        sig,
+        {
+          value: ethers.utils.parseEther('0.4'),  // price = 0.4, mintFee = 0.1
+        },
+      )).to.be.rejectedWith('NotEnoughValue');;
+
+      sig = getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        0,
+        1,
+        true,
+      );
+      await readonlyContract.mint(
+        0,
+        1,
+        [ethers.utils.hexZeroPad('0x', 32)],
+        timestamp,
+        sig,
+        {
+          value: ethers.utils.parseEther('0.4'),  // price = 0.4, mintFee = 0.1
+        },
+      );
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await readonlyContract.getStageInfo(0);
+      expect(walletMintedCount).to.eql([BigNumber.from(1)]);
+      expect(stagedMintedCount).to.eql([BigNumber.from(1)]);
+    });
+
     it('enforces Merkle proof if required', async () => {
       const accounts = (await ethers.getSigners()).map((signer) =>
         getAddress(signer.address).toLowerCase().trim(),
@@ -902,6 +960,7 @@ describe('ERC1155M', function () {
         timestamp,
         0,
         1,
+        false,
       );
       await readonlyContract.mint(
         0,
@@ -931,6 +990,7 @@ describe('ERC1155M', function () {
         timestamp,
         0,
         1,
+        false,
       );
 
       // invalid because of unexpected timestamp
@@ -1227,6 +1287,71 @@ describe('ERC1155M', function () {
       expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(parseEther('0.6'));
     });
 
+    it('mint with mint fee waived', async () => {
+      await contract.setStages([
+        {
+          price: [0, 0, 0],
+          mintFee: [parseEther('0.1'), parseEther('0.2'), parseEther('0.3')],
+          walletLimit: [0, 0, 0],
+          merkleRoot: [ZERO_PROOF, ZERO_PROOF, ZERO_PROOF],
+          maxStageSupply: [100, 100, 100],
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageEnd,
+        },
+      ]);
+
+      const [_owner, minter, cosigner] = await ethers.getSigners();
+
+      await contract.setCosigner(cosigner.address);
+
+      const timestamp = stageStart + 1;
+
+      let sig = getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        2,
+        1,
+        false,
+      );
+
+      await expect(readonlyContract.mint(
+        2,
+        1,
+        [ethers.utils.hexZeroPad('0x', 32)],
+        timestamp,
+        sig,
+        {
+          value: ethers.utils.parseEther('0'),  // price = 0, mintFee = 0.3
+        },
+      )).to.be.rejectedWith('NotEnoughValue');;
+
+      sig = getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        2,
+        1,
+        true,
+      );
+      await readonlyContract.mint(
+        2,
+        1,
+        [ethers.utils.hexZeroPad('0x', 32)],
+        timestamp,
+        sig,
+        {
+          value: ethers.utils.parseEther('0'),  // price = 0, mintFee = 0.3
+        },
+      );
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await readonlyContract.getStageInfo(0);
+      expect(walletMintedCount).to.eql([BigNumber.from(0), BigNumber.from(0), BigNumber.from(1)]);
+      expect(walletMintedCount).to.eql([BigNumber.from(0), BigNumber.from(0), BigNumber.from(1)]);
+    });
+
     it('enforces Merkle proof if required', async () => {
       const accounts = (await ethers.getSigners()).map((signer) =>
         getAddress(signer.address).toLowerCase().trim(),
@@ -1431,7 +1556,7 @@ describe('ERC1155M', function () {
     });
 
     it('revert if not authorized minter', async () => {
-      let mint = contract.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
+      const mint = contract.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
         value: parseEther('1'),
       });
       await expect(mint).to.be.revertedWith('NotAuthorized');

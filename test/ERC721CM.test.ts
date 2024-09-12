@@ -25,6 +25,7 @@ describe('ERC721CM', function () {
     minter: string,
     timestamp: number,
     qty: number,
+    waiveMintFee: boolean,
   ) => {
     const nonce = await contractInstance.getCosignNonce(minter);
     const digestFromJs = ethers.utils.solidityKeccak256(
@@ -32,6 +33,7 @@ describe('ERC721CM', function () {
         'address',
         'address',
         'uint32',
+        'bool',
         'address',
         'uint64',
         'uint256',
@@ -41,6 +43,7 @@ describe('ERC721CM', function () {
         contractInstance.address,
         minter,
         qty,
+        waiveMintFee,
         cosigner.address,
         timestamp,
         chainId,
@@ -734,6 +737,72 @@ describe('ERC721CM', function () {
       expect(mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial)).to.equal(ethers.utils.parseEther('0.1'));
     });
 
+    it('mint with waived mint fee', async () => {
+      const [_owner, minter, cosigner] = await ethers.getSigners();
+      const block = await ethers.provider.getBlock(
+        await ethers.provider.getBlockNumber(),
+      );
+      const stageStart = block.timestamp;
+
+      await contract.setStages([
+        {
+          price: 0,
+          mintFee: ethers.utils.parseEther('0.1'),
+          walletLimit: 0,
+          merkleRoot: ethers.utils.hexZeroPad('0x', 32),
+          maxStageSupply: 100,
+          startTimeUnixSeconds: stageStart,
+          endTimeUnixSeconds: stageStart + 1000,
+        },
+      ]);
+      await contract.setMintable(true);
+      await contract.setCosigner(cosigner.address);
+
+      const timestamp = stageStart + 100;
+      let sig = getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        1,
+        false,
+      );
+      await expect(
+        readonlyContract.mint(
+          1,
+          [ethers.utils.hexZeroPad('0x', 32)],
+          timestamp,
+          sig,
+          {
+            value: ethers.utils.parseEther('0'),
+          },
+        ),
+      ).to.be.revertedWith('NotEnoughValue');
+
+      sig = getCosignSignature(
+        contract,
+        cosigner,
+        minter.address,
+        timestamp,
+        1,
+        true,
+      );
+      await readonlyContract.mint(
+        1,
+        [ethers.utils.hexZeroPad('0x', 32)],
+        timestamp,
+        sig,
+        {
+          value: ethers.utils.parseEther('0'),
+        },
+      );
+      const [stageInfo, walletMintedCount, stagedMintedCount] =
+        await readonlyContract.getStageInfo(0);
+      expect(stageInfo.maxStageSupply).to.equal(100);
+      expect(walletMintedCount).to.equal(1);
+      expect(stagedMintedCount.toNumber()).to.equal(1);
+    });
+
     it('mint with cosign - happy path', async () => {
       const [_owner, minter, cosigner] = await ethers.getSigners();
       const block = await ethers.provider.getBlock(
@@ -762,6 +831,7 @@ describe('ERC721CM', function () {
         minter.address,
         timestamp,
         1,
+        false,
       );
       await readonlyContract.mint(
         1,
@@ -802,6 +872,7 @@ describe('ERC721CM', function () {
         minter.address,
         timestamp,
         1,
+        false,
       );
 
       // invalid because of unexpected timestamp
@@ -898,6 +969,7 @@ describe('ERC721CM', function () {
         minter.address,
         earlyTimestamp,
         1,
+        false,
       );
 
       await expect(
@@ -919,6 +991,7 @@ describe('ERC721CM', function () {
         minter.address,
         lateTimestamp,
         1,
+        false,
       );
 
       await expect(
@@ -961,6 +1034,7 @@ describe('ERC721CM', function () {
         minter.address,
         timestamp,
         1,
+        false,
       );
 
       // fast forward 2 minutes
@@ -1408,6 +1482,7 @@ describe('ERC721CM', function () {
         crossmintSigner.address,
         twoMinuteOldTimestamp,
         1,
+        false,
       );
 
       await crossMintConn.crossmint(
@@ -1600,7 +1675,7 @@ describe('ERC721CM', function () {
     });
 
     it('revert if not authorized minter', async () => {
-      let mint = contract.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
+      const mint = contract.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
         value: ethers.utils.parseEther('0.5'),
       });
       await expect(mint).to.be.revertedWith('NotAuthorized');
@@ -1618,7 +1693,7 @@ describe('ERC721CM', function () {
       ]);
 
       const reservoirConn = contract.connect(reservoirSigner);
-      
+
       await expect(reservoirConn.authorizedMint(1, '0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00', {
         value: ethers.utils.parseEther('1'),
       })).to.be.revertedWith('NotAuthorized');
@@ -1856,7 +1931,7 @@ describe('ERC721CM', function () {
       await erc721cm.deployed();
       const ownerConn = erc721cm.connect(owner);
       await expect(
-        ownerConn.getCosignDigest(owner.address, 1, 0),
+        ownerConn.getCosignDigest(owner.address, 1, false, 0),
       ).to.be.revertedWith('CosignerNotSet');
 
       // we can set the cosigner
@@ -1892,6 +1967,7 @@ describe('ERC721CM', function () {
         minter.address,
         timestamp,
         1,
+        false,
       );
       await expect(
         minterConn.assertValidCosign(minter.address, 1, timestamp, sig),
