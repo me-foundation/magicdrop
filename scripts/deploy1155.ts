@@ -10,6 +10,8 @@ interface IDeploy1155Params {
   uri: string;
   maxsupply: string;
   globalwalletlimit: string;
+  cosigner?: string;
+  timestampexpiryseconds?: number;
   mintcurrency?: string;
   fundreceiver?: string;
   erc2198royaltyreceiver?: string;
@@ -58,6 +60,8 @@ export const deploy1155 = async (
     args.uri,
     maxsupply,
     globalwalletlimit,
+    args.cosigner ?? hre.ethers.constants.AddressZero,
+    args.timestampexpiryseconds ?? 300,
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
     args.fundreceiver ?? signer.address,
     args.erc2198royaltyreceiver,

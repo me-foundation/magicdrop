@@ -4,6 +4,7 @@ export interface ICosignRequest {
   qty: number;
   chainId: number;
   nonce: number;
+  waiveMintFee?: boolean;
 }
 
 export interface ICollectionRequest {

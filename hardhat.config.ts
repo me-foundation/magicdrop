@@ -235,6 +235,12 @@ task('deploy1155', 'Deploy ERC1155M')
   .addParam('uri', 'token uri')
   .addParam('maxsupply', 'max supply')
   .addParam('globalwalletlimit', 'global wallet limit')
+  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
+  .addOptionalParam(
+    'cosigner',
+    'cosigner address (0x00...000 if not using cosign)',
+    '0x0000000000000000000000000000000000000000',
+  )
   .addOptionalParam(
     'mintcurrency',
     'ERC-20 contract address (if minting with ERC-20)',
