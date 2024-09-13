@@ -4,9 +4,11 @@ pragma solidity ^0.8.20;
 
 interface IERC1155M {
     error CannotIncreaseMaxMintableSupply();
+    error CosignerNotSet();
     error NewSupplyLessThanTotalSupply();
     error GlobalWalletLimitOverflow();
     error InsufficientStageTimeGap();
+    error InvalidCosignSignature();
     error InvalidLimitArgsLength();
     error InvalidProof();
     error InvalidStage();
@@ -46,6 +48,8 @@ interface IERC1155M {
         uint64 startTimeUnixSeconds,
         uint64 endTimeUnixSeconds
     );
+
+    event SetCosigner(address cosigner);
     event SetMaxMintableSupply(uint256 indexed tokenId, uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 indexed tokenId, uint256 globalWalletLimit);
     event Withdraw(uint256 value);
@@ -67,14 +71,18 @@ interface IERC1155M {
     function mint(
         uint256 tokenId,
         uint32 qty,
-        bytes32[] calldata proof
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
     ) external payable;
 
     function mintWithLimit(
         uint256 tokenId,
         uint32 qty,
         uint32 limit,
-        bytes32[] calldata proof
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
     ) external payable;
 
     function authorizedMint(
