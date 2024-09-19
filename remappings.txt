@@ -4,3 +4,4 @@ solemate/=/lib/solemate/src/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 forge-std/=lib/forge-std/src/
 erc721a/contracts=lib/ERC721a/contracts/
+erc721a-upgradeable/contracts=lib/ERC721A-Upgradeable/contracts/
