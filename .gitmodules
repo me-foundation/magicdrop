@@ -16,3 +16,6 @@
 [submodule "lib/operator-filter-registry"]
 	path = lib/operator-filter-registry
 	url = https://github.com/ProjectOpenSea/operator-filter-registry
+[submodule "lib/ERC721A"]
+	path = lib/ERC721A
+	url = https://github.com/chiru-labs/ERC721A
