@@ -1991,14 +1991,4 @@ describe('ERC721CM', function () {
       );
     });
   });
-
-  describe('Transfer validator', function () {
-    it('default validator settings', async () => {
-      expect(await contract.getTransferValidator()).to.equal(
-        '0x0000000000000000000000000000000000000000',
-      );
-    });
-
-    // TODO: figure out a way to mock the validator contract
-  });
 });

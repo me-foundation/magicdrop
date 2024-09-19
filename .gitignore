@@ -10,3 +10,4 @@ artifacts
 .vscode
 dist
 .DS_Store
+out/

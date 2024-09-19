@@ -34,7 +34,7 @@
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
     "@layerzerolabs/solidity-examples": "^0.0.13",
-    "@limitbreak/creator-token-standards": "^2.0.1",
+    "@limitbreak/creator-token-standards": "^3.0.0",
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/contracts-upgradeable": "^5.0.2",
     "erc721a": "^4.2.3",
@@ -93,6 +93,8 @@
       "eslint --ext .ts,.js scripts test --fix",
       "prettier --write scripts cosign-server test hardhat.config.ts"
     ],
-    "*.sol": ["prettier --write --plugin=prettier-plugin-solidity contracts"]
+    "*.sol": [
+      "prettier --write --plugin=prettier-plugin-solidity contracts"
+    ]
   }
 }
