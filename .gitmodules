@@ -22,3 +22,6 @@
 [submodule "lib/ERC721A-Upgradeable"]
 	path = lib/ERC721A-Upgradeable
 	url = https://github.com/chiru-labs/ERC721A-Upgradeable
+[submodule "lib/creator-token-standards"]
+	path = lib/creator-token-standards
+	url = https://github.com/limitbreakinc/creator-token-standards
