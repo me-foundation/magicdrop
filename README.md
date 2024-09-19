@@ -87,6 +87,32 @@ npm run build
 npm run test
 ```
 
+## Using Foundry
+
+### Install Foundry
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+```
+
+### Install Dependencies
+
+```bash
+forge install
+```
+
+### Build Contracts
+
+```bash
+forge build
+```
+
+### Run Tests
+
+```bash
+forge test
+```
+
 We are targeting 100% lines coverage.
 
 ![](https://bafkreic3dyzp5i2fi7co2fekkbgmyxgv342irjy5zfiuhvjqic6fuu53ju.ipfs.nftstorage.link/)
