@@ -76,6 +76,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     // Authorized minters
     mapping(address => bool) private _authorizedMinters;
 
+    uint256 public constant VERSION = 1;
+
     constructor(
         string memory collectionName,
         string memory collectionSymbol,

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "erc721a-upgradeable/contracts/extensions/IERC721AQueryableUpgradeable.sol";
-
+import "../../../common/Structs.sol";
 /**
  * @title IERC721MInitializable
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
@@ -32,16 +32,6 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable {
     error WithdrawFailed();
     error WrongMintCurrency();
     error NotSupported();
-
-    struct MintStageInfo {
-        uint80 price;
-        uint80 mintFee;
-        uint32 walletLimit; // 0 for unlimited
-        bytes32 merkleRoot; // 0x0 for no presale enforced
-        uint24 maxStageSupply; // 0 for unlimited
-        uint64 startTimeUnixSeconds;
-        uint64 endTimeUnixSeconds;
-    }
 
     event UpdateStage(
         uint256 stage,

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import {ERC2981, UpdatableRoyaltiesInitializable} from "../../../royalties/UpdatableRoyaltiesInitializable.sol";
-import {ERC721ACQueryableInitializable, ERC721CMInitializable, IERC721AUpgradeable, OwnableInitializable} from "./ERC721CMInitializable.sol";
+import {ERC721ACQueryableInitializable, ERC721CMInitializable, IERC721AUpgradeable, OwnableInitializable} from "../ERC721CMInitializable.sol";
 
 /**
  * @title ERC721CMRoyaltiesInitializable
@@ -64,18 +64,5 @@ contract ERC721CMRoyaltiesInitializable is
         override(ERC721CMInitializable, OwnableInitializable)
     {
         _checkOwner();
-    }
-
-    /** 
-     * @notice Returns the function selector for the transfer validator's validation function to be called 
-     * @notice for transaction simulation. 
-     */
-    function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
-        functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
-        isViewFunction = true;
-    }
-
-    function _tokenType() internal pure override returns(uint16) {
-        return uint16(721);
     }
 }

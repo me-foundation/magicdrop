@@ -9,10 +9,10 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
-import "../../../access/OwnableInitializable.sol";
-import "../interfaces/IERC721MInitializable.sol";
-import "../../../utils/Constants.sol";
+import "../creator-token-standards/ERC721ACQueryableInitializable.sol";
+import "../../access/OwnableInitializable.sol";
+import "./interfaces/IERC721MInitializable.sol";
+import "../../utils/Constants.sol";
 
 /**
  * @title ERC721CMInitializable
@@ -70,6 +70,8 @@ abstract contract ERC721CMInitializable is
 
     // Fund receiver
     address public FUND_RECEIVER;
+
+    uint256 public constant VERSION = 1;
 
     function __ERC721CMInitializable_init(
         string memory collectionName,
@@ -570,5 +572,18 @@ abstract contract ERC721CMInitializable is
         override(OwnableInitializable, OwnablePermissions)
     {
         _checkOwner();
+    }
+
+    /**
+     * @notice Returns the function selector for the transfer validator's validation function to be called 
+     * @notice for transaction simulation. 
+     */
+    function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
+        functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
+        isViewFunction = true;
+    }
+
+    function _tokenType() internal pure override returns(uint16) {
+        return uint16(721);
     }
 }

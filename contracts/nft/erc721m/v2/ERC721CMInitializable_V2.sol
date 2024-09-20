@@ -2,29 +2,31 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "../creator-token-standards/ERC721ACQueryable.sol";
-import "./interfaces/IERC721M.sol";
-import "../../utils/Constants.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
+import "../../../access/OwnableInitializable.sol";
+import "../interfaces/IERC721MInitializable.sol";
+import "../../../utils/Constants.sol";
+import "../../../common/interfaces/IInitializableToken.sol";
 
 /**
- * @title ERC721CM
- *
- * @dev ERC721ACQueryable and ERC721C subclass with MagicEden launchpad features including
- *  - multiple minting stages with time-based auto stage switch
- *  - global and stage wallet-level minting limit
- *  - whitelist using merkle tree
- *  - crossmint support
- *  - anti-botting
+ * @title ERC721CMInitializable
+ * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
+ * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
+contract ERC721CMInitializable_V2 is
+    IERC721MInitializable,
+    ERC721ACQueryableInitializable,
+    OwnableInitializable,
+    ReentrancyGuard,
+    IInitializableToken
+{
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -33,9 +35,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
 
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
     uint64 private _timestampExpirySeconds;
-
-    // The address of the cosigner server.
-    address private _cosigner;
 
     // The crossmint address. Need to set if using crossmint.
     address private _crossmintAddress;
@@ -72,129 +71,49 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     uint256 private _totalMintFee;
 
     // Fund receiver
-    address public immutable FUND_RECEIVER;
+    address public FUND_RECEIVER;
 
-    // Authorized minters
-    mapping(address => bool) private _authorizedMinters;
+    uint256 public constant VERSION = 2;
 
-    uint256 public constant VERSION = 1;
+    function initialize(
+        string calldata name,
+        string calldata symbol,
+        address payable initialOwner
+    ) external override initializerERC721A initializer {
+        __ERC721ACQueryableInitializable_init(name, symbol);
+    }
 
-    constructor(
-        string memory collectionName,
-        string memory collectionSymbol,
-        string memory tokenURISuffix,
+    function setup(
+        string calldata tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner,
         uint64 timestampExpirySeconds,
         address mintCurrency,
-        address fundReceiver
-    ) Ownable(msg.sender) ERC721ACQueryable(collectionName, collectionSymbol) {
+        address fundReceiver,
+        address crossmintAddress,
+        MintStageInfo[] calldata initialStages
+    ) external onlyOwner {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
-        _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         FUND_RECEIVER = fundReceiver;
-    }
-
-    /**
-     * @dev Returns whether mintable.
-     */
-    modifier canMint() {
-        if (!_mintable) revert NotMintable();
-        _;
-    }
-
-    /**
-     * @dev Returns whether it has enough supply for the given qty.
-     */
-    modifier hasSupply(uint256 qty) {
-        if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
-        _;
-    }
-
-    /**
-     * @dev Returns whether the msg sender is authorized to mint.
-     */
-    modifier onlyAuthorizedMinter() {
-        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
-        _;
-    }
-
-    /**
-     * @dev Returns cosign nonce.
-     */
-    function getCosignNonce(address minter) public view returns (uint256) {
-        return _numberMinted(minter);
-    }
-
-    /**
-     * @dev Sets cosigner.
-     */
-    function setCosigner(address cosigner) external onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
-    }
-
-    /**
-     * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
-     */
-    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
-        _timestampExpirySeconds = expiry;
-        emit SetTimestampExpirySeconds(expiry);
-    }
-
-    /**
-     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
-     */
-    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
+        
+        // Set crossmint address
         _crossmintAddress = crossmintAddress;
         emit SetCrossmintAddress(crossmintAddress);
+        
+        // Set initial stages
+        if (initialStages.length > 0) {
+            _setStages(initialStages);
+        }
     }
 
-    /**
-     * @dev Add authorized minter. Can only be called by contract owner.
-     */
-    function addAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = true;
-    }
-
-    /**
-     * @dev Remove authorized minter. Can only be called by contract owner.
-     */
-    function removeAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = false;
-    }
-
-    /**
-     * @dev Sets stages in the format of an array of `MintStageInfo`.
-     *
-     * Following is an example of launch with two stages. The first stage is exclusive for whitelisted wallets
-     * specified by merkle root.
-     *    [{
-     *      price: 10000000000000000000,
-     *      maxStageSupply: 2000,
-     *      walletLimit: 1,
-     *      merkleRoot: 0x559fadeb887449800b7b320bf1e92d309f329b9641ac238bebdb74e15c0a5218,
-     *      startTimeUnixSeconds: 1667768000,
-     *      endTimeUnixSeconds: 1667771600,
-     *     },
-     *     {
-     *      price: 20000000000000000000,
-     *      maxStageSupply: 3000,
-     *      walletLimit: 2,
-     *      merkleRoot: 0,
-     *      startTimeUnixSeconds: 1667771600,
-     *      endTimeUnixSeconds: 1667775200,
-     *     }
-     * ]
-     */
-    function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
+    function _setStages(MintStageInfo[] calldata newStages) internal {
         delete _mintStages;
 
         for (uint256 i = 0; i < newStages.length; ) {
@@ -237,6 +156,33 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
                 ++i;
             }
         }
+    }
+
+    function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
+        _setStages(newStages);
+    }
+
+    /**
+     * @dev Returns whether mintable.
+     */
+    modifier canMint() {
+        if (!_mintable) revert NotMintable();
+        _;
+    }
+
+    /**
+     * @dev Returns whether it has enough supply for the given qty.
+     */
+    modifier hasSupply(uint256 qty) {
+        if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
+        _;
+    }
+
+    /**
+     * @dev Returns cosign nonce.
+     */
+    function getCosignNonce(address minter) public view returns (uint256) {
+        return _numberMinted(minter);
     }
 
     /**
@@ -346,7 +292,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(qty, msg.sender, 0, proof, timestamp, signature);
+        _mintInternal(qty, msg.sender, 0, proof);
     }
 
     /**
@@ -365,7 +311,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint64 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
+        _mintInternal(qty, msg.sender, limit, proof);
     }
 
     /**
@@ -389,28 +335,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         // Check the caller is Crossmint
         if (msg.sender != _crossmintAddress) revert CrossmintOnly();
 
-        _mintInternal(qty, to, 0, proof, timestamp, signature);
-    }
-
-    /**
-     * @dev Authorized mints token(s) with limit
-     *
-     * qty - number of tokens to mint
-     * to - the address to mint tokens to
-     * limit - limit for the given minter
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function authorizedMint(
-        uint32 qty,
-        address to,
-        uint32 limit,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable onlyAuthorizedMinter {
-        _mintInternal(qty, to, limit, proof, timestamp, signature);
+        _mintInternal(qty, to, 0, proof);
     }
 
     /**
@@ -420,33 +345,20 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
         uint32 qty,
         address to,
         uint32 limit,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
+        bytes32[] calldata proof
     ) internal canMint hasSupply(qty) {
         uint64 stageTimestamp = uint64(block.timestamp);
-        bool waiveMintFee = false;
 
-        if (_cosigner != address(0)) {
-            waiveMintFee = assertValidCosign(
-                msg.sender,
-                qty,
-                timestamp,
-                signature
-            );
-            _assertValidTimestamp(timestamp);
-            stageTimestamp = timestamp;
-        }
+        MintStageInfo memory stage;
 
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
-        MintStageInfo memory stage = _mintStages[activeStage];
 
-        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee;
+        stage = _mintStages[activeStage];
 
         // Check value if minting with ETH
         if (
             _mintCurrency == address(0) &&
-            msg.value < (stage.price + adjustedMintFee) * qty
+            msg.value < (stage.price + stage.mintFee) * qty
         ) revert NotEnoughValue();
 
         // Check stage supply if applicable
@@ -491,11 +403,11 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
             IERC20(_mintCurrency).safeTransferFrom(
                 msg.sender,
                 address(this),
-                (stage.price + adjustedMintFee) * qty
+                (stage.price + stage.mintFee) * qty
             );
         }
 
-        _totalMintFee += adjustedMintFee * qty;
+        _totalMintFee += stage.mintFee * qty;
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
         _stageMintedCounts[activeStage] += qty;
@@ -565,7 +477,12 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
      */
     function tokenURI(
         uint256 tokenId
-    ) public view override(ERC721A, IERC721A) returns (string memory) {
+    )
+        public
+        view
+        override(ERC721AUpgradeable, IERC721AUpgradeable)
+        returns (string memory)
+    {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _currentBaseURI;
@@ -596,75 +513,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns data hash for the given minter, qty, waiveMintFee and timestamp.
-     */
-    function getCosignDigest(
-        address minter,
-        uint32 qty,
-        bool waiveMintFee,
-        uint64 timestamp
-    ) public view returns (bytes32) {
-        if (_cosigner == address(0)) revert CosignerNotSet();
-        return
-            MessageHashUtils.toEthSignedMessageHash(
-                keccak256(
-                    abi.encodePacked(
-                        address(this),
-                        minter,
-                        qty,
-                        waiveMintFee,
-                        _cosigner,
-                        timestamp,
-                        _chainID(),
-                        getCosignNonce(minter)
-                    )
-                )
-            );
-    }
-
-    /**
-     * @dev Validates the the given signature. Returns whether mint fee is waived.
-     */
-    function assertValidCosign(
-        address minter,
-        uint32 qty,
-        uint64 timestamp,
-        bytes memory signature
-    ) public view returns (bool) {
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    qty,
-                    /* waiveMintFee= */ true,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return true;
-        }
-
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    qty,
-                    /* waiveMintFee= */ false,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return false;
-        }
-
-        revert InvalidCosignSignature();
-    }
-
-    /**
      * @dev Returns the current active stage based on timestamp.
      */
     function getActiveStageFromTimestamp(
@@ -685,14 +533,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Validates the timestamp is not expired.
-     */
-    function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - _timestampExpirySeconds)
-            revert TimestampExpired();
-    }
-
-    /**
      * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
      */
     function _assertValidStartAndEndTimestamp(
@@ -705,15 +545,18 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns chain id.
      */
-    function _chainID() private view returns (uint256) {
-        uint256 chainID;
+    function _chainID() private view returns (uint256 chainID) {
         assembly {
             chainID := chainid()
         }
-        return chainID;
     }
 
-    function _requireCallerIsContractOwner() internal view virtual override {
+    function _requireCallerIsContractOwner()
+        internal
+        view
+        virtual
+        override(OwnableInitializable, OwnablePermissions)
+    {
         _checkOwner();
     }
 
