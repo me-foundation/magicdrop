@@ -1,22 +1,23 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
-import "../../contracts/factory/MagicDropCloneFactory.sol";
-import "../../contracts/MagicDropTokenImplRegistry.sol";
-import "../../contracts/nft/MagicDropERC721Initializable.sol";
-import "../../contracts/nft/MagicDropERC1155Initializable.sol";
+import {Test} from "forge-std/Test.sol";
+import {MagicDropCloneFactory} from "../../contracts/factory/MagicDropCloneFactory.sol";
+import {MagicDropTokenImplRegistry} from "../../contracts/MagicDropTokenImplRegistry.sol";
+import {MagicDropERC721Initializable} from "../../contracts/nft/MagicDropERC721Initializable.sol";
+import {MagicDropERC1155Initializable} from "../../contracts/nft/MagicDropERC1155Initializable.sol";
 import {TokenStandard} from "../../contracts/common/Structs.sol";
 
 contract MagicDropCloneFactoryTest is Test {
-    MagicDropCloneFactory factory;
-    MagicDropTokenImplRegistry registry;
-    MagicDropERC721Initializable erc721Implementation;
-    MagicDropERC1155Initializable erc1155Implementation;
-    address owner = address(0x1);
-    address user = address(0x2);
+    MagicDropCloneFactory internal factory;
+    MagicDropTokenImplRegistry internal registry;
+    MagicDropERC721Initializable internal erc721Implementation;
+    MagicDropERC1155Initializable internal erc1155Implementation;
+    address internal owner = address(0x1);
+    address internal user = address(0x2);
 
-    uint256 erc721ImplId;
-    uint256 erc1155ImplId;
+    uint256 internal erc721ImplId;
+    uint256 internal erc1155ImplId;
 
     function setUp() public {
         vm.startPrank(owner);

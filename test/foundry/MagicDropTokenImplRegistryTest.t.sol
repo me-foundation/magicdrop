@@ -1,24 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
-import "../../contracts/MagicDropTokenImplRegistry.sol";
+import {Test} from "forge-std/Test.sol";
+import {MagicDropTokenImplRegistry} from "../../contracts/MagicDropTokenImplRegistry.sol";
 import {TokenStandard} from  "../../contracts/common/Structs.sol";
-
-contract MockImplementation {}
+import {MockERC721A} from "../../contracts/mocks/MockERC721A.sol";
 
 contract MagicDropTokenImplRegistryTest is Test {
-    MagicDropTokenImplRegistry registry;
-    address owner = address(0x1);
-    address user = address(0x2);
-    MockImplementation mockImpl;
+    MagicDropTokenImplRegistry internal registry;
+    address internal owner = address(0x1);
+    address internal user = address(0x2);
+    MockERC721A internal mockImpl;
 
     function setUp() public {
         vm.startPrank(owner);
         registry = new MagicDropTokenImplRegistry();
         registry.initialize();
         vm.stopPrank();
-        mockImpl = new MockImplementation();
+        mockImpl = new MockERC721A();
     }
 
     function testRegisterImplementation() public {
