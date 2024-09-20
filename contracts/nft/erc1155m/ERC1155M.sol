@@ -14,6 +14,7 @@ import "../../utils/Constants.sol";
 
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "./interfaces/IERC1155M.sol";
+import {MintStageInfo1155} from "../../common/Structs.sol";
 
 /**
  * @title ERC1155M
@@ -48,7 +49,7 @@ contract ERC1155M is
     uint256[] private _globalWalletLimit;
 
     // Mint stage information. See MintStageInfo for details.
-    MintStageInfo[] private _mintStages;
+    MintStageInfo1155[] private _mintStages;
 
     // Whether the token can be transferred.
     bool private _transferable;
@@ -197,7 +198,7 @@ contract ERC1155M is
      *     }
      * ]
      */
-    function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
+    function setStages(MintStageInfo1155[] calldata newStages) external onlyOwner {
         delete _mintStages;
 
         for (uint256 i = 0; i < newStages.length; i++) {
@@ -217,7 +218,7 @@ contract ERC1155M is
             _assertValidStageArgsLength(newStages[i]);
 
             _mintStages.push(
-                MintStageInfo({
+                MintStageInfo1155({
                     price: newStages[i].price,
                     mintFee: newStages[i].mintFee,
                     walletLimit: newStages[i].walletLimit,
@@ -368,7 +369,7 @@ contract ERC1155M is
         external
         view
         override
-        returns (MintStageInfo memory, uint256[] memory, uint256[] memory)
+        returns (MintStageInfo1155 memory, uint256[] memory, uint256[] memory)
     {
         if (stage >= _mintStages.length) {
             revert InvalidStage();
@@ -484,7 +485,7 @@ contract ERC1155M is
 
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
-        MintStageInfo memory stage = _mintStages[activeStage];
+        MintStageInfo1155 memory stage = _mintStages[activeStage];
         uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee[tokenId];
 
         // Check value if minting with ETH
@@ -773,7 +774,7 @@ contract ERC1155M is
     }
 
     function _assertValidStageArgsLength(
-        MintStageInfo calldata stageInfo
+        MintStageInfo1155 calldata stageInfo
     ) internal {
         if (
             stageInfo.price.length != NUM_TOKENS ||

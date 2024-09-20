@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721CMInitializable_V2} from "../../contracts/nft/erc721m/v2/ERC721CMInitializable_V2.sol";
 import {MintStageInfo} from "../../contracts/common/Structs.sol";
-import {IERC721M} from "../../contracts/nft/erc721m/interfaces/IERC721M.sol";
+import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
 contract ERC721CMInitializable_V2Test is Test {
     ERC721CMInitializable_V2 public nft;
@@ -124,7 +124,7 @@ contract ERC721CMInitializable_V2Test is Test {
         nft.mint{value: 0.6 ether}(1, new bytes32[](0), 0, "");
         assertEq(nft.balanceOf(minter), 1);
 
-        vm.expectRevert(abi.encodeWithSelector(IERC721M.NotEnoughValue.selector));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
         vm.prank(minter);
         nft.mint{value: 0.5 ether}(1, new bytes32[](0), 0, "");
     }
@@ -138,11 +138,10 @@ contract ERC721CMInitializable_V2Test is Test {
             merkleRoot: bytes32(0),
             maxStageSupply: 100,
             startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 1000000 // Changed to a much later end time
+            endTimeUnixSeconds: 1000000
         });
         nft.setStages(stages);
 
-        // Set the block timestamp to a time within the stage
         vm.warp(500000);
 
         vm.prank(crossmintAddress);
@@ -150,7 +149,7 @@ contract ERC721CMInitializable_V2Test is Test {
         assertEq(nft.balanceOf(readonly), 1);
 
         vm.prank(minter);
-        vm.expectRevert(abi.encodeWithSelector(IERC721M.CrossmintOnly.selector));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.CrossmintOnly.selector));
         nft.crossmint{value: 0.5 ether}(1, readonly, new bytes32[](0), 0, "");
     }
 
@@ -170,7 +169,6 @@ contract ERC721CMInitializable_V2Test is Test {
         });
         nft.setStages(stages);
 
-        // Set the block timestamp to a time within the stage
         vm.warp(500000);
 
         vm.prank(minter);
@@ -185,7 +183,7 @@ contract ERC721CMInitializable_V2Test is Test {
         nft.setGlobalWalletLimit(2);
         assertEq(nft.getGlobalWalletLimit(), 2);
 
-        vm.expectRevert(abi.encodeWithSelector(IERC721M.GlobalWalletLimitOverflow.selector));
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.GlobalWalletLimitOverflow.selector));
         nft.setGlobalWalletLimit(INITIAL_SUPPLY + 1);
     }
 
