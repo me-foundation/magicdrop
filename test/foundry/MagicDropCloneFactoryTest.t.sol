@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 import {MagicDropCloneFactory} from "../../contracts/factory/MagicDropCloneFactory.sol";
-import {MagicDropTokenImplRegistry} from "../../contracts/MagicDropTokenImplRegistry.sol";
+import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropTokenImplRegistry.sol";
 import {MagicDropERC721Initializable} from "../../contracts/nft/MagicDropERC721Initializable.sol";
 import {MagicDropERC1155Initializable} from "../../contracts/nft/MagicDropERC1155Initializable.sol";
 import {TokenStandard} from "../../contracts/common/Structs.sol";

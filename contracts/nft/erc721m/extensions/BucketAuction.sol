@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "erc721a/contracts/ERC721A.sol";
 
-import "./IBucketAuction.sol";
+import "../interfaces/IBucketAuction.sol";
 import "../ERC721M.sol";
 
 contract BucketAuction is IBucketAuction, ERC721M {

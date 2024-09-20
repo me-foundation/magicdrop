@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {TokenStandard} from "../common/Structs.sol";
+import {TokenStandard} from "../../common/Structs.sol";
 
 interface IMagicDropCloneFactory {
     error ConstructorRegistryAddressCannotBeZero();

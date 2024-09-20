@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IInitializableToken} from "../interfaces/IInitializableToken.sol";
+import {IInitializableToken} from "../common/interfaces/IInitializableToken.sol";
 
 contract MagicDropERC721Initializable is ERC721Upgradeable, OwnableUpgradeable, IInitializableToken {
     string private baseURI = "";

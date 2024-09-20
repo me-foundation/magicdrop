@@ -10,10 +10,10 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "./utils/Constants.sol";
+import "../../utils/Constants.sol";
 
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import "./IERC1155M.sol";
+import "./interfaces/IERC1155M.sol";
 
 /**
  * @title ERC1155M

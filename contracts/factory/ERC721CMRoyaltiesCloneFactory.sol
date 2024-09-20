@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.4;
 
-import {ERC721CMRoyaltiesInitializable} from "../ERC721CMRoyaltiesInitializable.sol";
+import {ERC721CMRoyaltiesInitializable} from "../nft/erc721m/extensions/ERC721CMRoyaltiesInitializable.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /**

@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IInitializableToken} from "../interfaces/IInitializableToken.sol";
+import {IInitializableToken} from "../common/interfaces/IInitializableToken.sol";
 
 contract MagicDropERC1155Initializable is ERC1155Upgradeable, OwnableUpgradeable, IInitializableToken {
     string private _name;

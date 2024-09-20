@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {IMagicDropCloneFactory} from "../interfaces/IMagicDropCloneFactory.sol";
-import {IMagicDropTokenImplRegistry} from "../interfaces/IMagicDropTokenImplRegistry.sol";
-import {IInitializableToken} from "../interfaces/IInitializableToken.sol";
+import {IMagicDropCloneFactory} from "./interfaces/IMagicDropCloneFactory.sol";
+import {IMagicDropTokenImplRegistry} from "../registry/interfaces/IMagicDropTokenImplRegistry.sol";
+import {IInitializableToken} from "../common/interfaces/IInitializableToken.sol";
 import {TokenStandard} from "../common/Structs.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
@@ -14,7 +14,7 @@ contract MagicDropCloneFactory is
     Ownable2StepUpgradeable,
     UUPSUpgradeable
 {
-    IMagicDropTokenImplRegistry public immutable registry;
+    IMagicDropTokenImplRegistry public immutable REGISTRY;
 
     error ImplementationNotRegistered();
 
@@ -25,7 +25,7 @@ contract MagicDropCloneFactory is
             revert ConstructorRegistryAddressCannotBeZero();
         }
 
-        registry = _registry;
+        REGISTRY = _registry;
     }
 
     function initialize() public initializer {
@@ -43,7 +43,7 @@ contract MagicDropCloneFactory is
         uint256 implId,
         bytes32 salt
     ) external override returns (address) {
-        address impl = registry.getImplementation(standard, implId);
+        address impl = REGISTRY.getImplementation(standard, implId);
 
         if (impl == address(0)) {
             revert ImplementationNotRegistered();
@@ -73,5 +73,7 @@ contract MagicDropCloneFactory is
 
     function _authorizeUpgrade(
         address newImplementation
-    ) internal override onlyOwner {}
+    ) internal override onlyOwner {
+        // This function is left empty as the onlyOwner modifier handles the authorization
+    }
 }

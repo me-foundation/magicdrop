@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Test} from "forge-std/Test.sol";
-import {MagicDropTokenImplRegistry} from "../../contracts/MagicDropTokenImplRegistry.sol";
+import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropTokenImplRegistry.sol";
 import {TokenStandard} from  "../../contracts/common/Structs.sol";
 import {MockERC721A} from "../../contracts/mocks/MockERC721A.sol";
 

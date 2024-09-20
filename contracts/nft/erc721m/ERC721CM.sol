@@ -3,35 +3,33 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "erc721a/contracts/extensions/ERC721AQueryable.sol";
-import "./IERC721M.sol";
-import "./utils/Constants.sol";
+import "../creator-token-standards/ERC721ACQueryable.sol";
+import "./interfaces/IERC721M.sol";
+import "../../utils/Constants.sol";
 
 /**
- * @title ERC721M
+ * @title ERC721CM
  *
- * @dev ERC721A subclass with MagicEden launchpad features including
+ * @dev ERC721ACQueryable and ERC721C subclass with MagicEden launchpad features including
  *  - multiple minting stages with time-based auto stage switch
  *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
  *  - crossmint support
  *  - anti-botting
  */
-contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
+contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
     // Whether this contract is mintable.
     bool private _mintable;
-
-    // Whether base URI is permanent. Once set, base URI is immutable.
-    bool private _baseURIPermanent;
 
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
     uint64 private _timestampExpirySeconds;
@@ -53,6 +51,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     // The suffix for the token URL, e.g. ".json".
     string private _tokenURISuffix;
+
+    // The uri for the storefront-level metadata for better indexing. e.g. "ipfs://UyNGgv3jx2HHfBjQX9RnKtxj2xv2xQDtbVXoRi5rJ31234"
+    string private _contractURI;
 
     // Mint stage infomation. See MintStageInfo for details.
     MintStageInfo[] private _mintStages;
@@ -86,7 +87,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint64 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver
-    ) Ownable(msg.sender) ERC721A(collectionName, collectionSymbol) {
+    ) Ownable(msg.sender) ERC721ACQueryable(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
         _mintable = true;
@@ -194,7 +195,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         delete _mintStages;
 
-        for (uint256 i = 0; i < newStages.length; i++) {
+        for (uint256 i = 0; i < newStages.length; ) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds <
@@ -229,6 +230,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                 newStages[i].startTimeUnixSeconds,
                 newStages[i].endTimeUnixSeconds
             );
+
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -481,7 +486,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         }
 
         if (_mintCurrency != address(0)) {
-            // ERC20 mint payment
             IERC20(_mintCurrency).safeTransferFrom(
                 msg.sender,
                 address(this),
@@ -576,6 +580,20 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Returns URI for the collection-level metadata.
+     */
+    function contractURI() public view returns (string memory) {
+        return _contractURI;
+    }
+
+    /**
+     * @dev Set the URI for the collection-level metadata.
+     */
+    function setContractURI(string calldata uri) external onlyOwner {
+        _contractURI = uri;
+    }
+
+    /**
      * @dev Returns data hash for the given minter, qty, waiveMintFee and timestamp.
      */
     function getCosignDigest(
@@ -650,12 +668,15 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function getActiveStageFromTimestamp(
         uint64 timestamp
     ) public view returns (uint256) {
-        for (uint256 i = 0; i < _mintStages.length; i++) {
+        for (uint256 i = 0; i < _mintStages.length; ) {
             if (
                 timestamp >= _mintStages[i].startTimeUnixSeconds &&
                 timestamp < _mintStages[i].endTimeUnixSeconds
             ) {
                 return i;
+            }
+            unchecked {
+                ++i;
             }
         }
         revert InvalidStage();
@@ -688,5 +709,22 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             chainID := chainid()
         }
         return chainID;
+    }
+
+    function _requireCallerIsContractOwner() internal view virtual override {
+        _checkOwner();
+    }
+
+    /**
+     * @notice Returns the function selector for the transfer validator's validation function to be called 
+     * @notice for transaction simulation. 
+     */
+    function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
+        functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
+        isViewFunction = true;
+    }
+
+    function _tokenType() internal pure override returns(uint16) {
+        return uint16(721);
     }
 }

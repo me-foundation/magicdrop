@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import "@limitbreak/creator-token-standards/src/programmable-royalties/BasicRoyalties.sol";
-import "./ERC721CM.sol";
+import "../ERC721CM.sol";
 
 /**
  * @title ERC721CM with BasicRoyalties

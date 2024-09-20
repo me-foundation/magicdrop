@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 import "./interfaces/IMagicDropTokenImplRegistry.sol";
-import {TokenStandard} from "./common/Structs.sol";
+import {TokenStandard} from "../common/Structs.sol";
 
 /**
  * @title MagicDropTokenImplRegistry
