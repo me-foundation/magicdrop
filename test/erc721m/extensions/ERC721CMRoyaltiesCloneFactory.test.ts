@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import chai, { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
-import { ERC721CMRoyaltiesCloneFactory } from '../typechain-types';
+import { ERC721CMRoyaltiesCloneFactory } from '../../../typechain-types';
 import { isAddress } from 'ethers/lib/utils';
 
 chai.use(chaiAsPromised);

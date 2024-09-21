@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import chai, { expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
-import { BucketAuction } from '../typechain-types';
+import { BucketAuction } from '../../../typechain-types';
 
 chai.use(chaiAsPromised);
 

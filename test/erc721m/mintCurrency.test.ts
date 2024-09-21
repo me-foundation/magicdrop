@@ -1,4 +1,4 @@
-import { ERC721CM, ERC721M } from '../typechain-types';
+import { ERC721CM, ERC721M } from '../../typechain-types';
 import { Contract, Signer } from 'ethers';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';

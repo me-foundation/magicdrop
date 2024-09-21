@@ -3,7 +3,7 @@ import chai, { assert, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { ethers } from 'hardhat';
 import { MerkleTree } from 'merkletreejs';
-import { ERC1155M } from '../typechain-types';
+import { ERC1155M } from '../../typechain-types';
 import { BigNumber, Contract } from 'ethers';
 
 const { getAddress, parseEther } = ethers.utils;
