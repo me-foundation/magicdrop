@@ -6,8 +6,12 @@
 
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails, RESERVOIR_RELAYER_MUTLICALLER, RESERVOIR_RELAYER_ROUTER } from './common/constants';
-import { checkCodeVersion, estimateGas } from './utils/helper';
+import {
+  ContractDetails,
+  RESERVOIR_RELAYER_MUTLICALLER,
+  RESERVOIR_RELAYER_ROUTER,
+} from '../common/constants';
+import { checkCodeVersion, estimateGas } from '../utils/helper';
 import { Overrides } from 'ethers';
 
 interface IDeployParams {
@@ -65,7 +69,10 @@ export const deploy = async (
   }
 
   const [signer] = await hre.ethers.getSigners();
-  const contractFactory = await hre.ethers.getContractFactory(contractName, signer);
+  const contractFactory = await hre.ethers.getContractFactory(
+    contractName,
+    signer,
+  );
 
   const params = [
     args.name,
@@ -122,17 +129,6 @@ export const deploy = async (
   console.log(
     `npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`,
   );
-
-  // Set security policy to ME default
-  if (args.useerc721c) {
-    console.log('[ERC721CM] Setting security policy to ME default...');
-    const ERC721CM = await hre.ethers.getContractFactory(
-      ContractDetails.ERC721CM.name,
-    );
-    const erc721cm = ERC721CM.attach(contract.address);
-    const tx = await erc721cm.setToDefaultSecurityPolicy();
-    console.log('[ERC721CM] Security policy set');
-  }
 
   // Add reservoir relay as authorized minter by default
   const ERC721CM = await hre.ethers.getContractFactory(

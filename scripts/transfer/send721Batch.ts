@@ -1,8 +1,8 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ERC721BatchTransferContract } from './common/constants';
+import { ERC721BatchTransferContract } from '../common/constants';
 import fs from 'fs';
-import { estimateGas } from './utils/helper';
+import { estimateGas } from '../utils/helper';
 
 export interface ISend721BatchParams {
   contract: string;

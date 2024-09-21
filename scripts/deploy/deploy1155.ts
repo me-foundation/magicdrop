@@ -1,7 +1,11 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails, RESERVOIR_RELAYER_MUTLICALLER, RESERVOIR_RELAYER_ROUTER } from './common/constants';
-import { checkCodeVersion, estimateGas } from './utils/helper';
+import {
+  ContractDetails,
+  RESERVOIR_RELAYER_MUTLICALLER,
+  RESERVOIR_RELAYER_ROUTER,
+} from '../common/constants';
+import { checkCodeVersion, estimateGas } from '../utils/helper';
 import { Overrides } from 'ethers';
 
 interface IDeploy1155Params {
@@ -35,13 +39,17 @@ export const deploy1155 = async (
 
   console.log(args);
 
-  const maxsupply = args.maxsupply.split(',').map(supply => 
-    args.openedition? hre.ethers.BigNumber.from(0) : hre.ethers.BigNumber.from(supply.trim())
-  )
+  const maxsupply = args.maxsupply
+    .split(',')
+    .map((supply) =>
+      args.openedition
+        ? hre.ethers.BigNumber.from(0)
+        : hre.ethers.BigNumber.from(supply.trim()),
+    );
 
-  const globalwalletlimit = args.globalwalletlimit.split(',').map(limit =>
-    hre.ethers.BigNumber.from(limit.trim())
-  );
+  const globalwalletlimit = args.globalwalletlimit
+    .split(',')
+    .map((limit) => hre.ethers.BigNumber.from(limit.trim()));
 
   const overrides: Overrides = {};
   if (args.gaspricegwei) {
@@ -52,7 +60,10 @@ export const deploy1155 = async (
   }
 
   const [signer] = await hre.ethers.getSigners();
-  const contractFactory = await hre.ethers.getContractFactory(contractName, signer);
+  const contractFactory = await hre.ethers.getContractFactory(
+    contractName,
+    signer,
+  );
 
   const params = [
     args.name,
@@ -65,7 +76,7 @@ export const deploy1155 = async (
     args.mintcurrency ?? hre.ethers.constants.AddressZero,
     args.fundreceiver ?? signer.address,
     args.erc2198royaltyreceiver,
-    args.erc2198royaltyfeenumerator 
+    args.erc2198royaltyfeenumerator,
   ] as any[];
 
   console.log(
@@ -82,7 +93,7 @@ export const deploy1155 = async (
   ) {
     return;
   }
-  
+
   if (!(await confirm({ message: 'Continue to deploy?' }))) return;
 
   const contract = await contractFactory.deploy(...params, overrides);

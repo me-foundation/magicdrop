@@ -5,9 +5,9 @@
 // Runtime Environment's members available in the global scope.
 
 import { confirm } from '@inquirer/prompts';
-import { ContractDetails } from './common/constants';
+import { ContractDetails } from '../common/constants';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { estimateGas } from './utils/helper';
+import { estimateGas } from '../utils/helper';
 
 interface IDeployParams {
   name: string;
@@ -19,6 +19,7 @@ interface IDeployParams {
   mincontributioninwei: number;
   auctionstarttime: string;
   auctionendtime: string;
+  fundReceiver: string;
 }
 
 export const deployBA = async (
@@ -49,6 +50,7 @@ export const deployBA = async (
     hre.ethers.BigNumber.from(args.mincontributioninwei),
     Math.floor(new Date(args.auctionstarttime).getTime() / 1000),
     Math.floor(new Date(args.auctionendtime).getTime() / 1000),
+    args.fundReceiver,
   ] as const;
 
   console.log(

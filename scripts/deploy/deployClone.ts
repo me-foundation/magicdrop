@@ -1,7 +1,10 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails, ERC721CMRoyaltiesCloneFactoryContract } from './common/constants';
-import { estimateGas } from './utils/helper';
+import {
+  ContractDetails,
+  ERC721CMRoyaltiesCloneFactoryContract,
+} from '../common/constants';
+import { estimateGas } from '../utils/helper';
 import { Overrides } from 'ethers';
 
 export interface IDeployCloneParams {
@@ -25,7 +28,9 @@ export const deployClone = async (
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
-  const factory = await ethers.getContractFactory(ContractDetails.ERC721CMRoyaltiesCloneFactory.name);
+  const factory = await ethers.getContractFactory(
+    ContractDetails.ERC721CMRoyaltiesCloneFactory.name,
+  );
   const factoryContract = factory.attach(ERC721CMRoyaltiesCloneFactoryContract);
 
   if (args.openedition) {

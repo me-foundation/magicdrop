@@ -44,7 +44,7 @@ import {
   cleanWhitelist,
   ownerMint1155,
 } from './scripts';
-import { deployCloneFactory } from './scripts/deployCloneFactory';
+import { deployCloneFactory } from './scripts/deploy/deployCloneFactory';
 
 const config: HardhatUserConfig = {
   solidity: {

@@ -2,8 +2,12 @@ import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
-import { ContractDetails } from './common/constants';
-import { cleanVariableWalletLimit, cleanWhitelist, estimateGas } from './utils/helper';
+import { ContractDetails } from '../common/constants';
+import {
+  cleanVariableWalletLimit,
+  cleanWhitelist,
+  estimateGas,
+} from '../utils/helper';
 import { Overrides } from 'ethers';
 
 export interface ISetStagesParams {
@@ -70,7 +74,10 @@ export const setStages = async (
         );
         return mt.getHexRoot();
       } else if (stage.variableWalletLimitPath) {
-        const filteredMap = await cleanVariableWalletLimit(stage.variableWalletLimitPath, true);
+        const filteredMap = await cleanVariableWalletLimit(
+          stage.variableWalletLimitPath,
+          true,
+        );
         const leaves: any[] = [];
         for (const [address, limit] of filteredMap.entries()) {
           const digest = ethers.utils.solidityKeccak256(

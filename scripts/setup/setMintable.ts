@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
+import { ContractDetails } from '../common/constants';
 
 export interface ISetMintableParams {
   mintable: boolean;

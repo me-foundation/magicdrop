@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
+import { ContractDetails } from '../common/constants';
 import { Overrides } from 'ethers';
-import { estimateGas } from './utils/helper';
+import { estimateGas } from '../utils/helper';
 
 interface ISetBaseURIParams {
   uri: string;

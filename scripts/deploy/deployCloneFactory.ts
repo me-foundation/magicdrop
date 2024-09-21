@@ -6,8 +6,8 @@
 
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
-import { checkCodeVersion, estimateGas } from './utils/helper';
+import { ContractDetails } from '../common/constants';
+import { checkCodeVersion, estimateGas } from '../utils/helper';
 import { Overrides } from 'ethers';
 
 interface IDeployCloneFactoryParams {
@@ -25,7 +25,8 @@ export const deployCloneFactory = async (
 
   // Compile again in case we have a coverage build (binary too large to deploy)
   await hre.run('compile');
-  const contractName: string = ContractDetails.ERC721CMRoyaltiesCloneFactory.name;
+  const contractName: string =
+    ContractDetails.ERC721CMRoyaltiesCloneFactory.name;
   const contractFactory = await hre.ethers.getContractFactory(contractName);
 
   const overrides: Overrides = {};
@@ -39,11 +40,7 @@ export const deployCloneFactory = async (
   console.log(`Going to deploy ${contractName}.`);
 
   if (
-    !(await estimateGas(
-      hre,
-      contractFactory.getDeployTransaction(),
-      overrides,
-    ))
+    !(await estimateGas(hre, contractFactory.getDeployTransaction(), overrides))
   ) {
     return;
   }

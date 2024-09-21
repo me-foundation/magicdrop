@@ -1,13 +1,13 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
+import { ContractDetails } from '../common/constants';
 
-export interface ISendTokensRefundParams {
+export interface ISendRefundParams {
   contract: string;
   to: string;
 }
 
-export const sendTokensAndRefund = async (
-  args: ISendTokensRefundParams,
+export const sendRefund = async (
+  args: ISendRefundParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
   const { ethers } = hre;
@@ -19,7 +19,7 @@ export const sendTokensAndRefund = async (
   // Set the parameters for the contract function
   const params = [args.to] as const;
 
-  const tx = await contract.sendTokensAndRefund(...params);
+  const tx = await contract.sendRefund(...params);
   console.log(`Submitted tx ${tx.hash}`);
 
   await tx.wait();

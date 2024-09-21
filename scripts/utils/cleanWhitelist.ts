@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { cleanWhitelist as cleanWL, cleanVariableWalletLimit } from './utils/helper';
+import { cleanWhitelist as cleanWL, cleanVariableWalletLimit } from './helper';
 
 export interface ICleanWhitelistParams {
   whitelistpath: string;

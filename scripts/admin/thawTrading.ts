@@ -1,7 +1,7 @@
 import { confirm } from '@inquirer/prompts';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { ContractDetails } from './common/constants';
-import { estimateGas } from './utils/helper';
+import { ContractDetails } from '../common/constants';
+import { estimateGas } from '../utils/helper';
 
 export interface IThawTrading {
   contract: string;

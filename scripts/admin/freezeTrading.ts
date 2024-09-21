@@ -5,8 +5,8 @@ import {
   ERC721CV2_EMPTY_LIST,
   ERC721CV2_FREEZE_LEVEL,
   ERC721CV2_VALIDATOR,
-} from './common/constants';
-import { estimateGas } from './utils/helper';
+} from '../common/constants';
+import { estimateGas } from '../utils/helper';
 
 export interface IFreezeTrading {
   contract: string;
