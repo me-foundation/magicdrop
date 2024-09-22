@@ -15,7 +15,7 @@ contract ERC721CMRoyaltiesCloneFactory {
     address private immutable IMPLEMENTATION;
 
     constructor() {
-        IMPLEMENTATION = address(new ERC721CMRoyaltiesInitializable());
+        IMPLEMENTATION = address(new ERC721CMRoyaltiesInitializable(msg.sender));
     }
 
     function create(

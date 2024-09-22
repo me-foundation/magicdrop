@@ -30,7 +30,7 @@ contract ERC721CMInitializable_V2Test is Test {
         vm.deal(minter, 2 ether);
         vm.deal(crossmintAddress, 1 ether);
         
-        nft = new ERC721CMInitializable_V2();
+        nft = new ERC721CMInitializable_V2(owner);
         nft.initialize("Test", "TEST", payable(owner));
         nft.setup(
             ".json",

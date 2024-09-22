@@ -111,7 +111,7 @@ describe('ERC721CMIRoyaltiesClone', function () {
         readonlyContract.setStages([
           {
             price: ethers.utils.parseEther('0.5'),
-            mintFee: 0,
+          mintFee: 0,
             walletLimit: 3,
             merkleRoot: ethers.utils.hexZeroPad('0x1', 32),
             maxStageSupply: 5,

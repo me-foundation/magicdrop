@@ -3,7 +3,8 @@
 pragma solidity ^0.8.4;
 
 import {ERC2981, UpdatableRoyaltiesInitializable} from "../../../royalties/UpdatableRoyaltiesInitializable.sol";
-import {ERC721ACQueryableInitializable, ERC721CMInitializable, IERC721AUpgradeable, OwnableInitializable} from "../ERC721CMInitializable.sol";
+import {ERC721ACQueryableInitializable, ERC721CMInitializable, IERC721AUpgradeable} from "../ERC721CMInitializable.sol";
+import "@limitbreak/creator-token-standards/src/access/OwnableInitializable.sol";
 
 /**
  * @title ERC721CMRoyaltiesInitializable
@@ -14,9 +15,7 @@ contract ERC721CMRoyaltiesInitializable is
     ERC721CMInitializable,
     UpdatableRoyaltiesInitializable
 {
-    constructor() {
-        _disableInitializers();
-    }
+    constructor(address initialOwner) Ownable(initialOwner) {} 
 
     function initialize(
         string memory collectionName,

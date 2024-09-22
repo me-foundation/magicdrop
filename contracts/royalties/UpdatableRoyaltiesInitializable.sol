@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import {OwnableInitializable} from "../access/OwnableInitializable.sol";
+import {OwnableInitializable} from "@limitbreak/creator-token-standards/src/access/OwnableInitializable.sol";
 import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 

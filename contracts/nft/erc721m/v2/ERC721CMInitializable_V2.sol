@@ -2,18 +2,16 @@
 
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
-import "../../../access/OwnableInitializable.sol";
-import "../interfaces/IERC721MInitializable.sol";
-import "../../../utils/Constants.sol";
-import "../../../common/interfaces/IInitializableToken.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+// import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {OwnableInitializable, Ownable, OwnablePermissions} from "@limitbreak/creator-token-standards/src/access/OwnableInitializable.sol";
+import {ERC721ACQueryableInitializable, ERC721AUpgradeable, IERC721AUpgradeable} from "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
+import {IERC721MInitializable, MintStageInfo} from "../interfaces/IERC721MInitializable.sol";
+import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
+import {IInitializableToken} from "../../../common/interfaces/IInitializableToken.sol";
 
 /**
  * @title ERC721CMInitializable
@@ -71,9 +69,11 @@ contract ERC721CMInitializable_V2 is
     uint256 private _totalMintFee;
 
     // Fund receiver
-    address public FUND_RECEIVER;
+    address private _fundReceiver;
 
     uint256 public constant VERSION = 2;
+
+    constructor(address initialOwner) Ownable(initialOwner) {} 
 
     function initialize(
         string calldata name,
@@ -101,7 +101,7 @@ contract ERC721CMInitializable_V2 is
         _tokenURISuffix = tokenURISuffix;
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
-        FUND_RECEIVER = fundReceiver;
+        _fundReceiver = fundReceiver;
         
         // Set crossmint address
         _crossmintAddress = crossmintAddress;
@@ -264,7 +264,7 @@ contract ERC721CMInitializable_V2 is
         uint256 index
     ) external view override returns (MintStageInfo memory, uint32, uint256) {
         if (index >= _mintStages.length) {
-            revert("InvalidStage");
+            revert InvalidStage();
         }
         uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
         uint256 stageMinted = _stageMintedCounts[index];
@@ -289,8 +289,8 @@ contract ERC721CMInitializable_V2 is
     function mint(
         uint32 qty,
         bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
+        uint64,
+        bytes calldata
     ) external payable virtual nonReentrant {
         _mintInternal(qty, msg.sender, 0, proof);
     }
@@ -308,8 +308,8 @@ contract ERC721CMInitializable_V2 is
         uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
+        uint64,
+        bytes calldata
     ) external payable virtual nonReentrant {
         _mintInternal(qty, msg.sender, limit, proof);
     }
@@ -327,8 +327,8 @@ contract ERC721CMInitializable_V2 is
         uint32 qty,
         address to,
         bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
+        uint64,
+        bytes calldata
     ) external payable nonReentrant {
         if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
 
@@ -436,7 +436,7 @@ contract ERC721CMInitializable_V2 is
         _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
-        (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
+        (success, ) = _fundReceiver.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -452,7 +452,7 @@ contract ERC721CMInitializable_V2 is
         _totalMintFee = 0;
 
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
+        IERC20(_mintCurrency).safeTransfer(_fundReceiver, remaining);
 
         emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
