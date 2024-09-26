@@ -85,17 +85,6 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
-    ropsten: {
-      url: process.env.ROPSTEN_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    goerli: {
-      url:
-        process.env.GOERLI_URL || 'https://eth-goerli.api.onfinality.io/public',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
     sepolia: {
       url: process.env.SEPOLIA_URL || 'https://rpc.sepolia.org',
       accounts:
@@ -106,18 +95,8 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
-    mumbai: {
-      url: process.env.MUMBAI_URL || 'https://rpc-mumbai.maticvigil.com/',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
     polygon: {
       url: process.env.POLYGON_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    fuji: {
-      url: process.env.FUJI_URL || 'https://api.avax-test.network/ext/bc/C/rpc',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -132,6 +111,16 @@ const config: HardhatUserConfig = {
       url: process.env.ARBITRUM_URL || 'https://arbitrum-one.publicnode.com/',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 2000000000,
+      minGasPrice: 2000000000,
+      gas: 7000000,
+    },
+    // Apechain testnet curtis
+    apechain: {
+      chainId: 33111,
+      url: process.env.APECHAIN_URL || 'https://rpc.curtis.apechain.com',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },
   gasReporter: {
@@ -143,8 +132,8 @@ const config: HardhatUserConfig = {
       mainnet: process.env.ETHERSCAN_API_KEY ?? '',
       base: process.env.ETHERSCAN_API_KEY ?? '',
       polygon: process.env.ETHERSCAN_API_KEY ?? '',
-      arbitrum: process.env.ETHERSCAN_API_KEY ?? '',
-
+      arbitrumOne: process.env.ARBISCAN_API_KEY ?? '',
+      apechain: process.env.APECHAIN_API_KEY ?? '',
       sei: process.env.SEITRACE_API_KEY ?? '',
     },
     customChains: [
@@ -246,9 +235,9 @@ task('deploy', 'Deploy ERC721M')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(async (tasksArgs, hre) => {
     console.log('Cleaning...');
-    await hre.run('clean');
+    // await hre.run('clean');
     console.log('Compiling...');
-    await hre.run('compile');
+    // await hre.run('compile');
     console.log('Deploying...');
     await deploy(tasksArgs, hre);
   });
@@ -283,9 +272,9 @@ task('deploy1155', 'Deploy ERC1155M')
   .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
   .setAction(async (tasksArgs, hre) => {
     console.log('Cleaning...');
-    await hre.run('clean');
+    // await hre.run('clean');
     console.log('Compiling...');
-    await hre.run('compile');
+    // await hre.run('compile');
     console.log('Deploying...');
     await deploy1155(tasksArgs, hre);
   });

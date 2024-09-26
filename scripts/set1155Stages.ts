@@ -38,7 +38,7 @@ export const set1155Stages = async (
 
   const overrides: Overrides = {};
   if (args.gaspricegwei) {
-    overrides.gasPrice = ethers.BigNumber.from(args.gaspricegwei * 1e9);
+    overrides.gasPrice = ethers.BigNumber.from(args.gaspricegwei);
   }
   if (args.gaslimit) {
     overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
@@ -70,7 +70,10 @@ export const set1155Stages = async (
         );
         return mt.getHexRoot();
       } else if (stage.variableWalletLimitPath) {
-        const filteredMap = await cleanVariableWalletLimit(stage.variableWalletLimitPath, true);
+        const filteredMap = await cleanVariableWalletLimit(
+          stage.variableWalletLimitPath,
+          true,
+        );
         const leaves: any[] = [];
         for (const [address, limit] of filteredMap.entries()) {
           const digest = ethers.utils.solidityKeccak256(
@@ -91,14 +94,21 @@ export const set1155Stages = async (
     }),
   );
 
+  const startTimeUnixSeconds = Math.floor(
+    new Date(stagesConfig[0].startDate).getTime() / 1000,
+  );
+  const endTimeUnixSeconds = Math.floor(
+    new Date(stagesConfig[0].endDate).getTime() / 1000,
+  );
+
   const stages = stagesConfig.map((s, i) => ({
     price: [ethers.utils.parseEther(s.price)],
     mintFee: [s.mintFee ? ethers.utils.parseEther(s.mintFee) : 0],
     maxStageSupply: [s.maxSupply ?? 0],
     walletLimit: [s.walletLimit ?? 0],
     merkleRoot: [merkleRoots[i]],
-    startTimeUnixSeconds: Math.floor(new Date(s.startDate).getTime() / 1000),
-    endTimeUnixSeconds: Math.floor(new Date(s.endDate).getTime() / 1000),
+    startTimeUnixSeconds,
+    endTimeUnixSeconds,
   }));
 
   console.log(
