@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "@limitbreak/creator-token-standards/src/programmable-royalties/BasicRoyalties.sol";
 import "../ERC721CM.sol";

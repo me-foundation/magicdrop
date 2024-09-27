@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import "erc721a-upgradeable/contracts/extensions/IERC721AQueryableUpgradeable.sol";
 import "../../../common/Structs.sol";

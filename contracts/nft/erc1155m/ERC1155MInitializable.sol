@@ -64,19 +64,17 @@ contract ERC1155MInitializable is
     function initialize(
         string calldata name_,
         string calldata symbol_,
-        string calldata uri_,
         address initialOwner
     ) external initializer {
-        __ERC1155_init(uri_);
         name = name_;
         symbol = symbol_;
+        __ERC1155_init("");
         __Ownable_init(initialOwner);
     }
 
 
     function setup(
-        string memory collectionName,
-        string memory collectionSymbol,
+        string calldata uri_,
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
         address cosigner,
@@ -98,17 +96,15 @@ contract ERC1155MInitializable is
             }
         }
 
-        name = collectionName;
-        symbol = collectionSymbol;
         _numTokens = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _cosigner = cosigner;
         _transferable = true;
-
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
 
+        _setURI(uri_);
         setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
 

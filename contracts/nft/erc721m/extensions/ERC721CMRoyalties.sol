@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import {ERC2981, UpdatableRoyalties} from "../../../royalties/UpdatableRoyalties.sol";
 import {ERC721CM, ERC721ACQueryable, IERC721A} from "../ERC721CM.sol";
