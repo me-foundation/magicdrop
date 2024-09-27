@@ -12,7 +12,6 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {ERC721ACQueryableInitializable, ERC721AUpgradeable, IERC721AUpgradeable} from "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
 import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
-import {IInitializableToken} from "../../../common/interfaces/IInitializableToken.sol";
 import {UpdatableRoyaltiesInitializable, ERC2981} from "../../../royalties/UpdatableRoyaltiesInitializable.sol";
 import {MintStageInfo} from "../../../common/Structs.sol";
 import {IERC721MInitializable} from "../interfaces/IERC721MInitializable.sol";
@@ -22,7 +21,6 @@ import {IERC721MInitializable} from "../interfaces/IERC721MInitializable.sol";
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
 contract ERC721CMInitializableV2 is
-    IInitializableToken,
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
     UpdatableRoyaltiesInitializable,
@@ -86,9 +84,8 @@ contract ERC721CMInitializableV2 is
 
     function initialize(
         string calldata name,
-        string calldata symbol,
-        address payable initialOwner
-    ) external override initializerERC721A initializer {
+        string calldata symbol
+    ) external initializerERC721A initializer {
         __ERC721ACQueryableInitializable_init(name, symbol);
     }
 

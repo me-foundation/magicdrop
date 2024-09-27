@@ -2,22 +2,26 @@
 
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "../../utils/Constants.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {ERC1155SupplyUpgradeable, ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import "./interfaces/IERC1155M.sol";
 import {MintStageInfo1155} from "../../common/Structs.sol";
+import {IERC1155M} from "./interfaces/IERC1155M.sol";
+import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+
 
 /**
- * @title ERC1155M
+ * @title ERC1155MInitializable
  *
  * @dev OpenZeppelin's ERC1155 subclass with MagicEden launchpad features including
  *  - multi token minting
@@ -26,76 +30,61 @@ import {MintStageInfo1155} from "../../common/Structs.sol";
  *  - whitelist
  *  - variable wallet limit
  */
-contract ERC1155M is
+contract ERC1155MInitializable is
     IERC1155M,
-    ERC1155Supply,
-    ERC2981,
-    Ownable2Step,
-    ReentrancyGuard
+    ERC1155SupplyUpgradeable,
+    OwnableUpgradeable,
+    ReentrancyGuard,
+    ERC2981
 {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
-    // Collection name.
-    string public name;
-
-    // Collection symbol.
-    string public symbol;
-
-    // The total mintable supply per token.
-    uint256[] private _maxMintableSupply;
-
-    // Global wallet limit, across all stages, per token.
-    uint256[] private _globalWalletLimit;
-
     // Mint stage information. See MintStageInfo for details.
     MintStageInfo1155[] private _mintStages;
 
-    // Whether the token can be transferred.
-    bool private _transferable;
+    string public name;
+    string public symbol;
+    bool private _transferable; // Whether the token can be transferred.
+    uint256[] private _maxMintableSupply; // The total mintable supply per token.
+    uint256[] private _globalWalletLimit; // Global wallet limit, across all stages, per token.
+    uint256 private _totalMintFee;
+    uint64 private immutable _timestampExpirySeconds = 300;
+    address private _cosigner; // The address of the cosigner server.
+    address private _mintCurrency; // If 0 address, use native currency.
+    uint256 private _numTokens;
+    address private _fundReceiver;
 
-    // Minted count per stage per token per wallet
     mapping(uint256 => mapping(uint256 => mapping(address => uint32)))
         private _stageMintedCountsPerTokenPerWallet;
-
-    // Minted count per stage per token.
     mapping(uint256 => mapping(uint256 => uint256))
         private _stageMintedCountsPerToken;
-
-    // Total mint fee
-    uint256 private _totalMintFee;
-
-    // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
-    uint64 private _timestampExpirySeconds;
-
-    // The address of the cosigner server.
-    address private _cosigner;
-
-    // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
-    address private immutable MINT_CURRENCY;
-
-    // Number of tokens.
-    uint256 private immutable NUM_TOKENS;
-
-    // Fund receiver
-    address public immutable FUND_RECEIVER;
-
-    // Authorized minters
     mapping(address => bool) private _authorizedMinters;
-    
-    constructor(
+
+    function initialize(
+        string calldata name_,
+        string calldata symbol_,
+        string calldata uri_,
+        address initialOwner
+    ) external initializer {
+        __ERC1155_init(uri_);
+        name = name_;
+        symbol = symbol_;
+        __Ownable_init(initialOwner);
+    }
+
+
+    function setup(
         string memory collectionName,
         string memory collectionSymbol,
-        string memory uri,
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
-    ) Ownable(msg.sender) ERC1155(uri) {
+    ) external onlyOwner {
         if (maxMintableSupply.length != globalWalletLimit.length) {
             revert InvalidLimitArgsLength();
         }
@@ -111,17 +100,16 @@ contract ERC1155M is
 
         name = collectionName;
         symbol = collectionSymbol;
-        NUM_TOKENS = globalWalletLimit.length;
+        _numTokens = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _cosigner = cosigner;
-        _timestampExpirySeconds = timestampExpirySeconds;
         _transferable = true;
 
-        MINT_CURRENCY = mintCurrency;
-        FUND_RECEIVER = fundReceiver;
+        _mintCurrency = mintCurrency;
+        _fundReceiver = fundReceiver;
 
-        _setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+        setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
 
     /**
@@ -206,7 +194,7 @@ contract ERC1155M is
                 if (
                     newStages[i].startTimeUnixSeconds <
                     newStages[i - 1].endTimeUnixSeconds +
-                        TIMESTAMP_EXPIRY_SECONDS
+                        _timestampExpirySeconds
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -257,7 +245,7 @@ contract ERC1155M is
         uint256 tokenId,
         uint256 maxMintableSupply
     ) external virtual onlyOwner {
-        if (tokenId >= NUM_TOKENS) {
+        if (tokenId >= _numTokens) {
             revert InvalidTokenId();
         }
         if (
@@ -289,7 +277,7 @@ contract ERC1155M is
         uint256 tokenId,
         uint256 globalWalletLimit
     ) external onlyOwner {
-        if (tokenId >= NUM_TOKENS) {
+        if (tokenId >= _numTokens) {
             revert InvalidTokenId();
         }
         if (
@@ -308,9 +296,9 @@ contract ERC1155M is
     function totalMintedByAddress(
         address account
     ) public view virtual override returns (uint256[] memory) {
-        uint256[] memory totalMinted = new uint256[](NUM_TOKENS);
+        uint256[] memory totalMinted = new uint256[](_numTokens);
         uint256 numStages = _mintStages.length;
-        for (uint256 token = 0; token < NUM_TOKENS; token++) {
+        for (uint256 token = 0; token < _numTokens; token++) {
             for (uint256 stage = 0; stage < numStages; stage++) {
                 totalMinted[token] += _stageMintedCountsPerTokenPerWallet[
                     stage
@@ -323,7 +311,7 @@ contract ERC1155M is
     /**
      * @dev Returns number of minted token for a given token and address.
      */
-    function totalMintedByTokenByAddress(
+    function _totalMintedByTokenByAddress(
         address account,
         uint256 tokenId
     ) internal view virtual returns (uint256) {
@@ -340,12 +328,12 @@ contract ERC1155M is
     /**
      * @dev Returns number of minted tokens for a given stage and address.
      */
-    function totalMintedByStageByAddress(
+    function _totalMintedByStageByAddress(
         uint256 stage,
         address account
     ) internal view virtual returns (uint256[] memory) {
-        uint256[] memory totalMinted = new uint256[](NUM_TOKENS);
-        for (uint256 token = 0; token < NUM_TOKENS; token++) {
+        uint256[] memory totalMinted = new uint256[](_numTokens);
+        for (uint256 token = 0; token < _numTokens; token++) {
             totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][
                 token
             ][account];
@@ -375,7 +363,7 @@ contract ERC1155M is
             revert InvalidStage();
         }
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
-        uint256[] memory stageMinted = totalMintedByStageByAddress(
+        uint256[] memory stageMinted = _totalMintedByStageByAddress(
             stage,
             msg.sender
         );
@@ -386,7 +374,7 @@ contract ERC1155M is
      * @dev Returns mint currency address.
      */
     function getMintCurrency() external view returns (address) {
-        return MINT_CURRENCY;
+        return _mintCurrency;
     }
 
     /**
@@ -490,7 +478,7 @@ contract ERC1155M is
 
         // Check value if minting with ETH
         if (
-            MINT_CURRENCY == address(0) &&
+            _mintCurrency == address(0) &&
             msg.value < (stage.price[tokenId] + adjustedMintFee) * qty
         ) revert NotEnoughValue();
 
@@ -505,7 +493,7 @@ contract ERC1155M is
         // Check global wallet limit if applicable
         if (_globalWalletLimit[tokenId] > 0) {
             if (
-                totalMintedByTokenByAddress(to, tokenId) + qty >
+                _totalMintedByTokenByAddress(to, tokenId) + qty >
                 _globalWalletLimit[tokenId]
             ) revert WalletGlobalLimitExceeded();
         }
@@ -539,9 +527,9 @@ contract ERC1155M is
             }
         }
 
-        if (MINT_CURRENCY != address(0)) {
+        if (_mintCurrency != address(0)) {
             // ERC20 mint payment
-            IERC20(MINT_CURRENCY).safeTransferFrom(
+            IERC20(_mintCurrency).safeTransferFrom(
                 msg.sender,
                 address(this),
                 (stage.price[tokenId] + adjustedMintFee) * qty
@@ -577,7 +565,7 @@ contract ERC1155M is
         _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
-        (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
+        (success, ) = _fundReceiver.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -587,15 +575,15 @@ contract ERC1155M is
      * @dev Withdraws ERC-20 funds by owner.
      */
     function withdrawERC20() external onlyOwner {
-        if (MINT_CURRENCY == address(0)) revert WrongMintCurrency();
+        if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
-        IERC20(MINT_CURRENCY).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
         _totalMintFee = 0;
 
-        uint256 remaining = IERC20(MINT_CURRENCY).balanceOf(address(this));
-        IERC20(MINT_CURRENCY).safeTransfer(FUND_RECEIVER, remaining);
+        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
+        IERC20(_mintCurrency).safeTransfer(_fundReceiver, remaining);
 
-        emit WithdrawERC20(MINT_CURRENCY, _totalMintFee + remaining);
+        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
 
     /**
@@ -705,35 +693,12 @@ contract ERC1155M is
         revert InvalidCosignSignature();
     }
 
-    /**
-     * @dev Set default royalty for all tokens
-     */
-    function setDefaultRoyalty(
-        address receiver,
-        uint96 feeNumerator
-    ) public onlyOwner {
-        super._setDefaultRoyalty(receiver, feeNumerator);
-        emit DefaultRoyaltySet(receiver, feeNumerator);
-    }
-
-    /**
-     * @dev Set default royalty for individual token
-     */
-    function setTokenRoyalty(
-        uint256 tokenId,
-        address receiver,
-        uint96 feeNumerator
-    ) public onlyOwner {
-        super._setTokenRoyalty(tokenId, receiver, feeNumerator);
-        emit TokenRoyaltySet(tokenId, receiver, feeNumerator);
-    }
-
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ERC2981, ERC1155) returns (bool) {
-        return
-            ERC1155.supportsInterface(interfaceId) ||
-            ERC2981.supportsInterface(interfaceId);
+    ) public view virtual override(ERC2981, ERC1155Upgradeable) returns (bool) {
+        return super.supportsInterface(interfaceId) ||
+            ERC2981.supportsInterface(interfaceId) ||
+            ERC1155Upgradeable.supportsInterface(interfaceId);
     }
 
     /**
@@ -775,15 +740,32 @@ contract ERC1155M is
 
     function _assertValidStageArgsLength(
         MintStageInfo1155 calldata stageInfo
-    ) internal {
+    ) internal view {
         if (
-            stageInfo.price.length != NUM_TOKENS ||
-            stageInfo.mintFee.length != NUM_TOKENS ||
-            stageInfo.walletLimit.length != NUM_TOKENS ||
-            stageInfo.merkleRoot.length != NUM_TOKENS ||
-            stageInfo.maxStageSupply.length != NUM_TOKENS
+            stageInfo.price.length != _numTokens ||
+            stageInfo.mintFee.length != _numTokens ||
+            stageInfo.walletLimit.length != _numTokens ||
+            stageInfo.merkleRoot.length != _numTokens ||
+            stageInfo.maxStageSupply.length != _numTokens
         ) {
             revert InvalidStageArgsLength();
         }
+    }
+
+    function setDefaultRoyalty(
+        address receiver,
+        uint96 feeNumerator
+    ) public onlyOwner {
+        super._setDefaultRoyalty(receiver, feeNumerator);
+        emit DefaultRoyaltySet(receiver, feeNumerator);
+    }
+
+    function setTokenRoyalty(
+        uint256 tokenId,
+        address receiver,
+        uint96 feeNumerator
+    ) public onlyOwner {
+        super._setTokenRoyalty(tokenId, receiver, feeNumerator);
+        emit TokenRoyaltySet(tokenId, receiver, feeNumerator);
     }
 }
