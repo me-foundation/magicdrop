@@ -45,4 +45,13 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAn
         uint64 timestamp,
         bytes calldata signature
     ) external payable;
+
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable;
 }
