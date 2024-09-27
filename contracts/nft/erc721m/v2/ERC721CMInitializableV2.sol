@@ -8,8 +8,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-
-import {Ownable} from "@limitbreak/creator-token-standards/src/access/OwnableInitializable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {ERC721ACQueryableInitializable, ERC721AUpgradeable, IERC721AUpgradeable} from "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
 import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
@@ -18,11 +17,11 @@ import {UpdatableRoyaltiesInitializable, ERC2981} from "../../../royalties/Updat
 import {MintStageInfo} from "../../../common/Structs.sol";
 import {IERC721MInitializable} from "../interfaces/IERC721MInitializable.sol";
 /**
- * @title ERC721CMInitializable_V2
+ * @title ERC721CMInitializableV2
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-contract ERC721CMInitializable_V2 is
+contract ERC721CMInitializableV2 is
     IInitializableToken,
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
@@ -36,7 +35,7 @@ contract ERC721CMInitializable_V2 is
     bool private _mintable;
 
     // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
-    uint64 private _timestampExpirySeconds;
+    uint64 private immutable _timestampExpirySeconds = 300;
 
     // The address of the cosigner server.
     address private _cosigner;
@@ -97,7 +96,6 @@ contract ERC721CMInitializable_V2 is
         string calldata tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        uint64 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
         address crossmintAddress,
@@ -111,7 +109,6 @@ contract ERC721CMInitializable_V2 is
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
-        _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
         _crossmintAddress = crossmintAddress;
@@ -209,14 +206,6 @@ contract ERC721CMInitializable_V2 is
     function setCosigner(address cosigner) external onlyOwner {
         _cosigner = cosigner;
         emit SetCosigner(cosigner);
-    }
-
-    /**
-     * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
-     */
-    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
-        _timestampExpirySeconds = expiry;
-        emit SetTimestampExpirySeconds(expiry);
     }
 
     /**

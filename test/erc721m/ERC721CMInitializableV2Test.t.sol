@@ -4,12 +4,12 @@ pragma solidity ^0.8.20;
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ERC721CMInitializable_V2} from "../../contracts/nft/erc721m/v2/ERC721CMInitializable_V2.sol";
+import {ERC721CMInitializableV2} from "../../contracts/nft/erc721m/v2/ERC721CMInitializableV2.sol";
 import {MintStageInfo} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
-contract ERC721CMInitializable_V2Test is Test {
-    ERC721CMInitializable_V2 public nft;
+contract ERC721CMInitializableV2Test is Test {
+    ERC721CMInitializableV2 public nft;
     address public owner;
     address public minter;
     address public fundReceiver;
@@ -17,7 +17,6 @@ contract ERC721CMInitializable_V2Test is Test {
     address public crossmintAddress;
     uint256 public constant INITIAL_SUPPLY = 1000;
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
-    uint64 public constant TIMESTAMP_EXPIRY_SECONDS = 60;
 
     function setUp() public {
         owner = address(this);
@@ -30,13 +29,12 @@ contract ERC721CMInitializable_V2Test is Test {
         vm.deal(minter, 2 ether);
         vm.deal(crossmintAddress, 1 ether);
         
-        nft = new ERC721CMInitializable_V2(owner);
+        nft = new ERC721CMInitializableV2(owner);
         nft.initialize("Test", "TEST", payable(owner));
         nft.setup(
             ".json",
             INITIAL_SUPPLY,
             GLOBAL_WALLET_LIMIT,
-            TIMESTAMP_EXPIRY_SECONDS,
             address(0),
             fundReceiver,
             crossmintAddress,
@@ -96,8 +94,8 @@ contract ERC721CMInitializable_V2Test is Test {
             walletLimit: 4,
             merkleRoot: bytes32(uint256(2)),
             maxStageSupply: 10,
-            startTimeUnixSeconds: 61,
-            endTimeUnixSeconds: 62
+            startTimeUnixSeconds: 301,
+            endTimeUnixSeconds: 602
         });
 
         nft.setStages(stages);
