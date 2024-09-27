@@ -76,4 +76,8 @@ abstract contract ERC721ACQueryableInitializable is
     {
         return _msgSender();
     }
+
+    function _tokenType() internal pure override returns(uint16) {
+        return uint16(721);
+    }
 }

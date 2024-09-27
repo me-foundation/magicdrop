@@ -60,4 +60,8 @@ abstract contract ERC721ACQueryable is ERC721AQueryable, CreatorTokenBase {
     {
         return _msgSender();
     }
+
+    function _tokenType() internal pure override returns(uint16) {
+        return uint16(721);
+    }
 }

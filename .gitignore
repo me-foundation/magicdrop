@@ -1,6 +1,5 @@
 node_modules
 .env
-converage/
 coverage.json
 typechain
 typechain-types
@@ -11,3 +10,6 @@ artifacts
 dist
 .DS_Store
 out/
+lcov.info
+lcov.info.pruned
+coverage/

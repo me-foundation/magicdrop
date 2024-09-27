@@ -113,6 +113,12 @@ forge build
 forge test
 ```
 
+### Generate Coverage Report
+This project includes a script to generate and view a test coverage report. The script is located at `test/generate-coverage-report.sh`.
+```bash
+./test/generate-coverage-report.sh
+```
+
 We are targeting 100% lines coverage.
 
 ![](https://bafkreic3dyzp5i2fi7co2fekkbgmyxgv342irjy5zfiuhvjqic6fuu53ju.ipfs.nftstorage.link/)

@@ -72,13 +72,13 @@ contract ERC1155M is
     address private _cosigner;
 
     // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
-    address private immutable MINT_CURRENCY;
+    address private _mintCurrency;
 
     // Number of tokens.
-    uint256 private immutable NUM_TOKENS;
+    uint256 private _numTokens;
 
     // Fund receiver
-    address public immutable FUND_RECEIVER;
+    address private _fundReceiver;
 
     uint256 public constant VERSION = 1;
 
@@ -113,15 +113,15 @@ contract ERC1155M is
 
         name = collectionName;
         symbol = collectionSymbol;
-        NUM_TOKENS = globalWalletLimit.length;
+        _numTokens = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _cosigner = cosigner;
         _timestampExpirySeconds = timestampExpirySeconds;
         _transferable = true;
 
-        MINT_CURRENCY = mintCurrency;
-        FUND_RECEIVER = fundReceiver;
+        _mintCurrency = mintCurrency;
+        _fundReceiver = fundReceiver;
 
         _setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
@@ -259,7 +259,7 @@ contract ERC1155M is
         uint256 tokenId,
         uint256 maxMintableSupply
     ) external virtual onlyOwner {
-        if (tokenId >= NUM_TOKENS) {
+        if (tokenId >= _numTokens) {
             revert InvalidTokenId();
         }
         if (
@@ -291,7 +291,7 @@ contract ERC1155M is
         uint256 tokenId,
         uint256 globalWalletLimit
     ) external onlyOwner {
-        if (tokenId >= NUM_TOKENS) {
+        if (tokenId >= _numTokens) {
             revert InvalidTokenId();
         }
         if (
@@ -310,9 +310,9 @@ contract ERC1155M is
     function totalMintedByAddress(
         address account
     ) public view virtual override returns (uint256[] memory) {
-        uint256[] memory totalMinted = new uint256[](NUM_TOKENS);
+        uint256[] memory totalMinted = new uint256[](_numTokens);
         uint256 numStages = _mintStages.length;
-        for (uint256 token = 0; token < NUM_TOKENS; token++) {
+        for (uint256 token = 0; token < _numTokens; token++) {
             for (uint256 stage = 0; stage < numStages; stage++) {
                 totalMinted[token] += _stageMintedCountsPerTokenPerWallet[
                     stage
@@ -325,7 +325,7 @@ contract ERC1155M is
     /**
      * @dev Returns number of minted token for a given token and address.
      */
-    function totalMintedByTokenByAddress(
+    function _totalMintedByTokenByAddress(
         address account,
         uint256 tokenId
     ) internal view virtual returns (uint256) {
@@ -342,12 +342,12 @@ contract ERC1155M is
     /**
      * @dev Returns number of minted tokens for a given stage and address.
      */
-    function totalMintedByStageByAddress(
+    function _totalMintedByStageByAddress(
         uint256 stage,
         address account
     ) internal view virtual returns (uint256[] memory) {
-        uint256[] memory totalMinted = new uint256[](NUM_TOKENS);
-        for (uint256 token = 0; token < NUM_TOKENS; token++) {
+        uint256[] memory totalMinted = new uint256[](_numTokens);
+        for (uint256 token = 0; token < _numTokens; token++) {
             totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][
                 token
             ][account];
@@ -377,7 +377,7 @@ contract ERC1155M is
             revert InvalidStage();
         }
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
-        uint256[] memory stageMinted = totalMintedByStageByAddress(
+        uint256[] memory stageMinted = _totalMintedByStageByAddress(
             stage,
             msg.sender
         );
@@ -388,7 +388,7 @@ contract ERC1155M is
      * @dev Returns mint currency address.
      */
     function getMintCurrency() external view returns (address) {
-        return MINT_CURRENCY;
+        return _mintCurrency;
     }
 
     /**
@@ -492,7 +492,7 @@ contract ERC1155M is
 
         // Check value if minting with ETH
         if (
-            MINT_CURRENCY == address(0) &&
+            _mintCurrency == address(0) &&
             msg.value < (stage.price[tokenId] + adjustedMintFee) * qty
         ) revert NotEnoughValue();
 
@@ -507,7 +507,7 @@ contract ERC1155M is
         // Check global wallet limit if applicable
         if (_globalWalletLimit[tokenId] > 0) {
             if (
-                totalMintedByTokenByAddress(to, tokenId) + qty >
+                _totalMintedByTokenByAddress(to, tokenId) + qty >
                 _globalWalletLimit[tokenId]
             ) revert WalletGlobalLimitExceeded();
         }
@@ -541,9 +541,9 @@ contract ERC1155M is
             }
         }
 
-        if (MINT_CURRENCY != address(0)) {
+        if (_mintCurrency != address(0)) {
             // ERC20 mint payment
-            IERC20(MINT_CURRENCY).safeTransferFrom(
+            IERC20(_mintCurrency).safeTransferFrom(
                 msg.sender,
                 address(this),
                 (stage.price[tokenId] + adjustedMintFee) * qty
@@ -579,7 +579,7 @@ contract ERC1155M is
         _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
-        (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
+        (success, ) = _fundReceiver.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -589,15 +589,15 @@ contract ERC1155M is
      * @dev Withdraws ERC-20 funds by owner.
      */
     function withdrawERC20() external onlyOwner {
-        if (MINT_CURRENCY == address(0)) revert WrongMintCurrency();
+        if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
-        IERC20(MINT_CURRENCY).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
         _totalMintFee = 0;
 
-        uint256 remaining = IERC20(MINT_CURRENCY).balanceOf(address(this));
-        IERC20(MINT_CURRENCY).safeTransfer(FUND_RECEIVER, remaining);
+        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
+        IERC20(_mintCurrency).safeTransfer(_fundReceiver, remaining);
 
-        emit WithdrawERC20(MINT_CURRENCY, _totalMintFee + remaining);
+        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
 
     /**
@@ -777,13 +777,13 @@ contract ERC1155M is
 
     function _assertValidStageArgsLength(
         MintStageInfo1155 calldata stageInfo
-    ) internal {
+    ) internal view {
         if (
-            stageInfo.price.length != NUM_TOKENS ||
-            stageInfo.mintFee.length != NUM_TOKENS ||
-            stageInfo.walletLimit.length != NUM_TOKENS ||
-            stageInfo.merkleRoot.length != NUM_TOKENS ||
-            stageInfo.maxStageSupply.length != NUM_TOKENS
+            stageInfo.price.length != _numTokens ||
+            stageInfo.mintFee.length != _numTokens ||
+            stageInfo.walletLimit.length != _numTokens ||
+            stageInfo.merkleRoot.length != _numTokens ||
+            stageInfo.maxStageSupply.length != _numTokens
         ) {
             revert InvalidStageArgsLength();
         }
