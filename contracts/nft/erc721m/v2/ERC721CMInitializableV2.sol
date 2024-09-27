@@ -712,9 +712,7 @@ contract ERC721CMInitializableV2 is
         isViewFunction = true;
     }
 
-    function _tokenType() internal pure override returns(uint16) {
-        return uint16(721);
-    }
+
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC2981, IERC721AUpgradeable, ERC721ACQueryableInitializable) returns (bool) {
         return super.supportsInterface(interfaceId) ||

@@ -583,7 +583,5 @@ abstract contract ERC721CMInitializable is
         isViewFunction = true;
     }
 
-    function _tokenType() internal pure override returns(uint16) {
-        return uint16(721);
-    }
+
 }

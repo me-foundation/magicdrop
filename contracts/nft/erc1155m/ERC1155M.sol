@@ -80,6 +80,8 @@ contract ERC1155M is
     // Fund receiver
     address public immutable FUND_RECEIVER;
 
+    uint256 public constant VERSION = 1;
+
     // Authorized minters
     mapping(address => bool) private _authorizedMinters;
     

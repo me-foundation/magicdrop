@@ -40,6 +40,8 @@ contract ERC1155MInitializable is
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
+    uint256 public constant VERSION = 1;
+
     // Mint stage information. See MintStageInfo for details.
     MintStageInfo1155[] private _mintStages;
 
