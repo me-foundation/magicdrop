@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "./interfaces/IERC721M.sol";
 import "../../utils/Constants.sol";
+import "../../common/Cosignable.sol";
 
 /**
  * @title ERC721M
@@ -23,7 +24,7 @@ import "../../utils/Constants.sol";
  *  - crossmint support
  *  - anti-botting
  */
-contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
+contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosignable {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -32,12 +33,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     // Whether base URI is permanent. Once set, base URI is immutable.
     bool private _baseURIPermanent;
-
-    // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
-    uint64 private _timestampExpirySeconds;
-
-    // The address of the cosigner server.
-    address private _cosigner;
 
     // The crossmint address. Need to set if using crossmint.
     address private _crossmintAddress;
@@ -130,14 +125,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      */
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
-    }
-
-    /**
-     * @dev Sets cosigner.
-     */
-    function setCosigner(address cosigner) external onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
     }
 
     /**
@@ -427,7 +414,8 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
                 msg.sender,
                 qty,
                 timestamp,
-                signature
+                signature,
+                getCosignNonce(msg.sender)
             );
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;
@@ -578,75 +566,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Returns data hash for the given minter, qty, waiveMintFee and timestamp.
-     */
-    function getCosignDigest(
-        address minter,
-        uint32 qty,
-        bool waiveMintFee,
-        uint64 timestamp
-    ) public view returns (bytes32) {
-        if (_cosigner == address(0)) revert CosignerNotSet();
-        return
-            MessageHashUtils.toEthSignedMessageHash(
-                keccak256(
-                    abi.encodePacked(
-                        address(this),
-                        minter,
-                        qty,
-                        waiveMintFee,
-                        _cosigner,
-                        timestamp,
-                        _chainID(),
-                        getCosignNonce(minter)
-                    )
-                )
-            );
-    }
-
-    /**
-     * @dev Validates the the given signature. Returns whether mint fee is waived.
-     */
-    function assertValidCosign(
-        address minter,
-        uint32 qty,
-        uint64 timestamp,
-        bytes memory signature
-    ) public view returns (bool) {
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    qty,
-                    /* waiveMintFee= */ true,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return true;
-        }
-
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    qty,
-                    /* waiveMintFee= */ false,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return false;
-        }
-
-        revert InvalidCosignSignature();
-    }
-
-    /**
      * @dev Returns the current active stage based on timestamp.
      */
     function getActiveStageFromTimestamp(
@@ -661,14 +580,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
             }
         }
         revert InvalidStage();
-    }
-
-    /**
-     * @dev Validates the timestamp is not expired.
-     */
-    function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - _timestampExpirySeconds)
-            revert TimestampExpired();
     }
 
     /**

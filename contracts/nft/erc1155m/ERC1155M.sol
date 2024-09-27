@@ -13,8 +13,10 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "../../utils/Constants.sol";
 
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "./ERC1155MStorage.sol";
 import "./interfaces/IERC1155M.sol";
 import {MintStageInfo1155} from "../../common/Structs.sol";
+import {Cosignable} from "../../common/Cosignable.sol";
 
 /**
  * @title ERC1155M
@@ -31,60 +33,13 @@ contract ERC1155M is
     ERC1155Supply,
     ERC2981,
     Ownable2Step,
-    ReentrancyGuard
+    ReentrancyGuard,
+    ERC1155MStorage,
+    Cosignable
 {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
-    // Collection name.
-    string public name;
-
-    // Collection symbol.
-    string public symbol;
-
-    // The total mintable supply per token.
-    uint256[] private _maxMintableSupply;
-
-    // Global wallet limit, across all stages, per token.
-    uint256[] private _globalWalletLimit;
-
-    // Mint stage information. See MintStageInfo for details.
-    MintStageInfo1155[] private _mintStages;
-
-    // Whether the token can be transferred.
-    bool private _transferable;
-
-    // Minted count per stage per token per wallet
-    mapping(uint256 => mapping(uint256 => mapping(address => uint32)))
-        private _stageMintedCountsPerTokenPerWallet;
-
-    // Minted count per stage per token.
-    mapping(uint256 => mapping(uint256 => uint256))
-        private _stageMintedCountsPerToken;
-
-    // Total mint fee
-    uint256 private _totalMintFee;
-
-    // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
-    uint64 private _timestampExpirySeconds;
-
-    // The address of the cosigner server.
-    address private _cosigner;
-
-    // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
-    address private _mintCurrency;
-
-    // Number of tokens.
-    uint256 private _numTokens;
-
-    // Fund receiver
-    address private _fundReceiver;
-
-    uint256 public constant VERSION = 1;
-
-    // Authorized minters
-    mapping(address => bool) private _authorizedMinters;
-    
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -167,14 +122,6 @@ contract ERC1155M is
         uint256 tokenId
     ) public view returns (uint256) {
         return totalMintedByAddress(minter)[tokenId];
-    }
-
-    /**
-     * @dev Sets cosigner.
-     */
-    function setCosigner(address cosigner) external onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
     }
 
     /**
@@ -476,10 +423,10 @@ contract ERC1155M is
         if (_cosigner != address(0)) {
             waiveMintFee = assertValidCosign(
                 msg.sender,
-                tokenId,
                 qty,
                 timestamp,
-                signature
+                signature,
+                getCosignNonce(msg.sender, tokenId)
             );
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;
@@ -634,80 +581,6 @@ contract ERC1155M is
     }
 
     /**
-     * @dev Returns data hash for the given minter, qty, waiveMintFee and timestamp.
-     */
-    function getCosignDigest(
-        address minter,
-        uint256 tokenId,
-        uint32 qty,
-        bool waiveMintFee,
-        uint64 timestamp
-    ) public view returns (bytes32) {
-        if (_cosigner == address(0)) revert CosignerNotSet();
-
-        return
-            MessageHashUtils.toEthSignedMessageHash(
-                keccak256(
-                    abi.encodePacked(
-                        address(this),
-                        minter,
-                        qty,
-                        waiveMintFee,
-                        _cosigner,
-                        timestamp,
-                        block.chainid,
-                        getCosignNonce(minter, tokenId)
-                    )
-                )
-            );
-    }
-
-    /**
-     * @dev Validates the the given signature. Returns whether mint fee is waived.
-     */
-    function assertValidCosign(
-        address minter,
-        uint256 tokenId,
-        uint32 qty,
-        uint64 timestamp,
-        bytes memory signature
-    ) public view returns (bool) {
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    tokenId,
-                    qty,
-                    /* waiveMintFee= */ true,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return true;
-        }
-
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    tokenId,
-                    qty,
-                    /* waiveMintFee= */ false,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return false;
-        }
-
-        revert InvalidCosignSignature();
-    }
-
-    /**
      * @dev Set default royalty for all tokens
      */
     function setDefaultRoyalty(
@@ -765,14 +638,6 @@ contract ERC1155M is
         uint64 end
     ) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
-    }
-
-    /**
-     * @dev Validates the timestamp is not expired.
-     */
-    function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - _timestampExpirySeconds)
-            revert TimestampExpired();
     }
 
     function _assertValidStageArgsLength(

@@ -3,12 +3,12 @@ pragma solidity ^0.8.20;
 
 interface ErrorsAndEvents {
     error CannotIncreaseMaxMintableSupply();
-    error CosignerNotSet();
+    // error CosignerNotSet();
     error CrossmintAddressNotSet();
     error CrossmintOnly();
     error GlobalWalletLimitOverflow();
     error InsufficientStageTimeGap();
-    error InvalidCosignSignature();
+    // error InvalidCosignSignature();
     error InvalidProof();
     error InvalidStage();
     error InvalidStageArgsLength();
@@ -18,7 +18,7 @@ interface ErrorsAndEvents {
     error NotMintable();
     error Mintable();
     error StageSupplyExceeded();
-    error TimestampExpired();
+    // error TimestampExpired();
     error TransferFailed();
     error WalletGlobalLimitExceeded();
     error WalletStageLimitExceeded();
@@ -29,7 +29,7 @@ interface ErrorsAndEvents {
     error NewSupplyLessThanTotalSupply();
     error NotTransferable();
 
-    event SetCosigner(address cosigner);
+    // event SetCosigner(address cosigner);
     event SetCrossmintAddress(address crossmintAddress);
     event SetMintable(bool mintable);
     event SetActiveStage(uint256 activeStage);

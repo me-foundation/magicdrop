@@ -2,22 +2,22 @@
 
 pragma solidity ^0.8.20;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {ERC1155SupplyUpgradeable, ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {
+    ERC1155SupplyUpgradeable,
+    ERC1155Upgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {MintStageInfo1155} from "../../common/Structs.sol";
 import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+import {ERC1155MStorage} from "./ERC1155MStorage.sol";
+import {Cosignable} from "../../common/Cosignable.sol";
 
 
 /**
@@ -35,33 +35,12 @@ contract ERC1155MInitializable is
     ERC1155SupplyUpgradeable,
     OwnableUpgradeable,
     ReentrancyGuard,
-    ERC2981
+    ERC1155MStorage,
+    ERC2981,
+    Cosignable
 {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
-
-    uint256 public constant VERSION = 1;
-
-    // Mint stage information. See MintStageInfo for details.
-    MintStageInfo1155[] private _mintStages;
-
-    string public name;
-    string public symbol;
-    bool private _transferable; // Whether the token can be transferred.
-    uint256[] private _maxMintableSupply; // The total mintable supply per token.
-    uint256[] private _globalWalletLimit; // Global wallet limit, across all stages, per token.
-    uint256 private _totalMintFee;
-    uint64 private immutable _timestampExpirySeconds = 300;
-    address private _cosigner; // The address of the cosigner server.
-    address private _mintCurrency; // If 0 address, use native currency.
-    uint256 private _numTokens;
-    address private _fundReceiver;
-
-    mapping(uint256 => mapping(uint256 => mapping(address => uint32)))
-        private _stageMintedCountsPerTokenPerWallet;
-    mapping(uint256 => mapping(uint256 => uint256))
-        private _stageMintedCountsPerToken;
-    mapping(address => bool) private _authorizedMinters;
 
     function initialize(
         string calldata name_,
@@ -74,11 +53,11 @@ contract ERC1155MInitializable is
         __Ownable_init(initialOwner);
     }
 
-
     function setup(
         string calldata uri_,
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
+        uint64 timestampExpirySeconds,
         address cosigner,
         address mintCurrency,
         address fundReceiver,
@@ -105,7 +84,8 @@ contract ERC1155MInitializable is
         _transferable = true;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
-
+        _timestampExpirySeconds = timestampExpirySeconds;
+        
         _setURI(uri_);
         setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
@@ -151,14 +131,6 @@ contract ERC1155MInitializable is
         uint256 tokenId
     ) public view returns (uint256) {
         return totalMintedByAddress(minter)[tokenId];
-    }
-
-    /**
-     * @dev Sets cosigner.
-     */
-    function setCosigner(address cosigner) external onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
     }
 
     /**
@@ -460,10 +432,10 @@ contract ERC1155MInitializable is
         if (_cosigner != address(0)) {
             waiveMintFee = assertValidCosign(
                 msg.sender,
-                tokenId,
                 qty,
                 timestamp,
-                signature
+                signature,
+                getCosignNonce(msg.sender, tokenId)
             );
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;
@@ -617,80 +589,6 @@ contract ERC1155MInitializable is
         revert InvalidStage();
     }
 
-    /**
-     * @dev Returns data hash for the given minter, qty, waiveMintFee and timestamp.
-     */
-    function getCosignDigest(
-        address minter,
-        uint256 tokenId,
-        uint32 qty,
-        bool waiveMintFee,
-        uint64 timestamp
-    ) public view returns (bytes32) {
-        if (_cosigner == address(0)) revert CosignerNotSet();
-
-        return
-            MessageHashUtils.toEthSignedMessageHash(
-                keccak256(
-                    abi.encodePacked(
-                        address(this),
-                        minter,
-                        qty,
-                        waiveMintFee,
-                        _cosigner,
-                        timestamp,
-                        block.chainid,
-                        getCosignNonce(minter, tokenId)
-                    )
-                )
-            );
-    }
-
-    /**
-     * @dev Validates the the given signature. Returns whether mint fee is waived.
-     */
-    function assertValidCosign(
-        address minter,
-        uint256 tokenId,
-        uint32 qty,
-        uint64 timestamp,
-        bytes memory signature
-    ) public view returns (bool) {
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    tokenId,
-                    qty,
-                    /* waiveMintFee= */ true,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return true;
-        }
-
-        if (
-            SignatureChecker.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    tokenId,
-                    qty,
-                    /* waiveMintFee= */ false,
-                    timestamp
-                ),
-                signature
-            )
-        ) {
-            return false;
-        }
-
-        revert InvalidCosignSignature();
-    }
-
     function supportsInterface(
         bytes4 interfaceId
     ) public view virtual override(ERC2981, ERC1155Upgradeable) returns (bool) {
@@ -726,14 +624,6 @@ contract ERC1155MInitializable is
         uint64 end
     ) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
-    }
-
-    /**
-     * @dev Validates the timestamp is not expired.
-     */
-    function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - _timestampExpirySeconds)
-            revert TimestampExpired();
     }
 
     function _assertValidStageArgsLength(
