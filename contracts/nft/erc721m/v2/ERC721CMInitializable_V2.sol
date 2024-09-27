@@ -1,29 +1,31 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.20;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-// import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {OwnableInitializable, Ownable, OwnablePermissions} from "@limitbreak/creator-token-standards/src/access/OwnableInitializable.sol";
+
+import {Ownable} from "@limitbreak/creator-token-standards/src/access/OwnableInitializable.sol";
+
 import {ERC721ACQueryableInitializable, ERC721AUpgradeable, IERC721AUpgradeable} from "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
-import {IERC721MInitializable, MintStageInfo} from "../interfaces/IERC721MInitializable.sol";
 import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
 import {IInitializableToken} from "../../../common/interfaces/IInitializableToken.sol";
-
+import {UpdatableRoyaltiesInitializable, ERC2981} from "../../../royalties/UpdatableRoyaltiesInitializable.sol";
+import {MintStageInfo} from "../../../common/Structs.sol";
+import {IERC721MInitializable} from "../interfaces/IERC721MInitializable.sol";
 /**
- * @title ERC721CMInitializable
+ * @title ERC721CMInitializable_V2
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
 contract ERC721CMInitializable_V2 is
+    IInitializableToken,
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
-    OwnableInitializable,
-    ReentrancyGuard,
-    IInitializableToken
+    UpdatableRoyaltiesInitializable,
+    ReentrancyGuard
 {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
@@ -73,7 +75,7 @@ contract ERC721CMInitializable_V2 is
 
     uint256 public constant VERSION = 2;
 
-    constructor(address initialOwner) Ownable(initialOwner) {} 
+    constructor(address initialOwner) Ownable(initialOwner) {}
 
     function initialize(
         string calldata name,
@@ -91,7 +93,9 @@ contract ERC721CMInitializable_V2 is
         address mintCurrency,
         address fundReceiver,
         address crossmintAddress,
-        MintStageInfo[] calldata initialStages
+        MintStageInfo[] calldata initialStages,
+        address defaultRoyaltyReceiver,
+        uint96 defaultRoyaltyFeeNumerator
     ) external onlyOwner {
         if (globalWalletLimit > maxMintableSupply)
             revert GlobalWalletLimitOverflow();
@@ -102,15 +106,13 @@ contract ERC721CMInitializable_V2 is
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
-        
-        // Set crossmint address
         _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(crossmintAddress);
         
-        // Set initial stages
         if (initialStages.length > 0) {
             _setStages(initialStages);
         }
+
+        setDefaultRoyalty(defaultRoyaltyReceiver, defaultRoyaltyFeeNumerator);
     }
 
     function _setStages(MintStageInfo[] calldata newStages) internal {
@@ -551,15 +553,6 @@ contract ERC721CMInitializable_V2 is
         }
     }
 
-    function _requireCallerIsContractOwner()
-        internal
-        view
-        virtual
-        override(OwnableInitializable, OwnablePermissions)
-    {
-        _checkOwner();
-    }
-
     /**
      * @notice Returns the function selector for the transfer validator's validation function to be called 
      * @notice for transaction simulation. 
@@ -571,5 +564,11 @@ contract ERC721CMInitializable_V2 is
 
     function _tokenType() internal pure override returns(uint16) {
         return uint16(721);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC2981, IERC721AUpgradeable, ERC721ACQueryableInitializable) returns (bool) {
+        return super.supportsInterface(interfaceId) ||
+        ERC2981.supportsInterface(interfaceId) ||
+        ERC721ACQueryableInitializable.supportsInterface(interfaceId);
     }
 }

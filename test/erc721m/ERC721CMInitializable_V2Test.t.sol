@@ -40,7 +40,9 @@ contract ERC721CMInitializable_V2Test is Test {
             address(0),
             fundReceiver,
             crossmintAddress,
-            new MintStageInfo[](0)
+            new MintStageInfo[](0),
+            address(this),
+            0
         );
     }
 
