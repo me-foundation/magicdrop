@@ -25,7 +25,7 @@ interface ErrorsAndEvents {
     error WithdrawFailed();
     error WrongMintCurrency();
     error NotSupported();
-    error NotAuthorized();
+    // error NotAuthorized();
     error NewSupplyLessThanTotalSupply();
     error NotTransferable();
 

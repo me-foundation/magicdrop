@@ -15,6 +15,7 @@ import {UpdatableRoyaltiesInitializable, ERC2981} from "../../../royalties/Updat
 import {MintStageInfo} from "../../../common/Structs.sol";
 import {IERC721MInitializable} from "../interfaces/IERC721MInitializable.sol";
 import {Cosignable} from "../../../common/Cosignable.sol";
+import {AuthorizedMinterControl} from "../../../common/AuthorizedMinterControl.sol";
 
 /**
  * @title ERC721CMInitializableV2
@@ -26,7 +27,8 @@ contract ERC721CMInitializableV2 is
     ERC721ACQueryableInitializable,
     UpdatableRoyaltiesInitializable,
     ReentrancyGuard,
-    Cosignable
+    Cosignable,
+    AuthorizedMinterControl
 {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
@@ -70,9 +72,6 @@ contract ERC721CMInitializableV2 is
 
     // Fund receiver
     address private _fundReceiver;
-
-    // Authorized minters
-    mapping(address => bool) private _authorizedMinters;
 
     uint256 public constant VERSION = 2;
 
@@ -181,14 +180,6 @@ contract ERC721CMInitializableV2 is
     }
 
     /**
-     * @dev Returns whether the msg sender is authorized to mint.
-     */
-    modifier onlyAuthorizedMinter() {
-        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
-        _;
-    }
-
-    /**
      * @dev Returns cosign nonce.
      */
     function getCosignNonce(address minter) public view returns (uint256) {
@@ -206,15 +197,15 @@ contract ERC721CMInitializableV2 is
     /**
      * @dev Add authorized minter. Can only be called by contract owner.
      */
-    function addAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = true;
+    function addAuthorizedMinter(address minter) external onlyOwner override {
+        _addAuthorizedMinter(minter);
     }
 
     /**
      * @dev Remove authorized minter. Can only be called by contract owner.
      */
-    function removeAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = false;
+    function removeAuthorizedMinter(address minter) external onlyOwner override {
+        _removeAuthorizedMinter(minter);
     }
 
     /**

@@ -17,6 +17,7 @@ import "./ERC1155MStorage.sol";
 import "./interfaces/IERC1155M.sol";
 import {MintStageInfo1155} from "../../common/Structs.sol";
 import {Cosignable} from "../../common/Cosignable.sol";
+import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 /**
  * @title ERC1155M
@@ -35,7 +36,8 @@ contract ERC1155M is
     Ownable2Step,
     ReentrancyGuard,
     ERC1155MStorage,
-    Cosignable
+    Cosignable,
+    AuthorizedMinterControl
 {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
@@ -93,25 +95,17 @@ contract ERC1155M is
     }
 
     /**
-     * @dev Returns whether the msg sender is authorized to mint.
-     */
-    modifier onlyAuthorizedMinter() {
-        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
-        _;
-    }
-
-    /**
      * @dev Add authorized minter. Can only be called by contract owner.
      */
-    function addAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = true;
+    function addAuthorizedMinter(address minter) external onlyOwner override {
+        _addAuthorizedMinter(minter);
     }
 
     /**
      * @dev Remove authorized minter. Can only be called by contract owner.
      */
-    function removeAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = false;
+    function removeAuthorizedMinter(address minter) external onlyOwner override {
+        _removeAuthorizedMinter(minter);
     }
 
     /**

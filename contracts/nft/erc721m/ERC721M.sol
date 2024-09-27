@@ -13,7 +13,7 @@ import "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import "./interfaces/IERC721M.sol";
 import "../../utils/Constants.sol";
 import "../../common/Cosignable.sol";
-
+import "../../common/AuthorizedMinterControl.sol";
 /**
  * @title ERC721M
  *
@@ -24,7 +24,7 @@ import "../../common/Cosignable.sol";
  *  - crossmint support
  *  - anti-botting
  */
-contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosignable {
+contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosignable, AuthorizedMinterControl {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -68,9 +68,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
     // Fund receiver
     address public immutable FUND_RECEIVER;
 
-    // Authorized minters
-    mapping(address => bool) private _authorizedMinters;
-
     uint256 public constant VERSION = 1;
 
     constructor(
@@ -113,14 +110,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
     }
 
     /**
-     * @dev Returns whether the msg sender is authorized to mint.
-     */
-    modifier onlyAuthorizedMinter() {
-        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
-        _;
-    }
-
-    /**
      * @dev Returns cosign nonce.
      */
     function getCosignNonce(address minter) public view returns (uint256) {
@@ -146,15 +135,15 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
     /**
      * @dev Add authorized minter. Can only be called by contract owner.
      */
-    function addAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = true;
+    function addAuthorizedMinter(address minter) external onlyOwner override {
+        _addAuthorizedMinter(minter);
     }
 
     /**
      * @dev Remove authorized minter. Can only be called by contract owner.
      */
-    function removeAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = false;
+    function removeAuthorizedMinter(address minter) external onlyOwner override {
+        _removeAuthorizedMinter(minter);
     }
 
     /**

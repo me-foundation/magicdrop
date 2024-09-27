@@ -23,5 +23,4 @@ contract ERC1155MStorage {
         internal _stageMintedCountsPerTokenPerWallet;
     mapping(uint256 => mapping(uint256 => uint256))
         internal _stageMintedCountsPerToken;
-    mapping(address => bool) internal _authorizedMinters;
 }

@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.20;
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -18,6 +17,7 @@ import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 import {ERC1155MStorage} from "./ERC1155MStorage.sol";
 import {Cosignable} from "../../common/Cosignable.sol";
+import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 
 /**
@@ -37,9 +37,9 @@ contract ERC1155MInitializable is
     ReentrancyGuard,
     ERC1155MStorage,
     ERC2981,
-    Cosignable
+    Cosignable,
+    AuthorizedMinterControl
 {
-    using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
     function initialize(
@@ -101,26 +101,12 @@ contract ERC1155MInitializable is
         _;
     }
 
-    /**
-     * @dev Returns whether the msg sender is authorized to mint.
-     */
-    modifier onlyAuthorizedMinter() {
-        if (_authorizedMinters[_msgSender()] != true) revert NotAuthorized();
-        _;
+    function addAuthorizedMinter(address minter) external onlyOwner override {
+        _addAuthorizedMinter(minter);
     }
 
-    /**
-     * @dev Add authorized minter. Can only be called by contract owner.
-     */
-    function addAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = true;
-    }
-
-    /**
-     * @dev Remove authorized minter. Can only be called by contract owner.
-     */
-    function removeAuthorizedMinter(address minter) external onlyOwner {
-        _authorizedMinters[minter] = false;
+    function removeAuthorizedMinter(address minter) external onlyOwner override {
+        _removeAuthorizedMinter(minter);
     }
 
     /**
