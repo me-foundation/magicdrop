@@ -37,6 +37,8 @@
         "hardhat": "^2.22.2",
         "ts-node": "^10.7.0",
         "typechain": "^8.1.0",
-        "typescript": "^4.6.4"
+        "typescript": "^4.6.4",
+        "@rollup/plugin-json": "^5.0.1",
+        "@rollup/plugin-typescript": "^9.0.2"
     }
 }
