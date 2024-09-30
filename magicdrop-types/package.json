@@ -32,5 +32,11 @@
         "erc721a": "^4.2.3",
         "erc721a-upgradeable": "^4.3.0",
         "typechain": "^8.1.0"
+    },
+    "devDependencies": {
+        "hardhat": "^2.22.2",
+        "ts-node": "^10.7.0",
+        "typechain": "^8.1.0",
+        "typescript": "^4.6.4"
     }
 }

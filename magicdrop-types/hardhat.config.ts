@@ -1,13 +1,5 @@
-import 'dotenv/config';
 
-import "@nomicfoundation/hardhat-verify";
-import '@nomiclabs/hardhat-waffle';
-import '@typechain/hardhat';
-import 'hardhat-contract-sizer';
-import 'hardhat-gas-reporter';
-import 'hardhat-watcher';
-import { HardhatUserConfig, task, types } from 'hardhat/config';
-import 'solidity-coverage';
+import { HardhatUserConfig } from 'hardhat/config';
 
 const config: HardhatUserConfig = {
   solidity: {
