@@ -161,7 +161,7 @@ contract ERC1155M is
     function getCosignNonce(
         address minter,
         uint256 tokenId
-    ) public view returns (uint256) {
+    ) public view override returns (uint256) {
         return totalMintedByAddress(minter)[tokenId];
     }
 
@@ -349,6 +349,21 @@ contract ERC1155M is
             ][account];
         }
         return totalMinted;
+    }
+
+    function totalSupply()
+        public
+        view
+        override(ERC1155Supply, IERC1155M)
+        returns (uint256)
+    {
+        return ERC1155Supply.totalSupply();
+    }
+
+    function totalSupply(
+        uint256 tokenId
+    ) public view override(ERC1155Supply, IERC1155M) returns (uint256) {
+        return ERC1155Supply.totalSupply(tokenId);
     }
 
     /**

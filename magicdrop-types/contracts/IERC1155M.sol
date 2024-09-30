@@ -69,6 +69,10 @@ interface IERC1155M {
 
     function getNumberStages() external view returns (uint256);
 
+    function totalSupply() external view returns (uint256);
+
+    function totalSupply(uint256 tokenId) external view returns (uint256);
+
     function getGlobalWalletLimit(
         uint256 tokenId
     ) external view returns (uint256);
@@ -80,6 +84,11 @@ interface IERC1155M {
     function totalMintedByAddress(
         address account
     ) external view returns (uint256[] memory);
+
+    function getCosignNonce(
+        address minter,
+        uint256 tokenId
+    ) external view returns (uint256);
 
     function getStageInfo(
         uint256 stage

@@ -126,7 +126,9 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns cosign nonce.
      */
-    function getCosignNonce(address minter) public view returns (uint256) {
+    function getCosignNonce(
+        address minter
+    ) public view override returns (uint256) {
         return _numberMinted(minter);
     }
 
