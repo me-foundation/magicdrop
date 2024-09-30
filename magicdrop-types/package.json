@@ -39,6 +39,7 @@
         "typechain": "^8.1.0",
         "typescript": "^4.6.4",
         "@rollup/plugin-json": "^5.0.1",
-        "@rollup/plugin-typescript": "^9.0.2"
+        "@rollup/plugin-typescript": "^9.0.2",
+        "@typechain/hardhat": "^6.1.2"
     }
 }
