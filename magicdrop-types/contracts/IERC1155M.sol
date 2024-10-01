@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-
 interface IERC1155M {
     error CannotIncreaseMaxMintableSupply();
     error CosignerNotSet();
@@ -50,23 +49,53 @@ interface IERC1155M {
     );
 
     event SetCosigner(address cosigner);
-    event SetMaxMintableSupply(uint256 indexed tokenId, uint256 maxMintableSupply);
-    event SetGlobalWalletLimit(uint256 indexed tokenId, uint256 globalWalletLimit);
+    event SetMaxMintableSupply(
+        uint256 indexed tokenId,
+        uint256 maxMintableSupply
+    );
+    event SetGlobalWalletLimit(
+        uint256 indexed tokenId,
+        uint256 globalWalletLimit
+    );
     event Withdraw(uint256 value);
     event WithdrawERC20(address indexed mintCurrency, uint256 value);
     event SetTransferable(bool transferable);
     event DefaultRoyaltySet(address receiver, uint96 feeNumerator);
-    event TokenRoyaltySet(uint256 indexed tokenId, address receiver, uint96 feeNumerator);
+    event TokenRoyaltySet(
+        uint256 indexed tokenId,
+        address receiver,
+        uint96 feeNumerator
+    );
 
     function getNumberStages() external view returns (uint256);
 
-    function getGlobalWalletLimit(uint256 tokenId) external view returns (uint256);
+    function totalSupply() external view returns (uint256);
 
-    function getMaxMintableSupply(uint256 tokenId) external view returns (uint256);
+    function totalSupply(uint256 tokenId) external view returns (uint256);
 
-    function totalMintedByAddress(address account) external view returns (uint256[] memory);
+    function getGlobalWalletLimit(
+        uint256 tokenId
+    ) external view returns (uint256);
 
-    function getStageInfo(uint256 stage) external view returns (MintStageInfo memory, uint256[] memory, uint256[] memory);
+    function getMaxMintableSupply(
+        uint256 tokenId
+    ) external view returns (uint256);
+
+    function totalMintedByAddress(
+        address account
+    ) external view returns (uint256[] memory);
+
+    function getCosignNonce(
+        address minter,
+        uint256 tokenId
+    ) external view returns (uint256);
+
+    function getStageInfo(
+        uint256 stage
+    )
+        external
+        view
+        returns (MintStageInfo memory, uint256[] memory, uint256[] memory);
 
     function mint(
         uint256 tokenId,

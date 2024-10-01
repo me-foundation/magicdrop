@@ -11,8 +11,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./creator-token-standards/ERC721ACQueryableInitializable.sol";
 import "./access/OwnableInitializable.sol";
-import "./IERC721MInitializable.sol";
 import "./utils/Constants.sol";
+import "../magicdrop-types/contracts/IERC721MInitializable.sol";
 
 /**
  * @title ERC721CMInitializable
@@ -113,7 +113,9 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Returns cosign nonce.
      */
-    function getCosignNonce(address minter) public view returns (uint256) {
+    function getCosignNonce(
+        address minter
+    ) public view override returns (uint256) {
         return _numberMinted(minter);
     }
 

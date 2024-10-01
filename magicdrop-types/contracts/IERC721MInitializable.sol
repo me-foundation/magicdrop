@@ -1,9 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "erc721a/contracts/extensions/IERC721AQueryable.sol";
+import "erc721a-upgradeable/contracts/extensions/IERC721AQueryableUpgradeable.sol";
 
-interface IERC721M is IERC721AQueryable {
+/**
+ * @title IERC721MInitializable
+ * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
+ * contract is for use with EIP-1167 Minimal Proxies (Clones).
+ */
+interface IERC721MInitializable is IERC721AQueryableUpgradeable {
     error CannotIncreaseMaxMintableSupply();
     error CosignerNotSet();
     error CrossmintAddressNotSet();
@@ -16,7 +21,6 @@ interface IERC721M is IERC721AQueryable {
     error InvalidStageArgsLength();
     error InvalidStartAndEndTimestamp();
     error NoSupplyLeft();
-    error NotAuthorized();
     error NotEnoughValue();
     error NotMintable();
     error Mintable();
@@ -57,7 +61,6 @@ interface IERC721M is IERC721AQueryable {
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
-    event SetTimestampExpirySeconds(uint64 expiry);
     event SetMintCurrency(address mintCurrency);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
@@ -69,6 +72,8 @@ interface IERC721M is IERC721AQueryable {
     function getMaxMintableSupply() external view returns (uint256);
 
     function totalMintedByAddress(address a) external view returns (uint256);
+
+    function getCosignNonce(address minter) external view returns (uint256);
 
     function getStageInfo(
         uint256 index
@@ -92,15 +97,6 @@ interface IERC721M is IERC721AQueryable {
     function crossmint(
         uint32 qty,
         address to,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable;
-
-    function authorizedMint(
-        uint32 qty,
-        address to,
-        uint32 limit,
         bytes32[] calldata proof,
         uint64 timestamp,
         bytes calldata signature

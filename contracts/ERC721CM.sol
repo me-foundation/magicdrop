@@ -11,8 +11,8 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import "./creator-token-standards/ERC721ACQueryable.sol";
-import "./IERC721M.sol";
 import "./utils/Constants.sol";
+import "../magicdrop-types/contracts/IERC721M.sol";
 
 /**
  * @title ERC721CM
@@ -127,7 +127,9 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard {
     /**
      * @dev Returns cosign nonce.
      */
-    function getCosignNonce(address minter) public view returns (uint256) {
+    function getCosignNonce(
+        address minter
+    ) public view override returns (uint256) {
         return _numberMinted(minter);
     }
 
