@@ -1,4 +1,4 @@
-solady/=lib/solady/src/
+solady/=lib/solady/
 solemate/=/lib/solemate/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/

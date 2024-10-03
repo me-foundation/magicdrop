@@ -2,15 +2,15 @@
 
 pragma solidity ^0.8.20;
 
-import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {
     ERC1155SupplyUpgradeable,
     ERC1155Upgradeable
 } from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
-import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC2981} from "solady/src/tokens/ERC2981.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
+import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
+import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
+import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {MintStageInfo1155} from "../../common/Structs.sol";
 import {IERC1155M} from "./interfaces/IERC1155M.sol";
@@ -33,14 +33,13 @@ import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol"
 contract ERC1155MInitializable is
     IERC1155M,
     ERC1155SupplyUpgradeable,
-    OwnableUpgradeable,
+    Ownable,
     ReentrancyGuard,
     ERC1155MStorage,
     ERC2981,
     Cosignable,
     AuthorizedMinterControl
 {
-    using SafeERC20 for IERC20;
 
     function initialize(
         string calldata name_,
@@ -50,7 +49,7 @@ contract ERC1155MInitializable is
         name = name_;
         symbol = symbol_;
         __ERC1155_init("");
-        __Ownable_init(initialOwner);
+        _initializeOwner(initialOwner);
     }
 
     function setup(
@@ -101,11 +100,11 @@ contract ERC1155MInitializable is
         _;
     }
 
-    function addAuthorizedMinter(address minter) external onlyOwner override {
+    function addAuthorizedMinter(address minter) external override onlyOwner {
         _addAuthorizedMinter(minter);
     }
 
-    function removeAuthorizedMinter(address minter) external onlyOwner override {
+    function removeAuthorizedMinter(address minter) external override onlyOwner {
         _removeAuthorizedMinter(minter);
     }
 
@@ -121,26 +120,6 @@ contract ERC1155MInitializable is
 
     /**
      * @dev Sets stages in the format of an array of `MintStageInfo`.
-     *
-     * Following is an example of launch with two stages. The first stage is exclusive for whitelisted wallets
-     * specified by merkle root.
-     *    [{
-     *      price: 10000000000000000000,
-     *      maxStageSupply: 2000,
-     *      walletLimit: 1,
-     *      merkleRoot: 0x559fadeb887449800b7b320bf1e92d309f329b9641ac238bebdb74e15c0a5218,
-     *      startTimeUnixSeconds: 1667768000,
-     *      endTimeUnixSeconds: 1667771600,
-     *     },
-     *     {
-     *      price: 20000000000000000000,
-     *      maxStageSupply: 3000,
-     *      walletLimit: 2,
-     *      merkleRoot: 0,
-     *      startTimeUnixSeconds: 1667771600,
-     *      endTimeUnixSeconds: 1667775200,
-     *     }
-     * ]
      */
     function setStages(MintStageInfo1155[] calldata newStages) external onlyOwner {
         delete _mintStages;
@@ -465,12 +444,9 @@ contract ERC1155MInitializable is
 
         // Check merkle proof if applicable, merkleRoot == 0x00...00 means no proof required
         if (stage.merkleRoot[tokenId] != 0) {
-            if (
-                MerkleProof.processProof(
-                    proof,
-                    keccak256(abi.encodePacked(to, limit))
-                ) != stage.merkleRoot[tokenId]
-            ) revert InvalidProof();
+            if (!MerkleProofLib.verify(proof, stage.merkleRoot[tokenId], keccak256(abi.encodePacked(to, limit)))) {
+                revert InvalidProof();
+            }
 
             // Verify merkle proof mint limit
             if (
@@ -485,7 +461,8 @@ contract ERC1155MInitializable is
 
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
-            IERC20(_mintCurrency).safeTransferFrom(
+            SafeTransferLib.safeTransferFrom(
+                _mintCurrency,
                 msg.sender,
                 address(this),
                 (stage.price[tokenId] + adjustedMintFee) * qty
@@ -533,13 +510,18 @@ contract ERC1155MInitializable is
     function withdrawERC20() external onlyOwner {
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
-        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        uint256 totalFee = _totalMintFee;
+        uint256 remaining = SafeTransferLib.balanceOf(_mintCurrency, address(this));
+        
+        if (remaining < totalFee) revert InsufficientBalance();
+
         _totalMintFee = 0;
+        uint256 totalAmount = totalFee + remaining;
 
-        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(_fundReceiver, remaining);
+        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
 
-        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
+        emit WithdrawERC20(_mintCurrency, totalAmount);
     }
 
     /**
@@ -581,25 +563,6 @@ contract ERC1155MInitializable is
         return super.supportsInterface(interfaceId) ||
             ERC2981.supportsInterface(interfaceId) ||
             ERC1155Upgradeable.supportsInterface(interfaceId);
-    }
-
-    /**
-     * @dev The hook of token transfer to validate the transfer.
-     */
-    function _update(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory values
-    ) internal virtual override {
-        super._update(from, to, ids, values);
-
-        bool fromZeroAddress = from == address(0);
-        bool toZeroAddress = to == address(0);
-
-        if (!fromZeroAddress && !toZeroAddress && !_transferable) {
-            revert NotTransferable();
-        }
     }
 
     /**

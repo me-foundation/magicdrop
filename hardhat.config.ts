@@ -53,7 +53,7 @@ const config: HardhatUserConfig = {
       viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 20,
+        runs: 100,
         details: {
           yulDetails: {
             optimizerSteps: "dhfoD[xarrscLMcCTU]uljmul",

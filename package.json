@@ -39,7 +39,8 @@
     "@openzeppelin/contracts-upgradeable": "^5.0.2",
     "erc721a": "^4.2.3",
     "erc721a-upgradeable": "^4.3.0",
-    "operator-filter-registry": "^1.4.2"
+    "operator-filter-registry": "^1.4.2",
+    "solady": "^0.0.249"
   },
   "peerDependencies": {
     "ethers": "^5.0.0"
