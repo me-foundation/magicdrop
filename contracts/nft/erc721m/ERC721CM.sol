@@ -149,6 +149,14 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
     }
 
     /**
+     * @dev Sets cosigner. Can only be called by contract owner.
+     */
+    function setCosigner(address cosigner) external override onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
+    }
+
+    /**
      * @dev Sets stages in the format of an array of `MintStageInfo`.
      *
      * Following is an example of launch with two stages. The first stage is exclusive for whitelisted wallets

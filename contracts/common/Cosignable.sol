@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {SignatureCheckerLib} from "solady/src/utils/SignatureCheckerLib.sol";
 
-contract Cosignable {
+abstract contract Cosignable {
     address internal _cosigner;
     uint256 internal _timestampExpirySeconds;
 
@@ -14,10 +13,8 @@ contract Cosignable {
     error InvalidCosignSignature();
     error TimestampExpired();
 
-    function setCosigner(address cosigner) external virtual {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
-    }
+    // @dev: override this function with onlyOwner modifier in the contract that uses this library
+    function setCosigner(address cosigner) external virtual;
 
     function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external virtual {
         _timestampExpirySeconds = timestampExpirySeconds;
@@ -33,7 +30,7 @@ contract Cosignable {
         if (_cosigner == address(0)) revert CosignerNotSet();
 
         return
-            MessageHashUtils.toEthSignedMessageHash(
+            SignatureCheckerLib.toEthSignedMessageHash(
                 keccak256(
                     abi.encodePacked(
                         address(this),
@@ -56,8 +53,9 @@ contract Cosignable {
         bytes memory signature,
         uint256 cosignNonce
     ) public view returns (bool) {
+    
         if (
-            SignatureChecker.isValidSignatureNow(
+            SignatureCheckerLib.isValidSignatureNow(
                 _cosigner,
                 getCosignDigest(
                     minter,
@@ -73,7 +71,7 @@ contract Cosignable {
         }
 
         if (
-            SignatureChecker.isValidSignatureNow(
+            SignatureCheckerLib.isValidSignatureNow(
                 _cosigner,
                 getCosignDigest(
                     minter,

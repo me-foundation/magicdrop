@@ -24,7 +24,14 @@ import "../../common/AuthorizedMinterControl.sol";
  *  - crossmint support
  *  - anti-botting
  */
-contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosignable, AuthorizedMinterControl {
+contract ERC721M is
+    IERC721M,
+    ERC721AQueryable,
+    Ownable,
+    ReentrancyGuard,
+    Cosignable,
+    AuthorizedMinterControl
+{
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -87,10 +94,10 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
-        _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
         _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         FUND_RECEIVER = fundReceiver;
+        _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
     }
 
     /**
@@ -144,6 +151,14 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
      */
     function removeAuthorizedMinter(address minter) external onlyOwner override {
         _removeAuthorizedMinter(minter);
+    }
+
+    /**
+     * @dev Sets cosigner. Can only be called by contract owner.
+     */
+    function setCosigner(address cosigner) external override onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
     }
 
     /**

@@ -100,12 +100,26 @@ contract ERC1155MInitializable is
         _;
     }
 
-    function addAuthorizedMinter(address minter) external override onlyOwner {
+    /**
+     * @dev Add authorized minter. Can only be called by contract owner.
+     */
+    function addAuthorizedMinter(address minter) external onlyOwner override {
         _addAuthorizedMinter(minter);
     }
 
-    function removeAuthorizedMinter(address minter) external override onlyOwner {
+    /**
+     * @dev Remove authorized minter. Can only be called by contract owner.
+     */
+    function removeAuthorizedMinter(address minter) external onlyOwner override {
         _removeAuthorizedMinter(minter);
+    }
+
+    /**
+     * @dev Sets cosigner. Can only be called by contract owner.
+     */
+    function setCosigner(address cosigner) external override onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
     }
 
     /**

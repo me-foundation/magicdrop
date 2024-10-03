@@ -1931,7 +1931,7 @@ describe('ERC721CM', function () {
       await erc721cm.deployed();
       const ownerConn = erc721cm.connect(owner);
       await expect(
-        ownerConn.getCosignDigest(owner.address, 1, false, 0),
+        ownerConn.getCosignDigest(owner.address, 1, false, 0, 0),
       ).to.be.revertedWith('CosignerNotSet');
 
       // we can set the cosigner
@@ -1970,12 +1970,18 @@ describe('ERC721CM', function () {
         false,
       );
       await expect(
-        minterConn.assertValidCosign(minter.address, 1, timestamp, sig),
+        minterConn.assertValidCosign(minter.address, 1, timestamp, sig, 0),
       ).to.not.be.reverted;
 
       const invalidSig = sig + '00';
       await expect(
-        minterConn.assertValidCosign(minter.address, 1, timestamp, invalidSig),
+        minterConn.assertValidCosign(
+          minter.address,
+          1,
+          timestamp,
+          invalidSig,
+          0,
+        ),
       ).to.be.revertedWith('InvalidCosignSignature');
     });
   });

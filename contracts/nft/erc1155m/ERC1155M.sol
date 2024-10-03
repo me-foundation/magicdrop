@@ -109,6 +109,14 @@ contract ERC1155M is
     }
 
     /**
+     * @dev Sets cosigner. Can only be called by contract owner.
+     */
+    function setCosigner(address cosigner) external override onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
+    }
+
+    /**
      * @dev Returns cosign nonce.
      */
     function getCosignNonce(

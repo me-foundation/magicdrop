@@ -209,6 +209,15 @@ contract ERC721CMInitializableV2 is
     }
 
     /**
+     * @dev Sets cosigner. Can only be called by contract owner.
+     */
+    function setCosigner(address cosigner) external override onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
+    }
+
+
+    /**
      * @dev Gets whether mintable.
      */
     function getMintable() external view returns (bool) {
