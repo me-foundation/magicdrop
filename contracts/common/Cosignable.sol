@@ -20,30 +20,20 @@ abstract contract Cosignable {
         _timestampExpirySeconds = timestampExpirySeconds;
     }
 
-    function getCosignDigest(
-        address minter,
-        uint32 qty,
-        bool waiveMintFee,
-        uint64 timestamp,
-        uint256 cosignNonce
-    ) public view returns (bytes32) {
+    function getCosignDigest(address minter, uint32 qty, bool waiveMintFee, uint64 timestamp, uint256 cosignNonce)
+        public
+        view
+        returns (bytes32)
+    {
         if (_cosigner == address(0)) revert CosignerNotSet();
 
-        return
-            SignatureCheckerLib.toEthSignedMessageHash(
-                keccak256(
-                    abi.encodePacked(
-                        address(this),
-                        minter,
-                        qty,
-                        waiveMintFee,
-                        _cosigner,
-                        timestamp,
-                        block.chainid,
-                        cosignNonce
-                    )
+        return SignatureCheckerLib.toEthSignedMessageHash(
+            keccak256(
+                abi.encodePacked(
+                    address(this), minter, qty, waiveMintFee, _cosigner, timestamp, block.chainid, cosignNonce
                 )
-            );
+            )
+        );
     }
 
     function assertValidCosign(
@@ -53,18 +43,9 @@ abstract contract Cosignable {
         bytes memory signature,
         uint256 cosignNonce
     ) public view returns (bool) {
-    
         if (
             SignatureCheckerLib.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    qty,
-                    true,
-                    timestamp,
-                    cosignNonce
-                ),
-                signature
+                _cosigner, getCosignDigest(minter, qty, true, timestamp, cosignNonce), signature
             )
         ) {
             return true;
@@ -72,15 +53,7 @@ abstract contract Cosignable {
 
         if (
             SignatureCheckerLib.isValidSignatureNow(
-                _cosigner,
-                getCosignDigest(
-                    minter,
-                    qty,
-                    false,
-                    timestamp,
-                    cosignNonce
-                ),
-                signature
+                _cosigner, getCosignDigest(minter, qty, false, timestamp, cosignNonce), signature
             )
         ) {
             return false;
@@ -90,7 +63,8 @@ abstract contract Cosignable {
     }
 
     function _assertValidTimestamp(uint64 timestamp) internal view {
-        if (timestamp < block.timestamp - _timestampExpirySeconds)
+        if (timestamp < block.timestamp - _timestampExpirySeconds) {
             revert TimestampExpired();
+        }
     }
 }

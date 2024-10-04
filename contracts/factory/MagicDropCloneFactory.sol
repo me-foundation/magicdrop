@@ -9,18 +9,12 @@ import {IInitializableToken} from "../common/interfaces/IInitializableToken.sol"
 import {TokenStandard} from "../common/Structs.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-contract MagicDropCloneFactory is
-    IMagicDropCloneFactory,
-    Ownable2StepUpgradeable,
-    UUPSUpgradeable
-{
+contract MagicDropCloneFactory is IMagicDropCloneFactory, Ownable2StepUpgradeable, UUPSUpgradeable {
     IMagicDropTokenImplRegistry public immutable REGISTRY;
 
     error ImplementationNotRegistered();
 
-    constructor(
-        IMagicDropTokenImplRegistry _registry
-    ) {
+    constructor(IMagicDropTokenImplRegistry _registry) {
         if (address(_registry) == address(0)) {
             revert ConstructorRegistryAddressCannotBeZero();
         }
@@ -53,11 +47,7 @@ contract MagicDropCloneFactory is
 
         address instance = Clones.cloneDeterministic(impl, cloneSalt);
 
-        IInitializableToken(instance).initialize(
-            name,
-            symbol,
-            initialOwner
-        );
+        IInitializableToken(instance).initialize(name, symbol, initialOwner);
 
         emit NewContractInitialized({
             contractAddress: instance,
@@ -71,9 +61,7 @@ contract MagicDropCloneFactory is
         return instance;
     }
 
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
         // This function is left empty as the onlyOwner modifier handles the authorization
     }
 }

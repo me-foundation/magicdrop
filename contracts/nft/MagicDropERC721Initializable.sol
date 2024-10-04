@@ -8,11 +8,11 @@ import {IInitializableToken} from "../common/interfaces/IInitializableToken.sol"
 contract MagicDropERC721Initializable is ERC721Upgradeable, OwnableUpgradeable, IInitializableToken {
     string private baseURI = "";
 
-    function initialize(
-        string memory name,
-        string memory symbol,
-        address payable initialOwner
-    ) external initializer override {
+    function initialize(string memory name, string memory symbol, address payable initialOwner)
+        external
+        override
+        initializer
+    {
         __ERC721_init(name, symbol);
         __Ownable_init(initialOwner);
     }

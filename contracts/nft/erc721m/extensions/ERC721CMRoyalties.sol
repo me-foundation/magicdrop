@@ -36,17 +36,13 @@ contract ERC721CMRoyalties is ERC721CM, UpdatableRoyalties {
         UpdatableRoyalties(royaltyReceiver, royaltyFeeNumerator)
     {}
 
-    function supportsInterface(
-        bytes4 interfaceId
-    )
+    function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
         override(ERC2981, ERC721ACQueryable, IERC721A)
         returns (bool)
     {
-        return
-            ERC721ACQueryable.supportsInterface(interfaceId) ||
-            ERC2981.supportsInterface(interfaceId);
+        return ERC721ACQueryable.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId);
     }
 }

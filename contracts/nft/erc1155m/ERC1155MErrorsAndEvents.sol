@@ -22,9 +22,5 @@ interface ERC1155MErrorsAndEvents is ErrorsAndEvents {
     event SetTransferable(bool transferable);
 
     event DefaultRoyaltySet(address indexed receiver, uint96 feeNumerator);
-    event TokenRoyaltySet(
-        uint256 indexed tokenId,
-        address indexed receiver,
-        uint96 feeNumerator
-    );
+    event TokenRoyaltySet(uint256 indexed tokenId, address indexed receiver, uint96 feeNumerator);
 }

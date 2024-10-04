@@ -9,11 +9,11 @@ contract MagicDropERC1155Initializable is ERC1155Upgradeable, OwnableUpgradeable
     string private _name;
     string private _symbol;
 
-    function initialize(
-        string calldata name_,
-        string calldata symbol_,
-        address payable initialOwner
-    ) external initializer override {
+    function initialize(string calldata name_, string calldata symbol_, address payable initialOwner)
+        external
+        override
+        initializer
+    {
         _name = name_;
         _symbol = symbol_;
         __ERC1155_init("");
@@ -32,12 +32,7 @@ contract MagicDropERC1155Initializable is ERC1155Upgradeable, OwnableUpgradeable
         _setURI(newuri);
     }
 
-    function mint(
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes memory data
-    ) external {
+    function mint(address to, uint256 id, uint256 amount, bytes memory data) external {
         _mint(to, id, amount, data);
     }
 }

@@ -60,10 +60,7 @@ contract ERC1155M is
         }
 
         for (uint256 i = 0; i < globalWalletLimit.length; i++) {
-            if (
-                maxMintableSupply[i] > 0 &&
-                globalWalletLimit[i] > maxMintableSupply[i]
-            ) {
+            if (maxMintableSupply[i] > 0 && globalWalletLimit[i] > maxMintableSupply[i]) {
                 revert GlobalWalletLimitOverflow();
             }
         }
@@ -87,24 +84,23 @@ contract ERC1155M is
      * @dev Returns whether it has enough supply for the given qty.
      */
     modifier hasSupply(uint256 tokenId, uint256 qty) {
-        if (
-            _maxMintableSupply[tokenId] > 0 &&
-            totalSupply(tokenId) + qty > _maxMintableSupply[tokenId]
-        ) revert NoSupplyLeft();
+        if (_maxMintableSupply[tokenId] > 0 && totalSupply(tokenId) + qty > _maxMintableSupply[tokenId]) {
+            revert NoSupplyLeft();
+        }
         _;
     }
 
     /**
      * @dev Add authorized minter. Can only be called by contract owner.
      */
-    function addAuthorizedMinter(address minter) external onlyOwner override {
+    function addAuthorizedMinter(address minter) external override onlyOwner {
         _addAuthorizedMinter(minter);
     }
 
     /**
      * @dev Remove authorized minter. Can only be called by contract owner.
      */
-    function removeAuthorizedMinter(address minter) external onlyOwner override {
+    function removeAuthorizedMinter(address minter) external override onlyOwner {
         _removeAuthorizedMinter(minter);
     }
 
@@ -119,10 +115,7 @@ contract ERC1155M is
     /**
      * @dev Returns cosign nonce.
      */
-    function getCosignNonce(
-        address minter,
-        uint256 tokenId
-    ) public view returns (uint256) {
+    function getCosignNonce(address minter, uint256 tokenId) public view returns (uint256) {
         return totalMintedByAddress(minter)[tokenId];
     }
 
@@ -154,18 +147,12 @@ contract ERC1155M is
 
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
-                if (
-                    newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds +
-                        TIMESTAMP_EXPIRY_SECONDS
-                ) {
+                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + TIMESTAMP_EXPIRY_SECONDS)
+                {
                     revert InsufficientStageTimeGap();
                 }
             }
-            _assertValidStartAndEndTimestamp(
-                newStages[i].startTimeUnixSeconds,
-                newStages[i].endTimeUnixSeconds
-            );
+            _assertValidStartAndEndTimestamp(newStages[i].startTimeUnixSeconds, newStages[i].endTimeUnixSeconds);
             _assertValidStageArgsLength(newStages[i]);
 
             _mintStages.push(
@@ -195,26 +182,18 @@ contract ERC1155M is
     /**
      * @dev Returns maximum mintable supply per token.
      */
-    function getMaxMintableSupply(
-        uint256 tokenId
-    ) external view override returns (uint256) {
+    function getMaxMintableSupply(uint256 tokenId) external view override returns (uint256) {
         return _maxMintableSupply[tokenId];
     }
 
     /**
      * @dev Sets maximum mintable supply. New supply cannot be larger than the old or the supply alraedy minted.
      */
-    function setMaxMintableSupply(
-        uint256 tokenId,
-        uint256 maxMintableSupply
-    ) external virtual onlyOwner {
+    function setMaxMintableSupply(uint256 tokenId, uint256 maxMintableSupply) external virtual onlyOwner {
         if (tokenId >= _numTokens) {
             revert InvalidTokenId();
         }
-        if (
-            _maxMintableSupply[tokenId] != 0 &&
-            maxMintableSupply > _maxMintableSupply[tokenId]
-        ) {
+        if (_maxMintableSupply[tokenId] != 0 && maxMintableSupply > _maxMintableSupply[tokenId]) {
             revert CannotIncreaseMaxMintableSupply();
         }
         if (maxMintableSupply < totalSupply(tokenId)) {
@@ -227,26 +206,18 @@ contract ERC1155M is
     /**
      * @dev Returns global wallet limit. This is the max number of tokens can be minted by one wallet.
      */
-    function getGlobalWalletLimit(
-        uint256 tokenId
-    ) external view override returns (uint256) {
+    function getGlobalWalletLimit(uint256 tokenId) external view override returns (uint256) {
         return _globalWalletLimit[tokenId];
     }
 
     /**
      * @dev Sets global wallet limit.
      */
-    function setGlobalWalletLimit(
-        uint256 tokenId,
-        uint256 globalWalletLimit
-    ) external onlyOwner {
+    function setGlobalWalletLimit(uint256 tokenId, uint256 globalWalletLimit) external onlyOwner {
         if (tokenId >= _numTokens) {
             revert InvalidTokenId();
         }
-        if (
-            _maxMintableSupply[tokenId] > 0 &&
-            globalWalletLimit > _maxMintableSupply[tokenId]
-        ) {
+        if (_maxMintableSupply[tokenId] > 0 && globalWalletLimit > _maxMintableSupply[tokenId]) {
             revert GlobalWalletLimitOverflow();
         }
         _globalWalletLimit[tokenId] = globalWalletLimit;
@@ -256,16 +227,12 @@ contract ERC1155M is
     /**
      * @dev Returns number of minted tokens for a given address.
      */
-    function totalMintedByAddress(
-        address account
-    ) public view virtual override returns (uint256[] memory) {
+    function totalMintedByAddress(address account) public view virtual override returns (uint256[] memory) {
         uint256[] memory totalMinted = new uint256[](_numTokens);
         uint256 numStages = _mintStages.length;
         for (uint256 token = 0; token < _numTokens; token++) {
             for (uint256 stage = 0; stage < numStages; stage++) {
-                totalMinted[token] += _stageMintedCountsPerTokenPerWallet[
-                    stage
-                ][token][account];
+                totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][token][account];
             }
         }
         return totalMinted;
@@ -274,16 +241,11 @@ contract ERC1155M is
     /**
      * @dev Returns number of minted token for a given token and address.
      */
-    function _totalMintedByTokenByAddress(
-        address account,
-        uint256 tokenId
-    ) internal view virtual returns (uint256) {
+    function _totalMintedByTokenByAddress(address account, uint256 tokenId) internal view virtual returns (uint256) {
         uint256 totalMinted = 0;
         uint256 numStages = _mintStages.length;
         for (uint256 i = 0; i < numStages; i++) {
-            totalMinted += _stageMintedCountsPerTokenPerWallet[i][tokenId][
-                account
-            ];
+            totalMinted += _stageMintedCountsPerTokenPerWallet[i][tokenId][account];
         }
         return totalMinted;
     }
@@ -291,15 +253,15 @@ contract ERC1155M is
     /**
      * @dev Returns number of minted tokens for a given stage and address.
      */
-    function _totalMintedByStageByAddress(
-        uint256 stage,
-        address account
-    ) internal view virtual returns (uint256[] memory) {
+    function _totalMintedByStageByAddress(uint256 stage, address account)
+        internal
+        view
+        virtual
+        returns (uint256[] memory)
+    {
         uint256[] memory totalMinted = new uint256[](_numTokens);
         for (uint256 token = 0; token < _numTokens; token++) {
-            totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][
-                token
-            ][account];
+            totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][token][account];
         }
         return totalMinted;
     }
@@ -314,9 +276,7 @@ contract ERC1155M is
     /**
      * @dev Returns info for one stage specified by stage index (starting from 0).
      */
-    function getStageInfo(
-        uint256 stage
-    )
+    function getStageInfo(uint256 stage)
         external
         view
         override
@@ -326,10 +286,7 @@ contract ERC1155M is
             revert InvalidStage();
         }
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
-        uint256[] memory stageMinted = _totalMintedByStageByAddress(
-            stage,
-            msg.sender
-        );
+        uint256[] memory stageMinted = _totalMintedByStageByAddress(stage, msg.sender);
         return (_mintStages[stage], walletMinted, stageMinted);
     }
 
@@ -349,13 +306,12 @@ contract ERC1155M is
      * timestamp - the current timestamp
      * signature - the signature from cosigner if using cosigner
      */
-    function mint(
-        uint256 tokenId,
-        uint32 qty,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable virtual nonReentrant {
+    function mint(uint256 tokenId, uint32 qty, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature)
+        external
+        payable
+        virtual
+        nonReentrant
+    {
         _mintInternal(msg.sender, tokenId, qty, 0, proof, timestamp, signature);
     }
 
@@ -377,15 +333,7 @@ contract ERC1155M is
         uint64 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(
-            msg.sender,
-            tokenId,
-            qty,
-            limit,
-            proof,
-            timestamp,
-            signature
-        );
+        _mintInternal(msg.sender, tokenId, qty, limit, proof, timestamp, signature);
     }
 
     /**
@@ -397,13 +345,11 @@ contract ERC1155M is
      * limit - limit for the given minter
      * proof - the merkle proof generated on client side. This applies if using whitelist
      */
-    function authorizedMint(
-        address to,
-        uint256 tokenId,
-        uint32 qty,
-        uint32 limit,
-        bytes32[] calldata proof
-    ) external payable onlyAuthorizedMinter {
+    function authorizedMint(address to, uint256 tokenId, uint32 qty, uint32 limit, bytes32[] calldata proof)
+        external
+        payable
+        onlyAuthorizedMinter
+    {
         _mintInternal(to, tokenId, qty, limit, proof, 0, bytes("0"));
     }
 
@@ -423,13 +369,7 @@ contract ERC1155M is
         bool waiveMintFee = false;
 
         if (_cosigner != address(0)) {
-            waiveMintFee = assertValidCosign(
-                msg.sender,
-                qty,
-                timestamp,
-                signature,
-                getCosignNonce(msg.sender, tokenId)
-            );
+            waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender, tokenId));
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;
         }
@@ -440,52 +380,39 @@ contract ERC1155M is
         uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee[tokenId];
 
         // Check value if minting with ETH
-        if (
-            _mintCurrency == address(0) &&
-            msg.value < (stage.price[tokenId] + adjustedMintFee) * qty
-        ) revert NotEnoughValue();
+        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + adjustedMintFee) * qty) {
+            revert NotEnoughValue();
+        }
 
         // Check stage supply if applicable
         if (stage.maxStageSupply[tokenId] > 0) {
-            if (
-                _stageMintedCountsPerToken[activeStage][tokenId] + qty >
-                stage.maxStageSupply[tokenId]
-            ) revert StageSupplyExceeded();
+            if (_stageMintedCountsPerToken[activeStage][tokenId] + qty > stage.maxStageSupply[tokenId]) {
+                revert StageSupplyExceeded();
+            }
         }
 
         // Check global wallet limit if applicable
         if (_globalWalletLimit[tokenId] > 0) {
-            if (
-                _totalMintedByTokenByAddress(to, tokenId) + qty >
-                _globalWalletLimit[tokenId]
-            ) revert WalletGlobalLimitExceeded();
+            if (_totalMintedByTokenByAddress(to, tokenId) + qty > _globalWalletLimit[tokenId]) {
+                revert WalletGlobalLimitExceeded();
+            }
         }
 
         // Check wallet limit for stage if applicable, limit == 0 means no limit enforced
         if (stage.walletLimit[tokenId] > 0) {
-            if (
-                _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] +
-                    qty >
-                stage.walletLimit[tokenId]
-            ) revert WalletStageLimitExceeded();
+            if (_stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] + qty > stage.walletLimit[tokenId]) {
+                revert WalletStageLimitExceeded();
+            }
         }
 
         // Check merkle proof if applicable, merkleRoot == 0x00...00 means no proof required
         if (stage.merkleRoot[tokenId] != 0) {
-            if (
-                MerkleProof.processProof(
-                    proof,
-                    keccak256(abi.encodePacked(to, limit))
-                ) != stage.merkleRoot[tokenId]
-            ) revert InvalidProof();
+            if (MerkleProof.processProof(proof, keccak256(abi.encodePacked(to, limit))) != stage.merkleRoot[tokenId]) {
+                revert InvalidProof();
+            }
 
             // Verify merkle proof mint limit
-            if (
-                limit > 0 &&
-                _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] +
-                    qty >
-                limit
-            ) {
+            if (limit > 0 && _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] + qty > limit) {
                 revert WalletStageLimitExceeded();
             }
         }
@@ -493,9 +420,7 @@ contract ERC1155M is
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
             IERC20(_mintCurrency).safeTransferFrom(
-                msg.sender,
-                address(this),
-                (stage.price[tokenId] + adjustedMintFee) * qty
+                msg.sender, address(this), (stage.price[tokenId] + adjustedMintFee) * qty
             );
         }
 
@@ -511,11 +436,7 @@ contract ERC1155M is
      * NOTE: This function bypasses validations thus only available for owner.
      * This is typically used for owner to  pre-mint or mint the remaining of the supply.
      */
-    function ownerMint(
-        address to,
-        uint256 tokenId,
-        uint32 qty
-    ) external onlyOwner hasSupply(tokenId, qty) {
+    function ownerMint(address to, uint256 tokenId, uint32 qty) external onlyOwner hasSupply(tokenId, qty) {
         _mint(to, tokenId, qty, "");
     }
 
@@ -523,12 +444,12 @@ contract ERC1155M is
      * @dev Withdraws funds by owner.
      */
     function withdraw() external onlyOwner {
-        (bool success, ) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
+        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
         _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
-        (success, ) = _fundReceiver.call{value: remainingValue}("");
+        (success,) = _fundReceiver.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -568,14 +489,9 @@ contract ERC1155M is
     /**
      * @dev Returns the current active stage based on timestamp.
      */
-    function getActiveStageFromTimestamp(
-        uint64 timestamp
-    ) public view returns (uint256) {
+    function getActiveStageFromTimestamp(uint64 timestamp) public view returns (uint256) {
         for (uint256 i = 0; i < _mintStages.length; i++) {
-            if (
-                timestamp >= _mintStages[i].startTimeUnixSeconds &&
-                timestamp < _mintStages[i].endTimeUnixSeconds
-            ) {
+            if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
                 return i;
             }
         }
@@ -585,10 +501,7 @@ contract ERC1155M is
     /**
      * @dev Set default royalty for all tokens
      */
-    function setDefaultRoyalty(
-        address receiver,
-        uint96 feeNumerator
-    ) public onlyOwner {
+    function setDefaultRoyalty(address receiver, uint96 feeNumerator) public onlyOwner {
         super._setDefaultRoyalty(receiver, feeNumerator);
         emit DefaultRoyaltySet(receiver, feeNumerator);
     }
@@ -596,32 +509,23 @@ contract ERC1155M is
     /**
      * @dev Set default royalty for individual token
      */
-    function setTokenRoyalty(
-        uint256 tokenId,
-        address receiver,
-        uint96 feeNumerator
-    ) public onlyOwner {
+    function setTokenRoyalty(uint256 tokenId, address receiver, uint96 feeNumerator) public onlyOwner {
         super._setTokenRoyalty(tokenId, receiver, feeNumerator);
         emit TokenRoyaltySet(tokenId, receiver, feeNumerator);
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC2981, ERC1155) returns (bool) {
-        return
-            ERC1155.supportsInterface(interfaceId) ||
-            ERC2981.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC2981, ERC1155) returns (bool) {
+        return ERC1155.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId);
     }
 
     /**
      * @dev The hook of token transfer to validate the transfer.
      */
-    function _update(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory values
-    ) internal virtual override {
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
+        internal
+        virtual
+        override
+    {
         super._update(from, to, ids, values);
 
         bool fromZeroAddress = from == address(0);
@@ -635,22 +539,15 @@ contract ERC1155M is
     /**
      * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
      */
-    function _assertValidStartAndEndTimestamp(
-        uint64 start,
-        uint64 end
-    ) internal pure {
+    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 
-    function _assertValidStageArgsLength(
-        MintStageInfo1155 calldata stageInfo
-    ) internal view {
+    function _assertValidStageArgsLength(MintStageInfo1155 calldata stageInfo) internal view {
         if (
-            stageInfo.price.length != _numTokens ||
-            stageInfo.mintFee.length != _numTokens ||
-            stageInfo.walletLimit.length != _numTokens ||
-            stageInfo.merkleRoot.length != _numTokens ||
-            stageInfo.maxStageSupply.length != _numTokens
+            stageInfo.price.length != _numTokens || stageInfo.mintFee.length != _numTokens
+                || stageInfo.walletLimit.length != _numTokens || stageInfo.merkleRoot.length != _numTokens
+                || stageInfo.maxStageSupply.length != _numTokens
         ) {
             revert InvalidStageArgsLength();
         }

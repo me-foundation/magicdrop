@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropTokenImplRegistry.sol";
-import {TokenStandard} from  "../../contracts/common/Structs.sol";
+import {TokenStandard} from "../../contracts/common/Structs.sol";
 import {MockERC721A} from "../../contracts/mocks/MockERC721A.sol";
 
 contract MagicDropTokenImplRegistryTest is Test {
@@ -61,7 +61,7 @@ contract MagicDropTokenImplRegistryTest is Test {
     function testFailUnregisterImplementationAsNonOwner() public {
         vm.prank(owner);
         uint256 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockImpl));
-        
+
         vm.prank(user);
         registry.unregisterImplementation(TokenStandard.ERC721, implId);
     }

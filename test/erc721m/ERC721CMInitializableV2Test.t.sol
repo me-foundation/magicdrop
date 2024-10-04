@@ -30,7 +30,6 @@ contract ERC721CMInitializableV2Test is Test {
         vm.deal(owner, 10 ether);
         vm.deal(minter, 2 ether);
         vm.deal(crossmintAddress, 1 ether);
-        
 
         address clone = LibClone.deployERC1967(address(new ERC721CMInitializableV2()));
         nft = ERC721CMInitializableV2(clone);

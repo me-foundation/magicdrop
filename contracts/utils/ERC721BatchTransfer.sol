@@ -14,16 +14,9 @@ contract ERC721BatchTransfer {
     error InvalidArguments();
     error NotOwnerOfToken();
 
-    event BatchTransferToSingle(
-        address indexed contractAddress,
-        address indexed to,
-        uint256 amount
-    );
+    event BatchTransferToSingle(address indexed contractAddress, address indexed to, uint256 amount);
 
-    event BatchTransferToMultiple(
-        address indexed contractAddress,
-        uint256 amount
-    );
+    event BatchTransferToMultiple(address indexed contractAddress, uint256 amount);
 
     /**
      * @notice Transfer multiple tokens to the same wallet using the ERC721.transferFrom method.
@@ -32,13 +25,9 @@ contract ERC721BatchTransfer {
      * @param to the address that will receive the nfts
      * @param tokenIds the list of tokens that will be transferred
      */
-    function batchTransferToSingleWallet(
-        IERC721 erc721Contract,
-        address to,
-        uint256[] calldata tokenIds
-    ) external {
+    function batchTransferToSingleWallet(IERC721 erc721Contract, address to, uint256[] calldata tokenIds) external {
         uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
+        for (uint256 i; i < length;) {
             uint256 tokenId = tokenIds[i];
             address owner = erc721Contract.ownerOf(tokenId);
             if (msg.sender != owner) {
@@ -58,13 +47,11 @@ contract ERC721BatchTransfer {
      * @param to the address that will receive the nfts
      * @param tokenIds the list of tokens that will be transferred
      */
-    function safeBatchTransferToSingleWallet(
-        IERC721 erc721Contract,
-        address to,
-        uint256[] calldata tokenIds
-    ) external {
+    function safeBatchTransferToSingleWallet(IERC721 erc721Contract, address to, uint256[] calldata tokenIds)
+        external
+    {
         uint256 length = tokenIds.length;
-        for (uint256 i; i < length; ) {
+        for (uint256 i; i < length;) {
             uint256 tokenId = tokenIds[i];
             address owner = erc721Contract.ownerOf(tokenId);
             if (msg.sender != owner) {
@@ -90,15 +77,13 @@ contract ERC721BatchTransfer {
      * @param tos the list of addresses that will receive the nfts
      * @param tokenIds the list of tokens that will be transferred
      */
-    function batchTransferToMultipleWallets(
-        IERC721 erc721Contract,
-        address[] calldata tos,
-        uint256[] calldata tokenIds
-    ) external {
+    function batchTransferToMultipleWallets(IERC721 erc721Contract, address[] calldata tos, uint256[] calldata tokenIds)
+        external
+    {
         uint256 length = tokenIds.length;
         if (tos.length != length) revert InvalidArguments();
 
-        for (uint256 i; i < length; ) {
+        for (uint256 i; i < length;) {
             uint256 tokenId = tokenIds[i];
             address owner = erc721Contract.ownerOf(tokenId);
             address to = tos[i];
@@ -133,7 +118,7 @@ contract ERC721BatchTransfer {
         uint256 length = tokenIds.length;
         if (tos.length != length) revert InvalidArguments();
 
-        for (uint256 i; i < length; ) {
+        for (uint256 i; i < length;) {
             uint256 tokenId = tokenIds[i];
             address owner = erc721Contract.ownerOf(tokenId);
             address to = tos[i];

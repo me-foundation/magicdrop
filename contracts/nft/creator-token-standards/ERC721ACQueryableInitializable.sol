@@ -10,41 +10,32 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-abstract contract ERC721ACQueryableInitializable is
-    ERC721AQueryableUpgradeable,
-    CreatorTokenBase,
-    Initializable
-{
-    function __ERC721ACQueryableInitializable_init(
-        string memory name_,
-        string memory symbol_
-    ) public onlyInitializing {
+abstract contract ERC721ACQueryableInitializable is ERC721AQueryableUpgradeable, CreatorTokenBase, Initializable {
+    function __ERC721ACQueryableInitializable_init(string memory name_, string memory symbol_)
+        public
+        onlyInitializing
+    {
         __ERC721A_init_unchained(name_, symbol_);
         __ERC721AQueryable_init_unchained();
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    )
+    function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual
         override(ERC721AUpgradeable, IERC721AUpgradeable)
         returns (bool)
     {
-        return
-            interfaceId == type(ICreatorToken).interfaceId ||
-            ERC721AUpgradeable.supportsInterface(interfaceId);
+        return interfaceId == type(ICreatorToken).interfaceId || ERC721AUpgradeable.supportsInterface(interfaceId);
     }
 
     /// @dev Ties the erc721a _beforeTokenTransfers hook to more granular transfer validation logic
-    function _beforeTokenTransfers(
-        address from,
-        address to,
-        uint256 startTokenId,
-        uint256 quantity
-    ) internal virtual override {
-        for (uint256 i = 0; i < quantity; ) {
+    function _beforeTokenTransfers(address from, address to, uint256 startTokenId, uint256 quantity)
+        internal
+        virtual
+        override
+    {
+        for (uint256 i = 0; i < quantity;) {
             _validateBeforeTransfer(from, to, startTokenId + i);
             unchecked {
                 ++i;
@@ -53,13 +44,12 @@ abstract contract ERC721ACQueryableInitializable is
     }
 
     /// @dev Ties the erc721a _afterTokenTransfer hook to more granular transfer validation logic
-    function _afterTokenTransfers(
-        address from,
-        address to,
-        uint256 startTokenId,
-        uint256 quantity
-    ) internal virtual override {
-        for (uint256 i = 0; i < quantity; ) {
+    function _afterTokenTransfers(address from, address to, uint256 startTokenId, uint256 quantity)
+        internal
+        virtual
+        override
+    {
+        for (uint256 i = 0; i < quantity;) {
             _validateAfterTransfer(from, to, startTokenId + i);
             unchecked {
                 ++i;
@@ -67,17 +57,11 @@ abstract contract ERC721ACQueryableInitializable is
         }
     }
 
-    function _msgSenderERC721A()
-        internal
-        view
-        virtual
-        override
-        returns (address)
-    {
+    function _msgSenderERC721A() internal view virtual override returns (address) {
         return _msgSender();
     }
 
-    function _tokenType() internal pure override returns(uint16) {
+    function _tokenType() internal pure override returns (uint16) {
         return uint16(721);
     }
 }

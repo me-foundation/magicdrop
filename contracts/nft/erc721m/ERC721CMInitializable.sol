@@ -56,8 +56,7 @@ abstract contract ERC721CMInitializable is
     MintStageInfo[] private _mintStages;
 
     // Minted count per stage per wallet.
-    mapping(uint256 => mapping(address => uint32))
-        private _stageMintedCountsPerWallet;
+    mapping(uint256 => mapping(address => uint32)) private _stageMintedCountsPerWallet;
 
     // Minted count per stage.
     mapping(uint256 => uint256) private _stageMintedCounts;
@@ -85,8 +84,9 @@ abstract contract ERC721CMInitializable is
     ) public onlyInitializing {
         initializeOwner(msg.sender);
         __ERC721ACQueryableInitializable_init(collectionName, collectionSymbol);
-        if (globalWalletLimit > maxMintableSupply)
+        if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
+        }
         _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
@@ -155,20 +155,13 @@ abstract contract ERC721CMInitializable is
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         delete _mintStages;
 
-        for (uint256 i = 0; i < newStages.length; ) {
+        for (uint256 i = 0; i < newStages.length;) {
             if (i >= 1) {
-                if (
-                    newStages[i].startTimeUnixSeconds <
-                    newStages[i - 1].endTimeUnixSeconds +
-                        _timestampExpirySeconds
-                ) {
+                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds) {
                     revert InsufficientStageTimeGap();
                 }
             }
-            _assertValidStartAndEndTimestamp(
-                newStages[i].startTimeUnixSeconds,
-                newStages[i].endTimeUnixSeconds
-            );
+            _assertValidStartAndEndTimestamp(newStages[i].startTimeUnixSeconds, newStages[i].endTimeUnixSeconds);
             _mintStages.push(
                 MintStageInfo({
                     price: newStages[i].price,
@@ -231,9 +224,7 @@ abstract contract ERC721CMInitializable is
      *
      * New supply cannot be larger than the old.
      */
-    function setMaxMintableSupply(
-        uint256 maxMintableSupply
-    ) external virtual onlyOwner {
+    function setMaxMintableSupply(uint256 maxMintableSupply) external virtual onlyOwner {
         if (maxMintableSupply > _maxMintableSupply) {
             revert CannotIncreaseMaxMintableSupply();
         }
@@ -251,11 +242,10 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Sets global wallet limit.
      */
-    function setGlobalWalletLimit(
-        uint256 globalWalletLimit
-    ) external onlyOwner {
-        if (globalWalletLimit > _maxMintableSupply)
+    function setGlobalWalletLimit(uint256 globalWalletLimit) external onlyOwner {
+        if (globalWalletLimit > _maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
+        }
         _globalWalletLimit = globalWalletLimit;
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
@@ -263,18 +253,14 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Returns number of minted token for a given address.
      */
-    function totalMintedByAddress(
-        address a
-    ) external view virtual override returns (uint256) {
+    function totalMintedByAddress(address a) external view virtual override returns (uint256) {
         return _numberMinted(a);
     }
 
     /**
      * @dev Returns info for one stage specified by index (starting from 0).
      */
-    function getStageInfo(
-        uint256 index
-    ) external view override returns (MintStageInfo memory, uint32, uint256) {
+    function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
         if (index >= _mintStages.length) {
             revert("InvalidStage");
         }
@@ -298,12 +284,12 @@ abstract contract ERC721CMInitializable is
      * timestamp - the current timestamp
      * signature - the signature from cosigner if using cosigner.
      */
-    function mint(
-        uint32 qty,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable virtual nonReentrant {
+    function mint(uint32 qty, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature)
+        external
+        payable
+        virtual
+        nonReentrant
+    {
         _mintInternal(qty, msg.sender, 0, proof);
     }
 
@@ -335,13 +321,11 @@ abstract contract ERC721CMInitializable is
      * timestamp - the current timestamp
      * signature - the signature from cosigner if using cosigner.
      */
-    function crossmint(
-        uint32 qty,
-        address to,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable nonReentrant {
+    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature)
+        external
+        payable
+        nonReentrant
+    {
         if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
 
         // Check the caller is Crossmint
@@ -353,12 +337,11 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Implementation of minting.
      */
-    function _mintInternal(
-        uint32 qty,
-        address to,
-        uint32 limit,
-        bytes32[] calldata proof
-    ) internal canMint hasSupply(qty) {
+    function _mintInternal(uint32 qty, address to, uint32 limit, bytes32[] calldata proof)
+        internal
+        canMint
+        hasSupply(qty)
+    {
         uint64 stageTimestamp = uint64(block.timestamp);
 
         MintStageInfo memory stage;
@@ -368,55 +351,43 @@ abstract contract ERC721CMInitializable is
         stage = _mintStages[activeStage];
 
         // Check value if minting with ETH
-        if (
-            _mintCurrency == address(0) &&
-            msg.value < (stage.price + stage.mintFee) * qty
-        ) revert NotEnoughValue();
+        if (_mintCurrency == address(0) && msg.value < (stage.price + stage.mintFee) * qty) revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
-            if (_stageMintedCounts[activeStage] + qty > stage.maxStageSupply)
+            if (_stageMintedCounts[activeStage] + qty > stage.maxStageSupply) {
                 revert StageSupplyExceeded();
+            }
         }
 
         // Check global wallet limit if applicable
         if (_globalWalletLimit > 0) {
-            if (_numberMinted(to) + qty > _globalWalletLimit)
+            if (_numberMinted(to) + qty > _globalWalletLimit) {
                 revert WalletGlobalLimitExceeded();
+            }
         }
 
         // Check wallet limit for stage if applicable, limit == 0 means no limit enforced
         if (stage.walletLimit > 0) {
-            if (
-                _stageMintedCountsPerWallet[activeStage][to] + qty >
-                stage.walletLimit
-            ) revert WalletStageLimitExceeded();
+            if (_stageMintedCountsPerWallet[activeStage][to] + qty > stage.walletLimit) {
+                revert WalletStageLimitExceeded();
+            }
         }
 
         // Check merkle proof if applicable, merkleRoot == 0x00...00 means no proof required
         if (stage.merkleRoot != 0) {
-            if (
-                MerkleProof.processProof(
-                    proof,
-                    keccak256(abi.encodePacked(to, limit))
-                ) != stage.merkleRoot
-            ) revert InvalidProof();
+            if (MerkleProof.processProof(proof, keccak256(abi.encodePacked(to, limit))) != stage.merkleRoot) {
+                revert InvalidProof();
+            }
 
             // Verify merkle proof mint limit
-            if (
-                limit > 0 &&
-                _stageMintedCountsPerWallet[activeStage][to] + qty > limit
-            ) {
+            if (limit > 0 && _stageMintedCountsPerWallet[activeStage][to] + qty > limit) {
                 revert WalletStageLimitExceeded();
             }
         }
 
         if (_mintCurrency != address(0)) {
-            IERC20(_mintCurrency).safeTransferFrom(
-                msg.sender,
-                address(this),
-                (stage.price + stage.mintFee) * qty
-            );
+            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(this), (stage.price + stage.mintFee) * qty);
         }
 
         _totalMintFee += stage.mintFee * qty;
@@ -432,10 +403,7 @@ abstract contract ERC721CMInitializable is
      * NOTE: This function bypasses validations thus only available for owner.
      * This is typically used for owner to  pre-mint or mint the remaining of the supply.
      */
-    function ownerMint(
-        uint32 qty,
-        address to
-    ) external onlyOwner hasSupply(qty) {
+    function ownerMint(uint32 qty, address to) external onlyOwner hasSupply(qty) {
         _safeMint(to, qty);
     }
 
@@ -443,12 +411,12 @@ abstract contract ERC721CMInitializable is
      * @dev Withdraws funds by owner.
      */
     function withdraw() external onlyOwner {
-        (bool success, ) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
+        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
         _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
-        (success, ) = FUND_RECEIVER.call{value: remainingValue}("");
+        (success,) = FUND_RECEIVER.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -487,9 +455,7 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Returns token URI for a given token id.
      */
-    function tokenURI(
-        uint256 tokenId
-    )
+    function tokenURI(uint256 tokenId)
         public
         view
         override(ERC721AUpgradeable, IERC721AUpgradeable)
@@ -498,16 +464,7 @@ abstract contract ERC721CMInitializable is
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _currentBaseURI;
-        return
-            bytes(baseURI).length != 0
-                ? string(
-                    abi.encodePacked(
-                        baseURI,
-                        _toString(tokenId),
-                        _tokenURISuffix
-                    )
-                )
-                : "";
+        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix)) : "";
     }
 
     /**
@@ -527,14 +484,9 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Returns the current active stage based on timestamp.
      */
-    function getActiveStageFromTimestamp(
-        uint64 timestamp
-    ) public view returns (uint256) {
-        for (uint256 i = 0; i < _mintStages.length; ) {
-            if (
-                timestamp >= _mintStages[i].startTimeUnixSeconds &&
-                timestamp < _mintStages[i].endTimeUnixSeconds
-            ) {
+    function getActiveStageFromTimestamp(uint64 timestamp) public view returns (uint256) {
+        for (uint256 i = 0; i < _mintStages.length;) {
+            if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
                 return i;
             }
             unchecked {
@@ -547,10 +499,7 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
      */
-    function _assertValidStartAndEndTimestamp(
-        uint64 start,
-        uint64 end
-    ) internal pure {
+    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 
@@ -566,23 +515,16 @@ abstract contract ERC721CMInitializable is
         return chainID;
     }
 
-    function _requireCallerIsContractOwner()
-        internal
-        view
-        virtual
-        override(OwnableInitializable, OwnablePermissions)
-    {
+    function _requireCallerIsContractOwner() internal view virtual override(OwnableInitializable, OwnablePermissions) {
         _checkOwner();
     }
 
     /**
-     * @notice Returns the function selector for the transfer validator's validation function to be called 
-     * @notice for transaction simulation. 
+     * @notice Returns the function selector for the transfer validator's validation function to be called
+     * @notice for transaction simulation.
      */
     function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
         functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
         isViewFunction = true;
     }
-
-
 }
