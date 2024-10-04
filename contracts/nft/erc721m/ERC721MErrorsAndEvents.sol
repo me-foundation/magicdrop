@@ -17,4 +17,5 @@ interface ERC721MErrorsAndEvents is ErrorsAndEvents {
 
     event SetMaxMintableSupply(uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
+    event SetDefaultRoyalty(address receiver, uint96 feeNumerator);
 }

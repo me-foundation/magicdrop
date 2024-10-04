@@ -6,7 +6,6 @@ import {ErrorsAndEvents} from "../../common/ErrorsAndEvents.sol";
 interface ERC1155MErrorsAndEvents is ErrorsAndEvents {
     error InvalidLimitArgsLength();
     error InvalidTokenId();
-    error InsufficientBalance();
 
     event UpdateStage(
         uint256 indexed stage,

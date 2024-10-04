@@ -40,6 +40,9 @@ contract ERC1155MInitializable is
     Cosignable,
     AuthorizedMinterControl
 {
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(
         string calldata name_,

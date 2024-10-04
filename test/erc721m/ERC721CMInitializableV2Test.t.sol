@@ -29,12 +29,13 @@ contract ERC721CMInitializableV2Test is Test {
         vm.deal(minter, 2 ether);
         vm.deal(crossmintAddress, 1 ether);
         
-        nft = new ERC721CMInitializableV2(owner);
-        nft.initialize("Test", "TEST");
+        nft = new ERC721CMInitializableV2();
+        nft.initialize("Test", "TEST", owner);
         nft.setup(
             ".json",
             INITIAL_SUPPLY,
             GLOBAL_WALLET_LIMIT,
+            60, // timestampExpirySeconds
             address(0),
             fundReceiver,
             crossmintAddress,

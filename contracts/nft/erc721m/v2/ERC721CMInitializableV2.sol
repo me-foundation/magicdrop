@@ -2,16 +2,14 @@
 
 pragma solidity ^0.8.20;
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
+import {ERC2981} from "solady/src/tokens/ERC2981.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
+import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
+import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {ERC721ACQueryableInitializable, ERC721AUpgradeable, IERC721AUpgradeable} from "../../creator-token-standards/ERC721ACQueryableInitializable.sol";
 import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
-import {UpdatableRoyaltiesInitializable, ERC2981} from "../../../royalties/UpdatableRoyaltiesInitializable.sol";
 import {MintStageInfo} from "../../../common/Structs.sol";
 import {IERC721MInitializable} from "../interfaces/IERC721MInitializable.sol";
 import {Cosignable} from "../../../common/Cosignable.sol";
@@ -25,14 +23,12 @@ import {AuthorizedMinterControl} from "../../../common/AuthorizedMinterControl.s
 contract ERC721CMInitializableV2 is
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
-    UpdatableRoyaltiesInitializable,
+    ERC2981,
+    Ownable,
     ReentrancyGuard,
     Cosignable,
     AuthorizedMinterControl
 {
-    using ECDSA for bytes32;
-    using SafeERC20 for IERC20;
-
     // Whether this contract is mintable.
     bool private _mintable;
 
@@ -75,13 +71,17 @@ contract ERC721CMInitializableV2 is
 
     uint256 public constant VERSION = 2;
 
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(
         string calldata name,
-        string calldata symbol
+        string calldata symbol,
+        address initialOwner
     ) external initializerERC721A initializer {
         __ERC721ACQueryableInitializable_init(name, symbol);
+        _initializeOwner(initialOwner);
     }
 
     function setup(
@@ -451,12 +451,9 @@ contract ERC721CMInitializableV2 is
 
         // Check merkle proof if applicable, merkleRoot == 0x00...00 means no proof required
         if (stage.merkleRoot != 0) {
-            if (
-                MerkleProof.processProof(
-                    proof,
-                    keccak256(abi.encodePacked(to, limit))
-                ) != stage.merkleRoot
-            ) revert InvalidProof();
+            if (!MerkleProofLib.verify(proof, stage.merkleRoot, keccak256(abi.encodePacked(to, limit)))) {
+                revert InvalidProof();
+            }
 
             // Verify merkle proof mint limit
             if (
@@ -468,8 +465,8 @@ contract ERC721CMInitializableV2 is
         }
 
         if (_mintCurrency != address(0)) {
-            // ERC20 mint payment
-            IERC20(_mintCurrency).safeTransferFrom(
+            SafeTransferLib.safeTransferFrom(
+                _mintCurrency,
                 msg.sender,
                 address(this),
                 (stage.price + adjustedMintFee) * qty
@@ -517,13 +514,18 @@ contract ERC721CMInitializableV2 is
     function withdrawERC20() external onlyOwner {
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
-        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        uint256 totalFee = _totalMintFee;
+        uint256 remaining = SafeTransferLib.balanceOf(_mintCurrency, address(this));
+        
+        if (remaining < totalFee) revert InsufficientBalance();
+
         _totalMintFee = 0;
+        uint256 totalAmount = totalFee + remaining;
 
-        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(_fundReceiver, remaining);
+        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
 
-        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
+        emit WithdrawERC20(_mintCurrency, totalAmount);
     }
 
     /**
@@ -629,11 +631,21 @@ contract ERC721CMInitializableV2 is
         isViewFunction = true;
     }
 
-
-
     function supportsInterface(bytes4 interfaceId) public view override(ERC2981, IERC721AUpgradeable, ERC721ACQueryableInitializable) returns (bool) {
         return super.supportsInterface(interfaceId) ||
         ERC2981.supportsInterface(interfaceId) ||
         ERC721ACQueryableInitializable.supportsInterface(interfaceId);
+    }
+
+    function setDefaultRoyalty(
+        address receiver,
+        uint96 feeNumerator
+    ) public onlyOwner {
+        super._setDefaultRoyalty(receiver, feeNumerator);
+        emit SetDefaultRoyalty(receiver, feeNumerator);
+    }
+
+    function _requireCallerIsContractOwner() internal view override {
+        return _checkOwner();
     }
 }
