@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {LibClone} from "solady/src/utils/LibClone.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
+
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721CMInitializableV2} from "../../contracts/nft/erc721m/v2/ERC721CMInitializableV2.sol";
 import {MintStageInfo} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
@@ -29,7 +31,9 @@ contract ERC721CMInitializableV2Test is Test {
         vm.deal(minter, 2 ether);
         vm.deal(crossmintAddress, 1 ether);
         
-        nft = new ERC721CMInitializableV2();
+
+        address clone = LibClone.deployERC1967(address(new ERC721CMInitializableV2()));
+        nft = ERC721CMInitializableV2(clone);
         nft.initialize("Test", "TEST", owner);
         nft.setup(
             ".json",
@@ -59,7 +63,7 @@ contract ERC721CMInitializableV2Test is Test {
         assertFalse(nft.getMintable());
 
         vm.prank(readonly);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, readonly));
+        vm.expectRevert(Ownable.Unauthorized.selector);
         nft.setMintable(true);
     }
 
@@ -74,7 +78,7 @@ contract ERC721CMInitializableV2Test is Test {
         assertEq(fundReceiver.balance, initialFundReceiverBalance + 100);
 
         vm.prank(readonly);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, readonly));
+        vm.expectRevert(Ownable.Unauthorized.selector);
         nft.withdraw();
     }
 
@@ -103,7 +107,7 @@ contract ERC721CMInitializableV2Test is Test {
         assertEq(nft.getNumberStages(), 2);
 
         vm.prank(readonly);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, readonly));
+        vm.expectRevert(Ownable.Unauthorized.selector);
         nft.setStages(stages);
     }
 
