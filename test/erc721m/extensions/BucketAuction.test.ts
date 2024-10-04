@@ -28,6 +28,7 @@ describe('BucketAuction', function () {
       /* maxMintableSupply= */ 1000,
       /* globalWalletLimit= */ 0,
       ethers.constants.AddressZero,
+      60, // timestampExpirySeconds
       /* minimumContributionInWei= */ 100,
       0, // Placeholder; startTimeUnixSeconds will be overwritten later
       1, // Placeholder; endTimeUnixSeconds will be overwritten later
