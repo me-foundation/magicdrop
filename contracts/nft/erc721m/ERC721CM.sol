@@ -616,6 +616,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
      */
     function _chainID() private view returns (uint256) {
         uint256 chainID;
+        /// @solidity memory-safe-assembly
         assembly {
             chainID := chainid()
         }

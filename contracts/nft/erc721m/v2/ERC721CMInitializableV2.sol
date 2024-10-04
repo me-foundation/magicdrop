@@ -617,6 +617,7 @@ contract ERC721CMInitializableV2 is
      * @dev Returns chain id.
      */
     function _chainID() private view returns (uint256 chainID) {
+        /// @solidity memory-safe-assembly
         assembly {
             chainID := chainid()
         }

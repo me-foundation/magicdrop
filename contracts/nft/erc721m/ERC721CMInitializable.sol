@@ -559,6 +559,7 @@ abstract contract ERC721CMInitializable is
      */
     function _chainID() private view returns (uint256) {
         uint256 chainID;
+        /// @solidity memory-safe-assembly
         assembly {
             chainID := chainid()
         }
