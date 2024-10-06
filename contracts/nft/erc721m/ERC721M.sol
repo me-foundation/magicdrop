@@ -68,8 +68,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
     // Fund receiver
     address public immutable FUND_RECEIVER;
 
-    uint256 public constant VERSION = 1;
-
     constructor(
         string memory collectionName,
         string memory collectionSymbol,

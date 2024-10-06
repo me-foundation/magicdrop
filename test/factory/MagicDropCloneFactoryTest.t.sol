@@ -8,8 +8,6 @@ import {LibClone} from "solady/src/utils/LibClone.sol";
 
 import {MagicDropCloneFactory} from "../../contracts/factory/MagicDropCloneFactory.sol";
 import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropTokenImplRegistry.sol";
-import {MagicDropERC721Initializable} from "../../contracts/nft/MagicDropERC721Initializable.sol";
-import {MagicDropERC1155Initializable} from "../../contracts/nft/MagicDropERC1155Initializable.sol";
 import {TokenStandard} from "../../contracts/common/Structs.sol";
 
 contract MockERC721Initializable is MockERC721 {

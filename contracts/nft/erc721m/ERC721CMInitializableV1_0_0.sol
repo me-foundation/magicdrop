@@ -2,37 +2,39 @@
 
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@limitbreak/creator-token-standards/src/access/OwnableInitializable.sol";
-import "../creator-token-standards/ERC721ACQueryableInitializable.sol";
-import "./interfaces/IERC721MInitializable.sol";
-import "../../utils/Constants.sol";
+import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
+import {ERC2981} from "solady/src/tokens/ERC2981.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
+import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
+import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
+
+import {
+    ERC721ACQueryableInitializable,
+    ERC721AUpgradeable,
+    IERC721AUpgradeable
+} from "../creator-token-standards/ERC721ACQueryableInitializable.sol";
+import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+import {MintStageInfo} from "../../common/Structs.sol";
+import {IERC721MInitializable} from "./interfaces/IERC721MInitializable.sol";
+import {Cosignable} from "../../common/Cosignable.sol";
+import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 /**
- * @title ERC721CMInitializable
+ * @title ERC721CMInitializableV1_0_0
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-abstract contract ERC721CMInitializable is
+contract ERC721CMInitializableV1_0_0 is
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
-    OwnableInitializable,
-    ReentrancyGuard
+    ERC2981,
+    Ownable,
+    ReentrancyGuard,
+    Cosignable,
+    AuthorizedMinterControl
 {
-    using ECDSA for bytes32;
-    using SafeERC20 for IERC20;
-
     // Whether this contract is mintable.
     bool private _mintable;
-
-    // Specify how long a signature from cosigner is valid for, recommend 300 seconds.
-    uint64 private _timestampExpirySeconds;
 
     // The crossmint address. Need to set if using crossmint.
     address private _crossmintAddress;
@@ -68,22 +70,33 @@ abstract contract ERC721CMInitializable is
     uint256 private _totalMintFee;
 
     // Fund receiver
-    address public FUND_RECEIVER;
+    address private _fundReceiver;
 
-    uint256 public constant VERSION = 1;
+    constructor() {
+        _disableInitializers();
+    }
 
-    function __ERC721CMInitializable_init(
-        string memory collectionName,
-        string memory collectionSymbol,
-        string memory tokenURISuffix,
+    function initialize(string calldata name, string calldata symbol, address initialOwner)
+        external
+        initializerERC721A
+        initializer
+    {
+        __ERC721ACQueryableInitializable_init(name, symbol);
+        _initializeOwner(initialOwner);
+    }
+
+    function setup(
+        string calldata tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        uint64 timestampExpirySeconds,
+        uint256 timestampExpirySeconds,
         address mintCurrency,
-        address fundReceiver
-    ) public onlyInitializing {
-        initializeOwner(msg.sender);
-        __ERC721ACQueryableInitializable_init(collectionName, collectionSymbol);
+        address fundReceiver,
+        address crossmintAddress,
+        MintStageInfo[] calldata initialStages,
+        address defaultRoyaltyReceiver,
+        uint96 defaultRoyaltyFeeNumerator
+    ) external onlyOwner {
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
         }
@@ -91,68 +104,19 @@ abstract contract ERC721CMInitializable is
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
-        _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
-        FUND_RECEIVER = fundReceiver;
-    }
-
-    /**
-     * @dev Returns whether mintable.
-     */
-    modifier canMint() {
-        if (!_mintable) revert NotMintable();
-        _;
-    }
-
-    /**
-     * @dev Returns whether it has enough supply for the given qty.
-     */
-    modifier hasSupply(uint256 qty) {
-        if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
-        _;
-    }
-
-    /**
-     * @dev Returns cosign nonce.
-     */
-    function getCosignNonce(address minter) public view returns (uint256) {
-        return _numberMinted(minter);
-    }
-
-    /**
-     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
-     */
-    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
+        _fundReceiver = fundReceiver;
         _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(crossmintAddress);
+        _timestampExpirySeconds = timestampExpirySeconds;
+
+        if (initialStages.length > 0) {
+            _setStages(initialStages);
+        }
+
+        setDefaultRoyalty(defaultRoyaltyReceiver, defaultRoyaltyFeeNumerator);
     }
 
-    /**
-     * @dev Sets stages in the format of an array of `MintStageInfo`.
-     *
-     * Following is an example of launch with two stages. The first stage is exclusive for whitelisted wallets
-     * specified by merkle root.
-     *    [{
-     *      price: 10000000000000000000,
-     *      mintFee: 1000000000000000000,
-     *      maxStageSupply: 2000,
-     *      walletLimit: 1,
-     *      merkleRoot: 0x559fadeb887449800b7b320bf1e92d309f329b9641ac238bebdb74e15c0a5218,
-     *      startTimeUnixSeconds: 1667768000,
-     *      endTimeUnixSeconds: 1667771600,
-     *     },
-     *     {
-     *      price: 20000000000000000000,
-     *      mintFee: 0,
-     *      maxStageSupply: 3000,
-     *      walletLimit: 2,
-     *      merkleRoot: 0,
-     *      startTimeUnixSeconds: 1667771600,
-     *      endTimeUnixSeconds: 1667775200,
-     *     }
-     * ]
-     */
-    function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
+    function _setStages(MintStageInfo[] calldata newStages) internal {
         delete _mintStages;
 
         for (uint256 i = 0; i < newStages.length;) {
@@ -188,6 +152,63 @@ abstract contract ERC721CMInitializable is
                 ++i;
             }
         }
+    }
+
+    function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
+        _setStages(newStages);
+    }
+
+    /**
+     * @dev Returns whether mintable.
+     */
+    modifier canMint() {
+        if (!_mintable) revert NotMintable();
+        _;
+    }
+
+    /**
+     * @dev Returns whether it has enough supply for the given qty.
+     */
+    modifier hasSupply(uint256 qty) {
+        if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
+        _;
+    }
+
+    /**
+     * @dev Returns cosign nonce.
+     */
+    function getCosignNonce(address minter) public view returns (uint256) {
+        return _numberMinted(minter);
+    }
+
+    /**
+     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
+     */
+    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
+        _crossmintAddress = crossmintAddress;
+        emit SetCrossmintAddress(crossmintAddress);
+    }
+
+    /**
+     * @dev Add authorized minter. Can only be called by contract owner.
+     */
+    function addAuthorizedMinter(address minter) external override onlyOwner {
+        _addAuthorizedMinter(minter);
+    }
+
+    /**
+     * @dev Remove authorized minter. Can only be called by contract owner.
+     */
+    function removeAuthorizedMinter(address minter) external override onlyOwner {
+        _removeAuthorizedMinter(minter);
+    }
+
+    /**
+     * @dev Sets cosigner. Can only be called by contract owner.
+     */
+    function setCosigner(address cosigner) external override onlyOwner {
+        _cosigner = cosigner;
+        emit SetCosigner(cosigner);
     }
 
     /**
@@ -262,7 +283,7 @@ abstract contract ERC721CMInitializable is
      */
     function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
         if (index >= _mintStages.length) {
-            revert("InvalidStage");
+            revert InvalidStage();
         }
         uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
         uint256 stageMinted = _stageMintedCounts[index];
@@ -290,7 +311,7 @@ abstract contract ERC721CMInitializable is
         virtual
         nonReentrant
     {
-        _mintInternal(qty, msg.sender, 0, proof);
+        _mintInternal(qty, msg.sender, 0, proof, timestamp, signature);
     }
 
     /**
@@ -309,7 +330,7 @@ abstract contract ERC721CMInitializable is
         uint64 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
-        _mintInternal(qty, msg.sender, limit, proof);
+        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
     }
 
     /**
@@ -331,27 +352,57 @@ abstract contract ERC721CMInitializable is
         // Check the caller is Crossmint
         if (msg.sender != _crossmintAddress) revert CrossmintOnly();
 
-        _mintInternal(qty, to, 0, proof);
+        _mintInternal(qty, to, 0, proof, timestamp, signature);
+    }
+
+    /**
+     * @dev Authorized mints token(s) with limit
+     *
+     * qty - number of tokens to mint
+     * to - the address to mint tokens to
+     * limit - limit for the given minter
+     * proof - the merkle proof generated on client side. This applies if using whitelist.
+     * timestamp - the current timestamp
+     * signature - the signature from cosigner if using cosigner.
+     */
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) external payable onlyAuthorizedMinter {
+        _mintInternal(qty, to, limit, proof, timestamp, signature);
     }
 
     /**
      * @dev Implementation of minting.
      */
-    function _mintInternal(uint32 qty, address to, uint32 limit, bytes32[] calldata proof)
-        internal
-        canMint
-        hasSupply(qty)
-    {
+    function _mintInternal(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint64 timestamp,
+        bytes calldata signature
+    ) internal canMint hasSupply(qty) {
         uint64 stageTimestamp = uint64(block.timestamp);
+        bool waiveMintFee = false;
 
-        MintStageInfo memory stage;
+        if (_cosigner != address(0)) {
+            waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender));
+            _assertValidTimestamp(timestamp);
+            stageTimestamp = timestamp;
+        }
 
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
+        MintStageInfo memory stage = _mintStages[activeStage];
 
-        stage = _mintStages[activeStage];
+        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee;
 
         // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < (stage.price + stage.mintFee) * qty) revert NotEnoughValue();
+        if (_mintCurrency == address(0) && msg.value < (stage.price + adjustedMintFee) * qty) revert NotEnoughValue();
 
         // Check stage supply if applicable
         if (stage.maxStageSupply > 0) {
@@ -376,7 +427,7 @@ abstract contract ERC721CMInitializable is
 
         // Check merkle proof if applicable, merkleRoot == 0x00...00 means no proof required
         if (stage.merkleRoot != 0) {
-            if (MerkleProof.processProof(proof, keccak256(abi.encodePacked(to, limit))) != stage.merkleRoot) {
+            if (!MerkleProofLib.verify(proof, stage.merkleRoot, keccak256(abi.encodePacked(to, limit)))) {
                 revert InvalidProof();
             }
 
@@ -387,10 +438,12 @@ abstract contract ERC721CMInitializable is
         }
 
         if (_mintCurrency != address(0)) {
-            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(this), (stage.price + stage.mintFee) * qty);
+            SafeTransferLib.safeTransferFrom(
+                _mintCurrency, msg.sender, address(this), (stage.price + adjustedMintFee) * qty
+            );
         }
 
-        _totalMintFee += stage.mintFee * qty;
+        _totalMintFee += adjustedMintFee * qty;
 
         _stageMintedCountsPerWallet[activeStage][to] += qty;
         _stageMintedCounts[activeStage] += qty;
@@ -416,7 +469,7 @@ abstract contract ERC721CMInitializable is
         _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
-        (success,) = FUND_RECEIVER.call{value: remainingValue}("");
+        (success,) = _fundReceiver.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -428,13 +481,18 @@ abstract contract ERC721CMInitializable is
     function withdrawERC20() external onlyOwner {
         if (_mintCurrency == address(0)) revert WrongMintCurrency();
 
-        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
+        uint256 totalFee = _totalMintFee;
+        uint256 remaining = SafeTransferLib.balanceOf(_mintCurrency, address(this));
+
+        if (remaining < totalFee) revert InsufficientBalance();
+
         _totalMintFee = 0;
+        uint256 totalAmount = totalFee + remaining;
 
-        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
+        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
 
-        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
+        emit WithdrawERC20(_mintCurrency, totalAmount);
     }
 
     /**
@@ -506,17 +564,11 @@ abstract contract ERC721CMInitializable is
     /**
      * @dev Returns chain id.
      */
-    function _chainID() private view returns (uint256) {
-        uint256 chainID;
+    function _chainID() private view returns (uint256 chainID) {
         /// @solidity memory-safe-assembly
         assembly {
             chainID := chainid()
         }
-        return chainID;
-    }
-
-    function _requireCallerIsContractOwner() internal view virtual override(OwnableInitializable, OwnablePermissions) {
-        _checkOwner();
     }
 
     /**
@@ -526,5 +578,28 @@ abstract contract ERC721CMInitializable is
     function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
         functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
         isViewFunction = true;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC2981, IERC721AUpgradeable, ERC721ACQueryableInitializable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
+            || ERC721ACQueryableInitializable.supportsInterface(interfaceId);
+    }
+
+    function setDefaultRoyalty(address receiver, uint96 feeNumerator) public onlyOwner {
+        super._setDefaultRoyalty(receiver, feeNumerator);
+        emit SetDefaultRoyalty(receiver, feeNumerator);
+    }
+
+    function _requireCallerIsContractOwner() internal view override {
+        return _checkOwner();
+    }
+
+    function contractNameAndVersion() public pure returns (string memory, string memory) {
+        return ("ERC721CMInitializable", "1.0.0");
     }
 }

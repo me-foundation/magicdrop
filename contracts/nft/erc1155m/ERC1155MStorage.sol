@@ -4,8 +4,6 @@ pragma solidity ^0.8.20;
 import {MintStageInfo1155} from "../../common/Structs.sol";
 
 contract ERC1155MStorage {
-    uint256 public constant VERSION = 1;
-
     // Mint stage information. See MintStageInfo for details.
     MintStageInfo1155[] internal _mintStages;
 

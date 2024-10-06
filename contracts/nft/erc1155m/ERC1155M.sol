@@ -306,26 +306,7 @@ contract ERC1155M is
      * timestamp - the current timestamp
      * signature - the signature from cosigner if using cosigner
      */
-    function mint(uint256 tokenId, uint32 qty, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature)
-        external
-        payable
-        virtual
-        nonReentrant
-    {
-        _mintInternal(msg.sender, tokenId, qty, 0, proof, timestamp, signature);
-    }
-
-    /**
-     * @dev Mints token(s) with limit.
-     *
-     * tokenId - token id
-     * qty - number of tokens to mint
-     * limit - limit for the given minter
-     * proof - the merkle proof generated on client side. This applies if using whitelist
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner
-     */
-    function mintWithLimit(
+    function mint(
         uint256 tokenId,
         uint32 qty,
         uint32 limit,

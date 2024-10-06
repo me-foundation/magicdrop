@@ -6,12 +6,13 @@ import {Ownable} from "solady/src/auth/Ownable.sol";
 
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
-import {ERC721CMInitializableV2} from "../../contracts/nft/erc721m/v2/ERC721CMInitializableV2.sol";
+import {ERC721CMInitializableV1_0_0 as ERC721CMInitializable} from
+    "../../contracts/nft/erc721m/ERC721CMInitializableV1_0_0.sol";
 import {MintStageInfo} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
-contract ERC721CMInitializableV2Test is Test {
-    ERC721CMInitializableV2 public nft;
+contract ERC721CMInitializableTest is Test {
+    ERC721CMInitializable public nft;
     address public owner;
     address public minter;
     address public fundReceiver;
@@ -31,8 +32,8 @@ contract ERC721CMInitializableV2Test is Test {
         vm.deal(minter, 2 ether);
         vm.deal(crossmintAddress, 1 ether);
 
-        address clone = LibClone.deployERC1967(address(new ERC721CMInitializableV2()));
-        nft = ERC721CMInitializableV2(clone);
+        address clone = LibClone.deployERC1967(address(new ERC721CMInitializable()));
+        nft = ERC721CMInitializable(clone);
         nft.initialize("Test", "TEST", owner);
         nft.setup(
             ".json",
