@@ -1,53 +1,149 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-import {IMagicDropCloneFactory} from "./interfaces/IMagicDropCloneFactory.sol";
-import {IMagicDropTokenImplRegistry} from "../registry/interfaces/IMagicDropTokenImplRegistry.sol";
-import {IInitializableToken} from "../common/interfaces/IInitializableToken.sol";
+import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
+import {Initializable} from "solady/src/utils/Initializable.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
+import {LibClone} from "solady/src/utils/LibClone.sol";
 import {TokenStandard} from "../common/Structs.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {MagicDropTokenImplRegistry} from "../registry/MagicDropTokenImplRegistry.sol";
 
-contract MagicDropCloneFactory is IMagicDropCloneFactory, Ownable2StepUpgradeable, UUPSUpgradeable {
-    IMagicDropTokenImplRegistry public immutable REGISTRY;
+/// @title MagicDropCloneFactory
+/// @notice A factory contract for creating and managing clones of MagicDrop contracts
+/// @dev This contract uses the UUPS proxy pattern and is initializable
+contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
+    /*==============================================================
+    =                           CONSTANTS                          =
+    ==============================================================*/
 
-    error ImplementationNotRegistered();
+    MagicDropTokenImplRegistry private _registry;
+    bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address)"));
 
-    constructor(IMagicDropTokenImplRegistry _registry) {
-        if (address(_registry) == address(0)) {
-            revert ConstructorRegistryAddressCannotBeZero();
-        }
+    /*==============================================================
+    =                            STRUCTS                           =
+    ==============================================================*/
 
-        REGISTRY = _registry;
+    struct MagicDropFactoryStorage {
+        mapping(bytes32 => bool) usedSalts;
     }
 
-    function initialize() public initializer {
-        __Ownable2Step_init();
-        __Ownable_init(msg.sender);
-        __UUPSUpgradeable_init();
+    /*==============================================================
+    =                            STORAGE                           =
+    ==============================================================*/
+
+    // keccak256(abi.encode(uint256(keccak256("magicdrop.factory.MagicDropCloneFactory")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant MAGICDROP_FACTORY_STORAGE =
+        0x994baf5eba3c0ba1b1d51c78027db74423206530efe4b85d37542c047fcc6500;
+
+    /*==============================================================
+    =                             EVENTS                           =
+    ==============================================================*/
+
+    event MagicDropFactoryInitialized();
+    event NewContractInitialized(
+        address contractAddress, address initialOwner, uint32 implId, TokenStandard standard, string name, string symbol
+    );
+
+    /*==============================================================
+    =                             ERRORS                           =
+    ==============================================================*/
+
+    error ImplementationNotRegistered();
+    error InitializationFailed();
+    error SaltAlreadyUsed(bytes32 salt);
+    error ContractAlreadyDeployed(address deployedAddress);
+    error RegistryAddressCannotBeZero();
+    error ImplementationDeprecated();
+
+    /*==============================================================
+    =                          INITIALIZER                         =
+    ==============================================================*/
+
+    /// @dev Disables initializers to ensure this contract is used by a proxy
+    constructor() {
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the contract
+    /// @param initialOwner The address of the initial owner
+    /// @param registry The address of the registry contract
+    /// @dev This function can only be called once
+    function initialize(address initialOwner, address registry) public initializer {
+        if (registry == address(0)) {
+            revert RegistryAddressCannotBeZero();
+        }
+
+        _registry = MagicDropTokenImplRegistry(registry);
+        _initializeOwner(initialOwner);
+
         emit MagicDropFactoryInitialized();
     }
 
-    function createContract(
+    /*==============================================================
+    =                      PUBLIC WRITE METHODS                    =
+    ==============================================================*/
+
+    /// @notice Creates a new deterministic clone of a MagicDrop contract
+    /// @param name The name of the new contract
+    /// @param symbol The symbol of the new contract
+    /// @param standard The token standard of the new contract
+    /// @param initialOwner The initial owner of the new contract
+    /// @param implId The implementation ID
+    /// @param salt A unique salt for deterministic address generation
+    /// @return The address of the newly created contract
+    function createContractDeterministic(
         string calldata name,
         string calldata symbol,
         TokenStandard standard,
         address payable initialOwner,
-        uint256 implId,
+        uint32 implId,
         bytes32 salt
-    ) external override returns (address) {
-        address impl = REGISTRY.getImplementation(standard, implId);
+    ) external returns (address) {
+        // Retrieve the implementation address from the registry
+        (address impl, bool deprecated) = _registry.getImplementation(standard, implId);
+
+        if (deprecated) {
+            revert ImplementationDeprecated();
+        }
 
         if (impl == address(0)) {
             revert ImplementationNotRegistered();
         }
 
-        bytes32 cloneSalt = keccak256(abi.encodePacked(salt, blockhash(block.number)));
+        assembly {
+            mstore(0x00, salt)
+            mstore(0x20, MAGICDROP_FACTORY_STORAGE)
+            let saltUsed := sload(keccak256(0x00, 0x40)) // usedSalts[salt]
 
-        address instance = Clones.cloneDeterministic(impl, cloneSalt);
+            if saltUsed {
+                mstore(0x00, shl(224, 0x8bae94a6)) // SaltAlreadyUsed(salt)
+                mstore(0x04, salt) // Store `salt` argument
+                revert(0x00, 0x24) // Revert with 36 bytes (4-byte selector + 32-byte `salt`)
+            }
+        }
 
-        IInitializableToken(instance).initialize(name, symbol, initialOwner);
+        // Predict the address where the contract will be deployed
+        address predictedAddress = LibClone.predictDeterministicAddress(impl, salt, address(this));
+
+        // Check if a contract already exists at the predicted address
+        if (predictedAddress.code.length > 0) {
+            revert ContractAlreadyDeployed(predictedAddress);
+        }
+
+        // Create a deterministic clone of the implementation contract
+        address instance = LibClone.cloneDeterministic(impl, salt);
+
+        // Initialize the newly created contract
+        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        if (!success) {
+            revert InitializationFailed();
+        }
+
+        assembly {
+            mstore(0x00, salt)
+            mstore(0x20, MAGICDROP_FACTORY_STORAGE)
+            sstore(keccak256(0x00, 0x40), 1) // usedSalts[salt] = true
+        }
 
         emit NewContractInitialized({
             contractAddress: instance,
@@ -61,7 +157,103 @@ contract MagicDropCloneFactory is IMagicDropCloneFactory, Ownable2StepUpgradeabl
         return instance;
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
-        // This function is left empty as the onlyOwner modifier handles the authorization
+    /// @notice Creates a new clone of a MagicDrop contract
+    /// @param name The name of the new contract
+    /// @param symbol The symbol of the new contract
+    /// @param standard The token standard of the new contract
+    /// @param initialOwner The initial owner of the new contract
+    /// @param implId The implementation ID
+    /// @return The address of the newly created contract
+    function createContract(
+        string calldata name,
+        string calldata symbol,
+        TokenStandard standard,
+        address payable initialOwner,
+        uint32 implId
+    ) external returns (address) {
+        // Retrieve the implementation address from the registry
+        (address impl, bool deprecated) = _registry.getImplementation(standard, implId);
+
+        if (deprecated) {
+            revert ImplementationDeprecated();
+        }
+
+        if (impl == address(0)) {
+            revert ImplementationNotRegistered();
+        }
+
+        // Create a non-deterministic clone of the implementation contract
+        address instance = LibClone.clone(impl);
+
+        // Initialize the newly created contract
+        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        if (!success) {
+            revert InitializationFailed();
+        }
+
+        emit NewContractInitialized({
+            contractAddress: instance,
+            initialOwner: initialOwner,
+            implId: implId,
+            standard: standard,
+            name: name,
+            symbol: symbol
+        });
+
+        return instance;
     }
+
+    /*==============================================================
+    =                      PUBLIC VIEW METHODS                     =
+    ==============================================================*/
+
+    /// @notice Predicts the deployment address of a deterministic clone
+    /// @param standard The token standard of the contract
+    /// @param implId The implementation ID
+    /// @param salt The salt used for address generation
+    /// @return The predicted deployment address
+    function predictDeploymentAddress(TokenStandard standard, uint32 implId, bytes32 salt)
+        external
+        view
+        returns (address)
+    {
+        (address impl, bool deprecated) = _registry.getImplementation(standard, implId);
+
+        if (deprecated) {
+            revert ImplementationDeprecated();
+        }
+
+        if (impl == address(0)) {
+            revert ImplementationNotRegistered();
+        }
+
+        return LibClone.predictDeterministicAddress(impl, salt, address(this));
+    }
+
+    /// @notice Checks if a salt has been used
+    /// @param salt The salt to check
+    /// @return saltUsed Whether the salt has been used
+    function isSaltUsed(bytes32 salt) external view returns (bool saltUsed) {
+        assembly {
+            mstore(0x00, salt)
+            mstore(0x20, MAGICDROP_FACTORY_STORAGE)
+            let slot := keccak256(0x00, 0x40)
+            saltUsed := sload(slot)
+        }
+    }
+
+    /// @notice Retrieves the address of the registry contract
+    /// @return The address of the registry contract
+    function getRegistry() external view returns (address) {
+        return address(_registry);
+    }
+
+    /*==============================================================
+    =                      ADMIN OPERATIONS                        =
+    ==============================================================*/
+
+    ///@dev Internal function to authorize an upgrade.
+    ///@param newImplementation Address of the new implementation.
+    ///@notice Only the contract owner can upgrade the contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
