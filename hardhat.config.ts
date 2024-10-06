@@ -14,7 +14,6 @@ import {
   setMintable,
   deploy,
   deploy1155,
-  deployClone,
   setBaseURI,
   setCrossmintAddress,
   mint,
@@ -44,7 +43,6 @@ import {
   cleanWhitelist,
   ownerMint1155,
 } from './scripts';
-import { deployCloneFactory } from './scripts/deploy/deployCloneFactory';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -467,31 +465,5 @@ task('cleanWhitelist', 'Clean up whitelist')
   .addOptionalParam('whitelistpath', 'plain whitelist path')
   .addOptionalParam('variablewalletlimitpath', 'variable wallet limit whitelist path')
   .setAction(cleanWhitelist)
-
-task('deployCloneFactory', 'Deploy 721CMRoyalties clone factory')
-  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
-  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
-  .setAction(deployCloneFactory)
-
-task('deployClone', 'Create 721CMRoyalties cline')
-  .addParam('name', 'name')
-  .addParam('symbol', 'symbol')
-  .addParam('maxsupply', 'max supply')
-  .addParam('tokenurisuffix', 'token uri suffix', '.json')
-  .addParam('globalwalletlimit', 'global wallet limit', '0')
-  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
-  .addParam('mintcurrency','ERC-20 contract address. 0x0 if using native token','0x0000000000000000000000000000000000000000')
-  .addParam('fundreceiver', 'The treasury wallet to receive mint fund')
-  .addParam('royaltyreceiver', 'erc2198 royalty receiver address')
-  .addParam('royaltyfeenumerator', 'erc2198 royalty fee numerator')
-  .addParam<boolean>(
-    'openedition',
-    'whether or not a open edition mint (unlimited supply, 999,999,999)',
-    false,
-    types.boolean,
-  )
-  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
-  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
-  .setAction(deployClone);
 
 export default config;

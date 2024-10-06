@@ -82,7 +82,7 @@ describe('ERC721M: Mint Currency', () => {
         await expect(
           erc721M
             .connect(minter)
-            .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
+            .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
         ).to.be.revertedWith(`ERC20InsufficientAllowance("${erc721M.address}", 0, ${mintCost})`);
       });
 
@@ -98,7 +98,7 @@ describe('ERC721M: Mint Currency', () => {
         await expect(
           erc721M
             .connect(minter)
-            .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
+            .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
         ).to.be.revertedWith('ERC20InsufficientBalance');
       });
 
@@ -113,7 +113,7 @@ describe('ERC721M: Mint Currency', () => {
         // Mint tokens
         await erc721M
           .connect(minter)
-          .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00');
+          .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00');
 
         const postMintBalance = await erc20.balanceOf(
           await minter.getAddress(),
@@ -280,7 +280,7 @@ describe('ERC721CM: Mint Currency', () => {
         await expect(
           erc721CM
             .connect(minter)
-            .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
+            .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
         ).to.be.revertedWith(`ERC20InsufficientAllowance("${erc721CM.address}", 0, ${mintCost})`);
       });
 
@@ -298,7 +298,7 @@ describe('ERC721CM: Mint Currency', () => {
         await expect(
           erc721CM
             .connect(minter)
-            .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
+            .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
         ).to.be.revertedWith(`ERC20InsufficientBalance("${minterAddress}", ${minterBalance}, ${mintCost})`);
       });
 
@@ -313,7 +313,7 @@ describe('ERC721CM: Mint Currency', () => {
         // Mint tokens
         await erc721CM
           .connect(minter)
-          .mint(mintQty, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00');
+          .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00');
 
         const postMintBalance = await erc20.balanceOf(
           await minter.getAddress(),

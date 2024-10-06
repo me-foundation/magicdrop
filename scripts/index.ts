@@ -1,7 +1,6 @@
 export * from './deploy/deploy';
 export * from './deploy/deploy1155';
 export * from './deploy/deployBA';
-export * from './deploy/deployClone';
 export * from './mint/mint';
 export * from './mint/ownerMint';
 export * from './mint/ownerMint1155';
