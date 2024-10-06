@@ -20,6 +20,10 @@ contract MockERC1155Initializable is MockERC1155 {
     function initialize(string memory, string memory, address) public {}
 }
 
+contract InvalidImplementation is MockERC721 {
+    function initialize(string memory) public {} // Missing name and symbol parameters
+}
+
 contract MagicDropCloneFactoryTest is Test {
     MagicDropCloneFactory internal factory;
     MagicDropTokenImplRegistry internal registry;
@@ -148,5 +152,37 @@ contract MagicDropCloneFactoryTest is Test {
         assertTrue(!factory.isSaltUsed(salt));
         factory.createContractDeterministic("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId, salt);
         assertTrue(factory.isSaltUsed(salt));
+    }
+
+    function testImplementationDeprecated() public {
+        TokenStandard standard = TokenStandard.ERC721;
+
+        vm.startPrank(owner);
+        uint32 implId = registry.registerImplementation(standard, address(erc721Impl));
+        registry.deprecateImplementation(standard, implId);
+        vm.stopPrank();
+
+        vm.expectRevert(MagicDropCloneFactory.ImplementationDeprecated.selector);
+        factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
+    }
+
+    function testImplementationNotRegistered() public {
+        TokenStandard standard = TokenStandard.ERC721;
+        uint32 implId = 999;
+
+        vm.expectRevert(MagicDropCloneFactory.ImplementationNotRegistered.selector);
+        factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
+    }
+
+    function testInitializationFailed() public {
+        TokenStandard standard = TokenStandard.ERC721;
+
+        vm.startPrank(owner);
+        InvalidImplementation impl = new InvalidImplementation();
+        uint32 implId = registry.registerImplementation(standard, address(impl));
+        vm.stopPrank();
+
+        vm.expectRevert(MagicDropCloneFactory.InitializationFailed.selector);
+        factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
     }
 }

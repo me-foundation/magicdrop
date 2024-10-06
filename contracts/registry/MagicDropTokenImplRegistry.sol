@@ -65,12 +65,12 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
         _initializeOwner(initialOwner);
 
         // Initialize nextImplId and interface IDs for each token standard
-        RegistryStorage storage data = _loadRegistryStorage();
-        data.tokenStandardData[TokenStandard.ERC721].nextImplId = 1;
-        data.tokenStandardData[TokenStandard.ERC721].interfaceId = 0x80ac58cd; // ERC721 interface ID
+        RegistryStorage storage $ = _loadRegistryStorage();
+        $.tokenStandardData[TokenStandard.ERC721].nextImplId = 1;
+        $.tokenStandardData[TokenStandard.ERC721].interfaceId = 0x80ac58cd; // ERC721 interface ID
 
-        data.tokenStandardData[TokenStandard.ERC1155].nextImplId = 1;
-        data.tokenStandardData[TokenStandard.ERC1155].interfaceId = 0xd9b67a26; // ERC1155 interface ID
+        $.tokenStandardData[TokenStandard.ERC1155].nextImplId = 1;
+        $.tokenStandardData[TokenStandard.ERC1155].interfaceId = 0xd9b67a26; // ERC1155 interface ID
     }
 
     /*==============================================================
@@ -83,8 +83,8 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if an implementation with the same name is already registered.
     function registerImplementation(TokenStandard standard, address impl) external onlyOwner returns (uint32) {
-        RegistryStorage storage data = _loadRegistryStorage();
-        bytes4 interfaceId = data.tokenStandardData[standard].interfaceId;
+        RegistryStorage storage $ = _loadRegistryStorage();
+        bytes4 interfaceId = $.tokenStandardData[standard].interfaceId;
         if (interfaceId == 0) {
             revert UnsupportedTokenStandard(standard);
         }
@@ -93,9 +93,9 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
             revert ImplementationDoesNotSupportStandard(standard);
         }
 
-        uint32 implId = data.tokenStandardData[standard].nextImplId;
-        data.tokenStandardData[standard].implementations[implId] = impl;
-        data.tokenStandardData[standard].nextImplId = implId + 1;
+        uint32 implId = $.tokenStandardData[standard].nextImplId;
+        $.tokenStandardData[standard].implementations[implId] = impl;
+        $.tokenStandardData[standard].nextImplId = implId + 1;
         emit ImplementationRegistered(standard, impl, implId);
         return implId;
     }
@@ -106,16 +106,16 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if the implementation is not registered or already deprecated.
     function deprecateImplementation(TokenStandard standard, uint32 implId) external onlyOwner {
-        RegistryStorage storage data = _loadRegistryStorage();
-        if (data.tokenStandardData[standard].implementations[implId] == address(0)) {
+        RegistryStorage storage $ = _loadRegistryStorage();
+        if ($.tokenStandardData[standard].implementations[implId] == address(0)) {
             revert ImplementationNotRegistered();
         }
 
-        if (data.tokenStandardData[standard].deprecatedImplementations[implId]) {
+        if ($.tokenStandardData[standard].deprecatedImplementations[implId]) {
             revert ImplementationAlreadyDeprecated();
         }
 
-        data.tokenStandardData[standard].deprecatedImplementations[implId] = true;
+        $.tokenStandardData[standard].deprecatedImplementations[implId] = true;
 
         emit ImplementationDeprecated(standard, implId);
     }

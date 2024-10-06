@@ -64,16 +64,6 @@ contract MagicDropTokenImplRegistryTest is Test {
         assertFalse(deprecated);
     }
 
-    function testGetImplementationDeprecated() public {
-        vm.startPrank(owner);
-        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
-        registry.deprecateImplementation(TokenStandard.ERC721, implId);
-        (address impl, bool deprecated) = registry.getImplementation(TokenStandard.ERC721, implId);
-        assertEq(impl, address(mockERC721));
-        assertTrue(deprecated);
-        vm.stopPrank();
-    }
-
     function testRegisterUnsupportedStandard() public {
         vm.prank(owner);
         vm.expectRevert(
@@ -83,5 +73,36 @@ contract MagicDropTokenImplRegistryTest is Test {
         );
         // register as erc1155 with erc721 impl
         registry.registerImplementation(TokenStandard.ERC1155, address(mockERC721));
+    }
+
+    function testDeprecateImplementation() public {
+        vm.startPrank(owner);
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
+        registry.deprecateImplementation(TokenStandard.ERC721, implId);
+        vm.stopPrank();
+
+        (address impl, bool deprecated) = registry.getImplementation(TokenStandard.ERC721, implId);
+        assertEq(impl, address(mockERC721));
+        assertTrue(deprecated);
+    }
+
+    function testFailDeprecateImplementationAsNonOwner() public {
+        vm.prank(user);
+        registry.deprecateImplementation(TokenStandard.ERC721, 1);
+    }
+
+    function testDeprecateImplementationNotRegistered() public {
+        vm.prank(owner);
+        vm.expectRevert(MagicDropTokenImplRegistry.ImplementationNotRegistered.selector);
+        registry.deprecateImplementation(TokenStandard.ERC721, 1);
+    }
+
+    function testDeprecateImplementationAlreadyDeprecated() public {
+        vm.startPrank(owner);
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
+        registry.deprecateImplementation(TokenStandard.ERC721, implId);
+        vm.expectRevert(MagicDropTokenImplRegistry.ImplementationAlreadyDeprecated.selector);
+        registry.deprecateImplementation(TokenStandard.ERC721, implId);
+        vm.stopPrank();
     }
 }
