@@ -35,7 +35,7 @@ describe('ERC721CM', function () {
         'uint32',
         'bool',
         'address',
-        'uint64',
+        'uint256',
         'uint256',
         'uint256',
       ],
@@ -627,6 +627,7 @@ describe('ERC721CM', function () {
         1,
         0,
         [ethers.utils.hexZeroPad('0x', 32)],
+        0,
         '0x00',
         {
           value: ethers.utils.parseEther('0.5'),
@@ -1105,6 +1106,7 @@ describe('ERC721CM', function () {
         1,
         0,
         [ethers.utils.hexZeroPad('0x', 32)],
+        0,
         '0x00',
         {
           value: ethers.utils.parseEther('0.5'),

@@ -45,7 +45,7 @@ describe('ERC1155M', function () {
         'uint32',
         'bool',
         'address',
-        'uint64',
+        'uint256',
         'uint256',
         'uint256',
       ],
