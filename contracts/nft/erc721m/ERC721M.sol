@@ -14,6 +14,8 @@ import "./interfaces/IERC721M.sol";
 import "../../utils/Constants.sol";
 import "../../common/Cosignable.sol";
 import "../../common/AuthorizedMinterControl.sol";
+import "./ERC721MStorage.sol";
+
 /**
  * @title ERC721M
  *
@@ -24,46 +26,9 @@ import "../../common/AuthorizedMinterControl.sol";
  *  - authorized minter support
  *  - anti-botting
  */
-
-contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosignable, AuthorizedMinterControl {
+contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosignable, AuthorizedMinterControl, ERC721MStorage {
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
-
-    // Whether this contract is mintable.
-    bool private _mintable;
-
-    // Whether base URI is permanent. Once set, base URI is immutable.
-    bool private _baseURIPermanent;
-
-    // The total mintable supply.
-    uint256 internal _maxMintableSupply;
-
-    // Global wallet limit, across all stages.
-    uint256 private _globalWalletLimit;
-
-    // Current base URI.
-    string private _currentBaseURI;
-
-    // The suffix for the token URL, e.g. ".json".
-    string private _tokenURISuffix;
-
-    // Mint stage infomation. See MintStageInfo for details.
-    MintStageInfo[] private _mintStages;
-
-    // Minted count per stage per wallet.
-    mapping(uint256 => mapping(address => uint32)) private _stageMintedCountsPerWallet;
-
-    // Minted count per stage.
-    mapping(uint256 => uint256) private _stageMintedCounts;
-
-    // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
-    address private _mintCurrency;
-
-    // Total mint fee
-    uint256 private _totalMintFee;
-
-    // Fund receiver
-    address public immutable FUND_RECEIVER;
 
     constructor(
         string memory collectionName,
@@ -84,7 +49,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
         _mintCurrency = mintCurrency;
-        FUND_RECEIVER = fundReceiver;
+        _fundReceiver = fundReceiver;
 
         _setCosigner(cosigner);
         _setTimestampExpirySeconds(timestampExpirySeconds);
@@ -414,7 +379,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
         _totalMintFee = 0;
 
         uint256 remainingValue = address(this).balance;
-        (success,) = FUND_RECEIVER.call{value: remainingValue}("");
+        (success,) = _fundReceiver.call{value: remainingValue}("");
         if (!success) revert WithdrawFailed();
 
         emit Withdraw(_totalMintFee + remainingValue);
@@ -430,7 +395,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
         _totalMintFee = 0;
 
         uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(FUND_RECEIVER, remaining);
+        IERC20(_mintCurrency).safeTransfer(_fundReceiver, remaining);
 
         emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
     }
@@ -458,6 +423,21 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard, Cosign
 
         string memory baseURI = _currentBaseURI;
         return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix)) : "";
+    }
+
+    /**
+     * @dev Returns URI for the collection-level metadata.
+     */
+    function contractURI() public view returns (string memory) {
+        return _contractURI;
+    }
+
+    /**
+     * @dev Set the URI for the collection-level metadata.
+     */
+    function setContractURI(string calldata uri) external onlyOwner {
+        _contractURI = uri;
+        emit SetContractURI(uri);
     }
 
     /**
