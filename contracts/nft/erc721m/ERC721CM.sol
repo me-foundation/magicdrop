@@ -23,7 +23,7 @@ import "../../common/AuthorizedMinterControl.sol";
  *  - multiple minting stages with time-based auto stage switch
  *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
- *  - crossmint support
+ *  - authorized minter support
  *  - anti-botting
  */
 contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosignable, AuthorizedMinterControl {
@@ -32,9 +32,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
 
     // Whether this contract is mintable.
     bool private _mintable;
-
-    // The crossmint address. Need to set if using crossmint.
-    address private _crossmintAddress;
 
     // The total mintable supply.
     uint256 internal _maxMintableSupply;
@@ -115,14 +112,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
      */
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
-    }
-
-    /**
-     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
-     */
-    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
-        _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(crossmintAddress);
     }
 
     /**
@@ -315,28 +304,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
         nonReentrant
     {
         _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
-    }
-
-    /**
-     * @dev Mints token(s) through crossmint. This function is supposed to be called by crossmint.
-     *
-     * qty - number of tokens to mint
-     * to - the address to mint tokens to
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
-        external
-        payable
-        nonReentrant
-    {
-        if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
-
-        // Check the caller is Crossmint
-        if (msg.sender != _crossmintAddress) revert CrossmintOnly();
-
-        _mintInternal(qty, to, 0, proof, timestamp, signature);
     }
 
     /**

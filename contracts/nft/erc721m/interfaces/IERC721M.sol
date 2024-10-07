@@ -20,10 +20,6 @@ interface IERC721M is IERC721AQueryable, ERC721MErrorsAndEvents {
         external
         payable;
 
-    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
-        external
-        payable;
-
     function authorizedMint(
         uint32 qty,
         address to,

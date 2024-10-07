@@ -1,7 +1,7 @@
 {
     "name": "@me-foundation/magicdrop-types",
     "version": "0.2.0",
-    "description": "Interface and types defination for MagicDrop. MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.",
+    "description": "Interface and types defination for MagicDrop. MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and authorized minter support.",
     "files": [
         "./contracts/**/*.sol",
         "./artifacts/contracts/**/*.json",

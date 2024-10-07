@@ -5,7 +5,6 @@ export * from './mint/mint';
 export * from './mint/ownerMint';
 export * from './mint/ownerMint1155';
 export * from './setup/setBaseURI';
-export * from './setup/setCrossmintAddress';
 export * from './setup/setGlobalWalletLimit';
 export * from './setup/setMaxMintableSupply';
 export * from './setup/setMintable';

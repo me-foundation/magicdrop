@@ -5,7 +5,7 @@
 [![MIT License][license-shield]][license-url]
 [![Coverage][coverage-shield]][coverage-url]
 
-MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.
+MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and authorized minter support.
 
 ## Motivation
 
@@ -38,7 +38,7 @@ The composability of the stages is generic enough to enable flexible and complic
 - Per-stage whitelist Merkle Tree
 - Per-stage Max Supply
 - Global and Per-stage Limit
-- Crossmint support
+- Authorized minter support
 - Native TypeScript and Typechain-Types Support
 
 ## Contracts

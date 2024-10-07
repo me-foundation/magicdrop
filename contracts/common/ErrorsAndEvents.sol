@@ -3,8 +3,6 @@ pragma solidity ^0.8.20;
 
 interface ErrorsAndEvents {
     error CannotIncreaseMaxMintableSupply();
-    error CrossmintAddressNotSet();
-    error CrossmintOnly();
     error GlobalWalletLimitOverflow();
     error InsufficientStageTimeGap();
     error InsufficientBalance();
@@ -26,7 +24,6 @@ interface ErrorsAndEvents {
     error NewSupplyLessThanTotalSupply();
     error NotTransferable();
 
-    event SetCrossmintAddress(address crossmintAddress);
     event SetMintable(bool mintable);
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);

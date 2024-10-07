@@ -17,7 +17,6 @@ contract ERC721CMInitializableTest is Test {
     address public minter;
     address public fundReceiver;
     address public readonly;
-    address public crossmintAddress;
     uint256 public constant INITIAL_SUPPLY = 1000;
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
 
@@ -25,12 +24,10 @@ contract ERC721CMInitializableTest is Test {
         owner = address(this);
         fundReceiver = address(0x1);
         readonly = address(0x2);
-        crossmintAddress = address(0x3);
         minter = address(0x4);
 
         vm.deal(owner, 10 ether);
         vm.deal(minter, 2 ether);
-        vm.deal(crossmintAddress, 1 ether);
 
         address clone = LibClone.deployERC1967(address(new ERC721CMInitializable()));
         nft = ERC721CMInitializable(clone);
@@ -43,7 +40,6 @@ contract ERC721CMInitializableTest is Test {
             60, // timestampExpirySeconds
             address(0),
             fundReceiver,
-            crossmintAddress,
             new MintStageInfo[](0),
             address(this),
             0
@@ -133,30 +129,6 @@ contract ERC721CMInitializableTest is Test {
         vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
         vm.prank(minter);
         nft.mint{value: 0.5 ether}(1, 0, new bytes32[](0), 0, "");
-    }
-
-    function testCrossmint() public {
-        MintStageInfo[] memory stages = new MintStageInfo[](1);
-        stages[0] = MintStageInfo({
-            price: 0.5 ether,
-            mintFee: 0,
-            walletLimit: 0,
-            merkleRoot: bytes32(0),
-            maxStageSupply: 100,
-            startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 1000000
-        });
-        nft.setStages(stages);
-
-        vm.warp(500000);
-
-        vm.prank(crossmintAddress);
-        nft.crossmint{value: 0.5 ether}(1, readonly, new bytes32[](0), 0, "");
-        assertEq(nft.balanceOf(readonly), 1);
-
-        vm.prank(minter);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.CrossmintOnly.selector));
-        nft.crossmint{value: 0.5 ether}(1, readonly, new bytes32[](0), 0, "");
     }
 
     function testTokenURI() public {

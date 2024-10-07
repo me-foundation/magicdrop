@@ -15,7 +15,6 @@ import {
   deploy,
   deploy1155,
   setBaseURI,
-  setCrossmintAddress,
   mint,
   ownerMint,
   setGlobalWalletLimit,
@@ -284,11 +283,6 @@ task('setBaseURI', 'Set the base uri')
     types.int,
   )
   .setAction(setBaseURI);
-
-task('setCrossmintAddress', 'Set crossmint address')
-  .addParam('contract', 'contract address')
-  .addParam('crossmintaddress', 'new crossmint address')
-  .setAction(setCrossmintAddress);
 
 task('mint', 'Mint token(s)')
   .addParam('contract', 'contract address')

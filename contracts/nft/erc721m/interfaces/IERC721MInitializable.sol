@@ -23,10 +23,6 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAn
 
     function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature) external payable;
 
-    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
-        external
-        payable;
-
     function authorizedMint(
         uint32 qty,
         address to,
