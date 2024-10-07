@@ -87,10 +87,11 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _tokenURISuffix = tokenURISuffix;
-        _cosigner = cosigner; // ethers.constants.AddressZero for no cosigning
-        _timestampExpirySeconds = timestampExpirySeconds;
         _mintCurrency = mintCurrency;
         FUND_RECEIVER = fundReceiver;
+
+        _setCosigner(cosigner);
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     /**
@@ -114,14 +115,6 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
      */
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
-    }
-
-    /**
-     * @dev Sets expiry in seconds. This timestamp specifies how long a signature from cosigner is valid for.
-     */
-    function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
-        _timestampExpirySeconds = expiry;
-        emit SetTimestampExpirySeconds(expiry);
     }
 
     /**
@@ -150,8 +143,14 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
      * @dev Sets cosigner. Can only be called by contract owner.
      */
     function setCosigner(address cosigner) external override onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
+        _setCosigner(cosigner);
+    }
+
+    /**
+     * @dev Sets timestamp expiry seconds. Can only be called by contract owner.
+     */
+    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     /**
@@ -182,7 +181,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
 
         for (uint256 i = 0; i < newStages.length;) {
             if (i >= 1) {
-                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds) {
+                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()) {
                     revert InsufficientStageTimeGap();
                 }
             }
@@ -375,7 +374,7 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
         uint64 stageTimestamp = uint64(block.timestamp);
         bool waiveMintFee = false;
 
-        if (_cosigner != address(0)) {
+        if (getCosigner() != address(0)) {
             waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender));
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;

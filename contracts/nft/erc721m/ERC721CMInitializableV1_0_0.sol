@@ -89,6 +89,7 @@ contract ERC721CMInitializableV1_0_0 is
         string calldata tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
+        address cosigner,
         uint256 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
@@ -107,13 +108,14 @@ contract ERC721CMInitializableV1_0_0 is
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
         _crossmintAddress = crossmintAddress;
-        _timestampExpirySeconds = timestampExpirySeconds;
 
         if (initialStages.length > 0) {
             _setStages(initialStages);
         }
 
         setDefaultRoyalty(defaultRoyaltyReceiver, defaultRoyaltyFeeNumerator);
+        _setCosigner(cosigner);
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     function _setStages(MintStageInfo[] calldata newStages) internal {
@@ -121,7 +123,7 @@ contract ERC721CMInitializableV1_0_0 is
 
         for (uint256 i = 0; i < newStages.length;) {
             if (i >= 1) {
-                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds) {
+                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()) {
                     revert InsufficientStageTimeGap();
                 }
             }
@@ -207,8 +209,14 @@ contract ERC721CMInitializableV1_0_0 is
      * @dev Sets cosigner. Can only be called by contract owner.
      */
     function setCosigner(address cosigner) external override onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
+        _setCosigner(cosigner);
+    }
+
+    /**
+     * @dev Sets timestamp expiry seconds. Can only be called by contract owner.
+     */
+    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     /**
@@ -371,7 +379,7 @@ contract ERC721CMInitializableV1_0_0 is
         uint64 stageTimestamp = uint64(block.timestamp);
         bool waiveMintFee = false;
 
-        if (_cosigner != address(0)) {
+        if (getCosigner() != address(0)) {
             waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender));
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;

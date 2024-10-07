@@ -244,14 +244,15 @@ contract ERC1155MInitializableV1_0_0 is
         _numTokens = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
-        _cosigner = cosigner;
         _transferable = true;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
-        _timestampExpirySeconds = timestampExpirySeconds;
 
         _setURI(uri_);
         setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+
+        _setCosigner(cosigner);
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     /// @notice Sets the minting stages
@@ -261,7 +262,7 @@ contract ERC1155MInitializableV1_0_0 is
 
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
-                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + _timestampExpirySeconds) {
+                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()) {
                     revert InsufficientStageTimeGap();
                 }
             }
@@ -408,8 +409,13 @@ contract ERC1155MInitializableV1_0_0 is
     /// @notice Sets the cosigner address
     /// @param cosigner The new cosigner address
     function setCosigner(address cosigner) external override onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
+        _setCosigner(cosigner);
+    }
+
+    /// @notice Sets the expiry time for timestamps
+    /// @param timestampExpirySeconds The number of seconds after which a timestamp is considered expired
+    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     /*==============================================================
@@ -436,7 +442,7 @@ contract ERC1155MInitializableV1_0_0 is
         uint64 stageTimestamp = uint64(block.timestamp);
         bool waiveMintFee = false;
 
-        if (_cosigner != address(0)) {
+        if (getCosigner() != address(0)) {
             waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender, tokenId));
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;

@@ -33,7 +33,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
 
     // keccak256(abi.encode(uint256(keccak256("magicdrop.factory.MagicDropCloneFactory")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant MAGICDROP_FACTORY_STORAGE =
-        0x994baf5eba3c0ba1b1d51c78027db74423206530efe4b85d37542c047fcc6500;
+        0xc982f4ee776d5a4a389c53cdba6d233ccdaf1824e9a3b0f1ea8fce06f767d800;
 
     /*==============================================================
     =                             EVENTS                           =
@@ -50,7 +50,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
 
     error ImplementationNotRegistered();
     error InitializationFailed();
-    error SaltAlreadyUsed(bytes32 salt);
+    error SaltAlreadyUsed();
     error ContractAlreadyDeployed(address deployedAddress);
     error RegistryAddressCannotBeZero();
     error ImplementationDeprecated();
@@ -116,9 +116,8 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             let saltUsed := sload(keccak256(0x00, 0x40)) // usedSalts[salt]
 
             if saltUsed {
-                mstore(0x00, shl(224, 0x8bae94a6)) // SaltAlreadyUsed(salt)
-                mstore(0x04, salt) // Store `salt` argument
-                revert(0x00, 0x24) // Revert with 36 bytes (4-byte selector + 32-byte `salt`)
+                mstore(0x00, 0x0ced3043) // SaltAlreadyUsed()
+                revert(0x1c, 0x04)
             }
         }
 

@@ -70,13 +70,12 @@ contract ERC1155M is
         _numTokens = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
-        _cosigner = cosigner;
-        _timestampExpirySeconds = timestampExpirySeconds;
-        _transferable = true;
-
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
+        _transferable = true;
 
+        _setCosigner(cosigner);
+        _setTimestampExpirySeconds(timestampExpirySeconds);
         _setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
     }
 
@@ -108,8 +107,14 @@ contract ERC1155M is
      * @dev Sets cosigner. Can only be called by contract owner.
      */
     function setCosigner(address cosigner) external override onlyOwner {
-        _cosigner = cosigner;
-        emit SetCosigner(cosigner);
+        _setCosigner(cosigner);
+    }
+
+    /**
+     * @dev Sets timestamp expiry seconds. Can only be called by contract owner.
+     */
+    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     /**
@@ -349,7 +354,7 @@ contract ERC1155M is
         uint64 stageTimestamp = uint64(block.timestamp);
         bool waiveMintFee = false;
 
-        if (_cosigner != address(0)) {
+        if (getCosigner() != address(0)) {
             waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender, tokenId));
             _assertValidTimestamp(timestamp);
             stageTimestamp = timestamp;

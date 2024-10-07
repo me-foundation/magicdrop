@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {console} from "forge-std/console.sol";
 import {Test} from "forge-std/Test.sol";
 import {MockERC721} from "solady/test/utils/mocks/MockERC721.sol";
 import {MockERC1155} from "solady/test/utils/mocks/MockERC1155.sol";
@@ -117,7 +118,7 @@ contract MagicDropCloneFactoryTest is Test {
             "TestNFT1", "TNFT1", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
         );
 
-        vm.expectRevert(abi.encodeWithSelector(MagicDropCloneFactory.SaltAlreadyUsed.selector, bytes32(0)));
+        vm.expectRevert(MagicDropCloneFactory.SaltAlreadyUsed.selector);
 
         factory.createContractDeterministic(
             "TestNFT2", "TNFT2", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)

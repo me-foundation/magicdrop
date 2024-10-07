@@ -160,7 +160,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
 
     /// @dev Loads the registry storage.
     /// @return $ The registry storage.
-    function _loadRegistryStorage() private pure returns (RegistryStorage storage $) {
+    function _loadRegistryStorage() internal pure returns (RegistryStorage storage $) {
         assembly {
             $.slot := MAGICDROP_REGISTRY_STORAGE
         }

@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {console} from "forge-std/console.sol";
 import {Test} from "forge-std/Test.sol";
 import {Cosignable} from "../../contracts/common/Cosignable.sol";
 
 contract MockCosignable is Cosignable {
     constructor(address cosigner) {
-        setCosigner(cosigner);
+        _setCosigner(cosigner);
     }
 
-    function setCosigner(address cosigner) public override {
-        _cosigner = cosigner;
+    function setCosigner(address cosigner) external override {
+        _setCosigner(cosigner);
     }
 
     // Expose internal functions for testing
@@ -18,12 +19,8 @@ contract MockCosignable is Cosignable {
         _assertValidTimestamp(timestamp);
     }
 
-    function getCosigner() public view returns (address) {
-        return _cosigner;
-    }
-
-    function getTimestampExpirySeconds() public view returns (uint256) {
-        return _timestampExpirySeconds;
+    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override {
+        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 }
 

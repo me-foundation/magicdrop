@@ -39,6 +39,7 @@ contract ERC721CMInitializableTest is Test {
             ".json",
             INITIAL_SUPPLY,
             GLOBAL_WALLET_LIMIT,
+            address(0),
             60, // timestampExpirySeconds
             address(0),
             fundReceiver,
@@ -126,12 +127,12 @@ contract ERC721CMInitializableTest is Test {
 
         vm.warp(0);
         vm.prank(minter);
-        nft.mint{value: 0.6 ether}(1, new bytes32[](0), 0, "");
+        nft.mint{value: 0.6 ether}(1, 0, new bytes32[](0), 0, "");
         assertEq(nft.balanceOf(minter), 1);
 
         vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
         vm.prank(minter);
-        nft.mint{value: 0.5 ether}(1, new bytes32[](0), 0, "");
+        nft.mint{value: 0.5 ether}(1, 0, new bytes32[](0), 0, "");
     }
 
     function testCrossmint() public {
@@ -177,7 +178,7 @@ contract ERC721CMInitializableTest is Test {
         vm.warp(500000);
 
         vm.prank(minter);
-        nft.mint{value: 0.1 ether}(1, new bytes32[](0), 0, "");
+        nft.mint{value: 0.1 ether}(1, 0, new bytes32[](0), 0, "");
         assertEq(nft.tokenURI(0), "base_uri_0.json");
 
         vm.expectRevert(abi.encodeWithSelector(IERC721A.URIQueryForNonexistentToken.selector));
