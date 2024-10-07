@@ -262,7 +262,7 @@ describe('BucketAuction', function () {
     );
     expect(await readonlyConn.getMinimumContributionInWei()).to.be.equal(999);
     await expect(readonlyConn.setMinimumContribution(1999)).to.be.revertedWith(
-      'Ownable',
+      'Unauthorized',
     );
   });
 
@@ -294,14 +294,14 @@ describe('BucketAuction', function () {
 
     await expect(ownerConn.setPrice(200)).to.emit(ownerConn, 'SetPrice');
     expect(await readonlyConn.getPrice()).to.be.equal(200);
-    await expect(readonlyConn.setPrice(200)).to.be.revertedWith('Ownable');
+    await expect(readonlyConn.setPrice(200)).to.be.revertedWith('Unauthorized');
   });
 
   it('Can set claimable', async () => {
     expect(await ownerConn.getClaimable()).to.be.equal(false);
 
     // Only owner can set claimable
-    await expect(readonlyConn.setClaimable(true)).to.be.revertedWith('Ownable');
+    await expect(readonlyConn.setClaimable(true)).to.be.revertedWith('Unauthorized');
 
     await ownerConn.setClaimable(true);
     expect(await ownerConn.getClaimable()).to.be.equal(true);
@@ -799,25 +799,25 @@ describe('BucketAuction', function () {
     it('Reverts if not owner', async () => {
       await expect(
         readonlyConn.sendTokens(readonly.address, 1),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
       await expect(
         readonlyConn.sendRefund(readonly.address),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
       await expect(
         readonlyConn.sendAllTokens(readonly.address),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
       await expect(
         readonlyConn.sendTokensBatch([readonly.address]),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
       await expect(
         readonlyConn.sendRefundBatch([readonly.address]),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
       await expect(
         readonlyConn.sendTokensAndRefund(readonly.address),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
       await expect(
         readonlyConn.sendTokensAndRefundBatch([readonly.address]),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
     });
 
     it('Reverts if price not set', async () => {

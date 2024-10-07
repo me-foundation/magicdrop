@@ -39,7 +39,6 @@ describe('ERC721M: Mint Currency', () => {
       );
       await erc721M.deployed();
 
-
       contract = erc721M.connect(owner);
 
       const block = await ethers.provider.getBlock(
@@ -83,7 +82,11 @@ describe('ERC721M: Mint Currency', () => {
           erc721M
             .connect(minter)
             .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith(`ERC20InsufficientAllowance("${erc721M.address}", 0, ${mintCost})`);
+        ).to.be.revertedWith(
+          ethers.utils
+            .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
+            .substring(0, 10), // first 4 bytes of the hash
+        );
       });
 
       it('should revert mint if not enough token balance', async function () {
@@ -99,7 +102,11 @@ describe('ERC721M: Mint Currency', () => {
           erc721M
             .connect(minter)
             .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith('ERC20InsufficientBalance');
+        ).to.be.revertedWith(
+          ethers.utils
+            .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
+            .substring(0, 10), // first 4 bytes of the hash
+        );
       });
 
       it('should transfer the ERC20 tokens and mint when all conditions are met', async function () {
@@ -143,7 +150,9 @@ describe('ERC721M: Mint Currency', () => {
         await erc721M.connect(owner).withdrawERC20();
 
         // Get the balance of fundReceiver
-        const fundReceiverBalance = await erc20.balanceOf(await fundReceiver.getAddress());
+        const fundReceiverBalance = await erc20.balanceOf(
+          await fundReceiver.getAddress(),
+        );
 
         expect(fundReceiverBalance).to.equal(initialAmount);
       });
@@ -153,7 +162,7 @@ describe('ERC721M: Mint Currency', () => {
       // Try to call withdrawERC20 from another account
       const mintAddress = await minter.getAddress();
       await expect(erc721M.connect(minter).withdrawERC20()).to.be.revertedWith(
-        "Unauthorized",
+        'Unauthorized',
       );
     });
   });
@@ -281,7 +290,11 @@ describe('ERC721CM: Mint Currency', () => {
           erc721CM
             .connect(minter)
             .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith(`ERC20InsufficientAllowance("${erc721CM.address}", 0, ${mintCost})`);
+        ).to.be.revertedWith(
+          ethers.utils
+            .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
+            .substring(0, 10), // first 4 bytes of the hash
+        );
       });
 
       it('should revert mint if not enough token balance', async function () {
@@ -299,7 +312,11 @@ describe('ERC721CM: Mint Currency', () => {
           erc721CM
             .connect(minter)
             .mint(mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-        ).to.be.revertedWith(`ERC20InsufficientBalance("${minterAddress}", ${minterBalance}, ${mintCost})`);
+        ).to.be.revertedWith(
+          ethers.utils
+            .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
+            .substring(0, 10), // first 4 bytes of the hash
+        );
       });
 
       it('should transfer the ERC20 tokens and mint when all conditions are met', async function () {
@@ -343,7 +360,9 @@ describe('ERC721CM: Mint Currency', () => {
         await erc721CM.connect(owner).withdrawERC20();
 
         // Get the fundReceiver's balance
-        const fundReceiverBalance = await erc20.balanceOf(await fundReceiver.getAddress());
+        const fundReceiverBalance = await erc20.balanceOf(
+          await fundReceiver.getAddress(),
+        );
 
         expect(fundReceiverBalance).to.equal(initialAmount);
       });
@@ -353,7 +372,7 @@ describe('ERC721CM: Mint Currency', () => {
       // Try to call withdrawERC20 from another account
       const mintAddress = await minter.getAddress();
       await expect(erc721CM.connect(minter).withdrawERC20()).to.be.revertedWith(
-        "Unauthorized",
+        'Unauthorized',
       );
     });
   });

@@ -107,7 +107,9 @@ describe('ERC1155M', function () {
     ).to.equal(0);
 
     // readonlyContract should not be able to withdraw
-    await expect(readonlyContract.withdraw()).to.be.revertedWith('Ownable');
+    await expect(readonlyContract.withdraw()).to.be.revertedWith(
+      'Unauthorized',
+    );
   });
 
   describe('Configure stages', function () {
@@ -122,9 +124,9 @@ describe('ERC1155M', function () {
             maxStageSupply: [5],
             startTimeUnixSeconds: 0,
             endTimeUnixSeconds: 1,
-          }
+          },
         ]),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
     });
 
     it('cannot set stages with insufficient gap', async () => {
@@ -163,7 +165,7 @@ describe('ERC1155M', function () {
             maxStageSupply: [5],
             startTimeUnixSeconds: 0,
             endTimeUnixSeconds: 0,
-          }
+          },
         ]),
       ).to.be.revertedWith('InvalidStartAndEndTimestamp');
 
@@ -202,7 +204,7 @@ describe('ERC1155M', function () {
             maxStageSupply: [5],
             startTimeUnixSeconds: 0,
             endTimeUnixSeconds: 1,
-          }
+          },
         ]),
       ).to.be.revertedWith('InvalidStageArgsLength');
 
@@ -216,7 +218,7 @@ describe('ERC1155M', function () {
             maxStageSupply: [5, 0],
             startTimeUnixSeconds: 0,
             endTimeUnixSeconds: 1,
-          }
+          },
         ]),
       ).to.be.revertedWith('InvalidStageArgsLength');
 
@@ -268,7 +270,8 @@ describe('ERC1155M', function () {
 
       expect(await contract.getNumberStages()).to.equal(2);
 
-      let [stageInfo, walletMintedCount, stageMintedCount] = await contract.getStageInfo(0);
+      let [stageInfo, walletMintedCount, stageMintedCount] =
+        await contract.getStageInfo(0);
       expect(stageInfo.price).to.eql([parseEther('0.5')]);
       expect(stageInfo.walletLimit).to.eql([3]);
       expect(stageInfo.maxStageSupply).to.eql([5]);
@@ -276,7 +279,8 @@ describe('ERC1155M', function () {
       expect(walletMintedCount).to.eql([BigNumber.from(0)]);
       expect(stageMintedCount).to.eql([BigNumber.from(0)]);
 
-      [stageInfo, walletMintedCount, stageMintedCount] = await contract.getStageInfo(1);
+      [stageInfo, walletMintedCount, stageMintedCount] =
+        await contract.getStageInfo(1);
       expect(stageInfo.price).to.eql([parseEther('0.6')]);
       expect(stageInfo.walletLimit).to.eql([4]);
       expect(stageInfo.maxStageSupply).to.eql([10]);
@@ -298,7 +302,8 @@ describe('ERC1155M', function () {
       ]);
 
       expect(await contract.getNumberStages()).to.equal(1);
-      [stageInfo, walletMintedCount, stageMintedCount] = await contract.getStageInfo(0);
+      [stageInfo, walletMintedCount, stageMintedCount] =
+        await contract.getStageInfo(0);
       expect(stageInfo.price).to.eql([parseEther('0.6')]);
       expect(stageInfo.walletLimit).to.eql([4]);
       expect(stageInfo.maxStageSupply).to.eql([0]);
@@ -329,14 +334,14 @@ describe('ERC1155M', function () {
       ]);
 
       expect(await contract.getNumberStages()).to.equal(2);
-      [stageInfo, walletMintedCount, stageMintedCount] = await contract.getStageInfo(1);
+      [stageInfo, walletMintedCount, stageMintedCount] =
+        await contract.getStageInfo(1);
       expect(stageInfo.price).to.eql([parseEther('0.7')]);
       expect(stageInfo.walletLimit).to.eql([5]);
       expect(stageInfo.maxStageSupply).to.eql([5]);
       expect(stageInfo.merkleRoot).to.eql([ethers.utils.hexZeroPad('0x4', 32)]);
       expect(walletMintedCount).to.eql([BigNumber.from(0)]);
       expect(stageMintedCount).to.eql([BigNumber.from(0)]);
-
     });
 
     it('get stage info', async () => {
@@ -354,7 +359,8 @@ describe('ERC1155M', function () {
 
       expect(await contract.getNumberStages()).to.equal(1);
 
-      const [stageInfo, walletMintedCount, stageMintedCount] = await contract.getStageInfo(0);
+      const [stageInfo, walletMintedCount, stageMintedCount] =
+        await contract.getStageInfo(0);
       expect(stageInfo.price).to.eql([parseEther('0.5')]);
       expect(stageInfo.walletLimit).to.eql([3]);
       expect(stageInfo.maxStageSupply).to.eql([5]);
@@ -406,9 +412,15 @@ describe('ERC1155M', function () {
       expect(await contract.getActiveStageFromTimestamp(20)).to.equal(0);
       expect(await contract.getActiveStageFromTimestamp(361)).to.equal(1);
 
-      await expect(contract.getActiveStageFromTimestamp(1)).to.be.revertedWith('InvalidStage');
-      await expect(contract.getActiveStageFromTimestamp(70)).to.be.revertedWith('InvalidStage');
-      await expect(contract.getActiveStageFromTimestamp(363)).to.be.revertedWith('InvalidStage');
+      await expect(contract.getActiveStageFromTimestamp(1)).to.be.revertedWith(
+        'InvalidStage',
+      );
+      await expect(contract.getActiveStageFromTimestamp(70)).to.be.revertedWith(
+        'InvalidStage',
+      );
+      await expect(
+        contract.getActiveStageFromTimestamp(363),
+      ).to.be.revertedWith('InvalidStage');
     });
   });
 
@@ -456,7 +468,7 @@ describe('ERC1155M', function () {
       });
       await expect(mint).to.be.revertedWith('NotEnoughValue');
 
-      mint = contract.mint(0, 1, 0,[ZERO_PROOF], 0, '0x00', {
+      mint = contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
         value: parseEther('0.499999'),
       });
       await expect(mint).to.be.revertedWith('NotEnoughValue');
@@ -475,7 +487,7 @@ describe('ERC1155M', function () {
         reentrancyExploiter.exploit(0, 1, [], {
           value: parseEther('0.5'),
         }),
-      ).to.be.revertedWith('ReentrancyGuardReentrantCall');
+      ).to.be.revertedWith('Reentrancy');
     });
 
     it('set max mintable supply', async () => {
@@ -503,7 +515,7 @@ describe('ERC1155M', function () {
       // readonlyContract should not be able to set max mintable supply
       await expect(
         readonlyContract.setMaxMintableSupply(0, 99),
-      ).to.be.revertedWith('Ownable');
+      ).to.be.revertedWith('Unauthorized');
 
       // can not set the mintable supply lower than the total supply
       await contract.ownerMint(owner.address, 0, 10);
