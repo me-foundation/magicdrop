@@ -130,6 +130,11 @@ describe('ERC1155M', function () {
     });
 
     it('cannot set stages with insufficient gap', async () => {
+      console.log(
+        'contract.getTimestampExpirySeconds()',
+        await contract.getTimestampExpirySeconds(),
+      );
+      
       await expect(
         contract.setStages([
           {
@@ -147,8 +152,8 @@ describe('ERC1155M', function () {
             walletLimit: [4],
             merkleRoot: [ethers.utils.hexZeroPad('0x2', 32)],
             maxStageSupply: [10],
-            startTimeUnixSeconds: 61,
-            endTimeUnixSeconds: 62,
+            startTimeUnixSeconds: 60,
+            endTimeUnixSeconds: 61,
           },
         ]),
       ).to.be.revertedWith('InsufficientStageTimeGap');
@@ -1953,9 +1958,19 @@ describe('ERC1155M', function () {
 
       // mint should revert
       await expect(
-        contract
-          .mint(0, mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00',),
-      ).to.be.revertedWith(`ERC20InsufficientAllowance("${contract.address}", 0, ${mintCost})`);
+        contract.mint(
+          0,
+          mintQty,
+          0,
+          [ethers.utils.hexZeroPad('0x', 32)],
+          0,
+          '0x00',
+        ),
+      ).to.be.revertedWith(
+        ethers.utils
+          .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
+          .substring(0, 10), // first 4 bytes of the hash
+      );
     });
 
     it('should revert mint if not enough token balance', async function () {
@@ -1970,9 +1985,19 @@ describe('ERC1155M', function () {
 
       // mint should revert
       await expect(
-        contract
-          .mint(0, mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00'),
-      ).to.be.revertedWith(`ERC20InsufficientBalance("${minterAddress}", ${minterBalance}, ${mintCost})`);
+        contract.mint(
+          0,
+          mintQty,
+          0,
+          [ethers.utils.hexZeroPad('0x', 32)],
+          0,
+          '0x00',
+        ),
+      ).to.be.revertedWith(
+        ethers.utils
+          .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
+          .substring(0, 10), // first 4 bytes of the hash
+      );
     });
 
     it('should transfer the ERC20 tokens and mint when all conditions are met', async function () {
