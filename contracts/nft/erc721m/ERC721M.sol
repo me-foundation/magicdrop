@@ -7,15 +7,16 @@ import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 import {ERC721AQueryable, IERC721A, ERC721A} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
-
 import {IERC721M} from "./interfaces/IERC721M.sol";
 import {ERC721MStorage} from "./ERC721MStorage.sol";
-
 import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 import {MintStageInfo} from "../../common/Structs.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 
+/// @title ERC721M
+/// @notice An upgradeable ERC721 contract with multi-stage minting, royalties, and authorized minters
+/// @dev Implements ERC721, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
 contract ERC721M is
     IERC721M,
     ERC721AQueryable,
@@ -25,6 +26,20 @@ contract ERC721M is
     AuthorizedMinterControl,
     ERC721MStorage
 {
+    /*==============================================================
+    =                          CONSTRUCTOR                        =
+    ==============================================================*/
+
+    /// @notice Constructor for the ERC721M contract
+    /// @param collectionName The name of the collection
+    /// @param collectionSymbol The symbol of the collection
+    /// @param tokenURISuffix The suffix for the token URI
+    /// @param maxMintableSupply The maximum number of tokens that can be minted
+    /// @param globalWalletLimit The global wallet limit for minting
+    /// @param cosigner The address of the cosigner
+    /// @param timestampExpirySeconds The expiry time in seconds for timestamps
+    /// @param mintCurrency The address of the mint currency
+    /// @param fundReceiver The address of the fund receiver
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -51,36 +66,188 @@ contract ERC721M is
         _initializeOwner(msg.sender);
     }
 
+    /*==============================================================
+    =                             META                             =
+    ==============================================================*/
+
+    /// @notice Returns the contract name and version
+    /// @return The contract name and version as strings
+    function contractNameAndVersion() public pure returns (string memory, string memory) {
+        return ("ERC721M", "1.0.0");
+    }
+
+    /// @notice Gets the token URI for a specific token ID
+    /// @param tokenId The ID of the token
+    /// @return The token URI
+    function tokenURI(uint256 tokenId) public view override(ERC721A, IERC721A) returns (string memory) {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+        string memory baseURI = _currentBaseURI;
+        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix)) : "";
+    }
+
+    /// @notice Gets the contract URI
+    /// @return The contract URI
+    function contractURI() public view returns (string memory) {
+        return _contractURI;
+    }
+
+    /*==============================================================
+    =                             MODIFIERS                        =
+    ==============================================================*/
+
+    /// @notice Modifier to check if the contract is mintable
     modifier canMint() {
         if (!_mintable) revert NotMintable();
         _;
     }
 
+    /// @notice Modifier to check if the total supply is enough
+    /// @param qty The quantity to mint
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
         _;
     }
 
+    /*==============================================================
+    =                     PUBLIC WRITE METHODS                     =
+    ==============================================================*/
+
+    /// @notice Mints tokens for the caller
+    /// @param qty The quantity to mint
+    /// @param limit The minting limit for the caller (used in merkle proofs)
+    /// @param proof The merkle proof for allowlist minting
+    /// @param timestamp The timestamp for the minting action (used in cosigning)
+    /// @param signature The cosigner's signature
+    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
+        external
+        payable
+        virtual
+        nonReentrant
+    {
+        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
+    }
+
+    /// @notice Allows authorized minters to mint tokens for a specified address
+    /// @param to The address to mint tokens for
+    /// @param qty The quantity to mint
+    /// @param limit The minting limit for the recipient (used in merkle proofs)
+    /// @param proof The merkle proof for allowlist minting
+    /// @param timestamp The timestamp for the minting action (used in cosigning)
+    /// @param signature The cosigner's signature
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint256 timestamp,
+        bytes calldata signature
+    ) external payable onlyAuthorizedMinter {
+        _mintInternal(qty, to, limit, proof, timestamp, signature);
+    }
+
+    /*==============================================================
+    =                      PUBLIC VIEW METHODS                     =
+    ==============================================================*/
+
+    /// @notice Gets the stage info for a given stage index
+    /// @param index The stage index
+    /// @return The stage info, wallet minted count, and stage minted count
+    function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
+        if (index >= _mintStages.length) {
+            revert("InvalidStage");
+        }
+        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
+        uint256 stageMinted = _stageMintedCounts[index];
+        return (_mintStages[index], walletMinted, stageMinted);
+    }
+
+    /// @notice Gets the mint currency address
+    /// @return The address of the mint currency
+    function getMintCurrency() external view returns (address) {
+        return _mintCurrency;
+    }
+
+    /// @notice Gets the cosign nonce for a specific minter
+    /// @param minter The address of the minter
+    /// @return The cosign nonce
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
     }
 
+    /// @notice Gets the mintable status
+    /// @return The mintable status
+    function getMintable() external view returns (bool) {
+        return _mintable;
+    }
+
+    /// @notice Gets the number of minting stages
+    /// @return The number of minting stages
+    function getNumberStages() external view override returns (uint256) {
+        return _mintStages.length;
+    }
+
+    /// @notice Gets the maximum mintable supply
+    /// @return The maximum mintable supply
+    function getMaxMintableSupply() external view override returns (uint256) {
+        return _maxMintableSupply;
+    }
+
+    /// @notice Gets the global wallet limit
+    /// @return The global wallet limit
+    function getGlobalWalletLimit() external view override returns (uint256) {
+        return _globalWalletLimit;
+    }
+
+    /// @notice Gets the total minted count for a specific address
+    /// @param a The address to get the minted count for
+    /// @return The total minted count
+    function totalMintedByAddress(address a) external view virtual override returns (uint256) {
+        return _numberMinted(a);
+    }
+
+    /// @notice Gets the active stage from the timestamp
+    /// @param timestamp The timestamp to get the active stage from
+    /// @return The active stage
+    function getActiveStageFromTimestamp(uint256 timestamp) public view returns (uint256) {
+        for (uint256 i = 0; i < _mintStages.length; i++) {
+            if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
+                return i;
+            }
+        }
+        revert InvalidStage();
+    }
+
+    /*==============================================================
+    =                      ADMIN OPERATIONS                        =
+    ==============================================================*/
+
+    /// @notice Adds an authorized minter
+    /// @param minter The address to add as an authorized minter
     function addAuthorizedMinter(address minter) external override onlyOwner {
         _addAuthorizedMinter(minter);
     }
 
+    /// @notice Removes an authorized minter
+    /// @param minter The address to remove as an authorized minter
     function removeAuthorizedMinter(address minter) external override onlyOwner {
         _removeAuthorizedMinter(minter);
     }
 
+    /// @notice Sets the cosigner address
+    /// @param cosigner The address to set as the cosigner
     function setCosigner(address cosigner) external override onlyOwner {
         _setCosigner(cosigner);
     }
 
+    /// @notice Sets the timestamp expiry seconds
+    /// @param timestampExpirySeconds The expiry time in seconds for timestamps
     function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
         _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
+    /// @notice Sets the mint stages
+    /// @param newStages The new mint stages to set
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         delete _mintStages;
 
@@ -118,23 +285,15 @@ contract ERC721M is
         }
     }
 
-    function getMintable() external view returns (bool) {
-        return _mintable;
-    }
-
+    /// @notice Sets the mintable status
+    /// @param mintable The mintable status to set
     function setMintable(bool mintable) external onlyOwner {
         _mintable = mintable;
         emit SetMintable(mintable);
     }
 
-    function getNumberStages() external view override returns (uint256) {
-        return _mintStages.length;
-    }
-
-    function getMaxMintableSupply() external view override returns (uint256) {
-        return _maxMintableSupply;
-    }
-
+    /// @notice Sets the maximum mintable supply
+    /// @param maxMintableSupply The maximum mintable supply to set
     function setMaxMintableSupply(uint256 maxMintableSupply) external virtual onlyOwner {
         if (maxMintableSupply > _maxMintableSupply) {
             revert CannotIncreaseMaxMintableSupply();
@@ -143,10 +302,8 @@ contract ERC721M is
         emit SetMaxMintableSupply(maxMintableSupply);
     }
 
-    function getGlobalWalletLimit() external view override returns (uint256) {
-        return _globalWalletLimit;
-    }
-
+    /// @notice Sets the global wallet limit
+    /// @param globalWalletLimit The global wallet limit to set
     function setGlobalWalletLimit(uint256 globalWalletLimit) external onlyOwner {
         if (globalWalletLimit > _maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
@@ -155,43 +312,77 @@ contract ERC721M is
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
-    function totalMintedByAddress(address a) external view virtual override returns (uint256) {
-        return _numberMinted(a);
+    /// @notice Allows the owner to mint tokens for a specific address
+    /// @param qty The quantity to mint
+    /// @param to The address to mint tokens for
+    function ownerMint(uint32 qty, address to) external onlyOwner hasSupply(qty) {
+        _safeMint(to, qty);
     }
 
-    function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
-        if (index >= _mintStages.length) {
-            revert("InvalidStage");
-        }
-        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
-        uint256 stageMinted = _stageMintedCounts[index];
-        return (_mintStages[index], walletMinted, stageMinted);
+    /// @notice Withdraws the total mint fee and remaining balance from the contract
+    /// @dev Can only be called by the owner
+    function withdraw() external onlyOwner {
+        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
+        if (!success) revert TransferFailed();
+        _totalMintFee = 0;
+
+        uint256 remainingValue = address(this).balance;
+        (success,) = _fundReceiver.call{value: remainingValue}("");
+        if (!success) revert WithdrawFailed();
+
+        emit Withdraw(_totalMintFee + remainingValue);
     }
 
-    function getMintCurrency() external view returns (address) {
-        return _mintCurrency;
+    /// @notice Withdraws ERC20 tokens from the contract
+    /// @dev Can only be called by the owner
+    function withdrawERC20() external onlyOwner {
+        if (_mintCurrency == address(0)) revert WrongMintCurrency();
+
+        uint256 totalFee = _totalMintFee;
+        uint256 remaining = SafeTransferLib.balanceOf(_mintCurrency, address(this));
+
+        if (remaining < totalFee) revert InsufficientBalance();
+
+        _totalMintFee = 0;
+        uint256 totalAmount = totalFee + remaining;
+
+        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
+
+        emit WithdrawERC20(_mintCurrency, totalAmount);
     }
 
-    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
-        external
-        payable
-        virtual
-        nonReentrant
-    {
-        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
+    /// @notice Sets the base URI for the token URIs
+    /// @param baseURI The base URI to set
+    function setBaseURI(string calldata baseURI) external onlyOwner {
+        _currentBaseURI = baseURI;
+        emit SetBaseURI(baseURI);
     }
 
-    function authorizedMint(
-        uint32 qty,
-        address to,
-        uint32 limit,
-        bytes32[] calldata proof,
-        uint256 timestamp,
-        bytes calldata signature
-    ) external payable onlyAuthorizedMinter {
-        _mintInternal(qty, to, limit, proof, timestamp, signature);
+    /// @notice Sets the token URI suffix
+    /// @param suffix The suffix to set
+    function setTokenURISuffix(string calldata suffix) external onlyOwner {
+        _tokenURISuffix = suffix;
     }
 
+    /// @notice Sets the contract URI
+    /// @param uri The URI to set
+    function setContractURI(string calldata uri) external onlyOwner {
+        _contractURI = uri;
+        emit SetContractURI(uri);
+    }
+
+    /*==============================================================
+    =                      INTERNAL HELPERS                        =
+    ==============================================================*/
+
+    /// @notice Internal function to handle minting logic
+    /// @param qty The quantity to mint
+    /// @param to The address to mint tokens for
+    /// @param limit The minting limit for the recipient (used in merkle proofs)
+    /// @param proof The merkle proof for allowlist minting
+    /// @param timestamp The timestamp for the minting action (used in cosigning)
+    /// @param signature The cosigner's signature
     function _mintInternal(
         uint32 qty,
         address to,
@@ -264,85 +455,10 @@ contract ERC721M is
         _safeMint(to, qty);
     }
 
-    function ownerMint(uint32 qty, address to) external onlyOwner hasSupply(qty) {
-        _safeMint(to, qty);
-    }
-
-    function withdraw() external onlyOwner {
-        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
-        if (!success) revert TransferFailed();
-        _totalMintFee = 0;
-
-        uint256 remainingValue = address(this).balance;
-        (success,) = _fundReceiver.call{value: remainingValue}("");
-        if (!success) revert WithdrawFailed();
-
-        emit Withdraw(_totalMintFee + remainingValue);
-    }
-
-    /// @notice Withdraws ERC20 tokens from the contract
-    /// @dev Can only be called by the owner
-    function withdrawERC20() external onlyOwner {
-        if (_mintCurrency == address(0)) revert WrongMintCurrency();
-
-        uint256 totalFee = _totalMintFee;
-        uint256 remaining = SafeTransferLib.balanceOf(_mintCurrency, address(this));
-
-        if (remaining < totalFee) revert InsufficientBalance();
-
-        _totalMintFee = 0;
-        uint256 totalAmount = totalFee + remaining;
-
-        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
-        SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
-
-        emit WithdrawERC20(_mintCurrency, totalAmount);
-    }
-
-    function setBaseURI(string calldata baseURI) external onlyOwner {
-        _currentBaseURI = baseURI;
-        emit SetBaseURI(baseURI);
-    }
-
-    function setTokenURISuffix(string calldata suffix) external onlyOwner {
-        _tokenURISuffix = suffix;
-    }
-
-    function tokenURI(uint256 tokenId) public view override(ERC721A, IERC721A) returns (string memory) {
-        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
-
-        string memory baseURI = _currentBaseURI;
-        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix)) : "";
-    }
-
-    function contractURI() public view returns (string memory) {
-        return _contractURI;
-    }
-
-    function setContractURI(string calldata uri) external onlyOwner {
-        _contractURI = uri;
-        emit SetContractURI(uri);
-    }
-
-    function getActiveStageFromTimestamp(uint256 timestamp) public view returns (uint256) {
-        for (uint256 i = 0; i < _mintStages.length; i++) {
-            if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
-                return i;
-            }
-        }
-        revert InvalidStage();
-    }
-
+    /// @notice Validates the start and end timestamps for a stage
+    /// @param start The start timestamp
+    /// @param end The end timestamp
     function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
-    }
-
-    function _chainID() private view returns (uint256) {
-        uint256 chainID;
-        /// @solidity memory-safe-assembly
-        assembly {
-            chainID := chainid()
-        }
-        return chainID;
     }
 }
