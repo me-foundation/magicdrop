@@ -205,3 +205,5 @@ export const cleanWhitelist = async (whitelistPath: string, writeToFile: boolean
   console.log(`=========================================`);
   return wallets;
 }
+
+export const ensureArray = (value: any) => Array.isArray(value) ? value : [value];
