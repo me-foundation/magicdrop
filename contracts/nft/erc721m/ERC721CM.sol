@@ -2,31 +2,24 @@
 
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import "../creator-token-standards/ERC721ACQueryable.sol";
-import "./interfaces/IERC721M.sol";
-import "../../utils/Constants.sol";
-import "../../common/Cosignable.sol";
-import "../../common/AuthorizedMinterControl.sol";
-import "./ERC721MStorage.sol";
-/**
- * @title ERC721CM
- *
- * @dev ERC721ACQueryable and ERC721C subclass with MagicEden launchpad features including
- *  - multiple minting stages with time-based auto stage switch
- *  - global and stage wallet-level minting limit
- *  - whitelist using merkle tree
- *  - authorized minter support
- *  - anti-botting
- */
+import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
+import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
+import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
+import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol"; // Required by CreatorTokenBase
+import {ERC721ACQueryable, ERC721A, IERC721A} from "../creator-token-standards/ERC721ACQueryable.sol";
+
+import {IERC721M} from "./interfaces/IERC721M.sol";
+import {ERC721MStorage} from "./ERC721MStorage.sol";
+import {Cosignable} from "../../common/Cosignable.sol";
+import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
+import {MintStageInfo} from "../../common/Structs.sol";
+import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+
+/// @title ERC721CM
+/// @notice An upgradeable ERC721 contract with multi-stage minting, royalties, and authorized minters
+/// @dev Implements ERC721, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
 contract ERC721CM is
     IERC721M,
     ERC721ACQueryable,
@@ -34,11 +27,23 @@ contract ERC721CM is
     ReentrancyGuard,
     Cosignable,
     AuthorizedMinterControl,
-    ERC721MStorage
+    ERC721MStorage,
+    ERC2981
 {
-    using ECDSA for bytes32;
-    using SafeERC20 for IERC20;
+    /*==============================================================
+    =                          CONSTRUCTOR                        =
+    ==============================================================*/
 
+    /// @notice Constructor for the ERC721CM contract
+    /// @param collectionName The name of the collection
+    /// @param collectionSymbol The symbol of the collection
+    /// @param tokenURISuffix The suffix for the token URI
+    /// @param maxMintableSupply The maximum number of tokens that can be minted
+    /// @param globalWalletLimit The global wallet limit for minting
+    /// @param cosigner The address of the cosigner
+    /// @param timestampExpirySeconds The expiry time in seconds for timestamps
+    /// @param mintCurrency The address of the mint currency
+    /// @param fundReceiver The address of the fund receiver
     constructor(
         string memory collectionName,
         string memory collectionSymbol,
@@ -64,84 +69,212 @@ contract ERC721CM is
         _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
-    /**
-     * @dev Returns whether mintable.
-     */
+    /*==============================================================
+    =                             META                             =
+    ==============================================================*/
+
+    /// @notice Returns the contract name and version
+    /// @return The contract name and version as strings
+    function contractNameAndVersion() public pure returns (string memory, string memory) {
+        return ("ERC721M", "1.0.0");
+    }
+
+    /// @notice Gets the token URI for a specific token ID
+    /// @param tokenId The ID of the token
+    /// @return The token URI
+    function tokenURI(uint256 tokenId) public view override(ERC721A, IERC721A) returns (string memory) {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+        string memory baseURI = _currentBaseURI;
+        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix)) : "";
+    }
+
+    /// @notice Gets the contract URI
+    /// @return The contract URI
+    function contractURI() public view returns (string memory) {
+        return _contractURI;
+    }
+
+    /// @notice Checks if the contract supports a given interface
+    /// @param interfaceId The interface identifier
+    /// @return True if the contract supports the interface, false otherwise
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC2981, IERC721A, ERC721ACQueryable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
+            || ERC721ACQueryable.supportsInterface(interfaceId);
+    }
+
+    /*==============================================================
+    =                             MODIFIERS                        =
+    ==============================================================*/
+
+    /// @notice Modifier to check if the contract is mintable
     modifier canMint() {
         if (!_mintable) revert NotMintable();
         _;
     }
 
-    /**
-     * @dev Returns whether it has enough supply for the given qty.
-     */
+    /// @notice Modifier to check if the total supply is enough
+    /// @param qty The quantity to mint
     modifier hasSupply(uint256 qty) {
         if (totalSupply() + qty > _maxMintableSupply) revert NoSupplyLeft();
         _;
     }
 
-    /**
-     * @dev Returns cosign nonce.
-     */
+    /*==============================================================
+    =                     PUBLIC WRITE METHODS                     =
+    ==============================================================*/
+
+    /// @notice Mints tokens for the caller
+    /// @param qty The quantity to mint
+    /// @param limit The minting limit for the caller (used in merkle proofs)
+    /// @param proof The merkle proof for allowlist minting
+    /// @param timestamp The timestamp for the minting action (used in cosigning)
+    /// @param signature The cosigner's signature
+    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
+        external
+        payable
+        virtual
+        nonReentrant
+    {
+        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
+    }
+
+    /// @notice Allows authorized minters to mint tokens for a specified address
+    /// @param to The address to mint tokens for
+    /// @param qty The quantity to mint
+    /// @param limit The minting limit for the recipient (used in merkle proofs)
+    /// @param proof The merkle proof for allowlist minting
+    /// @param timestamp The timestamp for the minting action (used in cosigning)
+    /// @param signature The cosigner's signature
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint256 timestamp,
+        bytes calldata signature
+    ) external payable onlyAuthorizedMinter {
+        _mintInternal(qty, to, limit, proof, timestamp, signature);
+    }
+
+    /*==============================================================
+    =                      PUBLIC VIEW METHODS                     =
+    ==============================================================*/
+
+    /// @notice Gets the stage info for a given stage index
+    /// @param index The stage index
+    /// @return The stage info, wallet minted count, and stage minted count
+    function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
+        if (index >= _mintStages.length) {
+            revert("InvalidStage");
+        }
+        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
+        uint256 stageMinted = _stageMintedCounts[index];
+        return (_mintStages[index], walletMinted, stageMinted);
+    }
+
+    /// @notice Gets the mint currency address
+    /// @return The address of the mint currency
+    function getMintCurrency() external view returns (address) {
+        return _mintCurrency;
+    }
+
+    /// @notice Gets the cosign nonce for a specific minter
+    /// @param minter The address of the minter
+    /// @return The cosign nonce
     function getCosignNonce(address minter) public view returns (uint256) {
         return _numberMinted(minter);
     }
 
-    /**
-     * @dev Add authorized minter. Can only be called by contract owner.
-     */
+    /// @notice Gets the mintable status
+    /// @return The mintable status
+    function getMintable() external view returns (bool) {
+        return _mintable;
+    }
+
+    /// @notice Gets the number of minting stages
+    /// @return The number of minting stages
+    function getNumberStages() external view override returns (uint256) {
+        return _mintStages.length;
+    }
+
+    /// @notice Gets the maximum mintable supply
+    /// @return The maximum mintable supply
+    function getMaxMintableSupply() external view override returns (uint256) {
+        return _maxMintableSupply;
+    }
+
+    /// @notice Gets the global wallet limit
+    /// @return The global wallet limit
+    function getGlobalWalletLimit() external view override returns (uint256) {
+        return _globalWalletLimit;
+    }
+
+    /// @notice Gets the total minted count for a specific address
+    /// @param a The address to get the minted count for
+    /// @return The total minted count
+    function totalMintedByAddress(address a) external view virtual override returns (uint256) {
+        return _numberMinted(a);
+    }
+
+    /// @notice Gets the active stage from the timestamp
+    /// @param timestamp The timestamp to get the active stage from
+    /// @return The active stage
+    function getActiveStageFromTimestamp(uint256 timestamp) public view returns (uint256) {
+        for (uint256 i = 0; i < _mintStages.length; i++) {
+            if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
+                return i;
+            }
+        }
+        revert InvalidStage();
+    }
+
+    /// @notice Returns the function selector for the transfer validator's validation function to be called for transaction simulation.
+    function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
+        functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
+        isViewFunction = true;
+    }
+
+    /*==============================================================
+    =                      ADMIN OPERATIONS                        =
+    ==============================================================*/
+
+    /// @notice Adds an authorized minter
+    /// @param minter The address to add as an authorized minter
     function addAuthorizedMinter(address minter) external override onlyOwner {
         _addAuthorizedMinter(minter);
     }
 
-    /**
-     * @dev Remove authorized minter. Can only be called by contract owner.
-     */
+    /// @notice Removes an authorized minter
+    /// @param minter The address to remove as an authorized minter
     function removeAuthorizedMinter(address minter) external override onlyOwner {
         _removeAuthorizedMinter(minter);
     }
 
-    /**
-     * @dev Sets cosigner. Can only be called by contract owner.
-     */
+    /// @notice Sets the cosigner address
+    /// @param cosigner The address to set as the cosigner
     function setCosigner(address cosigner) external override onlyOwner {
         _setCosigner(cosigner);
     }
 
-    /**
-     * @dev Sets timestamp expiry seconds. Can only be called by contract owner.
-     */
+    /// @notice Sets the timestamp expiry seconds
+    /// @param timestampExpirySeconds The expiry time in seconds for timestamps
     function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
         _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
-    /**
-     * @dev Sets stages in the format of an array of `MintStageInfo`.
-     *
-     * Following is an example of launch with two stages. The first stage is exclusive for whitelisted wallets
-     * specified by merkle root.
-     *    [{
-     *      price: 10000000000000000000,
-     *      maxStageSupply: 2000,
-     *      walletLimit: 1,
-     *      merkleRoot: 0x559fadeb887449800b7b320bf1e92d309f329b9641ac238bebdb74e15c0a5218,
-     *      startTimeUnixSeconds: 1667768000,
-     *      endTimeUnixSeconds: 1667771600,
-     *     },
-     *     {
-     *      price: 20000000000000000000,
-     *      maxStageSupply: 3000,
-     *      walletLimit: 2,
-     *      merkleRoot: 0,
-     *      startTimeUnixSeconds: 1667771600,
-     *      endTimeUnixSeconds: 1667775200,
-     *     }
-     * ]
-     */
+    /// @notice Sets the mint stages
+    /// @param newStages The new mint stages to set
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
         delete _mintStages;
 
-        for (uint256 i = 0; i < newStages.length;) {
+        for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds
@@ -172,47 +305,18 @@ contract ERC721CM is
                 newStages[i].startTimeUnixSeconds,
                 newStages[i].endTimeUnixSeconds
             );
-
-            unchecked {
-                ++i;
-            }
         }
     }
 
-    /**
-     * @dev Gets whether mintable.
-     */
-    function getMintable() external view returns (bool) {
-        return _mintable;
-    }
-
-    /**
-     * @dev Sets mintable.
-     */
+    /// @notice Sets the mintable status
+    /// @param mintable The mintable status to set
     function setMintable(bool mintable) external onlyOwner {
         _mintable = mintable;
         emit SetMintable(mintable);
     }
 
-    /**
-     * @dev Returns number of stages.
-     */
-    function getNumberStages() external view override returns (uint256) {
-        return _mintStages.length;
-    }
-
-    /**
-     * @dev Returns maximum mintable supply.
-     */
-    function getMaxMintableSupply() external view override returns (uint256) {
-        return _maxMintableSupply;
-    }
-
-    /**
-     * @dev Sets maximum mintable supply.
-     *
-     * New supply cannot be larger than the old.
-     */
+    /// @notice Sets the maximum mintable supply
+    /// @param maxMintableSupply The maximum mintable supply to set
     function setMaxMintableSupply(uint256 maxMintableSupply) external virtual onlyOwner {
         if (maxMintableSupply > _maxMintableSupply) {
             revert CannotIncreaseMaxMintableSupply();
@@ -221,16 +325,8 @@ contract ERC721CM is
         emit SetMaxMintableSupply(maxMintableSupply);
     }
 
-    /**
-     * @dev Returns global wallet limit. This is the max number of tokens can be minted by one wallet.
-     */
-    function getGlobalWalletLimit() external view override returns (uint256) {
-        return _globalWalletLimit;
-    }
-
-    /**
-     * @dev Sets global wallet limit.
-     */
+    /// @notice Sets the global wallet limit
+    /// @param globalWalletLimit The global wallet limit to set
     function setGlobalWalletLimit(uint256 globalWalletLimit) external onlyOwner {
         if (globalWalletLimit > _maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
@@ -239,73 +335,77 @@ contract ERC721CM is
         emit SetGlobalWalletLimit(globalWalletLimit);
     }
 
-    /**
-     * @dev Returns number of minted token for a given address.
-     */
-    function totalMintedByAddress(address a) external view virtual override returns (uint256) {
-        return _numberMinted(a);
+    /// @notice Allows the owner to mint tokens for a specific address
+    /// @param qty The quantity to mint
+    /// @param to The address to mint tokens for
+    function ownerMint(uint32 qty, address to) external onlyOwner hasSupply(qty) {
+        _safeMint(to, qty);
     }
 
-    /**
-     * @dev Returns info for one stage specified by index (starting from 0).
-     */
-    function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
-        if (index >= _mintStages.length) {
-            revert("InvalidStage");
-        }
-        uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
-        uint256 stageMinted = _stageMintedCounts[index];
-        return (_mintStages[index], walletMinted, stageMinted);
+    /// @notice Withdraws the total mint fee and remaining balance from the contract
+    /// @dev Can only be called by the owner
+    function withdraw() external onlyOwner {
+        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
+        if (!success) revert TransferFailed();
+        _totalMintFee = 0;
+
+        uint256 remainingValue = address(this).balance;
+        (success,) = _fundReceiver.call{value: remainingValue}("");
+        if (!success) revert WithdrawFailed();
+
+        emit Withdraw(_totalMintFee + remainingValue);
     }
 
-    /**
-     * @dev Returns mint currency address.
-     */
-    function getMintCurrency() external view returns (address) {
-        return _mintCurrency;
+    /// @notice Withdraws ERC20 tokens from the contract
+    /// @dev Can only be called by the owner
+    function withdrawERC20() external onlyOwner {
+        if (_mintCurrency == address(0)) revert WrongMintCurrency();
+
+        uint256 totalFee = _totalMintFee;
+        uint256 remaining = SafeTransferLib.balanceOf(_mintCurrency, address(this));
+
+        if (remaining < totalFee) revert InsufficientBalance();
+
+        _totalMintFee = 0;
+        uint256 totalAmount = totalFee + remaining;
+
+        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
+
+        emit WithdrawERC20(_mintCurrency, totalAmount);
     }
 
-    /**
-     * @dev Mints token(s).
-     *
-     * qty - number of tokens to mint
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
-        external
-        payable
-        virtual
-        nonReentrant
-    {
-        _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
+    /// @notice Sets the base URI for the token URIs
+    /// @param baseURI The base URI to set
+    function setBaseURI(string calldata baseURI) external onlyOwner {
+        _currentBaseURI = baseURI;
+        emit SetBaseURI(baseURI);
     }
 
-    /**
-     * @dev Authorized mints token(s) with limit
-     *
-     * qty - number of tokens to mint
-     * to - the address to mint tokens to
-     * limit - limit for the given minter
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function authorizedMint(
-        uint32 qty,
-        address to,
-        uint32 limit,
-        bytes32[] calldata proof,
-        uint256 timestamp,
-        bytes calldata signature
-    ) external payable onlyAuthorizedMinter {
-        _mintInternal(qty, to, limit, proof, timestamp, signature);
+    /// @notice Sets the token URI suffix
+    /// @param suffix The suffix to set
+    function setTokenURISuffix(string calldata suffix) external onlyOwner {
+        _tokenURISuffix = suffix;
     }
 
-    /**
-     * @dev Implementation of minting.
-     */
+    /// @notice Sets the contract URI
+    /// @param uri The URI to set
+    function setContractURI(string calldata uri) external onlyOwner {
+        _contractURI = uri;
+        emit SetContractURI(uri);
+    }
+
+    /*==============================================================
+    =                      INTERNAL HELPERS                        =
+    ==============================================================*/
+
+    /// @notice Internal function to handle minting logic
+    /// @param qty The quantity to mint
+    /// @param to The address to mint tokens for
+    /// @param limit The minting limit for the recipient (used in merkle proofs)
+    /// @param proof The merkle proof for allowlist minting
+    /// @param timestamp The timestamp for the minting action (used in cosigning)
+    /// @param signature The cosigner's signature
     function _mintInternal(
         uint32 qty,
         address to,
@@ -354,7 +454,7 @@ contract ERC721CM is
 
         // Check merkle proof if applicable, merkleRoot == 0x00...00 means no proof required
         if (stage.merkleRoot != 0) {
-            if (MerkleProof.processProof(proof, keccak256(abi.encodePacked(to, limit))) != stage.merkleRoot) {
+            if (!MerkleProofLib.verify(proof, stage.merkleRoot, keccak256(abi.encodePacked(to, limit)))) {
                 revert InvalidProof();
             }
 
@@ -365,7 +465,10 @@ contract ERC721CM is
         }
 
         if (_mintCurrency != address(0)) {
-            IERC20(_mintCurrency).safeTransferFrom(msg.sender, address(this), (stage.price + adjustedMintFee) * qty);
+            // ERC20 mint payment
+            SafeTransferLib.safeTransferFrom(
+                _mintCurrency, msg.sender, address(this), (stage.price + adjustedMintFee) * qty
+            );
         }
 
         _totalMintFee += adjustedMintFee * qty;
@@ -375,130 +478,15 @@ contract ERC721CM is
         _safeMint(to, qty);
     }
 
-    /**
-     * @dev Mints token(s) by owner.
-     *
-     * NOTE: This function bypasses validations thus only available for owner.
-     * This is typically used for owner to  pre-mint or mint the remaining of the supply.
-     */
-    function ownerMint(uint32 qty, address to) external onlyOwner hasSupply(qty) {
-        _safeMint(to, qty);
-    }
-
-    /**
-     * @dev Withdraws funds by owner.
-     */
-    function withdraw() external onlyOwner {
-        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
-        if (!success) revert TransferFailed();
-        _totalMintFee = 0;
-
-        uint256 remainingValue = address(this).balance;
-        (success,) = _fundReceiver.call{value: remainingValue}("");
-        if (!success) revert WithdrawFailed();
-
-        emit Withdraw(_totalMintFee + remainingValue);
-    }
-
-    /**
-     * @dev Withdraws ERC-20 funds by owner.
-     */
-    function withdrawERC20() external onlyOwner {
-        if (_mintCurrency == address(0)) revert WrongMintCurrency();
-
-        IERC20(_mintCurrency).safeTransfer(MINT_FEE_RECEIVER, _totalMintFee);
-        _totalMintFee = 0;
-
-        uint256 remaining = IERC20(_mintCurrency).balanceOf(address(this));
-        IERC20(_mintCurrency).safeTransfer(_fundReceiver, remaining);
-
-        emit WithdrawERC20(_mintCurrency, _totalMintFee + remaining);
-    }
-
-    /**
-     * @dev Sets token base URI.
-     */
-    function setBaseURI(string calldata baseURI) external onlyOwner {
-        _currentBaseURI = baseURI;
-        emit SetBaseURI(baseURI);
-    }
-
-    /**
-     * @dev Sets token URI suffix. e.g. ".json".
-     */
-    function setTokenURISuffix(string calldata suffix) external onlyOwner {
-        _tokenURISuffix = suffix;
-    }
-
-    /**
-     * @dev Returns token URI for a given token id.
-     */
-    function tokenURI(uint256 tokenId) public view override(ERC721A, IERC721A) returns (string memory) {
-        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
-
-        string memory baseURI = _currentBaseURI;
-        return bytes(baseURI).length != 0 ? string(abi.encodePacked(baseURI, _toString(tokenId), _tokenURISuffix)) : "";
-    }
-
-    /**
-     * @dev Returns URI for the collection-level metadata.
-     */
-    function contractURI() public view returns (string memory) {
-        return _contractURI;
-    }
-
-    /**
-     * @dev Set the URI for the collection-level metadata.
-     */
-    function setContractURI(string calldata uri) external onlyOwner {
-        _contractURI = uri;
-        emit SetContractURI(uri);
-    }
-
-    /**
-     * @dev Returns the current active stage based on timestamp.
-     */
-    function getActiveStageFromTimestamp(uint256 timestamp) public view returns (uint256) {
-        for (uint256 i = 0; i < _mintStages.length;) {
-            if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
-                return i;
-            }
-            unchecked {
-                ++i;
-            }
-        }
-        revert InvalidStage();
-    }
-
-    /**
-     * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
-     */
+    /// @notice Validates the start and end timestamps for a stage
+    /// @param start The start timestamp
+    /// @param end The end timestamp
     function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 
-    /**
-     * @dev Returns chain id.
-     */
-    function _chainID() private view returns (uint256) {
-        uint256 chainID;
-        /// @solidity memory-safe-assembly
-        assembly {
-            chainID := chainid()
-        }
-        return chainID;
-    }
-
+    /// @notice Internal function to check if the caller is the contract owner
     function _requireCallerIsContractOwner() internal view virtual override {
         _checkOwner();
-    }
-
-    /**
-     * @notice Returns the function selector for the transfer validator's validation function to be called
-     * @notice for transaction simulation.
-     */
-    function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
-        functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
-        isViewFunction = true;
     }
 }
