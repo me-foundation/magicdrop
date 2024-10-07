@@ -116,7 +116,7 @@ router.post(
         'uint32',
         'bool',
         'address',
-        'uint64',
+        'uint256',
         'uint256',
         'uint256',
       ],
