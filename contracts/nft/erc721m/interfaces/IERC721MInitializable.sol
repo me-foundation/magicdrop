@@ -21,9 +21,9 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAn
 
     function getStageInfo(uint256 index) external view returns (MintStageInfo memory, uint32, uint256);
 
-    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature) external payable;
+    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature) external payable;
 
-    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature)
+    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
         external
         payable;
 
@@ -32,7 +32,7 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAn
         address to,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes calldata signature
     ) external payable;
 }

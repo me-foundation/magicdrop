@@ -16,7 +16,7 @@ contract ERC721CMRoyalties is ERC721CM, UpdatableRoyalties {
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds,
+        uint256 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
         address royaltyReceiver,

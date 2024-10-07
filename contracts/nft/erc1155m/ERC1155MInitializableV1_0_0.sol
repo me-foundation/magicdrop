@@ -91,7 +91,7 @@ contract ERC1155MInitializableV1_0_0 is
         uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
         _mintInternal(msg.sender, tokenId, qty, limit, proof, timestamp, signature);
@@ -141,7 +141,7 @@ contract ERC1155MInitializableV1_0_0 is
     /// @notice Gets the active stage based on a given timestamp
     /// @param timestamp The timestamp to check
     /// @return The active stage number
-    function getActiveStageFromTimestamp(uint64 timestamp) public view returns (uint256) {
+    function getActiveStageFromTimestamp(uint256 timestamp) public view returns (uint256) {
         for (uint256 i = 0; i < _mintStages.length; i++) {
             if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
                 return i;
@@ -224,7 +224,7 @@ contract ERC1155MInitializableV1_0_0 is
         string calldata uri_,
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
-        uint64 timestampExpirySeconds,
+        uint256 timestampExpirySeconds,
         address cosigner,
         address mintCurrency,
         address fundReceiver,
@@ -436,10 +436,10 @@ contract ERC1155MInitializableV1_0_0 is
         uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes memory signature
     ) internal hasSupply(tokenId, qty) {
-        uint64 stageTimestamp = uint64(block.timestamp);
+        uint256 stageTimestamp = block.timestamp;
         bool waiveMintFee = false;
 
         if (getCosigner() != address(0)) {
@@ -537,7 +537,7 @@ contract ERC1155MInitializableV1_0_0 is
     /// @dev Validates the start and end timestamps for a stage
     /// @param start The start timestamp
     /// @param end The end timestamp
-    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end) internal pure {
+    function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 

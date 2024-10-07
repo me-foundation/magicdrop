@@ -16,8 +16,8 @@ contract BucketAuction is IBucketAuction, ERC721M {
 
     bool private _claimable;
     bool private _firstTokenSent;
-    uint64 private _startTimeUnixSeconds;
-    uint64 private _endTimeUnixSeconds;
+    uint256 private _startTimeUnixSeconds;
+    uint256 private _endTimeUnixSeconds;
     uint256 private _minimumContributionInWei;
     uint256 private _price;
     mapping(address => User) private _userData;
@@ -30,10 +30,10 @@ contract BucketAuction is IBucketAuction, ERC721M {
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds,
+        uint256 timestampExpirySeconds,
         uint256 minimumContributionInWei,
-        uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds,
+        uint256 startTimeUnixSeconds,
+        uint256 endTimeUnixSeconds,
         address fundReceiver
     )
         ERC721M(
@@ -83,11 +83,11 @@ contract BucketAuction is IBucketAuction, ERC721M {
         return _price;
     }
 
-    function getStartTimeUnixSecods() external view returns (uint64) {
+    function getStartTimeUnixSecods() external view returns (uint256) {
         return _startTimeUnixSeconds;
     }
 
-    function getEndTimeUnixSecods() external view returns (uint64) {
+    function getEndTimeUnixSecods() external view returns (uint256) {
         return _endTimeUnixSeconds;
     }
 
@@ -141,7 +141,7 @@ contract BucketAuction is IBucketAuction, ERC721M {
      * @param startTime set to unix timestamp for the auction start time.
      * @param endTime set to unix timestamp for the auction end time.
      */
-    function setStartAndEndTimeUnixSeconds(uint64 startTime, uint64 endTime) external onlyOwner {
+    function setStartAndEndTimeUnixSeconds(uint256 startTime, uint256 endTime) external onlyOwner {
         if (_price != 0) revert PriceHasBeenSet();
         if (endTime <= startTime) revert InvalidStartAndEndTimestamp();
 

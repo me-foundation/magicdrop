@@ -14,8 +14,8 @@ interface ERC1155MErrorsAndEvents is ErrorsAndEvents {
         uint32[] walletLimit,
         bytes32[] merkleRoot,
         uint24[] maxStageSupply,
-        uint64 startTimeUnixSeconds,
-        uint64 endTimeUnixSeconds
+        uint256 startTimeUnixSeconds,
+        uint256 endTimeUnixSeconds
     );
     event SetMaxMintableSupply(uint256 indexed tokenId, uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 indexed tokenId, uint256 globalWalletLimit);

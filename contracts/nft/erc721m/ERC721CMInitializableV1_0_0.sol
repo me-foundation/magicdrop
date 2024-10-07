@@ -313,7 +313,7 @@ contract ERC721CMInitializableV1_0_0 is
      * timestamp - the current timestamp
      * signature - the signature from cosigner if using cosigner.
      */
-    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature)
+    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
         external
         payable
         virtual
@@ -331,7 +331,7 @@ contract ERC721CMInitializableV1_0_0 is
      * timestamp - the current timestamp
      * signature - the signature from cosigner if using cosigner.
      */
-    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint64 timestamp, bytes calldata signature)
+    function crossmint(uint32 qty, address to, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
         external
         payable
         nonReentrant
@@ -359,7 +359,7 @@ contract ERC721CMInitializableV1_0_0 is
         address to,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes calldata signature
     ) external payable onlyAuthorizedMinter {
         _mintInternal(qty, to, limit, proof, timestamp, signature);
@@ -373,10 +373,10 @@ contract ERC721CMInitializableV1_0_0 is
         address to,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes calldata signature
     ) internal canMint hasSupply(qty) {
-        uint64 stageTimestamp = uint64(block.timestamp);
+        uint256 stageTimestamp = block.timestamp;
         bool waiveMintFee = false;
 
         if (getCosigner() != address(0)) {
@@ -531,7 +531,7 @@ contract ERC721CMInitializableV1_0_0 is
     /**
      * @dev Returns the current active stage based on timestamp.
      */
-    function getActiveStageFromTimestamp(uint64 timestamp) public view returns (uint256) {
+    function getActiveStageFromTimestamp(uint256 timestamp) public view returns (uint256) {
         for (uint256 i = 0; i < _mintStages.length;) {
             if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
                 return i;
@@ -546,7 +546,7 @@ contract ERC721CMInitializableV1_0_0 is
     /**
      * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
      */
-    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end) internal pure {
+    function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 

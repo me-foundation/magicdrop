@@ -12,8 +12,8 @@ struct MintStageInfo {
     uint32 walletLimit; // 0 for unlimited
     bytes32 merkleRoot; // 0x0 for no presale enforced
     uint24 maxStageSupply; // 0 for unlimited
-    uint64 startTimeUnixSeconds;
-    uint64 endTimeUnixSeconds;
+    uint256 startTimeUnixSeconds;
+    uint256 endTimeUnixSeconds;
 }
 
 struct MintStageInfo1155 {
@@ -22,6 +22,6 @@ struct MintStageInfo1155 {
     uint32[] walletLimit; // 0 for unlimited
     bytes32[] merkleRoot; // 0x0 for no presale enforced
     uint24[] maxStageSupply; // 0 for unlimited
-    uint64 startTimeUnixSeconds;
-    uint64 endTimeUnixSeconds;
+    uint256 startTimeUnixSeconds;
+    uint256 endTimeUnixSeconds;
 }

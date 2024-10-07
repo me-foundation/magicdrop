@@ -49,7 +49,7 @@ contract ERC1155M is
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds,
+        uint256 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
         address royaltyReceiver,
@@ -316,7 +316,7 @@ contract ERC1155M is
         uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes calldata signature
     ) external payable virtual nonReentrant {
         _mintInternal(msg.sender, tokenId, qty, limit, proof, timestamp, signature);
@@ -348,10 +348,10 @@ contract ERC1155M is
         uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes memory signature
     ) internal hasSupply(tokenId, qty) {
-        uint64 stageTimestamp = uint64(block.timestamp);
+        uint256 stageTimestamp = block.timestamp;
         bool waiveMintFee = false;
 
         if (getCosigner() != address(0)) {
@@ -475,7 +475,7 @@ contract ERC1155M is
     /**
      * @dev Returns the current active stage based on timestamp.
      */
-    function getActiveStageFromTimestamp(uint64 timestamp) public view returns (uint256) {
+    function getActiveStageFromTimestamp(uint256 timestamp) public view returns (uint256) {
         for (uint256 i = 0; i < _mintStages.length; i++) {
             if (timestamp >= _mintStages[i].startTimeUnixSeconds && timestamp < _mintStages[i].endTimeUnixSeconds) {
                 return i;
@@ -525,7 +525,7 @@ contract ERC1155M is
     /**
      * @dev Validates the start timestamp is before end timestamp. Used when updating stages.
      */
-    function _assertValidStartAndEndTimestamp(uint64 start, uint64 end) internal pure {
+    function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 

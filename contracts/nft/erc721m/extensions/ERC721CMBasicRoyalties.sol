@@ -16,7 +16,7 @@ contract ERC721CMBasicRoyalties is ERC721CM, BasicRoyalties {
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address cosigner,
-        uint64 timestampExpirySeconds,
+        uint256 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
         address royaltyReceiver,

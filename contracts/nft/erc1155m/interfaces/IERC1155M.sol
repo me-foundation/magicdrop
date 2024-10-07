@@ -23,7 +23,7 @@ interface IERC1155M is ERC1155MErrorsAndEvents {
         uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
-        uint64 timestamp,
+        uint256 timestamp,
         bytes calldata signature
     ) external payable;
 

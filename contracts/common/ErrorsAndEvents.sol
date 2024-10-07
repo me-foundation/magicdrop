@@ -33,5 +33,4 @@ interface ErrorsAndEvents {
     event SetMintCurrency(address mintCurrency);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
-    event SetTimestampExpirySeconds(uint64 expiry);
 }
