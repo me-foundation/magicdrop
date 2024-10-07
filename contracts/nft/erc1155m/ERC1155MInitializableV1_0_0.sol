@@ -62,7 +62,7 @@ contract ERC1155MInitializableV1_0_0 is
     }
 
     /*==============================================================
-    =                     MODIFIERS                               =
+    =                         MODIFIERS                            =
     ==============================================================*/
 
     /// @dev Modifier to check if there's enough supply for minting
@@ -553,6 +553,26 @@ contract ERC1155MInitializableV1_0_0 is
                 || stageInfo.maxStageSupply.length != _numTokens
         ) {
             revert InvalidStageArgsLength();
+        }
+    }
+
+    /// @dev Updates the token balances for a specific address
+    /// @param from The address to transfer from
+    /// @param to The address to transfer to
+    /// @param ids The IDs of the tokens to transfer
+    /// @param values The quantities of the tokens to transfer
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
+        internal
+        virtual
+        override
+    {
+        super._update(from, to, ids, values);
+
+        bool fromZeroAddress = from == address(0);
+        bool toZeroAddress = to == address(0);
+
+        if (!fromZeroAddress && !toZeroAddress && !_transferable) {
+            revert NotTransferable();
         }
     }
 }
