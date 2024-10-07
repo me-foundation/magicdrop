@@ -153,7 +153,7 @@ describe('ERC721M: Mint Currency', () => {
       // Try to call withdrawERC20 from another account
       const mintAddress = await minter.getAddress();
       await expect(erc721M.connect(minter).withdrawERC20()).to.be.revertedWith(
-        `OwnableUnauthorizedAccount("${mintAddress}")`,
+        "Unauthorized",
       );
     });
   });
@@ -353,7 +353,7 @@ describe('ERC721CM: Mint Currency', () => {
       // Try to call withdrawERC20 from another account
       const mintAddress = await minter.getAddress();
       await expect(erc721CM.connect(minter).withdrawERC20()).to.be.revertedWith(
-        `OwnableUnauthorizedAccount("${mintAddress}")`,
+        "Unauthorized",
       );
     });
   });

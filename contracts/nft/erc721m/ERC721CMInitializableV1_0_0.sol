@@ -118,7 +118,10 @@ contract ERC721CMInitializableV1_0_0 is
 
         for (uint256 i = 0; i < newStages.length;) {
             if (i >= 1) {
-                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()) {
+                if (
+                    newStages[i].startTimeUnixSeconds
+                        < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()
+                ) {
                     revert InsufficientStageTimeGap();
                 }
             }

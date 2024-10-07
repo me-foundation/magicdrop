@@ -99,11 +99,11 @@ describe('ERC721CMRoyalties', function () {
 
     await expect(
       nonOwnerConnection.setTokenRoyalty(1, WALLET_2, 100),
-    ).to.be.revertedWith('OwnableUnauthorizedAccount');
+    ).to.be.revertedWith('Unauthorized');
 
     await expect(
       nonOwnerConnection.setDefaultRoyalty(WALLET_2, 0),
-    ).to.be.revertedWith('OwnableUnauthorizedAccount');
+    ).to.be.revertedWith('Unauthorized');
   });
 
   it('Supports the right interfaces', async () => {

@@ -1866,11 +1866,11 @@ describe('ERC1155M', function () {
     it('Non-owner update reverts', async () => {
       await expect(
         readonlyContract.setTokenRoyalty(1, WALLET_2, 100),
-      ).to.be.revertedWith('OwnableUnauthorizedAccount');
+      ).to.be.revertedWith('Unauthorized');
 
       await expect(
         readonlyContract.setDefaultRoyalty(WALLET_2, 0),
-      ).to.be.revertedWith('OwnableUnauthorizedAccount');
+      ).to.be.revertedWith('Unauthorized');
     });
   });
 
@@ -2010,7 +2010,7 @@ describe('ERC1155M', function () {
       // Try to call withdrawERC20 from another account
       const nonOwnerAddress = await readonly.getAddress();
       await expect(readonlyContract.withdrawERC20()).to.be.revertedWith(
-        `OwnableUnauthorizedAccount("${nonOwnerAddress}")`,
+        'Unauthorized',
       );
     });
   });

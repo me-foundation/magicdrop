@@ -26,7 +26,16 @@ import "./ERC721MStorage.sol";
  *  - authorized minter support
  *  - anti-botting
  */
-contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosignable, AuthorizedMinterControl, ERC721MStorage {
+
+contract ERC721CM is
+    IERC721M,
+    ERC721ACQueryable,
+    Ownable,
+    ReentrancyGuard,
+    Cosignable,
+    AuthorizedMinterControl,
+    ERC721MStorage
+{
     using ECDSA for bytes32;
     using SafeERC20 for IERC20;
 
@@ -134,7 +143,10 @@ contract ERC721CM is IERC721M, ERC721ACQueryable, Ownable, ReentrancyGuard, Cosi
 
         for (uint256 i = 0; i < newStages.length;) {
             if (i >= 1) {
-                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()) {
+                if (
+                    newStages[i].startTimeUnixSeconds
+                        < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()
+                ) {
                     revert InsufficientStageTimeGap();
                 }
             }

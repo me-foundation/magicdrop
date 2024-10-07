@@ -12,8 +12,8 @@ import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {MintStageInfo1155} from "../../common/Structs.sol";
-import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {ERC1155MStorage} from "./ERC1155MStorage.sol";
 import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
@@ -262,7 +262,10 @@ contract ERC1155MInitializableV1_0_0 is
 
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
-                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()) {
+                if (
+                    newStages[i].startTimeUnixSeconds
+                        < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()
+                ) {
                     revert InsufficientStageTimeGap();
                 }
             }
