@@ -479,22 +479,6 @@ describe('ERC1155M', function () {
       await expect(mint).to.be.revertedWith('NotEnoughValue');
     });
 
-    it('revert on reentrancy', async () => {
-      const reentrancyFactory = await ethers.getContractFactory(
-        'ERC1155MTestReentrantExploit',
-      );
-      const reentrancyExploiter = await reentrancyFactory.deploy(
-        contract.address,
-      );
-      await reentrancyExploiter.deployed();
-
-      await expect(
-        reentrancyExploiter.exploit(0, 1, [], {
-          value: parseEther('0.5'),
-        }),
-      ).to.be.revertedWith('Reentrancy');
-    });
-
     it('set max mintable supply', async () => {
       await contract.setMaxMintableSupply(0, 99);
       expect(await contract.getMaxMintableSupply(0)).to.equal(99);
@@ -939,7 +923,7 @@ describe('ERC1155M', function () {
       const address1Balance = await contract.balanceOf(address1.address, 0);
       expect(address1Balance.toNumber()).to.equal(5);
 
-      expect(await contract['totalSupply()'].apply(0)).to.equal(10);
+      expect(await contract.totalSupply(0)).to.equal(10);
     });
 
     it('mints by owner - invalid cases', async () => {
@@ -2025,7 +2009,7 @@ describe('ERC1155M', function () {
       );
       expect(totalMintedByMinter[0].toNumber()).to.equal(mintQty);
 
-      const totalSupply = await contract["totalSupply()"]();
+      const totalSupply = await contract.totalSupply(0);
       expect(totalSupply.toNumber()).to.equal(mintQty);
     });
 

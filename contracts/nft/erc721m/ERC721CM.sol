@@ -54,7 +54,7 @@ contract ERC721CM is
         uint256 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver
-    ) Ownable(msg.sender) ERC721ACQueryable(collectionName, collectionSymbol) {
+    ) ERC721ACQueryable(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
         }

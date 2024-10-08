@@ -87,7 +87,7 @@ describe('ERC721CM', function () {
 
     // readonlyContract should not be able to setMintable
     await expect(readonlyContract.setMintable(true)).to.be.revertedWith(
-      'Unauthorized',
+      'Ownable: caller is not the owner',
     );
   });
 
@@ -112,7 +112,7 @@ describe('ERC721CM', function () {
 
     // readonlyContract should not be able to withdraw
     await expect(readonlyContract.withdraw()).to.be.revertedWith(
-      'Unauthorized',
+      'Ownable: caller is not the owner',
     );
   });
 
@@ -139,7 +139,7 @@ describe('ERC721CM', function () {
             endTimeUnixSeconds: 62,
           },
         ]),
-      ).to.be.revertedWith('Unauthorized');
+      ).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
     it('cannot set stages with insufficient gap', async () => {
@@ -526,7 +526,7 @@ describe('ERC721CM', function () {
       // readonlyContract should not be able to set max mintable supply
       await expect(
         readonlyContract.setMaxMintableSupply(99),
-      ).to.be.revertedWith('Unauthorized');
+      ).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
     it('enforces max mintable supply', async () => {
@@ -1838,7 +1838,7 @@ describe('ERC721CM', function () {
       // readonly contract can't set cosigner
       await expect(
         readonlyContract.setCosigner(cosigner.address),
-      ).to.be.revertedWith('Unauthorized');
+      ).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
     it('can deploy with cosign', async () => {
