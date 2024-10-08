@@ -17,6 +17,7 @@ TOKEN_STANDARD=""
 
 # Function to display usage
 usage() {
+    # Example Usage: ./3a-register-magicdrop-registry-impl.sh --chain-id 137 --registry-address 0x00000001bA03aD5bD3BBB5b5179A5DeBd4dAFed2 --impl-address 0x0000a7f9a573a7289c9506d6a011628acf5a4a45 --token-standard ERC721
     echo "Usage: $0 --chain-id <chain id> --registry-address <registry address> --impl-address <impl address> --token-standard <token standard>"
     exit 1
 }
@@ -34,21 +35,6 @@ set_rpc_url() {
     esac
 
     export RPC_URL
-}
-
-# Function to set verification api key based on chain ID
-set_etherscan_api_key() {
-  case $1 in
-      1) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_ETHEREUM ;;
-      137) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_POLYGON ;;
-      8453) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_BASE ;;
-      42161) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_ARBITRUM ;;
-      1329) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_SEI ;;
-      33139) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_APECHAIN ;;
-      *) echo "Unsupported chain id"; exit 1 ;;
-  esac
-
-  export ETHERSCAN_API_KEY
 }
 
 # Process arguments
@@ -71,17 +57,15 @@ fi
 # Set the RPC URL based on chain ID
 set_rpc_url $CHAIN_ID
 
-# Set the ETHERSCAN API KEY based on chain ID
-set_etherscan_api_key $CHAIN_ID
-
 echo ""
-echo "============= DEPLOYING MAGICDROP IMPL REGISTRY ============="
-
-echo "Chain ID: $CHAIN_ID"
-echo "RPC URL: $RPC_URL"
-echo "REGISTRY ADDRESS: $REGISTRY_ADDRESS"
-echo "IMPL ADDRESS: $IMPL_ADDRESS"
-echo "TOKEN STANDARD: $TOKEN_STANDARD"
+echo "==================== REGISTRATION DETAILS ===================="
+echo "Chain ID:                     $CHAIN_ID"
+echo "RPC URL:                      $RPC_URL"
+echo "Registry Address:             $REGISTRY_ADDRESS"
+echo "Implementation Address:       $IMPL_ADDRESS"
+echo "Token Standard:               $TOKEN_STANDARD"
+echo "============================================================="
+echo ""
 read -p "Do you want to proceed? (yes/no) " yn
 
 case $yn in 
@@ -92,9 +76,17 @@ case $yn in
     exit 1;;
 esac
 
+export REGISTRY_ADDRESS=$REGISTRY_ADDRESS
+export IMPL_ADDRESS=$IMPL_ADDRESS
+export TOKEN_STANDARD=$TOKEN_STANDARD
+
 # NOTE: Remove --broadcast for dry-run
 forge script ./RegisterMagicDropImpl.s.sol:RegisterMagicDropImpl \
   --rpc-url $RPC_URL \
   --broadcast \
   --via-ir \
   -v
+
+unset REGISTRY_ADDRESS
+unset IMPL_ADDRESS
+unset TOKEN_STANDARD

@@ -17,6 +17,7 @@ IMPL_ID=""
 
 # Function to display usage
 usage() {
+    # Example Usage: ./3b-deprecate-magicdrop-registry-impl.sh --chain-id 137 --registry-address 0x00000001bA03aD5bD3BBB5b5179A5DeBd4dAFed2 --impl-id 1 --token-standard ERC721
     echo "Usage: $0 --chain-id <chain id> --registry-address <registry address> --impl-id <impl id> --token-standard <token standard>"
     exit 1
 }
@@ -75,13 +76,14 @@ set_rpc_url $CHAIN_ID
 set_etherscan_api_key $CHAIN_ID
 
 echo ""
-echo "============= DEPLOYING MAGICDROP IMPL REGISTRY ============="
-
-echo "Chain ID: $CHAIN_ID"
-echo "RPC URL: $RPC_URL"
-echo "REGISTRY ADDRESS: $REGISTRY_ADDRESS"
-echo "IMPL ID: $IMPL_ID"
-echo "TOKEN STANDARD: $TOKEN_STANDARD"
+echo "==================== DEPRECATION DETAILS ===================="
+echo "Chain ID:                     $CHAIN_ID"
+echo "RPC URL:                      $RPC_URL"
+echo "Registry Address:             $REGISTRY_ADDRESS"
+echo "Implementation ID:            $IMPL_ID"
+echo "Token Standard:               $TOKEN_STANDARD"
+echo "============================================================="
+echo ""
 read -p "Do you want to proceed? (yes/no) " yn
 
 case $yn in 
@@ -92,9 +94,17 @@ case $yn in
     exit 1;;
 esac
 
+export REGISTRY_ADDRESS=$REGISTRY_ADDRESS
+export IMPL_ID=$IMPL_ID
+export TOKEN_STANDARD=$TOKEN_STANDARD
+
 # NOTE: Remove --broadcast for dry-run
 forge script ./DeprecateMagicDropImpl.s.sol:DeprecateMagicDropImpl \
   --rpc-url $RPC_URL \
   --broadcast \
   --via-ir \
   -v
+
+unset REGISTRY_ADDRESS
+unset IMPL_ID
+unset TOKEN_STANDARD

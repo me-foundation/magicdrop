@@ -74,8 +74,8 @@ contract ERC721CMInitializableV1_0_0 is
 
     function initialize(string calldata name, string calldata symbol, address initialOwner)
         external
-        initializerERC721A
         initializer
+        initializerERC721A
     {
         __ERC721ACQueryableInitializable_init(name, symbol);
         _initializeOwner(initialOwner);
@@ -525,15 +525,6 @@ contract ERC721CMInitializableV1_0_0 is
         assembly {
             chainID := chainid()
         }
-    }
-
-    /**
-     * @notice Returns the function selector for the transfer validator's validation function to be called
-     * @notice for transaction simulation.
-     */
-    function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
-        functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
-        isViewFunction = true;
     }
 
     function supportsInterface(bytes4 interfaceId)

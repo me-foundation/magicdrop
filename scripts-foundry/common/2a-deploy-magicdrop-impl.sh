@@ -19,6 +19,7 @@ VERSION="" # e.g. 1_0_0, 1_0_1, 1_1_0
 
 # Function to display usage
 usage() {
+    # Example Usage: ./2a-deploy-magicdrop-impl.sh --chain-id 137 --version 1_0_0 --token-standard ERC721
     echo "Usage: $0 --chain-id <chain id>  --version <magic drop impl version> --token-standard <token standard>"
     exit 1
 }
@@ -144,7 +145,7 @@ forge script ./DeployMagicDropImplementation.s.sol:DeployMagicDropImplementation
   --optimizer-runs 777 \
   --via-ir \
   --verify \
-  -vvvv
+  -v
 
 echo ""
 echo "============= DEPLOYED MAGICDROP IMPLEMENTATION ============="

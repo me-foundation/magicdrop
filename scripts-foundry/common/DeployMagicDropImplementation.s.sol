@@ -23,7 +23,7 @@ contract DeployMagicDropImplementation is Script {
         console.log("Version: %s", version);
         console.log("Expected Address: %s", expectedAddress);
         console.log("Salt: %s", uint256(salt));
-        console.log("");
+        console.log("hello");
 
         vm.startBroadcast(privateKey);
 

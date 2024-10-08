@@ -528,11 +528,14 @@ contract ERC1155M is
     /// @param ids The IDs of the tokens being transferred
     /// @param amounts The quantities of the tokens being transferred
     /// @param data Additional data with no specified format
-    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-        internal
-        virtual
-        override
-    {
+    function _beforeTokenTransfer(
+        address operator,
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) internal virtual override {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
 
         bool fromZeroAddress = from == address(0);

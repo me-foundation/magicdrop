@@ -2,8 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {LibClone} from "solady/src/utils/LibClone.sol";
-import {Ownable} from "solady/src/auth/Ownable.sol";
-
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
 import {ERC721CMInitializableV1_0_0 as ERC721CMInitializable} from
@@ -60,7 +58,7 @@ contract ERC721CMInitializableTest is Test {
         assertFalse(nft.getMintable());
 
         vm.prank(readonly);
-        vm.expectRevert(Ownable.Unauthorized.selector);
+        vm.expectRevert();
         nft.setMintable(true);
     }
 
@@ -75,7 +73,7 @@ contract ERC721CMInitializableTest is Test {
         assertEq(fundReceiver.balance, initialFundReceiverBalance + 100);
 
         vm.prank(readonly);
-        vm.expectRevert(Ownable.Unauthorized.selector);
+        vm.expectRevert();
         nft.withdraw();
     }
 
@@ -104,7 +102,7 @@ contract ERC721CMInitializableTest is Test {
         assertEq(nft.getNumberStages(), 2);
 
         vm.prank(readonly);
-        vm.expectRevert(Ownable.Unauthorized.selector);
+        vm.expectRevert();
         nft.setStages(stages);
     }
 

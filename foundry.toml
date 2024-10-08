@@ -3,5 +3,6 @@ src = "contracts"
 out = "out"
 libs = ["lib", "node_modules"]
 solc_version = "0.8.20"
+evm_version = "cancun"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
