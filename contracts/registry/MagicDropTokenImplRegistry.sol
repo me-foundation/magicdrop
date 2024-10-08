@@ -69,53 +69,6 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     }
 
     /*==============================================================
-    =                      PUBLIC WRITE METHODS                    =
-    ==============================================================*/
-
-    /// @dev Registers a new implementation for a given token standard.
-    /// @param standard The token standard (ERC721, ERC1155).
-    /// @param impl The address of the implementation contract.
-    /// @notice Only the contract owner can call this function.
-    /// @notice Reverts if an implementation with the same name is already registered.
-    function registerImplementation(TokenStandard standard, address impl) external onlyOwner returns (uint32) {
-        RegistryStorage storage $ = _loadRegistryStorage();
-        bytes4 interfaceId = $.tokenStandardData[standard].interfaceId;
-        if (interfaceId == 0) {
-            revert UnsupportedTokenStandard(standard);
-        }
-
-        if (!IERC165(impl).supportsInterface(interfaceId)) {
-            revert ImplementationDoesNotSupportStandard(standard);
-        }
-
-        uint32 implId = $.tokenStandardData[standard].nextImplId;
-        $.tokenStandardData[standard].implementations[implId] = impl;
-        $.tokenStandardData[standard].nextImplId = implId + 1;
-        emit ImplementationRegistered(standard, impl, implId);
-        return implId;
-    }
-
-    /// @dev Deprecates an implementation for a given token standard.
-    /// @param standard The token standard (ERC721, ERC1155).
-    /// @param implId The ID of the implementation to deprecate.
-    /// @notice Only the contract owner can call this function.
-    /// @notice Reverts if the implementation is not registered or already deprecated.
-    function deprecateImplementation(TokenStandard standard, uint32 implId) external onlyOwner {
-        RegistryStorage storage $ = _loadRegistryStorage();
-        if ($.tokenStandardData[standard].implementations[implId] == address(0)) {
-            revert ImplementationNotRegistered();
-        }
-
-        if ($.tokenStandardData[standard].deprecatedImplementations[implId]) {
-            revert ImplementationAlreadyDeprecated();
-        }
-
-        $.tokenStandardData[standard].deprecatedImplementations[implId] = true;
-
-        emit ImplementationDeprecated(standard, implId);
-    }
-
-    /*==============================================================
     =                      PUBLIC VIEW METHODS                     =
     ==============================================================*/
 
@@ -164,6 +117,49 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     /*==============================================================
     =                      ADMIN OPERATIONS                        =
     ==============================================================*/
+
+    /// @dev Registers a new implementation for a given token standard.
+    /// @param standard The token standard (ERC721, ERC1155).
+    /// @param impl The address of the implementation contract.
+    /// @notice Only the contract owner can call this function.
+    /// @notice Reverts if an implementation with the same name is already registered.
+    function registerImplementation(TokenStandard standard, address impl) external onlyOwner returns (uint32) {
+        RegistryStorage storage $ = _loadRegistryStorage();
+        bytes4 interfaceId = $.tokenStandardData[standard].interfaceId;
+        if (interfaceId == 0) {
+            revert UnsupportedTokenStandard(standard);
+        }
+
+        if (!IERC165(impl).supportsInterface(interfaceId)) {
+            revert ImplementationDoesNotSupportStandard(standard);
+        }
+
+        uint32 implId = $.tokenStandardData[standard].nextImplId;
+        $.tokenStandardData[standard].implementations[implId] = impl;
+        $.tokenStandardData[standard].nextImplId = implId + 1;
+        emit ImplementationRegistered(standard, impl, implId);
+        return implId;
+    }
+
+    /// @dev Deprecates an implementation for a given token standard.
+    /// @param standard The token standard (ERC721, ERC1155).
+    /// @param implId The ID of the implementation to deprecate.
+    /// @notice Only the contract owner can call this function.
+    /// @notice Reverts if the implementation is not registered or already deprecated.
+    function deprecateImplementation(TokenStandard standard, uint32 implId) external onlyOwner {
+        RegistryStorage storage $ = _loadRegistryStorage();
+        if ($.tokenStandardData[standard].implementations[implId] == address(0)) {
+            revert ImplementationNotRegistered();
+        }
+
+        if ($.tokenStandardData[standard].deprecatedImplementations[implId]) {
+            revert ImplementationAlreadyDeprecated();
+        }
+
+        $.tokenStandardData[standard].deprecatedImplementations[implId] = true;
+
+        emit ImplementationDeprecated(standard, implId);
+    }
 
     /// @dev Internal function to authorize an upgrade.
     /// @param newImplementation Address of the new implementation.
