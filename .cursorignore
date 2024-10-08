@@ -1,0 +1,72 @@
+# Environment variables and configuration files
+.env*
+*.env
+config.json
+*.config
+*.cfg
+
+# Secret keys and credentials
+*secret*
+*key*
+*password*
+*credential*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+log/
+logs/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Personal or sensitive documents
+*.doc
+*.docx
+*.pdf
+*.xls
+*.xlsx
+*.csv
+
+# API tokens and access files
+.netrc
+.npmrc
+.yarnrc
+.pypirc
+
+# IDE and editor specific files that might contain sensitive information
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Dependency directories that might contain sensitive data
+node_modules/
+vendor/
+
+# Any file or directory starting with a dot (hidden files/folders)
+.*
+
+# Specific sensitive file names
+id_rsa
+id_dsa
+known_hosts
+authorized_keys

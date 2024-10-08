@@ -59,11 +59,6 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     =                          INITIALIZER                         =
     ==============================================================*/
 
-    /// @dev Disables initializers to ensure this contract is used by a proxy
-    constructor() {
-        _disableInitializers();
-    }
-
     /// @notice Initializes the contract
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
@@ -110,6 +105,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             revert ImplementationNotRegistered();
         }
 
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, salt)
             mstore(0x20, MAGICDROP_FACTORY_STORAGE)
@@ -138,6 +134,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             revert InitializationFailed();
         }
 
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, salt)
             mstore(0x20, MAGICDROP_FACTORY_STORAGE)
@@ -233,6 +230,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     /// @param salt The salt to check
     /// @return saltUsed Whether the salt has been used
     function isSaltUsed(bytes32 salt) external view returns (bool saltUsed) {
+        /// @solidity memory-safe-assembly
         assembly {
             mstore(0x00, salt)
             mstore(0x20, MAGICDROP_FACTORY_STORAGE)

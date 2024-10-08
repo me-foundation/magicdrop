@@ -54,11 +54,6 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     =                          INITIALIZER                         =
     ==============================================================*/
 
-    /// @dev Disables initializers to ensure this contract is used by a proxy
-    constructor() {
-        _disableInitializers();
-    }
-
     /// @dev Initializes the contract, setting up the owner and UUPS upgradeability.
     /// This function replaces the constructor for upgradeable contracts.
     function initialize(address initialOwner) public initializer {
