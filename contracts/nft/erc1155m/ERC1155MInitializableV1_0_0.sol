@@ -249,7 +249,10 @@ contract ERC1155MInitializableV1_0_0 is
         _fundReceiver = fundReceiver;
 
         _setURI(uri_);
-        setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+
+        if (royaltyReceiver != address(0)) {
+            setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+        }
 
         _setCosigner(cosigner);
         _setTimestampExpirySeconds(timestampExpirySeconds);

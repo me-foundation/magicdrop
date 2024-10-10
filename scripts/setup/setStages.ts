@@ -3,12 +3,9 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { MerkleTree } from 'merkletreejs';
 import fs from 'fs';
 import { ContractDetails } from '../common/constants';
-import {
-  cleanVariableWalletLimit,
-  cleanWhitelist,
-  estimateGas,
-} from '../utils/helper';
+import { estimateGas } from '../utils/helper';
 import { Overrides } from 'ethers';
+import { generateMerkleRoot } from '../utils/generateMerkleRoot';
 
 export interface ISetStagesParams {
   stages: string;
@@ -32,6 +29,7 @@ export const setStages = async (
   args: ISetStagesParams,
   hre: HardhatRuntimeEnvironment,
 ) => {
+  console.log('args', args);
   const { ethers } = hre;
   const stagesConfig = JSON.parse(
     fs.readFileSync(args.stages, 'utf-8'),
@@ -48,53 +46,15 @@ export const setStages = async (
     overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
   }
 
-  /*
-   * Merkle root generation logic:
-   * - for `whitelist`, leaves are `solidityKeccak256(['address', 'uint32'], [address, 0])`
-   * - for `variable wallet limit list`, leaves are `solidityKeccak256(['address', 'uint32'], [address, limit])`
-   */
   const merkleRoots = await Promise.all(
     stagesConfig.map(async (stage) => {
-      if (stage.whitelistPath) {
-        const filteredSet = await cleanWhitelist(stage.whitelistPath, true);
-        const filteredWhitelist = Array.from(filteredSet.values());
-
-        const mt = new MerkleTree(
-          filteredWhitelist.map((address: string) =>
-            ethers.utils.solidityKeccak256(
-              ['address', 'uint32'],
-              [ethers.utils.getAddress(address), 0],
-            ),
-          ),
-          ethers.utils.keccak256,
-          {
-            sortPairs: true,
-            hashLeaves: false,
-          },
-        );
-        return mt.getHexRoot();
-      } else if (stage.variableWalletLimitPath) {
-        const filteredMap = await cleanVariableWalletLimit(
-          stage.variableWalletLimitPath,
-          true,
-        );
-        const leaves: any[] = [];
-        for (const [address, limit] of filteredMap.entries()) {
-          const digest = ethers.utils.solidityKeccak256(
-            ['address', 'uint32'],
-            [address, limit],
-          );
-          leaves.push(digest);
-        }
-
-        const mt = new MerkleTree(leaves, ethers.utils.keccak256, {
-          sortPairs: true,
-          hashLeaves: false,
-        });
-        return mt.getHexRoot();
-      }
-
-      return ethers.utils.hexZeroPad('0x', 32);
+      const isVariableWalletLimit = !!stage.variableWalletLimitPath;
+      return generateMerkleRoot(
+        isVariableWalletLimit
+          ? stage.variableWalletLimitPath
+          : stage.whitelistPath,
+        isVariableWalletLimit,
+      );
     }),
   );
 

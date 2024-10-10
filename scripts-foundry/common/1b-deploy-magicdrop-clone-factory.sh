@@ -53,6 +53,8 @@ set_etherscan_api_key() {
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --chain-id) CHAIN_ID=$2; shift ;;
+        --salt) SALT=$2; shift ;;
+        --expected-address) EXPECTED_ADDRESS=$2; shift ;;
         --resume) RESUME="--resume" ;;
         *) usage ;;
     esac
@@ -75,8 +77,8 @@ echo "============= DEPLOYING MAGICDROP CLONE FACTORY ============="
 
 echo "Chain ID: $CHAIN_ID"
 echo "RPC URL: $RPC_URL"
-echo "SALT: $SALT"
-echo "EXPECTED ADDRESS: $EXPECTED_ADDRESS"
+echo "SALT: $FACTORY_SALT"
+echo "EXPECTED ADDRESS: $FACTORY_EXPECTED_ADDRESS"
 read -p "Do you want to proceed? (yes/no) " yn
 
 case $yn in 

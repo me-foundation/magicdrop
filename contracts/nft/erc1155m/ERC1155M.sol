@@ -67,7 +67,11 @@ contract ERC1155M is
 
         _setCosigner(cosigner);
         _setTimestampExpirySeconds(timestampExpirySeconds);
-        _setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+        
+        if (royaltyReceiver != address(0)) {
+            setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+        }
+
         _initializeOwner(msg.sender);
     }
 

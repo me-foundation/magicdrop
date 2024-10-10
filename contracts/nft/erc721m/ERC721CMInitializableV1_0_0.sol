@@ -90,8 +90,8 @@ contract ERC721CMInitializableV1_0_0 is
         address mintCurrency,
         address fundReceiver,
         MintStageInfo[] calldata initialStages,
-        address defaultRoyaltyReceiver,
-        uint96 defaultRoyaltyFeeNumerator
+        address royaltyReceiver,
+        uint96 royaltyFeeNumerator
     ) external onlyOwner {
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
@@ -107,7 +107,10 @@ contract ERC721CMInitializableV1_0_0 is
             _setStages(initialStages);
         }
 
-        setDefaultRoyalty(defaultRoyaltyReceiver, defaultRoyaltyFeeNumerator);
+        if (royaltyReceiver != address(0)) {
+            setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+        }
+
         _setCosigner(cosigner);
         _setTimestampExpirySeconds(timestampExpirySeconds);
     }

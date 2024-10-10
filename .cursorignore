@@ -70,3 +70,4 @@ id_rsa
 id_dsa
 known_hosts
 authorized_keys
+cli/defaults.json

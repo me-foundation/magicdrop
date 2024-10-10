@@ -53,7 +53,7 @@ const config: HardhatUserConfig = {
         runs: 100,
         details: {
           yulDetails: {
-            optimizerSteps: "dhfoD[xarrscLMcCTU]uljmul",
+            optimizerSteps: 'dhfoD[xarrscLMcCTU]uljmul',
           },
         },
       },
@@ -74,11 +74,11 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       accounts: {
-        accountsBalance: '1000000000000000000000'
-      }
+        accountsBalance: '1000000000000000000000',
+      },
     },
     base: {
-      url: process.env.BASE_URL || '',
+      url: process.env.BASE_URL || 'https://mainnet.base.org',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -99,7 +99,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     mainnet: {
-      url: process.env.MAINNET_URL || '',
+      url: process.env.MAINNET_URL || 'https://cloudflare-eth.com',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -109,7 +109,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     polygon: {
-      url: process.env.POLYGON_URL || '',
+      url: process.env.POLYGON_URL || 'https://polygon-rpc.com',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -127,8 +127,8 @@ const config: HardhatUserConfig = {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
   sourcify: {
-    enabled: true
-  }
+    enabled: true,
+  },
 };
 
 task('setStages', 'Set stages for ERC721M')
