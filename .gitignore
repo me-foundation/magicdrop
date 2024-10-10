@@ -15,3 +15,4 @@ lcov.info.pruned
 coverage/
 broadcast/
 cli/defaults.json
+cli/deployments
