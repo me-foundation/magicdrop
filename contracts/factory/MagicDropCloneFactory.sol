@@ -48,12 +48,10 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     =                             ERRORS                           =
     ==============================================================*/
 
-    error ImplementationNotRegistered();
     error InitializationFailed();
     error SaltAlreadyUsed();
     error ContractAlreadyDeployed(address deployedAddress);
     error RegistryAddressCannotBeZero();
-    error ImplementationDeprecated();
 
     /*==============================================================
     =                          INITIALIZER                         =
@@ -94,15 +92,12 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         uint32 implId,
         bytes32 salt
     ) external returns (address) {
+        address impl;
         // Retrieve the implementation address from the registry
-        (address impl, bool deprecated) = _registry.getImplementation(standard, implId);
-
-        if (deprecated) {
-            revert ImplementationDeprecated();
-        }
-
-        if (impl == address(0)) {
-            revert ImplementationNotRegistered();
+        if (implId == 0) {
+            impl = _registry.getDefaultImplementation(standard);
+        } else {
+            impl = _registry.getImplementation(standard, implId);
         }
 
         /// @solidity memory-safe-assembly
@@ -167,15 +162,12 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         address payable initialOwner,
         uint32 implId
     ) external returns (address) {
+        address impl;
         // Retrieve the implementation address from the registry
-        (address impl, bool deprecated) = _registry.getImplementation(standard, implId);
-
-        if (deprecated) {
-            revert ImplementationDeprecated();
-        }
-
-        if (impl == address(0)) {
-            revert ImplementationNotRegistered();
+        if (implId == 0) {
+            impl = _registry.getDefaultImplementation(standard);
+        } else {
+            impl = _registry.getImplementation(standard, implId);
         }
 
         // Create a non-deterministic clone of the implementation contract
@@ -213,16 +205,12 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         view
         returns (address)
     {
-        (address impl, bool deprecated) = _registry.getImplementation(standard, implId);
-
-        if (deprecated) {
-            revert ImplementationDeprecated();
+        address impl;
+        if (implId == 0) {
+            impl = _registry.getDefaultImplementation(standard);
+        } else {
+            impl = _registry.getImplementation(standard, implId);
         }
-
-        if (impl == address(0)) {
-            revert ImplementationNotRegistered();
-        }
-
         return LibClone.predictDeterministicAddress(impl, salt, address(this));
     }
 

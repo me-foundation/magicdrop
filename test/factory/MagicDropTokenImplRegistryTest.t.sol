@@ -7,10 +7,6 @@ import {TokenStandard} from "../../contracts/common/Structs.sol";
 import {MockERC721} from "solady/test/utils/mocks/MockERC721.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 
-interface IMagicDropTokenImplRegistryRaw {
-    function registerImplementation(uint8 tokenStandard, address implementation) external returns (uint32);
-}
-
 contract MagicDropTokenImplRegistryTest is Test {
     MagicDropTokenImplRegistry internal registry;
     address internal owner = address(0x1);
@@ -28,24 +24,23 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testRegisterImplementation() public {
         vm.prank(owner);
-        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
         assertEq(implId, 1);
-        (address impl, bool deprecated) = registry.getImplementation(TokenStandard.ERC721, implId);
+        address impl = registry.getImplementation(TokenStandard.ERC721, implId);
         assertEq(impl, address(mockERC721));
-        assertFalse(deprecated);
     }
 
     function testRegisterMultipleImplementations() public {
         vm.startPrank(owner);
-        uint32 implId1 = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
-        uint32 implId2 = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
+        uint32 implId1 = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
+        uint32 implId2 = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
         vm.stopPrank();
 
         assertEq(implId1, 1);
         assertEq(implId2, 2); // ensure the implId is incremented
 
-        (address impl1,) = registry.getImplementation(TokenStandard.ERC721, implId1);
-        (address impl2,) = registry.getImplementation(TokenStandard.ERC721, implId2);
+        address impl1 = registry.getImplementation(TokenStandard.ERC721, implId1);
+        address impl2 = registry.getImplementation(TokenStandard.ERC721, implId2);
 
         assertEq(impl1, address(mockERC721));
         assertEq(impl2, address(mockERC721));
@@ -53,15 +48,14 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testFailRegisterImplementationAsNonOwner() public {
         vm.prank(user);
-        registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
+        registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
     }
 
     function testGetImplementation() public {
         vm.prank(owner);
-        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
-        (address impl, bool deprecated) = registry.getImplementation(TokenStandard.ERC721, implId);
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
+        address impl = registry.getImplementation(TokenStandard.ERC721, implId);
         assertEq(impl, address(mockERC721));
-        assertFalse(deprecated);
     }
 
     function testRegisterUnsupportedStandard() public {
@@ -72,37 +66,27 @@ contract MagicDropTokenImplRegistryTest is Test {
             )
         );
         // register as erc1155 with erc721 impl
-        registry.registerImplementation(TokenStandard.ERC1155, address(mockERC721));
+        registry.registerImplementation(TokenStandard.ERC1155, address(mockERC721), false);
     }
 
-    function testDeprecateImplementation() public {
+    function testUnregisterImplementation() public {
         vm.startPrank(owner);
-        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
-        registry.deprecateImplementation(TokenStandard.ERC721, implId);
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
+        registry.unregisterImplementation(TokenStandard.ERC721, implId);
         vm.stopPrank();
 
-        (address impl, bool deprecated) = registry.getImplementation(TokenStandard.ERC721, implId);
-        assertEq(impl, address(mockERC721));
-        assertTrue(deprecated);
+        vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
+        registry.getImplementation(TokenStandard.ERC721, implId);
     }
 
-    function testFailDeprecateImplementationAsNonOwner() public {
+    function testFailUnregisterImplementationAsNonOwner() public {
         vm.prank(user);
-        registry.deprecateImplementation(TokenStandard.ERC721, 1);
+        registry.unregisterImplementation(TokenStandard.ERC721, 1);
     }
 
-    function testDeprecateImplementationNotRegistered() public {
+    function testUnregisterImplementationNotRegistered() public {
         vm.prank(owner);
-        vm.expectRevert(MagicDropTokenImplRegistry.ImplementationNotRegistered.selector);
-        registry.deprecateImplementation(TokenStandard.ERC721, 1);
-    }
-
-    function testDeprecateImplementationAlreadyDeprecated() public {
-        vm.startPrank(owner);
-        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721));
-        registry.deprecateImplementation(TokenStandard.ERC721, implId);
-        vm.expectRevert(MagicDropTokenImplRegistry.ImplementationAlreadyDeprecated.selector);
-        registry.deprecateImplementation(TokenStandard.ERC721, implId);
-        vm.stopPrank();
+        vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
+        registry.unregisterImplementation(TokenStandard.ERC721, 1);
     }
 }

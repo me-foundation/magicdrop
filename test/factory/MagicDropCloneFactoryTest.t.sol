@@ -53,8 +53,8 @@ contract MagicDropCloneFactoryTest is Test {
         erc1155Impl = new MockERC1155Initializable();
 
         // Register implementations
-        erc721ImplId = registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl));
-        erc1155ImplId = registry.registerImplementation(TokenStandard.ERC1155, address(erc1155Impl));
+        erc721ImplId = registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), false);
+        erc1155ImplId = registry.registerImplementation(TokenStandard.ERC1155, address(erc1155Impl), false);
 
         vm.stopPrank();
     }
@@ -153,23 +153,23 @@ contract MagicDropCloneFactoryTest is Test {
         assertTrue(factory.isSaltUsed(salt));
     }
 
-    function testImplementationDeprecated() public {
+    function testImplementationUnregistered() public {
         TokenStandard standard = TokenStandard.ERC721;
 
         vm.startPrank(owner);
-        uint32 implId = registry.registerImplementation(standard, address(erc721Impl));
-        registry.deprecateImplementation(standard, implId);
+        uint32 implId = registry.registerImplementation(standard, address(erc721Impl), false);
+        registry.unregisterImplementation(standard, implId);
         vm.stopPrank();
 
-        vm.expectRevert(MagicDropCloneFactory.ImplementationDeprecated.selector);
+        vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
         factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
     }
 
-    function testImplementationNotRegistered() public {
+    function testInvalidImplementation() public {
         TokenStandard standard = TokenStandard.ERC721;
         uint32 implId = 999;
 
-        vm.expectRevert(MagicDropCloneFactory.ImplementationNotRegistered.selector);
+        vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
         factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
     }
 
@@ -178,7 +178,7 @@ contract MagicDropCloneFactoryTest is Test {
 
         vm.startPrank(owner);
         InvalidImplementation impl = new InvalidImplementation();
-        uint32 implId = registry.registerImplementation(standard, address(impl));
+        uint32 implId = registry.registerImplementation(standard, address(impl), false);
         vm.stopPrank();
 
         vm.expectRevert(MagicDropCloneFactory.InitializationFailed.selector);

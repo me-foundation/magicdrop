@@ -101,23 +101,22 @@ is_valid_ethereum_address() {
 get_ethereum_address() {
     local prompt="$1"
     local address
-    while true; do
-        address=$(gum input --placeholder "$prompt (or 'exit' to quit)")
-        if [[ -z "$address" ]]; then
-            echo "Exiting program..."
-            kill $$
-        elif [[ "$address" == "exit" || "$address" == "quit" ]]; then
-            echo "Exiting program..."
-            kill $$
-        fi
 
-        if is_valid_ethereum_address "$address"; then
-            echo "$address"
-            return
-        else
-            echo "Invalid input. Please enter a valid Ethereum address."
-        fi
-    done
+    address=$(gum input --placeholder "$prompt (or 'exit' to quit)")
+    if [[ -z "$address" ]]; then
+        echo "Exiting program..."
+        kill $$
+    elif [[ "$address" == "exit" || "$address" == "quit" ]]; then
+        echo "Exiting program..."
+        kill $$
+    fi
+
+    if is_valid_ethereum_address "$address"; then
+        echo "$address"
+    else
+        echo "Invalid input. Exiting..."
+        exit 1
+    fi
 }
 
 file_exists() {
@@ -203,6 +202,36 @@ confirm_setup() {
     fi
 }
 
+confirm_set_base_uri() {
+    echo ""
+    echo "==================== BASE URI ===================="
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
+    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
+    echo "Base URI:                     $(gum style --foreground 212 "$base_uri")"
+    echo "==================================================="
+    echo ""
+    
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
+confirm_set_global_wallet_limit() {
+    echo ""
+    echo "==================== GLOBAL WALLET LIMIT ===================="
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
+    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
+    echo "Global Wallet Limit:          $(gum style --foreground 212 "$global_wallet_limit")"
+    echo "==========================================================="
+    echo ""
+
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
 show_main_title() {
     gum style \
 	--foreground 212 --border-foreground 212 --border double \
@@ -220,11 +249,41 @@ show_title() {
     "$subtitle"
 }
 
+select_chain() {
+    local chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
+    local chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
+    echo "$chain_id:$chain"
+}
+
+set_rpc_url() {
+    case $1 in
+        1) RPC_URL="https://cloudflare-eth.com" ;; # Ethereum
+        137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
+        8453) RPC_URL="https://mainnet.base.org" ;; # Base
+        42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
+        1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
+        33139) RPC_URL="https://curtis.rpc.caldera.xyz/http" ;; # ApeChain
+        *) echo "Unsupported chain id"; exit 1 ;;
+    esac
+
+    export RPC_URL
+}
+
+go_to_main_menu_or_exit() {
+    if gum confirm "Go to main menu?"; then
+        main_menu
+    else
+        echo "Exiting..."
+        exit 0
+    fi
+}
 
 #==============================================================#
 #                          MAIN MENU                           #
 #==============================================================#
 main_menu() {
+    clear
+
     trap "echo 'Exiting...'; exit 1" SIGINT
 
     show_main_title
@@ -239,10 +298,16 @@ main_menu() {
 
     case $option in
         "Deploy Contracts")
-            # deploy_contract
+            deploy_contract
             ;;
         "Manage Contracts")
-            # setup_contract
+            contract_management_menu
+            ;;
+        "Mint Tokens")
+            minting_menu
+            ;;
+        "Token Operations")
+            token_operations_menu
             ;;
         "Quit")
             echo "Exiting..."
@@ -259,17 +324,22 @@ deploy_contract() {
     clear 
 
     title="Deploy a new collection"
-    
-    # Pick chain
-    show_title "$title" "> Choose a chain to deploy on <"
-    chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
-    chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
-    clear
 
-    # Pick token standard
+        # Pick token standard
     show_title "$title" "> Choose a token standard <"
-    token_standard=$(gum choose "ERC721" "ERC1155")
+    token_standard=$(gum choose "ERC721" "ERC1155" "Back to main menu")
+    if [ "$token_standard" == "Back to main menu" ]; then
+        clear
+        main_menu
+    fi
     check_input "$token_standard" "token standard"
+    clear
+    
+    # get chain info
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
     clear
 
     # get name
@@ -456,54 +526,155 @@ setup_contract() {
     echo "Setup complete"
 }
 
+set_base_uri() {
+    clear
+
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Base URI"
+
+    base_uri_selector="setBaseURI(string)"
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "Set Base URI")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
+    clear
+
+    show_title "$title" "> Enter the base URI <"
+    base_uri=$(gum input --placeholder "Enter base URI")
+    check_input "$base_uri" "base URI"
+
+    set_rpc_url $chain_id
+
+    confirm_set_base_uri
+
+    output=$(gum spin --spinner dot --title "Setting Base URI" -- cast send $contract_address $base_uri_selector $base_uri --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo "Transaction successful. Transaction hash: $tx_hash"
+    else
+        echo "Transaction failed. Error output:"
+        echo "$output"
+    fi
+
+    echo ""
+    go_to_main_menu_or_exit
+}
+
+set_global_wallet_limit() {
+    clear
+
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Global Wallet Limit"
+
+    global_wallet_limit_selector="setGlobalWalletLimit(uint256)"
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
+    clear
+
+    show_title "$title" "> Enter the global wallet limit <"
+    global_wallet_limit=$(get_numeric_input "Enter global wallet limit")
+    check_input "$global_wallet_limit" "global wallet limit"
+
+    set_rpc_url $chain_id
+
+    confirm_set_global_wallet_limit
+    output=$(gum spin --spinner dot --title "Setting Global Wallet Limit" -- cast send $contract_address $global_wallet_limit_selector $global_wallet_limit --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+    # TODO(adam) for tomorrow fix bug with setting global wallet limit
+
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo "Transaction successful. Transaction hash: $tx_hash"
+    else
+        echo "Transaction failed. Error output:"
+        echo "$output"
+    fi
+
+    echo ""
+    go_to_main_menu_or_exit
+}
+
+set_max_mintable_supply() {
+    echo "Set Max Mintable Supply"
+}
+
+set_mintable() {
+    echo "Set Mintable"
+}
+
+set_stages() {
+    echo "Set Stages"
+}
+
+set_timestamp_expiry() {
+    echo "Set Timestamp Expiry"
+}
+
+transfer_ownership() {
+    echo "Transfer Ownership"
+}
+
+freeze_trading() {
+    echo "Freeze/Thaw Trading"
+}
+
 contract_management_menu() {
     local option=$(gum choose \
+        "Initialize contract" \
         "Set Base URI" \
         "Set Global Wallet Limit" \
         "Set Max Mintable Supply" \
-        "Set Mintable State" \
+        "Set Mintable" \
         "Set Stages" \
-        "Set 1155 Stages" \
-        "Set Timestamp Expiry Seconds" \
+        "Set Timestamp Expiry" \
         "Transfer Ownership" \
-        "Freeze Trading" \
-        "Thaw Trading" \
-        "Clean Whitelist" \
+        "Freeze/Thaw Trading" \
         "Back to main menu")
 
     case $option in
+        "Initialize contract")
+            setup_contract
+            ;;
         "Set Base URI")
-            npx hardhat setBaseURI
+            set_base_uri
             ;;
         "Set Global Wallet Limit")
-            npx hardhat setGlobalWalletLimit
+            set_global_wallet_limit
             ;;
         "Set Max Mintable Supply")
-            npx hardhat setMaxMintableSupply
+            set_max_mintable_supply
             ;;
-        "Set Mintable State")
-            npx hardhat setMintable
+        "Set Mintable")
+            set_mintable
             ;;
         "Set Stages")
-            npx hardhat setStages
+            set_stages
             ;;
-        "Set 1155 Stages")
-            npx hardhat set1155Stages
-            ;;
-        "Set Timestamp Expiry Seconds")
-            npx hardhat setTimestampExpirySeconds
+        "Set Timestamp Expiry")
+            set_timestamp_expiry
             ;;
         "Transfer Ownership")
-            npx hardhat transferOwnership
+            transfer_ownership
             ;;
-        "Freeze Trading")
-            npx hardhat freezeTrading
-            ;;
-        "Thaw Trading")
-            npx hardhat thawTrading
-            ;;
-        "Clean Whitelist")
-            npx hardhat cleanWhitelist
+        "Freeze/Thaw Trading")
+            freeze_trading
             ;;
         "Back to main menu")
             main_menu
