@@ -47,9 +47,9 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     ==============================================================*/
 
     error InvalidImplementation();
-    error ImplementationDoesNotSupportStandard(TokenStandard standard);
-    error UnsupportedTokenStandard(TokenStandard standard);
-    error DefaultImplementationNotRegistered(TokenStandard standard);
+    error ImplementationDoesNotSupportStandard();
+    error UnsupportedTokenStandard();
+    error DefaultImplementationNotRegistered();
 
     /*==============================================================
     =                          INITIALIZER                         =
@@ -64,11 +64,9 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
         RegistryStorage storage $ = _loadRegistryStorage();
         $.tokenStandardData[TokenStandard.ERC721].nextImplId = 1;
         $.tokenStandardData[TokenStandard.ERC721].interfaceId = 0x80ac58cd; // ERC721 interface ID
-        $.tokenStandardData[TokenStandard.ERC721].defaultImplId = 1;
 
         $.tokenStandardData[TokenStandard.ERC1155].nextImplId = 1;
         $.tokenStandardData[TokenStandard.ERC1155].interfaceId = 0xd9b67a26; // ERC1155 interface ID
-        $.tokenStandardData[TokenStandard.ERC1155].defaultImplId = 1;
     }
 
     /*==============================================================
@@ -93,6 +91,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
             let implSlot := keccak256(0x00, 0x40)
             implAddress := sload(implSlot)
 
+            // Revert if the implementation is not registered
             if iszero(implAddress) {
                 mstore(0x00, 0x68155f9a) // revert InvalidImplementation()
                 revert(0x1c, 0x04)
@@ -103,27 +102,58 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     /// @dev Gets the default implementation ID for a given token standard
     /// @param standard The token standard (ERC721, ERC1155)
     /// @notice Reverts if the default implementation is not registered.
-    /// @return The default implementation ID for the given standard
-    function getDefaultImplementationID(TokenStandard standard) external view returns (uint32) {
-        RegistryStorage storage $ = _loadRegistryStorage();
-        uint32 defaultImplId = $.tokenStandardData[standard].defaultImplId;
-        if (defaultImplId == 0) {
-            revert DefaultImplementationNotRegistered(standard);
+    /// @return defaultImplId The default implementation ID for the given standard
+    function getDefaultImplementationID(TokenStandard standard) external view returns (uint32 defaultImplId) {
+        assembly {
+            // Compute storage slot for tokenStandardData[standard]
+            mstore(0x00, standard)
+            mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
+            let slot := keccak256(0x00, 0x40)
+
+            // Extract 'defaultImplId' by shifting and masking
+            // Shift right by 64 bits to bring 'defaultImplId' to bits 0-31
+            let shiftedData := shr(64, sload(slot))
+            // Mask to extract the lower 32 bits
+            defaultImplId := and(shiftedData, 0xffffffff)
+
+            // Check if defaultImplId is 0 and revert if so
+            if iszero(defaultImplId) {
+                // Prepare error message for DefaultImplementationNotRegistered(TokenStandard)
+                mstore(0x00, 0x161378fc)
+                revert(0x1c, 0x04)
+            }
         }
-        return defaultImplId;
     }
 
     /// @dev Gets the default implementation address for a given token standard
     /// @param standard The token standard (ERC721, ERC1155)
     /// @notice Reverts if the default implementation is not registered.
-    /// @return The default implementation address for the given standard
-    function getDefaultImplementation(TokenStandard standard) external view returns (address) {
-        RegistryStorage storage $ = _loadRegistryStorage();
-        uint32 defaultImplId = $.tokenStandardData[standard].defaultImplId;
-        if (defaultImplId == 0) {
-            revert DefaultImplementationNotRegistered(standard);
+    /// @return implAddress The default implementation address for the given standard
+    function getDefaultImplementation(TokenStandard standard) external view returns (address implAddress) {
+        assembly {
+            mstore(0x00, standard)
+            mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
+            let slot := keccak256(0x00, 0x40)
+
+            // Extract 'defaultImplId' by shifting and masking
+            // Shift right by 64 bits to bring 'defaultImplId' to bits 0-31
+            let shiftedData := shr(64, sload(slot))
+            // Mask to extract the lower 32 bits
+            let defaultImplId := and(shiftedData, 0xffffffff)
+
+            // Revert if the default implementation is not registered
+            if iszero(defaultImplId) {
+                // revert DefaultImplementationNotRegistered()
+                mstore(0x00, 0x161378fc)
+                revert(0x1c, 0x04)
+            }
+
+            // Compute storage slot for implementations[defaultImplId]
+            mstore(0x00, defaultImplId)
+            mstore(0x20, add(slot, 1))
+            let implSlot := keccak256(0x00, 0x40)
+            implAddress := sload(implSlot)
         }
-        return $.tokenStandardData[standard].implementations[defaultImplId];
     }
 
     /*==============================================================
@@ -157,23 +187,23 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
         RegistryStorage storage $ = _loadRegistryStorage();
         bytes4 interfaceId = $.tokenStandardData[standard].interfaceId;
         if (interfaceId == 0) {
-            revert UnsupportedTokenStandard(standard);
+            revert UnsupportedTokenStandard();
         }
 
         if (!IERC165(impl).supportsInterface(interfaceId)) {
-            revert ImplementationDoesNotSupportStandard(standard);
+            revert ImplementationDoesNotSupportStandard();
         }
 
         uint32 implId = $.tokenStandardData[standard].nextImplId;
         $.tokenStandardData[standard].implementations[implId] = impl;
         $.tokenStandardData[standard].nextImplId = implId + 1;
+        emit ImplementationRegistered(standard, impl, implId);
 
         if (isDefault) {
             $.tokenStandardData[standard].defaultImplId = implId;
             emit DefaultImplementationSet(standard, implId);
         }
 
-        emit ImplementationRegistered(standard, impl, implId);
         return implId;
     }
 

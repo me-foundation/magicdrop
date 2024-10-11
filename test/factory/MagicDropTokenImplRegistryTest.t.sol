@@ -6,6 +6,7 @@ import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropToke
 import {TokenStandard} from "../../contracts/common/Structs.sol";
 import {MockERC721} from "solady/test/utils/mocks/MockERC721.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 
 contract MagicDropTokenImplRegistryTest is Test {
     MagicDropTokenImplRegistry internal registry;
@@ -22,6 +23,10 @@ contract MagicDropTokenImplRegistryTest is Test {
         mockERC721 = new MockERC721();
     }
 
+    /*==============================================================
+    =                      REGISTRATION                            =
+    ==============================================================*/
+
     function testRegisterImplementation() public {
         vm.prank(owner);
         uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
@@ -30,20 +35,29 @@ contract MagicDropTokenImplRegistryTest is Test {
         assertEq(impl, address(mockERC721));
     }
 
-    function testRegisterMultipleImplementations() public {
+    function testRegisterMultipleImplementations(uint256 numImplementations) public {
         vm.startPrank(owner);
-        uint32 implId1 = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
-        uint32 implId2 = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
+
+        // bound the number of implementations
+        numImplementations = bound(numImplementations, 1, 25);
+
+        for (uint256 i = 0; i < numImplementations; i++) {
+            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
+        }
         vm.stopPrank();
 
-        assertEq(implId1, 1);
-        assertEq(implId2, 2); // ensure the implId is incremented
+        for (uint256 i = 0; i < numImplementations; i++) {
+            uint32 implId = uint32(i + 1);
+            address impl = registry.getImplementation(TokenStandard.ERC721, implId);
+            assertEq(impl, address(mockERC721));
+        }
+    }
 
-        address impl1 = registry.getImplementation(TokenStandard.ERC721, implId1);
-        address impl2 = registry.getImplementation(TokenStandard.ERC721, implId2);
-
-        assertEq(impl1, address(mockERC721));
-        assertEq(impl2, address(mockERC721));
+    function testRegisterUnsupportedStandard() public {
+        vm.prank(owner);
+        vm.expectRevert(MagicDropTokenImplRegistry.ImplementationDoesNotSupportStandard.selector);
+        // register as erc1155 with erc721 impl
+        registry.registerImplementation(TokenStandard.ERC1155, address(mockERC721), false);
     }
 
     function testFailRegisterImplementationAsNonOwner() public {
@@ -51,23 +65,9 @@ contract MagicDropTokenImplRegistryTest is Test {
         registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
     }
 
-    function testGetImplementation() public {
-        vm.prank(owner);
-        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
-        address impl = registry.getImplementation(TokenStandard.ERC721, implId);
-        assertEq(impl, address(mockERC721));
-    }
-
-    function testRegisterUnsupportedStandard() public {
-        vm.prank(owner);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                MagicDropTokenImplRegistry.ImplementationDoesNotSupportStandard.selector, TokenStandard.ERC1155
-            )
-        );
-        // register as erc1155 with erc721 impl
-        registry.registerImplementation(TokenStandard.ERC1155, address(mockERC721), false);
-    }
+    /*==============================================================
+    =                      UNREGISTRATION                          =
+    ==============================================================*/
 
     function testUnregisterImplementation() public {
         vm.startPrank(owner);
@@ -84,9 +84,49 @@ contract MagicDropTokenImplRegistryTest is Test {
         registry.unregisterImplementation(TokenStandard.ERC721, 1);
     }
 
-    function testUnregisterImplementationNotRegistered() public {
+    function testUnregisterImplementationInvalidImplementation() public {
         vm.prank(owner);
         vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
         registry.unregisterImplementation(TokenStandard.ERC721, 1);
+    }
+
+    /*==============================================================
+    =                      GET IMPLEMENTATION                      =
+    ==============================================================*/
+
+    function testGetImplementation() public {
+        vm.prank(owner);
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false);
+        address impl = registry.getImplementation(TokenStandard.ERC721, implId);
+        assertEq(impl, address(mockERC721));
+    }
+
+    function testGetImplementationInvalidImplementation() public {
+        vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
+        registry.getImplementation(TokenStandard.ERC721, 1);
+    }
+
+    function testGetDefaultImplementation() public {
+        vm.prank(owner);
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), true);
+        address impl = registry.getDefaultImplementation(TokenStandard.ERC721);
+        assertEq(impl, address(mockERC721));
+    }
+
+    function testGetDefaultImplementationNotRegistered() public {
+        vm.expectRevert(MagicDropTokenImplRegistry.DefaultImplementationNotRegistered.selector);
+        registry.getDefaultImplementation(TokenStandard.ERC721);
+    }
+
+    function testGetDefaultImplementationID() public {
+        vm.prank(owner);
+        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), true);
+        uint32 defaultImplId = registry.getDefaultImplementationID(TokenStandard.ERC721);
+        assertEq(defaultImplId, implId);
+    }
+
+    function testGetDefaultImplementationIDNotRegistered() public {
+        vm.expectRevert(MagicDropTokenImplRegistry.DefaultImplementationNotRegistered.selector);
+        registry.getDefaultImplementationID(TokenStandard.ERC721);
     }
 }
