@@ -25,12 +25,12 @@ usage() {
 # Function to set RPC URL based on chain ID
 set_rpc_url() {
     case $1 in
-        1) RPC_URL=$RPC_URL_ETHEREUM ;;
-        137) RPC_URL=$RPC_URL_POLYGON ;;
-        8453) RPC_URL=$RPC_URL_BASE ;;
-        42161) RPC_URL=$RPC_URL_ARBITRUM ;;
-        1329) RPC_URL=$RPC_URL_SEI ;;
-        33139) RPC_URL=$RPC_URL_APECHAIN ;;
+        1) RPC_URL="https://cloudflare-eth.com" ;; # Ethereum
+        137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
+        8453) RPC_URL="https://mainnet.base.org" ;; # Base
+        42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
+        1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
+        33139) RPC_URL="https://curtis.rpc.caldera.xyz/http" ;; # ApeChain
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -94,17 +94,8 @@ case $yn in
     exit 1;;
 esac
 
-export REGISTRY_ADDRESS=$REGISTRY_ADDRESS
-export IMPL_ID=$IMPL_ID
-export TOKEN_STANDARD=$TOKEN_STANDARD
-
 # NOTE: Remove --broadcast for dry-run
-forge script ./DeprecateMagicDropImpl.s.sol:DeprecateMagicDropImpl \
-  --rpc-url $RPC_URL \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_ADDRESS=$REGISTRY_ADDRESS IMPL_ID=$IMPL_ID TOKEN_STANDARD=$TOKEN_STANDARD forge script ./DeprecateMagicDropImpl.s.sol:DeprecateMagicDropImpl \
   --broadcast \
   --via-ir \
   -v
-
-unset REGISTRY_ADDRESS
-unset IMPL_ID
-unset TOKEN_STANDARD
