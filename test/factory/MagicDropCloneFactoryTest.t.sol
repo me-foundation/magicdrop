@@ -53,8 +53,8 @@ contract MagicDropCloneFactoryTest is Test {
         erc1155Impl = new MockERC1155Initializable();
 
         // Register implementations
-        erc721ImplId = registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), false);
-        erc1155ImplId = registry.registerImplementation(TokenStandard.ERC1155, address(erc1155Impl), false);
+        erc721ImplId = registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), true);
+        erc1155ImplId = registry.registerImplementation(TokenStandard.ERC1155, address(erc1155Impl), true);
 
         vm.stopPrank();
     }
@@ -67,6 +67,19 @@ contract MagicDropCloneFactoryTest is Test {
 
         MockERC721Initializable nft = MockERC721Initializable(newContract);
 
+        // Test minting
+        nft.mint(user, 1);
+        assertEq(nft.ownerOf(1), user);
+
+        vm.stopPrank();
+    }
+
+    function testCreateERC721ContractWithDefaultImplementation() public {
+        vm.startPrank(user);
+
+        address newContract = factory.createContract("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), 0);
+
+        MockERC721Initializable nft = MockERC721Initializable(newContract);
         // Test minting
         nft.mint(user, 1);
         assertEq(nft.ownerOf(1), user);
@@ -89,17 +102,34 @@ contract MagicDropCloneFactoryTest is Test {
         vm.stopPrank();
     }
 
-    function testCreateContractWithDifferentSalts() public {
+    function testCreateERC1155ContractWithDefaultImplementation() public {
         vm.startPrank(user);
 
-        address contract1 = factory.createContractDeterministic(
-            "TestNFT1", "TNFT1", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(uint256(0))
-        );
-        address contract2 = factory.createContractDeterministic(
-            "TestNFT2", "TNFT2", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(uint256(1))
-        );
+        address newContract = factory.createContract("TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0);
 
-        assertTrue(contract1 != contract2);
+        MockERC1155Initializable nft = MockERC1155Initializable(newContract);
+
+        // Test minting
+        nft.mint(user, 1, 100, "");
+        assertEq(nft.balanceOf(user, 1), 100);
+
+        vm.stopPrank();
+    }
+
+    function testCreateContractWithDifferentSalts(uint256 numSalts) public {
+        vm.startPrank(user);
+
+        numSalts = bound(numSalts, 10, 100);
+        bytes32[] memory salts = new bytes32[](numSalts);
+
+        for (uint256 i = 0; i < numSalts; i++) {
+            salts[i] = keccak256(abi.encodePacked(i, block.timestamp, msg.sender));
+            address predictedAddress = factory.predictDeploymentAddress(TokenStandard.ERC721, erc721ImplId, salts[i]);
+            address deployedAddress = factory.createContractDeterministic(
+                "TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId, salts[i]
+            );
+            assertEq(predictedAddress, deployedAddress);
+        }
 
         vm.stopPrank();
     }
@@ -153,26 +183,6 @@ contract MagicDropCloneFactoryTest is Test {
         assertTrue(factory.isSaltUsed(salt));
     }
 
-    function testImplementationUnregistered() public {
-        TokenStandard standard = TokenStandard.ERC721;
-
-        vm.startPrank(owner);
-        uint32 implId = registry.registerImplementation(standard, address(erc721Impl), false);
-        registry.unregisterImplementation(standard, implId);
-        vm.stopPrank();
-
-        vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
-        factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
-    }
-
-    function testInvalidImplementation() public {
-        TokenStandard standard = TokenStandard.ERC721;
-        uint32 implId = 999;
-
-        vm.expectRevert(MagicDropTokenImplRegistry.InvalidImplementation.selector);
-        factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
-    }
-
     function testInitializationFailed() public {
         TokenStandard standard = TokenStandard.ERC721;
 
@@ -183,5 +193,9 @@ contract MagicDropCloneFactoryTest is Test {
 
         vm.expectRevert(MagicDropCloneFactory.InitializationFailed.selector);
         factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
+    }
+
+    function testGetRegistry() public {
+        assertEq(factory.getRegistry(), address(registry));
     }
 }

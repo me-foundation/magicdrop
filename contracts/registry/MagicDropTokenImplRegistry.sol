@@ -118,7 +118,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
 
             // Check if defaultImplId is 0 and revert if so
             if iszero(defaultImplId) {
-                // Prepare error message for DefaultImplementationNotRegistered(TokenStandard)
+                // revert DefaultImplementationNotRegistered()
                 mstore(0x00, 0x161378fc)
                 revert(0x1c, 0x04)
             }

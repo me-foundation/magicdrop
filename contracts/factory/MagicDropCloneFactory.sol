@@ -107,7 +107,8 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             let saltUsed := sload(keccak256(0x00, 0x40)) // usedSalts[salt]
 
             if saltUsed {
-                mstore(0x00, 0x0ced3043) // SaltAlreadyUsed()
+                // revert SaltAlreadyUsed()
+                mstore(0x00, 0x0ced3043)
                 revert(0x1c, 0x04)
             }
         }
