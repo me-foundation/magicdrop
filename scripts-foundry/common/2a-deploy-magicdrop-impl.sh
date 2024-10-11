@@ -20,19 +20,19 @@ VERSION="" # e.g. 1_0_0, 1_0_1, 1_1_0
 # Function to display usage
 usage() {
     # Example Usage: ./2a-deploy-magicdrop-impl.sh --chain-id 137 --version 1_0_0 --token-standard ERC721
-    echo "Usage: $0 --chain-id <chain id>  --version <magic drop impl version> --token-standard <token standard>"
+    echo "Usage: $0 --chain-id <chain id> --version <magic drop impl version> --token-standard <token standard>"
     exit 1
 }
 
 # Function to set RPC URL based on chain ID
 set_rpc_url() {
     case $1 in
-        1) RPC_URL=$RPC_URL_ETHEREUM ;;
-        137) RPC_URL=$RPC_URL_POLYGON ;;
-        8453) RPC_URL=$RPC_URL_BASE ;;
-        42161) RPC_URL=$RPC_URL_ARBITRUM ;;
-        1329) RPC_URL=$RPC_URL_SEI ;;
-        33139) RPC_URL=$RPC_URL_APECHAIN ;;
+        1) RPC_URL="https://cloudflare-eth.com" ;; # Ethereum
+        137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
+        8453) RPC_URL="https://mainnet.base.org" ;; # Base
+        42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
+        1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
+        33139) RPC_URL="https://curtis.rpc.caldera.xyz/http" ;; # ApeChain
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -85,38 +85,12 @@ CONTRACT_VERSION=$(echo $VERSION | tr '_' '.')
 # Convert STANDARD to lowercase for the path
 STANDARD_LOWERCASE=$(echo $STANDARD | tr '[:upper:]' '[:lower:]')
 
-# Get the bytecode using forge inspect
-BYTECODE=$(forge inspect "contracts/nft/$STANDARD_LOWERCASE""m/$CONTRACT_NAME.sol:$CONTRACT_NAME" bytecode --optimizer-runs 777 --via-ir)
-
-# Run the cast create2 command and capture the output
-OUTPUT=$(cast create2 --starts-with 0000 --case-sensitive --init-code $BYTECODE)
-
-# Extract the address
-EXPECTED_ADDRESS=$(echo "$OUTPUT" | grep "Address:" | awk '{print $2}')
-
-# Extract the salt
-SALT=$(echo "$OUTPUT" | grep "Salt:" | awk '{print $2}')
-SALT_UINT=$(echo "$OUTPUT" | grep "Salt:" | awk '{print $3}')
-
-# Estimate the deployment cost
-EXPECTED_DEPLOY_COST_RAW=$(cast estimate \
-    --rpc-url $RPC_URL \
-    --chain-id $CHAIN_ID \
-    --create \
-    $BYTECODE)
-
-# Convert the deployment cost to a human-readable Ether value
-EXPECTED_DEPLOY_COST=$(echo "scale=18; $EXPECTED_DEPLOY_COST_RAW / 1000000000000000000" | bc)
-
 echo ""
 echo "==================== DEPLOYMENT DETAILS ===================="
 echo "Chain ID:                     $CHAIN_ID"
 echo "RPC URL:                      $RPC_URL"
 echo "Version:                      $CONTRACT_VERSION"
 echo "Token Standard:               $STANDARD"
-echo "Expected Address:             $EXPECTED_ADDRESS"
-echo "Salt:                         $SALT_UINT"
-echo "Deployment Cost (native):     $EXPECTED_DEPLOY_COST"
 echo "============================================================"
 echo ""
 read -p "Do you want to proceed? (yes/no) " yn
@@ -129,30 +103,18 @@ case $yn in
     exit 1;;
 esac
 
-# Export the variables to the environment
-export SALT=$SALT
-export EXPECTED_ADDRESS=$EXPECTED_ADDRESS
-export TOKEN_STANDARD=$STANDARD
-export CONTRACT_VERSION=$CONTRACT_VERSION
-
 echo ""
 echo "============= DEPLOYING MAGICDROP IMPLEMENTATION ============="
 echo ""
 
-forge script ./DeployMagicDropImplementation.s.sol:DeployMagicDropImplementation \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD CONTRACT_VERSION=$CONTRACT_VERSION forge script ./DeployMagicDropImplementation.s.sol:DeployMagicDropImplementation \
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \
-  --via-ir \
-  --verify \
-  -v
+  --via-ir
+  # --verify \
+  # -v
 
 echo ""
 echo "============= DEPLOYED MAGICDROP IMPLEMENTATION ============="
 echo ""
-
-# Unset the environment variables
-unset SALT
-unset EXPECTED_ADDRESS
-unset TOKEN_STANDARD
-unset CONTRACT_VERSION

@@ -12,24 +12,18 @@ contract DeployMagicDropImplementation is Script {
     error InvalidTokenStandard(string standard);
     error FailedToGetContractVersion();
     function run() external {
-        bytes32 salt = vm.envBytes32("SALT");
-        address expectedAddress = address(uint160(vm.envUint("EXPECTED_ADDRESS")));
         TokenStandard standard = parseTokenStandard(vm.envString("TOKEN_STANDARD"));
         string memory version = vm.envString("CONTRACT_VERSION");
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
 
-        address deployedAddress;
-
-        console.log("Version: %s", version);
-        console.log("Expected Address: %s", expectedAddress);
-        console.log("Salt: %s", uint256(salt));
-
         vm.startBroadcast(privateKey);
 
+        address deployedAddress;
+
         if (standard == TokenStandard.ERC721) {
-            deployedAddress = address(new ERC721CMInitializableV1_0_0{salt: salt}());
+            deployedAddress = address(new ERC721CMInitializableV1_0_0());
         } else if (standard == TokenStandard.ERC1155) {
-            deployedAddress = address(new ERC1155MInitializableV1_0_0{salt: salt}());
+            deployedAddress = address(new ERC1155MInitializableV1_0_0());
         }
 
         bytes memory data = abi.encodeWithSignature("contractNameAndVersion()");
@@ -37,17 +31,13 @@ contract DeployMagicDropImplementation is Script {
         if (!success) {
             revert FailedToGetContractVersion();
         }
-        vm.stopBroadcast();
 
         (, string memory deployedVersion) = abi.decode(result, (string, string));
         if (keccak256(abi.encodePacked(deployedVersion)) != keccak256(abi.encodePacked(version))) {
             revert InvalidVersion(version, deployedVersion);
         }
 
-        // Verify the deployed address matches the predicted address
-        if (deployedAddress != expectedAddress) {
-            revert AddressMismatch(expectedAddress, deployedAddress);
-        }
+        vm.stopBroadcast();
     }
 
     function parseTokenStandard(string memory standardString) internal pure returns (TokenStandard) {

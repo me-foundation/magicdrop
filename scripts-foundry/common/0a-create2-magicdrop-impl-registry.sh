@@ -14,7 +14,7 @@ echo "create2 MagicDropImplRegistry START"
 registryCode="$(forge inspect contracts/registry/MagicDropTokenImplRegistry.sol:MagicDropTokenImplRegistry bytecode --optimizer-runs 777 --via-ir)"
 registryInitCode="$registryCode"
 echo $registryCode
-cast create2 --starts-with 00000000 --case-sensitive --init-code $registryInitCode
+cast create2 --starts-with 0000 --case-sensitive --init-code $registryInitCode
 echo "create2 MagicDropImplRegistry END"
 echo "-------------------------------------"
 echo ""

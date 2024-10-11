@@ -443,22 +443,22 @@ setup_contract() {
     clear
 
     # Check if we need a cosigner
-    show_title "$title" "> Set cosigner <"
-    if gum confirm "Need a cosigner?" --default=false; then
-        cosigner=$(get_ethereum_address "Cosigner (default: $DEFAULT_COSIGNER)")
-    else
-        cosigner=$DEFAULT_COSIGNER  
-    fi
-    clear
+    # show_title "$title" "> Set cosigner <"
+    # if gum confirm "Need a cosigner?" --default=false; then
+    #     cosigner=$(get_ethereum_address "Cosigner (default: $DEFAULT_COSIGNER)")
+    # else
+    #     cosigner=$DEFAULT_COSIGNER  
+    # fi
+    # clear
     
-    # Set timestamp expiry with default value
-    show_title "$title" "> Set timestamp expiry <"
-    if gum confirm "Override default timestamp expiry? ($DEFAULT_TIMESTAMP_EXPIRY seconds)" --default=false; then
-        timestamp_expiry=$(get_numeric_input "Timestamp expiry (default: $DEFAULT_TIMESTAMP_EXPIRY seconds)")
-    else
-        timestamp_expiry=$DEFAULT_TIMESTAMP_EXPIRY
-    fi
-    clear
+    # # Set timestamp expiry with default value
+    # show_title "$title" "> Set timestamp expiry <"
+    # if gum confirm "Override default timestamp expiry? ($DEFAULT_TIMESTAMP_EXPIRY seconds)" --default=false; then
+    #     timestamp_expiry=$(get_numeric_input "Timestamp expiry (default: $DEFAULT_TIMESTAMP_EXPIRY seconds)")
+    # else
+    #     timestamp_expiry=$DEFAULT_TIMESTAMP_EXPIRY
+    # fi
+    # clear
     
     # Set mint currency (default to native gas token)
     show_title "$title" "> Set mint currency <"

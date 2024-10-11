@@ -15,19 +15,19 @@ RESUME=""
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 --chain-id <chain id>"
+    echo "Usage: $0 --chain-id <chain id> --salt <salt> --expected-address <expected address> --initial-owner <initial owner>"
     exit 1
 }
 
 # Function to set RPC URL based on chain ID
 set_rpc_url() {
     case $1 in
-        1) RPC_URL=$RPC_URL_ETHEREUM ;;
-        137) RPC_URL=$RPC_URL_POLYGON ;;
-        8453) RPC_URL=$RPC_URL_BASE ;;
-        42161) RPC_URL=$RPC_URL_ARBITRUM ;;
-        1329) RPC_URL=$RPC_URL_SEI ;;
-        33139) RPC_URL=$RPC_URL_APECHAIN ;;
+        1) RPC_URL="https://cloudflare-eth.com" ;; # Ethereum
+        137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
+        8453) RPC_URL="https://mainnet.base.org" ;; # Base
+        42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
+        1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
+        33139) RPC_URL="https://curtis.rpc.caldera.xyz/http" ;; # ApeChain
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -53,6 +53,9 @@ set_etherscan_api_key() {
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --chain-id) CHAIN_ID=$2; shift ;;
+        --salt) REGISTRY_SALT=$2; shift ;;
+        --expected-address) REGISTRY_EXPECTED_ADDRESS=$2; shift ;;
+        --initial-owner) INITIAL_OWNER=$2; shift ;;
         --resume) RESUME="--resume" ;;
         *) usage ;;
     esac
@@ -60,7 +63,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Check if all parameters are set
-if [ -z "$CHAIN_ID" ]; then
+if [ -z "$CHAIN_ID" ] || [ -z "$REGISTRY_SALT" ] || [ -z "$REGISTRY_EXPECTED_ADDRESS" ] || [ -z "$INITIAL_OWNER" ]; then
     usage
 fi
 
@@ -75,8 +78,8 @@ echo "============= DEPLOYING MAGICDROP IMPL REGISTRY ============="
 
 echo "Chain ID: $CHAIN_ID"
 echo "RPC URL: $RPC_URL"
-echo "SALT: $SALT"
-echo "EXPECTED ADDRESS: $EXPECTED_ADDRESS"
+echo "SALT: $REGISTRY_SALT"
+echo "EXPECTED ADDRESS: $REGISTRY_EXPECTED_ADDRESS"
 read -p "Do you want to proceed? (yes/no) " yn
 
 case $yn in 
@@ -88,10 +91,10 @@ case $yn in
 esac
 
 # NOTE: Remove --broadcast for dry-run
-forge script ./DeployMagicDropTokenImplRegistry.s.sol:DeployMagicDropTokenImplRegistry \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECTED_ADDRESS=$REGISTRY_EXPECTED_ADDRESS INITIAL_OWNER=$INITIAL_OWNER forge script ./DeployMagicDropTokenImplRegistry.s.sol:DeployMagicDropTokenImplRegistry \
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \
-  --via-ir \
-  --verify $RESUME \
-  -v
+  --via-ir # \
+  # --verify $RESUME \
+  # -v

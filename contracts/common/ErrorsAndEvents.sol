@@ -27,6 +27,7 @@ interface ErrorsAndEvents {
     event SetMintable(bool mintable);
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
+    event SetTokenURISuffix(string suffix);
     event SetMintCurrency(address mintCurrency);
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);

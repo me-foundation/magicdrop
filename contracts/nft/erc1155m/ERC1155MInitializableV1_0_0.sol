@@ -214,8 +214,6 @@ contract ERC1155MInitializableV1_0_0 is
     /// @param uri_ The URI for token metadata
     /// @param maxMintableSupply Array of maximum mintable supply for each token ID
     /// @param globalWalletLimit Array of global wallet limits for each token ID
-    /// @param timestampExpirySeconds The expiry time in seconds for timestamps
-    /// @param cosigner The address of the cosigner
     /// @param mintCurrency The address of the mint currency
     /// @param fundReceiver The address to receive funds
     /// @param royaltyReceiver The address to receive royalties
@@ -224,8 +222,6 @@ contract ERC1155MInitializableV1_0_0 is
         string calldata uri_,
         uint256[] memory maxMintableSupply,
         uint256[] memory globalWalletLimit,
-        uint256 timestampExpirySeconds,
-        address cosigner,
         address mintCurrency,
         address fundReceiver,
         address royaltyReceiver,
@@ -247,15 +243,13 @@ contract ERC1155MInitializableV1_0_0 is
         _transferable = true;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
+        _setTimestampExpirySeconds(300); // 5 minutes
 
         _setURI(uri_);
 
         if (royaltyReceiver != address(0)) {
             setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
         }
-
-        _setCosigner(cosigner);
-        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     /// @notice Sets the minting stages

@@ -45,7 +45,7 @@ contract ERC721CMInitializableV1_0_0 is
     string private _currentBaseURI;
 
     // The suffix for the token URL, e.g. ".json".
-    string private _tokenURISuffix;
+    string private _tokenURISuffix = ".json";
 
     // The uri for the storefront-level metadata for better indexing. e.g. "ipfs://UyNGgv3jx2HHfBjQX9RnKtxj2xv2xQDtbVXoRi5rJ31234"
     string private _contractURI;
@@ -82,11 +82,8 @@ contract ERC721CMInitializableV1_0_0 is
     }
 
     function setup(
-        string calldata tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
-        address cosigner,
-        uint256 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
         MintStageInfo[] calldata initialStages,
@@ -99,9 +96,9 @@ contract ERC721CMInitializableV1_0_0 is
         _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
-        _tokenURISuffix = tokenURISuffix;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
+        _setTimestampExpirySeconds(300); // 5 minutes
 
         if (initialStages.length > 0) {
             _setStages(initialStages);
@@ -110,9 +107,6 @@ contract ERC721CMInitializableV1_0_0 is
         if (royaltyReceiver != address(0)) {
             setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
         }
-
-        _setCosigner(cosigner);
-        _setTimestampExpirySeconds(timestampExpirySeconds);
     }
 
     function _setStages(MintStageInfo[] calldata newStages) internal {
@@ -467,6 +461,7 @@ contract ERC721CMInitializableV1_0_0 is
      */
     function setTokenURISuffix(string calldata suffix) external onlyOwner {
         _tokenURISuffix = suffix;
+        emit SetTokenURISuffix(suffix);
     }
 
     /**
