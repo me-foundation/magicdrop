@@ -13,3 +13,5 @@ brew install gum
 # install jq
 brew install jq
 
+forge install
+forge build
