@@ -16,7 +16,7 @@ SKIP_CONFIRMATION=${SKIP_CONFIRMATION:-false}
 # Magicdrop Factory Clone
 NEW_CONTRACT_EVENT_SIG_EVENT=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
 CREATE_CONTRACT_SELECTOR="createContract(string,string,uint8,address,uint32)"
-FACTORY_ADDRESS="0x000005305814D026e49Bd08f444359FC27BB113e"
+FACTORY_ADDRESS="0x000073735DD587b1e5d3E84025A1145e110D4684"
 
 # Function to display usage
 usage() {

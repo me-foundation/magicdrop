@@ -31,16 +31,7 @@ contract ERC721CMInitializableTest is Test {
         nft = ERC721CMInitializable(clone);
         nft.initialize("Test", "TEST", owner);
         nft.setup(
-            ".json",
-            INITIAL_SUPPLY,
-            GLOBAL_WALLET_LIMIT,
-            address(0),
-            60, // timestampExpirySeconds
-            address(0),
-            fundReceiver,
-            new MintStageInfo[](0),
-            address(this),
-            0
+            INITIAL_SUPPLY, GLOBAL_WALLET_LIMIT, address(0), fundReceiver, new MintStageInfo[](0), address(this), 0
         );
     }
 
@@ -60,6 +51,16 @@ contract ERC721CMInitializableTest is Test {
         vm.prank(readonly);
         vm.expectRevert();
         nft.setMintable(true);
+    }
+
+    function testSetMaxMintableSupply() public {
+        nft.setMaxMintableSupply(INITIAL_SUPPLY - 1);
+        assertEq(nft.getMaxMintableSupply(), INITIAL_SUPPLY - 1);
+    }
+
+    function testSetGlobalWalletLimit() public {
+        nft.setGlobalWalletLimit(5);
+        assertEq(nft.getGlobalWalletLimit(), 5);
     }
 
     function testWithdraw() public {

@@ -31,6 +31,9 @@
     "lint:js": "eslint --ignore-path .gitignore . --fix",
     "lint:sol": "prettier --write \"contracts/**/*.sol\""
   },
+  "bin": {
+    "generateMerkleRoot": "./scripts/utils/generateMerkleRoot.ts"
+  },
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
     "@layerzerolabs/solidity-examples": "^0.0.13",
