@@ -9,6 +9,8 @@ main_menu() {
 
     show_main_title
 
+    load_private_key
+
     option=$(gum choose \
     "Deploy Contracts" \
     "Manage Contracts" \

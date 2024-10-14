@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 trap "echo 'Exiting...'; exit 1" SIGINT
@@ -12,6 +11,9 @@ SUPPORTED_CHAINS=(
     "1329:Sei"
 )
 
+MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
+export ETH_KEYSTORE_ACCOUNT=$MAGIC_DROP_KEYSTORE
+
 #==============================================================#
 #                      HELPER FUNCTIONS                        #
 #==============================================================#
@@ -24,7 +26,6 @@ load_defaults() {
         DEFAULT_TIMESTAMP_EXPIRY=$(jq -r '.default_timestamp_expiry // empty' defaults.json)
         DEFAULT_MINT_CURRENCY=$(jq -r '.default_mint_currency // empty' defaults.json)
         DEFAULT_TOKEN_URI_SUFFIX=$(jq -r '.default_token_uri_suffix // empty' defaults.json)
-        PRIVATE_KEY=$(jq -r '.private_key // empty' defaults.json)
         DEFAULT_ROYALTY_RECEIVER=$(jq -r '.default_royalty_receiver // empty' defaults.json)
         DEFAULT_ROYALTY_FEE=$(jq -r '.default_royalty_fee // empty' defaults.json)
         DEFAULT_MERKLE_ROOT=$(jq -r '.default_merkle_root // empty' defaults.json)
@@ -32,29 +33,56 @@ load_defaults() {
         echo "No defaults.json found."
         exit 1
     fi
+
+    source .env
+}
+
+get_password_if_set() {
+    if [[ -n "$KEYSTORE_PASSWORD" ]]; then
+        echo "--password $KEYSTORE_PASSWORD"
+    else
+        echo ""
+    fi
 }
 
 load_private_key() {
-    if [[ -f "defaults.json" ]]; then
-        PRIVATE_KEY=$(jq -r '.private_key // empty' defaults.json)
-        SIGNER=$(jq -r '.signer // empty' defaults.json)
+    keystore_file="$HOME/.foundry/keystores/$MAGIC_DROP_KEYSTORE"
+
+    # Check if the keystore file exists
+    if [[ -f "$keystore_file" ]]; then
+        return 0
     fi
 
-    if [[ -z "$PRIVATE_KEY" || -z "$SIGNER" ]]; then
-        PRIVATE_KEY=$(gum input --placeholder "Enter private key")
+    echo "============================================================"
+    echo ""
+    echo "MagicDrop CLI requires a private key to send transactions."
+    echo "This key controls all funds in the account, so it must be protected carefully."
+    echo ""
+    echo "MagicDrop CLI will create an encrypted keystore for your private key."
+    echo "You will be prompted to enter your private key and a password to encrypt it."
+    echo "Learn more: https://book.getfoundry.sh/reference/cast/cast-wallet-import"
+    echo ""
+    echo "This password will be required to send transactions from your account."
+    echo ""
+    echo "============================================================"
+    echo ""
+    cast wallet import --interactive $MAGIC_DROP_KEYSTORE
 
-        SIGNER=$(cast wallet address --private-key $PRIVATE_KEY)
-        if [[ -z "$SIGNER" ]]; then
-            echo "Invalid private key. Please enter a valid private key."
-            exit 1
-        fi
+    echo ""
+    echo "Keystore created successfully"
+    echo "You can store your password in .env to avoid entering it every time"
+    echo "echo \"KEYSTORE_PASSWORD=<your_password>\" >> .env"
+    echo ""
 
-        jq --arg value "$PRIVATE_KEY" '.private_key = $value' defaults.json > tmp.json && mv tmp.json defaults.json
-        jq --arg value "$SIGNER" '.signer = $value' defaults.json > tmp.json && mv tmp.json defaults.json
-        echo ""
-        echo "Private key and signer saved to defaults.json"
-        echo ""
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to create keystore"
+        exit 1
     fi
+}
+
+load_signer() {
+    password=$(get_password_if_set)
+    export SIGNER=$(cast wallet address $password)
 }
 
 check_input() {
@@ -165,7 +193,11 @@ confirm_deployment() {
     echo "Symbol:                       $(gum style --foreground 212 "$symbol")"
     echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
     echo "Initial Owner:                $(gum style --foreground 212 "$(format_address "$initial_owner")")"
-    echo "Impl ID:                      $(gum style --foreground 212 "$impl_id")"
+    if [[ "$impl_id" -eq 0 ]]; then
+        echo "Impl ID:                      $(gum style --foreground 212 "DEFAULT")"
+    else
+        echo "Impl ID:                      $(gum style --foreground 212 "$impl_id")"
+    fi
     echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
     echo "============================================================"
     echo ""
@@ -183,11 +215,8 @@ confirm_setup() {
     echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
     echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$deployed_contract_address")")"
     echo "======================= SETUP INFO ======================="
-    # echo "Token URI Suffix:             $(gum style --foreground 212 "$token_uri_suffix")"
     echo "Max Supply:                   $(gum style --foreground 212 "$max_supply")"
     echo "Global Wallet Limit:          $(gum style --foreground 212 "$wallet_limit")"
-    # echo "Cosigner:                     $(gum style --foreground 212 "$(format_address "$cosigner")")"
-    # echo "Timestamp Expiry:             $(gum style --foreground 212 "$timestamp_expiry")"
     echo "Mint Currency:                $(gum style --foreground 212 "$(format_address "$mint_currency")")"
     echo "Royalty Receiver:             $(gum style --foreground 212 "$(format_address "$royalty_receiver")")"
     echo "Royalty Fee:                  $(gum style --foreground 212 "$royalty_fee")"
@@ -351,4 +380,43 @@ load_stages_json() {
     }')
 
     export STAGES_DATA="$RESULT"
+}
+
+extract_log_data() {
+    local log="$1"
+    echo $(echo "$log" | jq -r '.data' | sed 's/^0x//')
+}
+
+get_contract_address() {
+    local deployment_data="$1"
+    local event_sig="$2"
+    
+    for log in $(echo "$deployment_data" | jq -c '.logs[]'); do
+        local topic0=$(echo "$log" | jq -r '.topics[0]')
+        if [ "$topic0" == "$event_sig" ]; then
+            echo $(extract_log_data "$log")
+            return
+        fi
+    done
+}
+
+decode_address() {
+  chunk=$1
+  # Take the last 40 characters (20 bytes for an address)
+  echo "0x${chunk:24}"
+}
+
+save_deployment_data() {
+    chain_id=$1
+    deployment_data=$2
+
+    # Get the current timestamp
+    timestamp=$(date +%s)
+    # Create the directory if it doesn't exist
+    deployment_dir="./deployments/$chain_id"
+    mkdir -p "$deployment_dir"
+
+    file_name="$NAME-$STANDARD-$timestamp.json"
+    echo "$deployment_data" > "$deployment_dir/$file_name"
+    echo "Deployment details saved to $deployment_dir/$file_name"
 }

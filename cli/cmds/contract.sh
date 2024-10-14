@@ -6,9 +6,6 @@ trap "echo 'Exiting...'; exit 1" SIGINT
 
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
-
-    load_private_key
-
     clear 
 
     title="Deploy a new collection"
@@ -18,12 +15,19 @@ deploy_contract() {
     token_standard=$(gum choose "ERC721" "ERC1155")
     check_input "$token_standard" "token standard"
     clear
+
+    case $token_standard in
+        ERC721) standard_id=0 ;;
+        ERC1155) standard_id=1 ;;
+        *) echo "Unsupported token standard"; exit 1 ;;
+    esac
     
     # get chain info
     show_title "$title" "> Choose a chain <"
     chain_info=$(select_chain "$title")
     chain_id=$(echo "$chain_info" | cut -d':' -f1)
     chain=$(echo "$chain_info" | cut -d':' -f2)
+    set_rpc_url $chain_id
     clear
 
     # get name
@@ -38,6 +42,8 @@ deploy_contract() {
     check_input "$symbol" "symbol"
     clear
 
+    load_signer
+
     # ask if they want to override the signer as the initial owner
     show_title "$title" "> Set initial owner <"
     if gum confirm "Override initial owner? ($(format_address $SIGNER))" --default=false; then
@@ -47,31 +53,57 @@ deploy_contract() {
     fi
     clear
 
-    # get impl id
     show_title "$title" "> Set implementation ID <"
-    impl_id=$(get_numeric_input "Enter implementation ID")
-    clear
+    if gum confirm "Override default implementation?" --default=false; then
+        impl_id=$(get_numeric_input "Enter implementation ID")
+        clear
+    else
+        # when using impl_id=0, the contract will fallback to the default implementation
+        impl_id=0
+    fi
+
 
     confirm_deployment
 
-    # run deploy-factory-clone.sh
-    OUTPUT=$(PRIVATE_KEY=$PRIVATE_KEY ./../scripts-foundry/common/deploy-factory-clone.sh \
-        --chain-id $chain_id --name "$name" --symbol "$symbol" \
-        --token-standard "$token_standard" --initial-owner "$initial_owner" \
-        --impl-id "$impl_id" --skip-confirmation true)
+    create_contract_selector="createContract(string,string,uint8,address,uint32)"
+    factory_address="0x000073735DD587b1e5d3E84025A1145e110D4684"
 
-    echo $OUTPUT
+    password=$(get_password_if_set)
 
-    DEPLOYED_CONTRACT_ADDRESS=$(echo "$OUTPUT" | grep -oE '0x[a-fA-F0-9]{40}')
+    echo "Deploying contract... this may take a minute."
+    echo ""
+    output=$(cast send \
+    --rpc-url "$RPC_URL" \
+    --chain-id $chain_id \
+    $factory_address \
+    "$create_contract_selector" \
+    "$name" \
+    "$symbol" \
+    "$standard_id" \
+    "$initial_owner" \
+    $impl_id \
+    $password \
+    --json)
 
-    if [ $? -ne 0 ]; then
-        echo "Deployment failed"
-        exit 1
-    fi
-    
-    # ask if they would like to setup the contract now
-    if gum confirm "Would you like to setup the contract?"; then
-        setup_contract "$DEPLOYED_CONTRACT_ADDRESS" "$chain_id" "$token_standard" "$initial_owner"
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo "Transaction successful. Transaction hash: $tx_hash"
+        save_deployment_data $chain_id $output
+
+        sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
+        event_data=$(get_contract_address "$output" "$sig_event")
+        chunks=($(echo "$event_data" | fold -w64))
+        contract_address=$(decode_address "${chunks[0]}")
+        echo "Deployed Contract Address: $contract_address"
+        echo ""
+
+        # ask if they would like to setup the contract now
+        if gum confirm "Would you like to setup the contract?"; then
+            setup_contract "$contract_address" "$chain_id" "$token_standard" "$initial_owner"
+        fi
+    else
+        echo "Transaction failed. Error output:"
+        echo "$output"
     fi
 }
 
@@ -82,8 +114,6 @@ setup_contract() {
     local chain_id="$2"
     local token_standard="$3"
     local initial_owner="$4"
-
-    load_private_key
 
     clear 
 
@@ -152,6 +182,9 @@ setup_contract() {
     stages_file=$(get_file "Enter stages JSON file")
     clear
 
+    # todo(adam): see if we can remove this
+    load_signer
+
     # Set fund receiver
     show_title "$title" "> Set fund receiver <"
     if gum confirm "Override fund receiver? (default: $(format_address $SIGNER))" --default=false; then
@@ -161,11 +194,11 @@ setup_contract() {
     fi
     clear
 
-    # Get deployed contract address
-    if [ -z "$deployed_contract_address" ]; then
-        show_title "$title" "> Enter deployed contract address <"
-        deployed_contract_address=$(gum input --placeholder "Enter a deployed contract address")
-        check_input "$deployed_contract_address" "deployed contract address"
+    # Get contract address
+    if [ -z "$contract_address" ]; then
+        show_title "$title" "> Enter contract address <"
+        contract_address=$(gum input --placeholder "Enter contract address")
+        check_input "$contract_address" "contract address"
     fi
 
     confirm_setup
@@ -176,8 +209,23 @@ setup_contract() {
         exit 1
     fi
 
+    password=$(get_password_if_set)
+    
     setup_selector="setup(uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
-    output=$(gum spin --spinner dot --title "Setting Up Contract" -- cast send $deployed_contract_address "$setup_selector" $max_supply $wallet_limit $mint_currency $fund_receiver "$STAGES_DATA" $royalty_receiver $royalty_fee --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+    output=$(gum spin --spinner dot --title "Setting Up Contract" -- \
+        cast send $contract_address \
+        "$setup_selector" \
+        $max_supply \
+        $wallet_limit \
+        $mint_currency \
+        $fund_receiver \
+        "$STAGES_DATA" \
+        $royalty_receiver \
+        $royalty_fee \
+        $password \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
     
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -221,7 +269,15 @@ set_base_uri() {
 
     confirm_set_base_uri
 
-    output=$(gum spin --spinner dot --title "Setting Base URI" -- cast send $contract_address $base_uri_selector $base_uri --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+    password=$(get_password_if_set)
+    output=$(gum spin --spinner dot --title "Setting Base URI" -- \
+        cast send $contract_address \
+        $base_uri_selector \
+        $base_uri \
+        $password \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
 
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -261,7 +317,15 @@ set_global_wallet_limit() {
     set_rpc_url $chain_id
 
     confirm_set_global_wallet_limit
-    output=$(gum spin --spinner dot --title "Setting Global Wallet Limit" -- cast send $contract_address $global_wallet_limit_selector $global_wallet_limit --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+    password=$(get_password_if_set)
+    output=$(gum spin --spinner dot --title "Setting Global Wallet Limit" -- \
+        cast send $contract_address \
+        $global_wallet_limit_selector \
+        $global_wallet_limit \
+        $password \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
 
     # TODO(adam) for tomorrow fix bug with setting global wallet limit
 
@@ -303,7 +367,15 @@ set_max_mintable_supply() {
 
     if gum confirm "Do you want to proceed?"; then
         set_max_mintable_supply_selector="setMaxMintableSupply(uint256)"
-        output=$(gum spin --spinner dot --title "Setting Max Mintable Supply" -- cast send $contract_address $set_max_mintable_supply_selector $max_mintable_supply --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Setting Max Mintable Supply" -- \
+            cast send $contract_address \
+            $set_max_mintable_supply_selector \
+            $max_mintable_supply \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -355,7 +427,15 @@ set_mintable() {
 
     if gum confirm "Do you want to proceed?"; then
         set_mintable_selector="setMintable(bool)"
-        output=$(gum spin --spinner dot --title "Setting Mintable" -- cast send $contract_address $set_mintable_selector $mintable --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Setting Mintable" -- \
+            cast send $contract_address \
+            $set_mintable_selector \
+            $mintable \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -373,9 +453,6 @@ set_mintable() {
 
 set_stages() {
     trap "echo 'Exiting...'; exit 1" SIGINT
-
-    load_private_key
-
     clear 
 
     title="Set Stages"
@@ -408,7 +485,14 @@ set_stages() {
     fi
 
     set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
-    output=$(gum spin --spinner dot --title "Setting Stages" -- cast send $deployed_contract_address "$set_stages_selector" "$STAGES_DATA" --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+    password=$(get_password_if_set)
+    output=$(gum spin --spinner dot --title "Setting Stages" -- \
+        cast send $deployed_contract_address \
+        "$set_stages_selector" \
+        "$STAGES_DATA" \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
     
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -454,7 +538,15 @@ set_cosigner() {
 
     if gum confirm "Do you want to proceed?"; then
         set_cosigner_selector="setCosigner(address)"
-        output=$(gum spin --spinner dot --title "Setting Cosigner" -- cast send $contract_address $set_cosigner_selector $cosigner --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Setting Cosigner" -- \
+            cast send $contract_address \
+            $set_cosigner_selector \
+            $cosigner \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -500,7 +592,15 @@ set_timestamp_expiry() {
 
     if gum confirm "Do you want to proceed?"; then
         timestamp_expiry_selector="setTimestampExpirySeconds(uint256)"
-        output=$(gum spin --spinner dot --title "Setting Timestamp Expiry" -- cast send $contract_address $timestamp_expiry_selector $timestamp_expiry --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Setting Timestamp Expiry" -- \
+            cast send $contract_address \
+            $timestamp_expiry_selector \
+            $timestamp_expiry \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -557,7 +657,15 @@ transfer_ownership() {
 
     if gum confirm "Do you want to proceed?"; then
         complete_ownership_handover_selector="completeOwnershipHandover(address)"
-        output=$(gum spin --spinner dot --title "Transferring Ownership" -- cast send $contract_address $complete_ownership_handover_selector $new_owner --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Transferring Ownership" -- \
+            cast send $contract_address \
+            $complete_ownership_handover_selector \
+            $new_owner \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -602,7 +710,15 @@ set_token_uri_suffix() {
     confirm_set_token_uri_suffix
 
     token_uri_suffix_selector="setTokenURISuffix(string)"
-    output=$(gum spin --spinner dot --title "Setting Token URI Suffix" -- cast send $contract_address $token_uri_suffix_selector $token_uri_suffix --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+    password=$(get_password_if_set)
+    output=$(gum spin --spinner dot --title "Setting Token URI Suffix" -- \
+        cast send $contract_address \
+        $token_uri_suffix_selector \
+        $token_uri_suffix \
+        $password \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
 
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -636,7 +752,15 @@ set_uri() {
 
     if gum confirm "Do you want to proceed?"; then
         set_uri_selector="setURI(string)"
-        output=$(gum spin --spinner dot --title "Setting URI" -- cast send $contract_address $set_uri_selector $uri --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Setting URI" -- \
+            cast send $contract_address \
+            $set_uri_selector \
+            $uri \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -697,7 +821,16 @@ set_royalties() {
     
     if gum confirm "Do you want to proceed?"; then
         set_royalties_selector="setDefaultRoyalty(address,uint96)"
-        output=$(gum spin --spinner dot --title "Setting Royalties" -- cast send $contract_address $set_royalties_selector $receiver $fee_numerator --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Setting Royalties" -- \
+            cast send $contract_address \
+            $set_royalties_selector \
+            $receiver \
+            $fee_numerator \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
