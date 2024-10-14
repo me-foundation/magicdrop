@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-source ./commands/main_menu.sh
+source ./cmds/main_menu.sh
 
 load_defaults
 

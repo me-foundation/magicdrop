@@ -1,27 +1,26 @@
 #!/usr/bin/env bash
 
-source ./commands/contract.sh
+source ./cmds/contract.sh
 
 trap "echo 'Exiting...'; exit 1" SIGINT
 
 contract_management_menu() {
     local option=$(gum choose \
         "Initialize contract" \
-        "Set Base URI" \
+        "Set Base URI (ERC721 Only)" \
+        "Set URI (ERC1155 Only)" \
         "Set Global Wallet Limit" \
         "Set Max Mintable Supply" \
         "Set Mintable" \
         "Set Stages" \
+        "Set Royalties" \
         "Set Timestamp Expiry" \
         "Transfer Ownership" \
-        "Freeze/Thaw Trading")
+        "Set Token URI Suffix")
 
     case $option in
         "Initialize contract")
             setup_contract
-            ;;
-        "Set Base URI")
-            set_base_uri
             ;;
         "Set Global Wallet Limit")
             set_global_wallet_limit
@@ -41,8 +40,17 @@ contract_management_menu() {
         "Transfer Ownership")
             transfer_ownership
             ;;
-        "Freeze/Thaw Trading")
-            freeze_trading
+        "Set Royalties")
+            set_royalties
+            ;;
+        "Set Base URI (ERC721 Only)")
+            set_base_uri
+            ;;
+        "Set URI (ERC1155 Only)")
+            set_uri
+            ;;
+        "Set Token URI Suffix")
+            set_token_uri_suffix
             ;;
     esac
 }

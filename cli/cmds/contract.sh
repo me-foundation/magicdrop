@@ -105,17 +105,6 @@ setup_contract() {
         token_standard=$(gum choose "ERC721" "ERC1155")
         clear
     fi
-    
-    # Set token URI suffix with default value of ".json"
-    # if [ -z "$TOKEN_URI_SUFFIX" ]; then
-    #     show_title "$title" "> Set token URI suffix <"
-    #     if gum confirm "Override default token URI suffix? ($DEFAULT_TOKEN_URI_SUFFIX)" --default=false; then
-    #         token_uri_suffix=$(gum input --placeholder ".json")
-    #     else
-    #         token_uri_suffix=$DEFAULT_TOKEN_URI_SUFFIX
-    #     fi
-    #     clear
-    # fi
 
     # Set max supply (number)
     show_title "$title" "> Set max supply <"
@@ -127,23 +116,6 @@ setup_contract() {
     wallet_limit=$(get_numeric_input "Enter global wallet limit")
     clear
 
-    # Check if we need a cosigner
-    # show_title "$title" "> Set cosigner <"
-    # if gum confirm "Need a cosigner?" --default=false; then
-    #     cosigner=$(get_ethereum_address "Cosigner (default: $DEFAULT_COSIGNER)")
-    # else
-    #     cosigner=$DEFAULT_COSIGNER  
-    # fi
-    # clear
-    
-    # # Set timestamp expiry with default value
-    # show_title "$title" "> Set timestamp expiry <"
-    # if gum confirm "Override default timestamp expiry? ($DEFAULT_TIMESTAMP_EXPIRY seconds)" --default=false; then
-    #     timestamp_expiry=$(get_numeric_input "Timestamp expiry (default: $DEFAULT_TIMESTAMP_EXPIRY seconds)")
-    # else
-    #     timestamp_expiry=$DEFAULT_TIMESTAMP_EXPIRY
-    # fi
-    # clear
     
     # Set mint currency (default to native gas token)
     show_title "$title" "> Set mint currency <"
@@ -205,7 +177,7 @@ setup_contract() {
     fi
 
     setup_selector="setup(uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
-    output=$(cast send $deployed_contract_address "$setup_selector" $max_supply $wallet_limit $mint_currency $fund_receiver "$STAGES_DATA" $royalty_receiver $royalty_fee --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+    output=$(gum spin --spinner dot --title "Setting Up Contract" -- cast send $deployed_contract_address "$setup_selector" $max_supply $wallet_limit $mint_currency $fund_receiver "$STAGES_DATA" $royalty_receiver $royalty_fee --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
     
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
@@ -305,25 +277,438 @@ set_global_wallet_limit() {
 }
 
 set_max_mintable_supply() {
-    echo "Set Max Mintable Supply"
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Max Mintable Supply"
+
+    show_title "$title" "> Choose a chain to deploy on <"
+    chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
+    # Extract the chain ID based on the selected chain name
+    chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
+    set_rpc_url $chain_id
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Enter the max mintable supply <"
+    max_mintable_supply=$(get_numeric_input "Enter max mintable supply")
+    check_input "$max_mintable_supply" "max mintable supply"
+
+    echo ""
+    echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        set_max_mintable_supply_selector="setMaxMintableSupply(uint256)"
+        output=$(gum spin --spinner dot --title "Setting Max Mintable Supply" -- cast send $contract_address $set_max_mintable_supply_selector $max_mintable_supply --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+            exit 1
+        fi
+    else
+        echo "Set max mintable supply cancelled."
+    fi
+
+    echo ""
 }
 
 set_mintable() {
-    echo "Set Mintable"
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Mintable"
+
+    show_title "$title" "> Choose a chain to deploy on <"
+    chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
+    # Extract the chain ID based on the selected chain name
+    chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
+    set_rpc_url $chain_id
+    clear
+
+    show_title "$title" "> Choose a token standard <"
+    token_standard=$(gum choose "ERC721" "ERC1155")
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Set mintable <"
+    if gum confirm "Set mintable?" --default=false; then
+        mintable=true
+    else
+        mintable=false
+    fi
+    clear
+
+    echo ""
+    echo "You are about to set the mintable status of $(format_address $contract_address) to $mintable"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        set_mintable_selector="setMintable(bool)"
+        output=$(gum spin --spinner dot --title "Setting Mintable" -- cast send $contract_address $set_mintable_selector $mintable --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
+    else
+        echo "Set mintable cancelled."
+    fi
+
+    echo ""
 }
 
 set_stages() {
-    echo "Set Stages"
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    load_private_key
+
+    clear 
+
+    title="Set Stages"
+
+    show_title "$title" "> Choose a chain to deploy on <"
+    chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
+    # Extract the chain ID based on the selected chain name
+    chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
+    set_rpc_url $chain_id
+    clear
+    
+    show_title "$title" "> Choose a token standard <"
+    token_standard=$(gum choose "ERC721" "ERC1155")
+    clear
+
+    # Set stages by reading from a JSON file, default is stages.json
+    show_title "$title" "> Set stages file <"
+    stages_file=$(get_file "Enter stages JSON file")
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    deployed_contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$deployed_contract_address" "contract address"
+    clear
+
+    load_stages_json "$stages_file"
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to load stages data"
+        exit 1
+    fi
+
+    set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+    output=$(gum spin --spinner dot --title "Setting Stages" -- cast send $deployed_contract_address "$set_stages_selector" "$STAGES_DATA" --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+    
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo "Transaction successful. Transaction hash: $tx_hash"
+    else
+        echo "Transaction failed. Error output:"
+        echo "$output"
+        exit 1
+    fi
+
+    echo ""
+    echo "Stages setup complete"
+    echo ""
+}
+
+set_cosigner() {
+    clear
+
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Cosigner"
+
+    show_title "$title" "> Choose a chain to deploy on <"
+    chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
+    # Extract the chain ID based on the selected chain name
+    chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
+    set_rpc_url $chain_id
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Enter cosigner address <"
+    cosigner=$(get_ethereum_address "Enter cosigner address")
+    check_input "$cosigner" "cosigner address"
+    clear
+
+    echo ""
+    echo "You are about to set the cosigner of $(format_address $contract_address) to $(format_address $cosigner)"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        set_cosigner_selector="setCosigner(address)"
+        output=$(gum spin --spinner dot --title "Setting Cosigner" -- cast send $contract_address $set_cosigner_selector $cosigner --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+            exit 1
+        fi
+    else
+        echo "Set cosigner cancelled."
+    fi
+
+    echo ""
 }
 
 set_timestamp_expiry() {
-    echo "Set Timestamp Expiry"
+    clear
+
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Timestamp Expiry"
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
+    set_rpc_url $chain_id
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Enter the timestamp expiry <"
+    timestamp_expiry=$(get_numeric_input "Enter timestamp expiry in seconds")
+    check_input "$timestamp_expiry" "timestamp expiry"
+
+    echo ""
+    echo "You are about to set the timestamp expiry of $(format_address $contract_address) to $timestamp_expiry seconds."
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        timestamp_expiry_selector="setTimestampExpirySeconds(uint256)"
+        output=$(gum spin --spinner dot --title "Setting Timestamp Expiry" -- cast send $contract_address $timestamp_expiry_selector $timestamp_expiry --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+            exit 1
+        fi
+    else
+        echo "Timestamp expiry cancelled."
+    fi
+
+    echo ""
 }
 
 transfer_ownership() {
-    echo "Transfer Ownership"
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Complete Ownership Handover"
+
+    echo ""
+    echo "Notice: In order to transfer ownership, the next owner must call 'requestOwnershipTransfer(address)' on the contract."
+    echo "This request will expire in 48 hours. Once expired, the request can be made again by the new owner."
+    echo "After the request is made, the current owner can proceed with this action."
+    echo ""
+
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
+    set_rpc_url $chain_id
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Enter new owner address <"
+    new_owner=$(get_ethereum_address "Enter new owner address")
+    check_input "$new_owner" "new owner address"
+    clear
+    
+    echo ""
+    echo "You are about to transfer ownership of $(format_address $contract_address) to $(format_address $new_owner)"
+    echo "This action cannot be undone."
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        complete_ownership_handover_selector="completeOwnershipHandover(address)"
+        output=$(gum spin --spinner dot --title "Transferring Ownership" -- cast send $contract_address $complete_ownership_handover_selector $new_owner --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
+    else
+        echo "Transfer ownership cancelled."
+    fi
+
+    echo ""
 }
 
-freeze_trading() {
-    echo "Freeze/Thaw Trading"
+set_token_uri_suffix() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Set Token URI Suffix"
+
+    show_title "$title" "> Set token URI suffix <"
+    if gum confirm "Override default token URI suffix? ($DEFAULT_TOKEN_URI_SUFFIX)" --default=false; then
+        token_uri_suffix=$(gum input --placeholder ".json")
+    else
+        token_uri_suffix=$DEFAULT_TOKEN_URI_SUFFIX
+    fi
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
+    clear
+
+    set_rpc_url $chain_id
+
+    confirm_set_token_uri_suffix
+
+    token_uri_suffix_selector="setTokenURISuffix(string)"
+    output=$(gum spin --spinner dot --title "Setting Token URI Suffix" -- cast send $contract_address $token_uri_suffix_selector $token_uri_suffix --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo "Transaction successful. Transaction hash: $tx_hash"
+    else
+        echo "Transaction failed. Error output:"
+        echo "$output"
+    fi
+
+    echo ""
+}
+
+set_uri() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Set URI (ERC1155 Only)"
+
+    show_title "$title" "> Enter ERC1155 contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Enter new URI <"
+    uri=$(gum input --placeholder "Enter new URI")
+    check_input "$uri" "URI"
+    clear
+
+    echo ""
+    echo "You are about to set the URI of $(format_address $contract_address) to $uri"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        set_uri_selector="setURI(string)"
+        output=$(gum spin --spinner dot --title "Setting URI" -- cast send $contract_address $set_uri_selector $uri --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
+    else
+        echo "Set URI cancelled."
+    fi
+
+    echo ""
+}
+
+set_royalties() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Set Royalties"
+
+    echo ""
+    echo "Notice: This only works for contracts that implement the ERC2981 standard."
+    echo "Newer versions of ERC721M and ERC1155M support this out of the box."
+    echo ""
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
+    set_rpc_url $chain_id
+    clear
+
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Enter receiver address <"
+    receiver=$(get_ethereum_address "Enter receiver address")
+    check_input "$receiver" "receiver address"
+    clear
+    
+    show_title "$title" "> Enter fee numerator <"
+    echo "Notice: The fee numerator is a number from 0 to 10000."
+    echo "It shows the royalty fee as a percentage."
+    echo "For example, 1000 means 10%, 100 means 1%, and 0 means 0%."
+    echo ""
+
+    fee_numerator=$(get_numeric_input "Enter fee numerator")
+    check_input "$fee_numerator" "fee numerator"
+    clear
+
+    echo ""
+    percentage=$(echo "scale=2; $fee_numerator / 100" | bc)
+    echo "You are about to set the royalties of $(format_address $contract_address) to $(format_address $receiver) with a fee numerator of $fee_numerator ($percentage%)"
+    echo ""
+    
+    if gum confirm "Do you want to proceed?"; then
+        set_royalties_selector="setDefaultRoyalty(address,uint96)"
+        output=$(gum spin --spinner dot --title "Setting Royalties" -- cast send $contract_address $set_royalties_selector $receiver $fee_numerator --chain-id $chain_id --private-key $PRIVATE_KEY --rpc-url "$RPC_URL" --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
+    else
+        echo "Set royalties cancelled."
+    fi
+
+    echo ""
 }

@@ -27,6 +27,7 @@ load_defaults() {
         PRIVATE_KEY=$(jq -r '.private_key // empty' defaults.json)
         DEFAULT_ROYALTY_RECEIVER=$(jq -r '.default_royalty_receiver // empty' defaults.json)
         DEFAULT_ROYALTY_FEE=$(jq -r '.default_royalty_fee // empty' defaults.json)
+        DEFAULT_MERKLE_ROOT=$(jq -r '.default_merkle_root // empty' defaults.json)
     else 
         echo "No defaults.json found."
         exit 1
@@ -231,6 +232,21 @@ confirm_set_global_wallet_limit() {
     fi
 }
 
+confirm_set_token_uri_suffix() {
+    echo ""
+    echo "==================== TOKEN URI SUFFIX ===================="
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
+    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
+    echo "Token URI Suffix:             $(gum style --foreground 212 "$token_uri_suffix")"
+    echo "==========================================================="
+    echo ""
+    
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
 show_main_title() {
     gum style \
 	--foreground 212 --border-foreground 212 --border double \
@@ -287,7 +303,7 @@ load_stages_json() {
     merkle_roots=()
     for whitelistPath in $whitelistPaths; do
         if [[ -z "$whitelistPath" || "$whitelistPath" == "null" ]]; then
-            merkle_roots+=("0x0000000000000000000000000000000000000000000000000000000000000000")
+            merkle_roots+=("$DEFAULT_MERKLE_ROOT")
         else
             result=$(generateMerkleRoot "$whitelistPath")
             if [[ $? -ne 0 ]]; then
@@ -299,7 +315,7 @@ load_stages_json() {
     done
     json_array=$(printf '%s\n' "${merkle_roots[@]}" | jq -R . | jq -s .)
 
-    local stages_data
+    # Map the stages data from the JSON file, and replace the merkle root with the generated one
     stages_data=$(jq -c --argjson merkle_roots "$json_array" '
         to_entries | map(
             [
