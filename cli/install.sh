@@ -13,5 +13,11 @@ brew install gum
 # install jq
 brew install jq
 
+git pull
 forge install
 forge build
+
+echo ""
+echo "Done"
+echo "Run './magicdrop' to start"
+echo ""
