@@ -16,7 +16,7 @@ import {MintStageInfo} from "../../common/Structs.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 
 /// @title ERC721M
-/// @notice An upgradeable ERC721 contract with multi-stage minting, royalties, and authorized minters
+/// @notice An initializable ERC721 contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC721, Ownable, ReentrancyGuard, and custom minting logic
 contract ERC721M is
     IERC721M,

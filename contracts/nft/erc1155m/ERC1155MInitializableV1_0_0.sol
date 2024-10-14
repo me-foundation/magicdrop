@@ -19,7 +19,7 @@ import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 /// @title ERC1155MInitializableV1_0_0
-/// @notice An upgradeable ERC1155 contract with multi-stage minting, royalties, and authorized minters
+/// @notice An initializable ERC1155 contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC1155, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
 contract ERC1155MInitializableV1_0_0 is
     IERC1155M,
