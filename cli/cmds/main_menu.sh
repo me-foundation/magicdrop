@@ -40,14 +40,17 @@ contract_management_menu() {
         "Initialize contract" \
         "Set Base URI (ERC721 Only)" \
         "Set URI (ERC1155 Only)" \
+        "Set Stages" \
+        "Set Royalties" \
         "Set Global Wallet Limit" \
         "Set Max Mintable Supply" \
         "Set Mintable" \
-        "Set Stages" \
-        "Set Royalties" \
+        "Set Cosigner" \
+        "Set Token URI Suffix" \
         "Set Timestamp Expiry" \
         "Transfer Ownership" \
-        "Set Token URI Suffix")
+        "Manage Authorized Minters"\
+        "Go to Main Menu")
 
     case $option in
         "Initialize contract")
@@ -83,13 +86,23 @@ contract_management_menu() {
         "Set Token URI Suffix")
             set_token_uri_suffix
             ;;
+        "Set Cosigner")
+            set_cosigner
+            ;;
+        "Manage Authorized Minters")
+            manage_authorized_minters
+            ;;
+        "Go to Main Menu")
+            main_menu
+            ;;
     esac
 }
 
 token_operations_menu() {
     local option=$(gum choose \
         "Owner Mint" \
-        "Send ERC721 Batch")
+        "Send ERC721 Batch"\
+        "Go to Main Menu")
 
     case $option in
         "Owner Mint")
@@ -97,6 +110,9 @@ token_operations_menu() {
             ;;
         "Send ERC721 Batch")
             send_erc721_batch
+            ;;
+        "Go to Main Menu")
+            main_menu
             ;;
     esac
 }

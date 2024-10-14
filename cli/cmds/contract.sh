@@ -889,27 +889,188 @@ owner_mint() {
         mint_args="$recipient $token_id $quantity"
     fi
 
+    echo ""
+    echo "You are about to mint $quantity token(s) of token ID #$token_id to $(format_address $recipient)"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        password=$(get_password_if_set)
+        output=$(gum spin --spinner dot --title "Minting" -- \
+            cast send $contract_address \
+            "$mint_selector" \
+            $mint_args \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
+    else
+        echo "Mint cancelled."
+    fi
+}
+
+send_erc721_batch() {
+    echo "Not implemented, please use the hardhat script instead."
+}
+
+manage_authorized_minters() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Manage Authorized Minters"
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Choose an action <"
+    action=$(gum choose "Add Authorized Minter" "Remove Authorized Minter")
+    clear
+
+    show_title "$title" "> Enter minter address <"
+    minter=$(get_ethereum_address "Enter minter address")
+    check_input "$minter" "minter address"
+    clear
+
+    if [ "$action" == "Add Authorized Minter" ]; then
+        add_authorized_minter $contract_address $minter $chain_id
+    else
+        remove_authorized_minter $contract_address $minter $chain_id
+    fi
+}
+
+add_authorized_minter() {
+    contract_address=$1
+    minter=$2
+    chain_id=$3
+
+    set_rpc_url $chain_id
     password=$(get_password_if_set)
-    output=$(gum spin --spinner dot --title "Minting" -- \
+    add_authorized_minter_selector="addAuthorizedMinter(address)"
+
+    echo ""
+    echo "You are about to add $(format_address $minter) as an authorized minter of $(format_address $contract_address)"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        output=$(gum spin --spinner dot --title "Adding Authorized Minter" -- \
+            cast send $contract_address \
+            "$add_authorized_minter_selector" \
+            $minter \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
+    else
+        echo "Add authorized minter cancelled."
+    fi
+}
+
+remove_authorized_minter() {
+    contract_address=$1
+    minter=$2
+    chain_id=$3
+
+    set_rpc_url $chain_id
+    password=$(get_password_if_set)
+    remove_authorized_minter_selector="removeAuthorizedMinter(address)"
+
+    echo ""
+    echo "You are about to remove $(format_address $minter) as an authorized minter of $(format_address $contract_address)"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        output=$(gum spin --spinner dot --title "Removing Authorized Minter" -- \
+            cast send $contract_address \
+            "$remove_authorized_minter_selector" \
+            $minter \
+            $password \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+        --json)
+
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
+    else
+        echo "Remove authorized minter cancelled."
+    fi
+}
+
+set_cosigner() {
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Set Cosigner"
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    show_title "$title" "> Enter cosigner address <"
+    cosigner=$(get_ethereum_address "Enter cosigner address")
+    check_input "$cosigner" "cosigner address"
+    clear
+
+    set_rpc_url $chain_id
+    password=$(get_password_if_set)
+    set_cosigner_selector="setCosigner(address)"
+
+    echo ""
+    echo "You are about to set the cosigner of $(format_address $contract_address) to $(format_address $cosigner)"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        output=$(gum spin --spinner dot --title "Setting Cosigner" -- \
         cast send $contract_address \
-        "$mint_selector" \
-        $mint_args \
+        "$set_cosigner_selector" \
+        $cosigner \
         $password \
         --chain-id $chain_id \
         --rpc-url "$RPC_URL" \
         --json)
 
-    if [ $? -eq 0 ]; then
-        tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo "Transaction successful. Transaction hash: $tx_hash"
+        if [ $? -eq 0 ]; then
+            tx_hash=$(echo "$output" | jq -r '.transactionHash')
+            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+        else
+            echo "Transaction failed. Error output:"
+            echo "$output"
+        fi
     else
-        echo "Transaction failed. Error output:"
-        echo "$output"
+        echo "Set cosigner cancelled."
     fi
-
-    echo ""
 }
 
-send_erc721_batch() {
-    echo "Not implemented"
-}
