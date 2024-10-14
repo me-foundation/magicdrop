@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-source ./cmds/menu.sh
 source ./cmds/contract.sh
 source ./cmds/utils.sh
 
@@ -14,30 +13,90 @@ main_menu() {
     option=$(gum choose \
     "Deploy Contracts" \
     "Manage Contracts" \
-    "Mint Tokens" \
     "Token Operations" \
     "Quit")
 
     case $option in
         "Deploy Contracts")
             deploy_contract
-            go_to_main_menu_or_exit
             ;;
         "Manage Contracts")
             contract_management_menu
-            go_to_main_menu_or_exit
-            ;;
-        "Mint Tokens")
-            minting_menu
-            go_to_main_menu_or_exit
             ;;
         "Token Operations")
             token_operations_menu
-            go_to_main_menu_or_exit
             ;;
         "Quit")
             echo "Exiting..."
             exit 0
+            ;;
+    esac
+
+    go_to_main_menu_or_exit
+}
+
+contract_management_menu() {
+    local option=$(gum choose \
+        "Initialize contract" \
+        "Set Base URI (ERC721 Only)" \
+        "Set URI (ERC1155 Only)" \
+        "Set Global Wallet Limit" \
+        "Set Max Mintable Supply" \
+        "Set Mintable" \
+        "Set Stages" \
+        "Set Royalties" \
+        "Set Timestamp Expiry" \
+        "Transfer Ownership" \
+        "Set Token URI Suffix")
+
+    case $option in
+        "Initialize contract")
+            setup_contract
+            ;;
+        "Set Global Wallet Limit")
+            set_global_wallet_limit
+            ;;
+        "Set Max Mintable Supply")
+            set_max_mintable_supply
+            ;;
+        "Set Mintable")
+            set_mintable
+            ;;
+        "Set Stages")
+            set_stages
+            ;;
+        "Set Timestamp Expiry")
+            set_timestamp_expiry
+            ;;
+        "Transfer Ownership")
+            transfer_ownership
+            ;;
+        "Set Royalties")
+            set_royalties
+            ;;
+        "Set Base URI (ERC721 Only)")
+            set_base_uri
+            ;;
+        "Set URI (ERC1155 Only)")
+            set_uri
+            ;;
+        "Set Token URI Suffix")
+            set_token_uri_suffix
+            ;;
+    esac
+}
+
+token_operations_menu() {
+    local option=$(gum choose \
+        "Owner Mint" \
+        "Send ERC721 Batch")
+
+    case $option in
+        "Owner Mint")
+            owner_mint
+            ;;
+        "Send ERC721 Batch")
+            send_erc721_batch
             ;;
     esac
 }

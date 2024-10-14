@@ -72,7 +72,8 @@ deploy_contract() {
 
     echo "Deploying contract... this may take a minute."
     echo ""
-    output=$(cast send \
+    output=$(gum spin --spinner dot --title "Deploying Contract" -- \
+    cast send \
     --rpc-url "$RPC_URL" \
     --chain-id $chain_id \
     $factory_address \
@@ -793,7 +794,6 @@ set_royalties() {
     set_rpc_url $chain_id
     clear
 
-
     show_title "$title" "> Enter contract address <"
     contract_address=$(get_ethereum_address "Enter contract address")
     check_input "$contract_address" "contract address"
@@ -844,4 +844,72 @@ set_royalties() {
     fi
 
     echo ""
+}
+
+owner_mint() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Mint Tokens"
+
+    show_title "$title" "> Choose a chain <"
+    chain_info=$(select_chain "$title")
+    chain_id=$(echo "$chain_info" | cut -d':' -f1)
+    chain=$(echo "$chain_info" | cut -d':' -f2)
+    set_rpc_url $chain_id
+    clear
+
+    show_title "$title" "> Enter contract address <"
+    contract_address=$(get_ethereum_address "Enter contract address")
+    check_input "$contract_address" "contract address"
+    clear
+
+    token_standard=$(get_token_standard "$contract_address")
+    show_title "$title" "> Choose a token standard <"
+    token_standard=$(gum choose "ERC721" "ERC1155")
+    clear
+
+    show_title "$title" "> Enter recipient address <"
+    recipient=$(get_ethereum_address "Enter recipient address")
+    check_input "$recipient" "recipient address"
+    clear
+    
+    show_title "$title" "> Enter quantity <"
+    quantity=$(get_numeric_input "Enter quantity")
+    check_input "$quantity" "quantity"
+    clear
+
+    token_id=""
+    mint_selector="ownerMint(uint32,address)" # ERC721 mint(to, quantity)
+    mint_args="$quantity $recipient"
+    if [ "$token_standard" == "ERC1155" ]; then
+        token_id=$(get_numeric_input "Enter token ID")
+        check_input "$token_id" "token ID"
+        clear
+        mint_selector="ownerMint(address,uint256,uint32)" # ERC1155 mint(to, tokenId, quantity)
+        mint_args="$recipient $token_id $quantity"
+    fi
+
+    password=$(get_password_if_set)
+    output=$(gum spin --spinner dot --title "Minting" -- \
+        cast send $contract_address \
+        "$mint_selector" \
+        $mint_args \
+        $password \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
+
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo "Transaction successful. Transaction hash: $tx_hash"
+    else
+        echo "Transaction failed. Error output:"
+        echo "$output"
+    fi
+
+    echo ""
+}
+
+send_erc721_batch() {
+    echo "Not implemented"
 }
