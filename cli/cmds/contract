@@ -93,7 +93,6 @@ deploy_contract() {
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
         echo "Transaction successful. Transaction hash: $tx_hash"
-        save_deployment_data $chain_id $output
 
         sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
         event_data=$(get_contract_address "$output" "$sig_event")
@@ -101,6 +100,8 @@ deploy_contract() {
         contract_address=$(decode_address "${chunks[0]}")
         echo "Deployed Contract Address: $contract_address"
         echo ""
+
+        save_deployment_data $chain_id $contract_address $name $symbol $token_standard $initial_owner $impl_id
 
         # ask if they would like to setup the contract now
         if gum confirm "Would you like to setup the contract?"; then

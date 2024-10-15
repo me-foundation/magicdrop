@@ -29,7 +29,7 @@ load_defaults() {
         DEFAULTS_FILE="./defaults.json"
     fi
 
-    if [[ ! -f "$DEFAULTS_FILf" ]]; then
+    if [[ ! -f "$DEFAULTS_FILE" ]]; then
         echo "defaults.json not found in current directory. Exiting..."
         exit 1
     fi
@@ -434,7 +434,12 @@ decode_address() {
 
 save_deployment_data() {
     chain_id=$1
-    deployment_data=$2
+    contract_address=$2
+    name=$3
+    symbol=$4
+    token_standard=$5
+    initial_owner=$6
+    impl_id=$7
 
     # Get the current timestamp
     timestamp=$(date +%s)
@@ -442,8 +447,29 @@ save_deployment_data() {
     deployment_dir="./deployments/$chain_id"
     mkdir -p "$deployment_dir"
 
-    file_name="$NAME-$STANDARD-$timestamp.json"
-    echo "$deployment_data" > "$deployment_dir/$file_name"
+    # Create a JSON object with the provided data
+    json_data=$(jq -n \
+        --arg chain_id "$chain_id" \
+        --arg contract_address "$contract_address" \
+        --arg name "$name" \
+        --arg symbol "$symbol" \
+        --arg token_standard "$token_standard" \
+        --arg initial_owner "$initial_owner" \
+        --arg impl_id "$impl_id" \
+        --arg timestamp "$timestamp" \
+        '{
+            chain_id: $chain_id,
+            contract_address: $contract_address,
+            name: $name,
+            symbol: $symbol,
+            token_standard: $token_standard,
+            initial_owner: $initial_owner,
+            impl_id: $impl_id,
+            timestamp: $timestamp
+        }')
+
+    file_name="$name-$token_standard-$timestamp.json"
+    echo "$json_data" > "$deployment_dir/$file_name"
     echo "Deployment details saved to $deployment_dir/$file_name"
 }
 
