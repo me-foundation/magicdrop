@@ -43,6 +43,13 @@ load_defaults() {
     DEFAULT_ROYALTY_FEE=$(jq -r '.default_royalty_fee // empty' "$DEFAULTS_FILE")
     DEFAULT_MERKLE_ROOT=$(jq -r '.default_merkle_root // empty' "$DEFAULTS_FILE")
 
+    # Create collections directory if it doesn't exist
+    COLLECTIONS_DIR="$BASE_DIR/../collections"
+    if [[ ! -d "$COLLECTIONS_DIR" ]]; then
+        echo "Creating collections directory at $COLLECTIONS_DIR..."
+        mkdir -p "$COLLECTIONS_DIR"
+    fi
+    
     source .env
 }
 
