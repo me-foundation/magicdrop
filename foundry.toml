@@ -1,3 +1,5 @@
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
 [profile.default]
 src = "contracts"
 out = "out"
@@ -6,5 +8,3 @@ solc_version = "0.8.20"
 evm_version = "cancun"
 via_ir = true
 optimizer_runs = 777
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

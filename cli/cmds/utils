@@ -20,7 +20,7 @@ export ETH_KEYSTORE_ACCOUNT=$MAGIC_DROP_KEYSTORE
 load_defaults() {
     CONFIG_COMPLETE=true
 
-    if [[ -f "defaults.json" ]]; then
+    if [[ -f "$BASE_DIR/../defaults.json" ]]; then
         # Read values from defaults.json using jq
         DEFAULT_COSIGNER=$(jq -r '.default_cosigner // empty' defaults.json)
         DEFAULT_TIMESTAMP_EXPIRY=$(jq -r '.default_timestamp_expiry // empty' defaults.json)
@@ -55,10 +55,10 @@ load_private_key() {
 
     echo "============================================================"
     echo ""
-    echo "MagicDrop CLI requires a private key to send transactions."
+    echo "Magic Drop CLI requires a private key to send transactions."
     echo "This key controls all funds in the account, so it must be protected carefully."
     echo ""
-    echo "MagicDrop CLI will create an encrypted keystore for your private key."
+    echo "Magic Drop CLI will create an encrypted keystore for your private key."
     echo "You will be prompted to enter your private key and a password to encrypt it."
     echo "Learn more: https://book.getfoundry.sh/reference/cast/cast-wallet-import"
     echo ""
@@ -152,11 +152,11 @@ file_exists() {
     [[ -f "$file" ]]
 }
 
-get_file() {
+get_collection_file() {
     local prompt="$1"
     local file
     while true; do
-        file=$(gum file --height 10)
+        file=$(gum file --directory ./collections --height 10)
 
         if file_exists "$file"; then
             echo "$file"
@@ -280,7 +280,7 @@ show_main_title() {
     gum style \
 	--foreground 212 --border-foreground 212 --border double \
 	--align center --width 40 --margin "1 0" --padding "1" \
-	'MagicDrop CLI' '' 'Create and manage NFT collections'
+	'Magic Drop CLI' '' 'Create and manage NFT collections'
 }
 
 show_title() {
@@ -419,4 +419,28 @@ save_deployment_data() {
     file_name="$NAME-$STANDARD-$timestamp.json"
     echo "$deployment_data" > "$deployment_dir/$file_name"
     echo "Deployment details saved to $deployment_dir/$file_name"
+}
+
+prestart() {
+    # Fetch the latest changes from the remote
+    git fetch
+
+    # Check if the local main is behind the remote main
+    LOCAL=$(git rev-parse @)
+    REMOTE=$(git rev-parse @{u})
+    BASE=$(git merge-base @ @{u})
+
+    if [ $LOCAL = $REMOTE ]; then
+        echo "You are up-to-date with the main branch."
+    elif [ $LOCAL = $BASE ]; then
+        echo "Your local main branch is behind the remote. Please pull the latest changes."
+        exit 1
+    elif [ $REMOTE = $BASE ]; then
+        echo "Your local main branch is ahead of the remote."
+    else
+        echo "Your local main branch has diverged from the remote."
+        exit 1
+    fi
+
+    forge build
 }

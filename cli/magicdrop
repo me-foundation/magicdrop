@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
-source ./cmds/main_menu.sh
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Ensure the path to the script is correct and the file exists
+source "$BASE_DIR/cmds/main_menu"
 
 load_defaults
 
 # Run the menu only if the configuration is complete
 if [[ "$CONFIG_COMPLETE" == true ]]; then
+    prestart
     main_menu
 else
     echo "Configuration is incomplete. Please ensure all values are set in defaults.json."

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-source ./cmds/utils.sh
+# Set BASE_DIR to the directory where this script is located
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Ensure the path to the utils script is correct and the file exists
+source "$BASE_DIR/utils"
 
 trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -180,7 +184,7 @@ setup_contract() {
 
     # Set stages by reading from a JSON file, default is stages.json
     show_title "$title" "> Set stages file <"
-    stages_file=$(get_file "Enter stages JSON file")
+    stages_file=$(get_collection_file "Enter stages JSON file")
     clear
 
     # todo(adam): see if we can remove this
@@ -467,11 +471,11 @@ set_stages() {
     
     show_title "$title" "> Choose a token standard <"
     token_standard=$(gum choose "ERC721" "ERC1155")
-    clear
+    clearn
 
     # Set stages by reading from a JSON file, default is stages.json
     show_title "$title" "> Set stages file <"
-    stages_file=$(get_file "Enter stages JSON file")
+    stages_file=$(get_collection_file "Enter stages JSON file")
     clear
 
     show_title "$title" "> Enter contract address <"

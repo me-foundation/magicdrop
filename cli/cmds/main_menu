@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
-source ./cmds/contract.sh
-source ./cmds/utils.sh
+# Set BASE_DIR to the directory where this script is located
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source the necessary scripts, ensuring paths are quoted
+source "$BASE_DIR/contract"
+source "$BASE_DIR/utils"
 
 main_menu() {
     trap "echo 'Exiting...'; exit 1" SIGINT
