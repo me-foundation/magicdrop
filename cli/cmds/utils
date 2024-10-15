@@ -29,7 +29,7 @@ load_defaults() {
         DEFAULTS_FILE="./defaults.json"
     fi
 
-    if [[ ! -f "$DEFAULTS_FILE" ]]; then
+    if [[ ! -f "$DEFAULTS_FILf" ]]; then
         echo "defaults.json not found in current directory. Exiting..."
         exit 1
     fi
@@ -49,8 +49,10 @@ load_defaults() {
         echo "Creating collections directory at $COLLECTIONS_DIR..."
         mkdir -p "$COLLECTIONS_DIR"
     fi
-    
-    source .env
+
+    source "$BASE_DIR/../.env"
+
+    load_signer
 }
 
 get_password_if_set() {
@@ -329,7 +331,7 @@ set_rpc_url() {
     export RPC_URL
 }
 
-generateMerkleRoot() {
+generate_merkle_root() {
     generateMerkleRootPath="$BASE_DIR/../../scripts/utils/generateMerkleRoot.ts"
 
     if [[ ! -f "$generateMerkleRootPath" ]]; then
@@ -357,7 +359,7 @@ load_stages_json() {
         if [[ -z "$whitelistPath" || "$whitelistPath" == "null" ]]; then
             merkle_roots+=("$DEFAULT_MERKLE_ROOT")
         else
-            result=$(generateMerkleRoot "$BASE_DIR/../collections/$whitelistPath")
+            result=$(generate_merkle_root "$BASE_DIR/../collections/$whitelistPath")
             if [[ $? -ne 0 ]]; then
                 echo "Error: Failed to generate merkle root"
                 return 1
