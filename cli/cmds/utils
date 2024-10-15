@@ -172,17 +172,14 @@ file_exists() {
 
 get_collection_file() {
     local prompt="$1"
-    local file
-    while true; do
-        file=$(gum file --directory "$BASE_DIR/../collections" --height 10)
+    local file file=$(gum file --directory "$BASE_DIR/../collections" --height 10)
 
-        if file_exists "$file"; then
-            echo "$file"
-            return
-        else
-            echo "File not found. Please enter a valid file path."
-        fi
-    done
+    if file_exists "$file"; then
+        echo "$file"
+    else 
+        # should never get here
+        exit 1
+    fi
 }
 
 format_address() {
