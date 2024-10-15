@@ -57,7 +57,7 @@ load_defaults() {
 
 get_password_if_set() {
     if [[ -n "$KEYSTORE_PASSWORD" ]]; then
-        echo "--password $KEYSTORE_PASSWORD"
+        echo "--password $KEYSTORE_PASSWORD --account $MAGIC_DROP_KEYSTORE"
     else
         echo ""
     fi
@@ -84,18 +84,18 @@ load_private_key() {
     echo ""
     echo "============================================================"
     echo ""
+
     cast wallet import --interactive $MAGIC_DROP_KEYSTORE
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to create keystore"
+        exit 1
+    fi
 
     echo ""
     echo "Keystore created successfully"
     echo "You can store your password in .env to avoid entering it every time"
     echo "echo \"KEYSTORE_PASSWORD=<your_password>\" >> .env"
     echo ""
-
-    if [[ $? -ne 0 ]]; then
-        echo "Failed to create keystore"
-        exit 1
-    fi
 }
 
 load_signer() {
@@ -359,12 +359,12 @@ load_stages_json() {
         if [[ -z "$whitelistPath" || "$whitelistPath" == "null" ]]; then
             merkle_roots+=("$DEFAULT_MERKLE_ROOT")
         else
+            echo "Cleaning whitelist files and generating merkle roots for $whitelistPath..."
             result=$(generate_merkle_root "$BASE_DIR/../collections/$whitelistPath")
             if [[ $? -ne 0 ]]; then
                 echo "Error: Failed to generate merkle root"
                 return 1
             fi
-            echo "merkle root: $result"
             merkle_roots+=("$result")
         fi
     done
@@ -495,4 +495,98 @@ prestart() {
     fi
 
     forge build --root "$BASE_DIR"
+}
+
+# TODO(adam) finish deployment loading
+load_deployment_data() {
+    local deployment_file="$1"
+    if [[ ! -f "$deployment_file" ]]; then
+        echo "Error: Deployment file not found: $deployment_file"
+        return 1
+    fi
+
+
+    jq -r '
+        .chain_id,
+        .contract_address,
+        .name,
+        .symbol,
+        .token_standard,
+        .initial_owner,
+        .impl_id
+    ' "$deployment_file"
+}
+
+choose_deployment() {
+    local chain_id="$1"
+    local deployments_dir="./deployments/$chain_id"
+    if [[ ! -d "$deployments_dir" ]]; then
+        echo "Error: Deployments directory not found: $deployments_dir"
+        return 1
+    fi
+    
+    local deployment_files=("$deployments_dir"/*.json)
+    if [[ ${#deployment_files[@]} -eq 0 ]]; then
+        echo "No deployments found in $deployments_dir"
+        return 1
+    fi
+
+    local deployment_file=$(gum choose "${deployment_files[@]}")
+    echo "$deployment_file"
+}
+
+check_signer_native_balance() {
+    local chain_id="$1"
+    set_rpc_url $chain_id
+    local balance=$(cast balance $SIGNER --rpc-url "$RPC_URL")
+    local from_wei=$(cast from-wei $balance)
+    printf "%.3f\n" $from_wei
+}
+
+chain_id_to_symbol() {
+    local chain_id="$1"
+    case $chain_id in
+        1) echo "ETH" ;;
+        137) echo "MATIC" ;;
+        8453) echo "BASE" ;;
+        42161) echo "ARB" ;;
+        1329) echo "SEI" ;;
+        33139) echo "APE" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
+chain_id_to_explorer_url() {
+    local chain_id="$1"
+    case $chain_id in
+        1) echo "https://etherscan.io" ;;
+        137) echo "https://polygonscan.com" ;;
+        8453) echo "https://explorer.base.org" ;;
+        42161) echo "https://arbiscan.io" ;;
+        1329) echo "https://sei.explorer.sepolia.io" ;;
+        33139) echo "https://explorer.caldera.xyz" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
+format_explorer_contract_url() {
+    local chain_id="$1"
+    local contract_address="$2"
+    local explorer_url=$(chain_id_to_explorer_url $chain_id)
+    echo "$explorer_url/address/$contract_address"
+}
+
+format_explorer_tx_url() {
+    local chain_id="$1"
+    local tx_hash="$2"
+    local explorer_url=$(chain_id_to_explorer_url $chain_id)
+    echo "$explorer_url/tx/$tx_hash"
+}
+
+print_signer_with_balance() {
+    local chain_id="$1"
+    local balance=$(check_signer_native_balance $chain_id)
+    local symbol=$(chain_id_to_symbol $chain_id)
+    printf "Signer: %s\nBalance: %s %s\n" "$(format_address $SIGNER)" "$balance" "$symbol" | gum style --foreground 137
+    echo ""
 }

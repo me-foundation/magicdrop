@@ -11,7 +11,6 @@ main_menu() {
     trap "echo 'Exiting...'; exit 1" SIGINT
 
     show_main_title
-
     load_private_key
 
     option=$(gum choose \
@@ -123,6 +122,7 @@ token_operations_menu() {
 
 go_to_main_menu_or_exit() {
     if gum confirm "Go to main menu?"; then
+        clear
         main_menu
     else
         echo "Exiting..."

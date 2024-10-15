@@ -46,12 +46,10 @@ deploy_contract() {
     check_input "$symbol" "symbol"
     clear
 
-    
-
     # ask if they want to override the signer as the initial owner
-    show_title "$title" "> Set initial owner <"
-    if gum confirm "Override initial owner? ($(format_address $SIGNER))" --default=false; then
-        initial_owner=$(get_ethereum_address "Initial owner")
+    show_title "$title" "> Set initial contract owner <"
+    if gum confirm "Override initial contract owner? ($(format_address $SIGNER))" --default=false; then
+        initial_owner=$(get_ethereum_address "Initial contract owner")
     else
         initial_owner=$SIGNER
     fi
@@ -66,6 +64,7 @@ deploy_contract() {
         impl_id=0
     fi
 
+    print_signer_with_balance $chain_id
 
     confirm_deployment
 
@@ -78,30 +77,34 @@ deploy_contract() {
     echo ""
     output=$(gum spin --spinner dot --title "Deploying Contract" -- \
     cast send \
-    --rpc-url "$RPC_URL" \
-    --chain-id $chain_id \
-    $factory_address \
-    "$create_contract_selector" \
-    "$name" \
-    "$symbol" \
-    "$standard_id" \
-    "$initial_owner" \
-    $impl_id \
-    $password \
-    --json)
+        --rpc-url "$RPC_URL" \
+        --chain-id $chain_id \
+        $factory_address \
+        "$create_contract_selector" \
+        "$name" \
+        "$symbol" \
+        "$standard_id" \
+        "$initial_owner" \
+        $impl_id \
+        $password \
+        --json)
 
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo "Transaction successful. Transaction hash: $tx_hash"
-
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
         sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
         event_data=$(get_contract_address "$output" "$sig_event")
         chunks=($(echo "$event_data" | fold -w64))
         contract_address=$(decode_address "${chunks[0]}")
         echo "Deployed Contract Address: $contract_address"
+        echo $(format_explorer_contract_url $chain_id $contract_address)
         echo ""
 
         save_deployment_data $chain_id $contract_address $name $symbol $token_standard $initial_owner $impl_id
+        echo ""
 
         # ask if they would like to setup the contract now
         if gum confirm "Would you like to setup the contract?"; then
@@ -143,19 +146,22 @@ setup_contract() {
     fi
 
     # Set max supply (number)
-    show_title "$title" "> Set max supply <"
+    show_title "$title" "> Set max supply (collection size) <"
     max_supply=$(get_numeric_input "Enter max supply")
     clear
     
     # Set global wallet limit (number)
     show_title "$title" "> Set global wallet limit <"
-    wallet_limit=$(get_numeric_input "Enter global wallet limit")
+    if gum confirm "Use global wallet limit?" --default=false; then
+        wallet_limit=$(get_numeric_input "Enter global wallet limit (0 for no limit)")
+    else
+        wallet_limit=0
+    fi
     clear
 
-    
     # Set mint currency (default to native gas token)
     show_title "$title" "> Set mint currency <"
-    if gum confirm "Using a custom mint currency?" --default=false; then
+    if gum confirm "Using ERC20 mint currency?" --default=false; then
         mint_currency=$(get_ethereum_address "Mint currency (default: Native Gas Token)")
     else
         mint_currency=$DEFAULT_MINT_CURRENCY
@@ -175,12 +181,10 @@ setup_contract() {
         show_title "$title" "> Set royalty fee numerator <"
         royalty_fee=$(get_numeric_input "Enter royalty fee numerator (e.g., 500 for 5%)")
         royalty_fee=${royalty_fee:-"N/A"}
-        clear
     else 
         royalty_receiver=$DEFAULT_ROYALTY_RECEIVER
         royalty_fee=$DEFAULT_ROYALTY_FEE
     fi
-
     clear
 
     # Set stages by reading from a JSON file, default is stages.json
@@ -203,6 +207,8 @@ setup_contract() {
         contract_address=$(gum input --placeholder "Enter contract address")
         check_input "$contract_address" "contract address"
     fi
+
+    print_signer_with_balance $chain_id
 
     confirm_setup
 
@@ -232,7 +238,10 @@ setup_contract() {
     
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo "Transaction successful. Transaction hash: $tx_hash"
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
     else
         echo "Transaction failed. Error output:"
         echo "$output"
@@ -270,6 +279,8 @@ set_base_uri() {
 
     set_rpc_url $chain_id
 
+    print_signer_with_balance $chain_id
+
     confirm_set_base_uri
 
     password=$(get_password_if_set)
@@ -284,7 +295,10 @@ set_base_uri() {
 
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo "Transaction successful. Transaction hash: $tx_hash"
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
     else
         echo "Transaction failed. Error output:"
         echo "$output"
@@ -318,6 +332,7 @@ set_global_wallet_limit() {
     check_input "$global_wallet_limit" "global wallet limit"
 
     set_rpc_url $chain_id
+    print_signer_with_balance $chain_id
 
     confirm_set_global_wallet_limit
     password=$(get_password_if_set)
@@ -334,7 +349,10 @@ set_global_wallet_limit() {
 
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo "Transaction successful. Transaction hash: $tx_hash"
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
     else
         echo "Transaction failed. Error output:"
         echo "$output"
@@ -368,6 +386,8 @@ set_max_mintable_supply() {
     echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply"
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         set_max_mintable_supply_selector="setMaxMintableSupply(uint256)"
         password=$(get_password_if_set)
@@ -382,7 +402,10 @@ set_max_mintable_supply() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
+            echo ""
         else
             echo "Transaction failed. Error output:"
             echo "$output"
@@ -442,7 +465,8 @@ set_mintable() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
         else
             echo "Transaction failed. Error output:"
             echo "$output"
@@ -487,6 +511,8 @@ set_stages() {
         exit 1
     fi
 
+    print_signer_with_balance $chain_id
+
     set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
     password=$(get_password_if_set)
     output=$(gum spin --spinner dot --title "Setting Stages" -- \
@@ -499,7 +525,10 @@ set_stages() {
     
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo "Transaction successful. Transaction hash: $tx_hash"
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
     else
         echo "Transaction failed. Error output:"
         echo "$output"
@@ -539,6 +568,8 @@ set_cosigner() {
     echo "You are about to set the cosigner of $(format_address $contract_address) to $(format_address $cosigner)"
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         set_cosigner_selector="setCosigner(address)"
         password=$(get_password_if_set)
@@ -553,7 +584,8 @@ set_cosigner() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
         else
             echo "Transaction failed. Error output:"
             echo "$output"
@@ -593,6 +625,8 @@ set_timestamp_expiry() {
     echo "You are about to set the timestamp expiry of $(format_address $contract_address) to $timestamp_expiry seconds."
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         timestamp_expiry_selector="setTimestampExpirySeconds(uint256)"
         password=$(get_password_if_set)
@@ -607,7 +641,10 @@ set_timestamp_expiry() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
+            echo ""
         else
             echo "Transaction failed. Error output:"
             echo "$output"
@@ -658,6 +695,8 @@ transfer_ownership() {
     echo "This action cannot be undone."
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         complete_ownership_handover_selector="completeOwnershipHandover(address)"
         password=$(get_password_if_set)
@@ -672,7 +711,10 @@ transfer_ownership() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
+            echo ""
         else
             echo "Transaction failed. Error output:"
             echo "$output"
@@ -710,6 +752,8 @@ set_token_uri_suffix() {
 
     set_rpc_url $chain_id
 
+    print_signer_with_balance $chain_id
+
     confirm_set_token_uri_suffix
 
     token_uri_suffix_selector="setTokenURISuffix(string)"
@@ -725,7 +769,10 @@ set_token_uri_suffix() {
 
     if [ $? -eq 0 ]; then
         tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo "Transaction successful. Transaction hash: $tx_hash"
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
     else
         echo "Transaction failed. Error output:"
         echo "$output"
@@ -753,6 +800,8 @@ set_uri() {
     echo "You are about to set the URI of $(format_address $contract_address) to $uri"
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         set_uri_selector="setURI(string)"
         password=$(get_password_if_set)
@@ -767,7 +816,10 @@ set_uri() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
+            echo ""
         else
             echo "Transaction failed. Error output:"
             echo "$output"
@@ -820,7 +872,9 @@ set_royalties() {
     percentage=$(echo "scale=2; $fee_numerator / 100" | bc)
     echo "You are about to set the royalties of $(format_address $contract_address) to $(format_address $receiver) with a fee numerator of $fee_numerator ($percentage%)"
     echo ""
-    
+
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         set_royalties_selector="setDefaultRoyalty(address,uint96)"
         password=$(get_password_if_set)
@@ -836,7 +890,10 @@ set_royalties() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
+            echo ""
         else
             echo "Transaction failed. Error output:"
             echo "$output"
@@ -892,7 +949,7 @@ owner_mint() {
     fi
 
     echo ""
-    echo "You are about to mint $quantity token(s) of token ID #$token_id to $(format_address $recipient)"
+    echo "You are about to mint $quantity token(s) to $(format_address $recipient)"
     echo ""
 
     if gum confirm "Do you want to proceed?"; then
@@ -908,7 +965,9 @@ owner_mint() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
             echo ""
         else
             echo "Transaction failed. Error output:"
@@ -967,6 +1026,8 @@ add_authorized_minter() {
     echo "You are about to add $(format_address $minter) as an authorized minter of $(format_address $contract_address)"
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         output=$(gum spin --spinner dot --title "Adding Authorized Minter" -- \
             cast send $contract_address \
@@ -979,7 +1040,9 @@ add_authorized_minter() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
             echo ""
         else
             echo "Transaction failed. Error output:"
@@ -1003,6 +1066,8 @@ remove_authorized_minter() {
     echo "You are about to remove $(format_address $minter) as an authorized minter of $(format_address $contract_address)"
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         output=$(gum spin --spinner dot --title "Removing Authorized Minter" -- \
             cast send $contract_address \
@@ -1015,7 +1080,9 @@ remove_authorized_minter() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
             echo ""
         else
             echo "Transaction failed. Error output:"
@@ -1053,6 +1120,8 @@ set_cosigner() {
     echo "You are about to set the cosigner of $(format_address $contract_address) to $(format_address $cosigner)"
     echo ""
 
+    print_signer_with_balance $chain_id
+
     if gum confirm "Do you want to proceed?"; then
         output=$(gum spin --spinner dot --title "Setting Cosigner" -- \
         cast send $contract_address \
@@ -1065,7 +1134,9 @@ set_cosigner() {
 
         if [ $? -eq 0 ]; then
             tx_hash=$(echo "$output" | jq -r '.transactionHash')
-            echo "Transaction successful. Transaction hash: $tx_hash"
+            echo ""
+            echo "Transaction successful."
+            echo $(format_explorer_tx_url $chain_id $tx_hash)
             echo ""
         else
             echo "Transaction failed. Error output:"
