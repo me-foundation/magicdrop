@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULTS_FILE="$BASE_DIR/../defaults.json"
+
 trap "echo 'Exiting...'; exit 1" SIGINT
 
 SUPPORTED_CHAINS=(
@@ -20,19 +23,25 @@ export ETH_KEYSTORE_ACCOUNT=$MAGIC_DROP_KEYSTORE
 load_defaults() {
     CONFIG_COMPLETE=true
 
-    if [[ -f "$BASE_DIR/../defaults.json" ]]; then
-        # Read values from defaults.json using jq
-        DEFAULT_COSIGNER=$(jq -r '.default_cosigner // empty' defaults.json)
-        DEFAULT_TIMESTAMP_EXPIRY=$(jq -r '.default_timestamp_expiry // empty' defaults.json)
-        DEFAULT_MINT_CURRENCY=$(jq -r '.default_mint_currency // empty' defaults.json)
-        DEFAULT_TOKEN_URI_SUFFIX=$(jq -r '.default_token_uri_suffix // empty' defaults.json)
-        DEFAULT_ROYALTY_RECEIVER=$(jq -r '.default_royalty_receiver // empty' defaults.json)
-        DEFAULT_ROYALTY_FEE=$(jq -r '.default_royalty_fee // empty' defaults.json)
-        DEFAULT_MERKLE_ROOT=$(jq -r '.default_merkle_root // empty' defaults.json)
-    else 
-        echo "No defaults.json found."
+    # Check if defaults.json exists in the expected location
+    if [[ ! -f "$DEFAULTS_FILE" ]]; then
+        echo "defaults.json not found in $DEFAULTS_FILE. Checking current directory..."
+        DEFAULTS_FILE="./defaults.json"
+    fi
+
+    if [[ ! -f "$DEFAULTS_FILE" ]]; then
+        echo "defaults.json not found in current directory. Exiting..."
         exit 1
     fi
+
+    # Read values from defaults.json using jq
+    DEFAULT_COSIGNER=$(jq -r '.default_cosigner // empty' "$DEFAULTS_FILE")
+    DEFAULT_TIMESTAMP_EXPIRY=$(jq -r '.default_timestamp_expiry // empty' "$DEFAULTS_FILE")
+    DEFAULT_MINT_CURRENCY=$(jq -r '.default_mint_currency // empty' "$DEFAULTS_FILE")
+    DEFAULT_TOKEN_URI_SUFFIX=$(jq -r '.default_token_uri_suffix // empty' "$DEFAULTS_FILE")
+    DEFAULT_ROYALTY_RECEIVER=$(jq -r '.default_royalty_receiver // empty' "$DEFAULTS_FILE")
+    DEFAULT_ROYALTY_FEE=$(jq -r '.default_royalty_fee // empty' "$DEFAULTS_FILE")
+    DEFAULT_MERKLE_ROOT=$(jq -r '.default_merkle_root // empty' "$DEFAULTS_FILE")
 
     source .env
 }
@@ -156,7 +165,7 @@ get_collection_file() {
     local prompt="$1"
     local file
     while true; do
-        file=$(gum file --directory ./collections --height 10)
+        file=$(gum file --directory "$BASE_DIR/../collections" --height 10)
 
         if file_exists "$file"; then
             echo "$file"
@@ -213,7 +222,7 @@ confirm_setup() {
     echo "==================== CONTRACT DETAILS ===================="
     echo "Chain:                        $(gum style --foreground 212 "$chain")"
     echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
-    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$deployed_contract_address")")"
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
     echo "======================= SETUP INFO ======================="
     echo "Max Supply:                   $(gum style --foreground 212 "$max_supply")"
     echo "Global Wallet Limit:          $(gum style --foreground 212 "$wallet_limit")"
@@ -314,7 +323,14 @@ set_rpc_url() {
 }
 
 generateMerkleRoot() {
-    result=$(npx ts-node ./../scripts/utils/generateMerkleRoot.ts $1 false)
+    generateMerkleRootPath="$BASE_DIR/../../scripts/utils/generateMerkleRoot.ts"
+
+    if [[ ! -f "$generateMerkleRootPath" ]]; then
+        echo "Error: generateMerkleRoot.ts not found at $generateMerkleRootPath"
+        return 1
+    fi
+
+    result=$(npx ts-node "$generateMerkleRootPath" "$1" false)
     echo "$result" | sed -n 's/^Merkle Root: *//p'
 }
 
@@ -334,11 +350,12 @@ load_stages_json() {
         if [[ -z "$whitelistPath" || "$whitelistPath" == "null" ]]; then
             merkle_roots+=("$DEFAULT_MERKLE_ROOT")
         else
-            result=$(generateMerkleRoot "$whitelistPath")
+            result=$(generateMerkleRoot "$BASE_DIR/../collections/$whitelistPath")
             if [[ $? -ne 0 ]]; then
                 echo "Error: Failed to generate merkle root"
                 return 1
             fi
+            echo "merkle root: $result"
             merkle_roots+=("$result")
         fi
     done
@@ -423,12 +440,12 @@ save_deployment_data() {
 
 prestart() {
     # Fetch the latest changes from the remote
-    git fetch
+    git -C "$BASE_DIR" fetch
 
     # Check if the local main is behind the remote main
-    LOCAL=$(git rev-parse @)
-    REMOTE=$(git rev-parse @{u})
-    BASE=$(git merge-base @ @{u})
+    LOCAL=$(git -C "$BASE_DIR" rev-parse @)
+    REMOTE=$(git -C "$BASE_DIR" rev-parse @{u})
+    BASE=$(git -C "$BASE_DIR" merge-base @ @{u})
 
     if [ $LOCAL = $REMOTE ]; then
         echo "You are up-to-date with the main branch."
@@ -442,5 +459,5 @@ prestart() {
         exit 1
     fi
 
-    forge build
+    forge build --root "$BASE_DIR"
 }

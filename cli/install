@@ -78,6 +78,14 @@ else
     npm install
 fi
 
+echo "Checking for ts-node..."
+if ! npm list -g ts-node > /dev/null 2>&1; then
+    echo "ts-node not installed. Installing..."
+    npm install -g ts-node
+else
+    echo "ts-node is already installed."
+fi
+
 echo "Creating .env file for optional configuration..."
 touch .env
 
@@ -121,5 +129,5 @@ fi
 
 echo ""
 echo "Installation complete!"
-echo "Run './magicdrop' or 'drop' to start"
+echo "Run 'magicdrop' or 'drop' to start"
 echo ""

@@ -215,8 +215,13 @@ setup_contract() {
     fi
 
     password=$(get_password_if_set)
+
+    echo "contract address: $contract_address"
     
     setup_selector="setup(uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+    
+    echo "cast send $contract_address $setup_selector $max_supply $wallet_limit $mint_currency $fund_receiver $STAGES_DATA $royalty_receiver $royalty_fee $password --chain-id $chain_id --rpc-url $RPC_URL --json"
+    
     output=$(gum spin --spinner dot --title "Setting Up Contract" -- \
         cast send $contract_address \
         "$setup_selector" \
