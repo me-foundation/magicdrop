@@ -18,7 +18,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
 
     MagicDropTokenImplRegistry private _registry;
     bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address)"));
-    
+
     /*==============================================================
     =                             EVENTS                           =
     ==============================================================*/

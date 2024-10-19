@@ -147,7 +147,7 @@ contract MagicDropCloneFactoryTest is Test {
         factory.createContractDeterministic(
             "TestNFT1", "TNFT1", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
         );
-        
+
         factory.createContractDeterministic(
             "TestNFT2", "TNFT2", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
         );
