@@ -18,23 +18,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
 
     MagicDropTokenImplRegistry private _registry;
     bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address)"));
-
-    /*==============================================================
-    =                            STRUCTS                           =
-    ==============================================================*/
-
-    struct MagicDropFactoryStorage {
-        mapping(bytes32 => bool) usedSalts;
-    }
-
-    /*==============================================================
-    =                            STORAGE                           =
-    ==============================================================*/
-
-    // keccak256(abi.encode(uint256(keccak256("magicdrop.factory.MagicDropCloneFactory")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant MAGICDROP_FACTORY_STORAGE =
-        0xc982f4ee776d5a4a389c53cdba6d233ccdaf1824e9a3b0f1ea8fce06f767d800;
-
+    
     /*==============================================================
     =                             EVENTS                           =
     ==============================================================*/
@@ -49,8 +33,6 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     ==============================================================*/
 
     error InitializationFailed();
-    error SaltAlreadyUsed();
-    error ContractAlreadyDeployed(address deployedAddress);
     error RegistryAddressCannotBeZero();
 
     /*==============================================================
@@ -100,27 +82,6 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             impl = _registry.getImplementation(standard, implId);
         }
 
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, salt)
-            mstore(0x20, MAGICDROP_FACTORY_STORAGE)
-            let saltUsed := sload(keccak256(0x00, 0x40)) // usedSalts[salt]
-
-            if saltUsed {
-                // revert SaltAlreadyUsed()
-                mstore(0x00, 0x0ced3043)
-                revert(0x1c, 0x04)
-            }
-        }
-
-        // Predict the address where the contract will be deployed
-        address predictedAddress = LibClone.predictDeterministicAddress(impl, salt, address(this));
-
-        // Check if a contract already exists at the predicted address
-        if (predictedAddress.code.length > 0) {
-            revert ContractAlreadyDeployed(predictedAddress);
-        }
-
         // Create a deterministic clone of the implementation contract
         address instance = LibClone.cloneDeterministic(impl, salt);
 
@@ -128,13 +89,6 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
         if (!success) {
             revert InitializationFailed();
-        }
-
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, salt)
-            mstore(0x20, MAGICDROP_FACTORY_STORAGE)
-            sstore(keccak256(0x00, 0x40), 1) // usedSalts[salt] = true
         }
 
         emit NewContractInitialized({
@@ -213,19 +167,6 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             impl = _registry.getImplementation(standard, implId);
         }
         return LibClone.predictDeterministicAddress(impl, salt, address(this));
-    }
-
-    /// @notice Checks if a salt has been used
-    /// @param salt The salt to check
-    /// @return saltUsed Whether the salt has been used
-    function isSaltUsed(bytes32 salt) external view returns (bool saltUsed) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, salt)
-            mstore(0x20, MAGICDROP_FACTORY_STORAGE)
-            let slot := keccak256(0x00, 0x40)
-            saltUsed := sload(slot)
-        }
     }
 
     /// @notice Retrieves the address of the registry contract

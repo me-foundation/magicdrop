@@ -1,0 +1,10 @@
+{
+  "chain_id": "137",
+  "contract_address": "0xe6ed6e29104e4f7a4dd9e855267765b6af21df64",
+  "name": "aaa",
+  "symbol": "aaa",
+  "token_standard": "ERC721",
+  "initial_owner": "0xc327B16C33fdd558C1ad7DaaFf1a4081E91049f3",
+  "impl_id": "0",
+  "timestamp": "1729023515"
+}

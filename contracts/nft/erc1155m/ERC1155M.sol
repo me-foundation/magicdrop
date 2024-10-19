@@ -65,14 +65,13 @@ contract ERC1155M is
         _fundReceiver = fundReceiver;
         _transferable = true;
 
+        _initializeOwner(msg.sender);
         _setCosigner(cosigner);
         _setTimestampExpirySeconds(timestampExpirySeconds);
 
         if (royaltyReceiver != address(0)) {
             setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
         }
-
-        _initializeOwner(msg.sender);
     }
 
     /*==============================================================

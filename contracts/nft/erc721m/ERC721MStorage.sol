@@ -7,9 +7,6 @@ contract ERC721MStorage {
     // Whether this contract is mintable.
     bool internal _mintable;
 
-    // Whether base URI is permanent. Once set, base URI is immutable.
-    bool internal _baseURIPermanent;
-
     // The total mintable supply.
     uint256 internal _maxMintableSupply;
 

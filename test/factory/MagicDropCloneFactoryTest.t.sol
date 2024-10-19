@@ -141,21 +141,19 @@ contract MagicDropCloneFactoryTest is Test {
         factory.createContract("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), invalidImplId);
     }
 
-    function testCreateDeterministicContractWithSameSalt() public {
+    function testFailCreateDeterministicContractWithSameSalt() public {
         vm.startPrank(user);
 
         factory.createContractDeterministic(
             "TestNFT1", "TNFT1", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
         );
-
-        vm.expectRevert(MagicDropCloneFactory.SaltAlreadyUsed.selector);
-
+        
         factory.createContractDeterministic(
             "TestNFT2", "TNFT2", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
         );
     }
 
-    function testContractAlreadyDeployed() public {
+    function testFailContractAlreadyDeployed() public {
         bytes32 salt = bytes32(uint256(1));
         uint32 implId = 1;
         TokenStandard standard = TokenStandard.ERC721;
@@ -170,17 +168,7 @@ contract MagicDropCloneFactoryTest is Test {
         vm.etch(predictedAddress, address(erc721Impl).code);
 
         // Try to create a contract with the same parameters
-        vm.expectRevert(
-            abi.encodeWithSelector(MagicDropCloneFactory.ContractAlreadyDeployed.selector, predictedAddress)
-        );
         factory.createContractDeterministic(name, symbol, standard, payable(initialOwner), implId, salt);
-    }
-
-    function testIsSaltUsed() public {
-        bytes32 salt = bytes32(uint256(1));
-        assertTrue(!factory.isSaltUsed(salt));
-        factory.createContractDeterministic("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId, salt);
-        assertTrue(factory.isSaltUsed(salt));
     }
 
     function testInitializationFailed() public {
@@ -195,7 +183,7 @@ contract MagicDropCloneFactoryTest is Test {
         factory.createContractDeterministic("TestNFT", "TNFT", standard, payable(user), implId, bytes32(0));
     }
 
-    function testGetRegistry() public {
+    function testGetRegistry() public view {
         assertEq(factory.getRegistry(), address(registry));
     }
 }

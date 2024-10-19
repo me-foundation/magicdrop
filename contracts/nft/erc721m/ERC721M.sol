@@ -62,9 +62,9 @@ contract ERC721M is
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
 
+        _initializeOwner(msg.sender);
         _setCosigner(cosigner);
         _setTimestampExpirySeconds(timestampExpirySeconds);
-        _initializeOwner(msg.sender);
     }
 
     /*==============================================================
