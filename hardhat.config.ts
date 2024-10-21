@@ -80,6 +80,11 @@ const config: HardhatUserConfig = {
         accountsBalance: '1000000000000000000000'
       }
     },
+    apechain: {
+      url: 'https://apechain.calderachain.xyz/http',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     base: {
       url: process.env.BASE_URL || '',
       accounts:
@@ -128,6 +133,16 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+    customChains: [
+      {
+        network: "apechain",
+        chainId: 33139,
+        urls: {
+          apiURL: "https://api.apescan.io/api",
+          browserURL: "https://apescan.io/"
+        }
+      }
+    ]
   },
   sourcify: {
     enabled: true
