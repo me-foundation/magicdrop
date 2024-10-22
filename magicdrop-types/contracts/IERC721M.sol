@@ -6,8 +6,6 @@ import "erc721a/contracts/extensions/IERC721AQueryable.sol";
 interface IERC721M is IERC721AQueryable {
     error CannotIncreaseMaxMintableSupply();
     error CosignerNotSet();
-    error CrossmintAddressNotSet();
-    error CrossmintOnly();
     error GlobalWalletLimitOverflow();
     error InsufficientStageTimeGap();
     error InvalidCosignSignature();
@@ -51,7 +49,6 @@ interface IERC721M is IERC721AQueryable {
     );
 
     event SetCosigner(address cosigner);
-    event SetCrossmintAddress(address crossmintAddress);
     event SetMintable(bool mintable);
     event SetMaxMintableSupply(uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 globalWalletLimit);
@@ -78,22 +75,7 @@ interface IERC721M is IERC721AQueryable {
 
     function mint(
         uint32 qty,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable;
-
-    function mintWithLimit(
-        uint32 qty,
         uint32 limit,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable;
-
-    function crossmint(
-        uint32 qty,
-        address to,
         bytes32[] calldata proof,
         uint64 timestamp,
         bytes calldata signature

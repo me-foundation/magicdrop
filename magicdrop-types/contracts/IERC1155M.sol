@@ -100,14 +100,6 @@ interface IERC1155M {
     function mint(
         uint256 tokenId,
         uint32 qty,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable;
-
-    function mintWithLimit(
-        uint256 tokenId,
-        uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
         uint64 timestamp,

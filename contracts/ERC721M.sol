@@ -20,7 +20,7 @@ import "../magicdrop-types/contracts/IERC721M.sol";
  *  - multiple minting stages with time-based auto stage switch
  *  - global and stage wallet-level minting limit
  *  - whitelist using merkle tree
- *  - crossmint support
+ *  - authorized minting
  *  - anti-botting
  */
 contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
@@ -38,9 +38,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
 
     // The address of the cosigner server.
     address private _cosigner;
-
-    // The crossmint address. Need to set if using crossmint.
-    address private _crossmintAddress;
 
     // The total mintable supply.
     uint256 internal _maxMintableSupply;
@@ -146,14 +143,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
     function setTimestampExpirySeconds(uint64 expiry) external onlyOwner {
         _timestampExpirySeconds = expiry;
         emit SetTimestampExpirySeconds(expiry);
-    }
-
-    /**
-     * @dev Sets crossmint address if using crossmint. This allows the specified address to call `crossmint`.
-     */
-    function setCrossmintAddress(address crossmintAddress) external onlyOwner {
-        _crossmintAddress = crossmintAddress;
-        emit SetCrossmintAddress(crossmintAddress);
     }
 
     /**
@@ -313,7 +302,7 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         uint256 index
     ) external view override returns (MintStageInfo memory, uint32, uint256) {
         if (index >= _mintStages.length) {
-            revert("InvalidStage");
+            revert InvalidStage();
         }
         uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
         uint256 stageMinted = _stageMintedCounts[index];
@@ -331,29 +320,12 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
      * @dev Mints token(s).
      *
      * qty - number of tokens to mint
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function mint(
-        uint32 qty,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable virtual nonReentrant {
-        _mintInternal(qty, msg.sender, 0, proof, timestamp, signature);
-    }
-
-    /**
-     * @dev Mints token(s) with limit.
-     *
-     * qty - number of tokens to mint
      * limit - limit for the given minter
      * proof - the merkle proof generated on client side. This applies if using whitelist.
      * timestamp - the current timestamp
      * signature - the signature from cosigner if using cosigner.
      */
-    function mintWithLimit(
+    function mint(
         uint32 qty,
         uint32 limit,
         bytes32[] calldata proof,
@@ -361,30 +333,6 @@ contract ERC721M is IERC721M, ERC721AQueryable, Ownable, ReentrancyGuard {
         bytes calldata signature
     ) external payable virtual nonReentrant {
         _mintInternal(qty, msg.sender, limit, proof, timestamp, signature);
-    }
-
-    /**
-     * @dev Mints token(s) through crossmint. This function is supposed to be called by crossmint.
-     *
-     * qty - number of tokens to mint
-     * to - the address to mint tokens to
-     * proof - the merkle proof generated on client side. This applies if using whitelist.
-     * timestamp - the current timestamp
-     * signature - the signature from cosigner if using cosigner.
-     */
-    function crossmint(
-        uint32 qty,
-        address to,
-        bytes32[] calldata proof,
-        uint64 timestamp,
-        bytes calldata signature
-    ) external payable nonReentrant {
-        if (_crossmintAddress == address(0)) revert CrossmintAddressNotSet();
-
-        // Check the caller is Crossmint
-        if (msg.sender != _crossmintAddress) revert CrossmintOnly();
-
-        _mintInternal(qty, to, 0, proof, timestamp, signature);
     }
 
     /**
