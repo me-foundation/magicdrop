@@ -38,7 +38,7 @@ deploy_contract() {
         "$create_contract_selector" \
         "$name" \
         "$symbol" \
-        "$standard_id" \
+        "$(get_standard_id $token_standard)" \
         "$initial_owner" \
         $impl_id \
         $password \
@@ -86,13 +86,21 @@ setup_contract() {
     confirm_setup
 
     echo "Processing stages file... this will take a moment."
-    process_stages "$stages_file" "stagesInput.tmp"
+    process_stages "$stages_file" "stagesInput.tmp" "$token_standard"
     stages_data=$(cat "stagesInput.tmp")
     rm "stagesInput.tmp"
     echo ""
 
     password=$(get_password_if_set)
-    setup_selector="setup(uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
+    elif [ "$token_standard" == "ERC721" ]; then
+        setup_selector="setup(uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+    else
+        echo "Unknown token standard"
+        exit 1
+    fi
 
     echo "Setting up contract... this will take a moment."
 
@@ -255,7 +263,7 @@ set_stages() {
     set_token_standard
     set_stages_file
 
-    process_stages "$stages_file" "stagesInput.tmp"
+    process_stages "$stages_file" "stagesInput.tmp" "$token_standard"
     stages_data=$(cat "stagesInput.tmp")
     rm "stagesInput.tmp"
 

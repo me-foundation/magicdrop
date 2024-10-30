@@ -331,7 +331,9 @@ set_rpc_url() {
 process_stages() {
     local stages_file="$1"
     local output_file="$2"
-    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$output_file"
+    local token_standard="$3"
+
+    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$output_file" "$token_standard"
 
     if [[ $? -ne 0 ]]; then
         echo "Error: Failed to get stages data"
@@ -533,4 +535,12 @@ print_transaction_hash() {
         echo "Transaction failed."
         exit 1
     fi
+}
+
+get_standard_id() {
+    case $1 in
+        "ERC721") echo "0" ;;
+        "ERC1155") echo "1" ;;
+        *) echo "Unknown" ;;
+    esac
 }

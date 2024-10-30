@@ -111,9 +111,9 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD CONTRACT_VERSION=$C
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \
-  --via-ir
-  # --verify \
-  # -v
+  --via-ir \
+  --verify \
+  -v
 
 echo ""
 echo "============= DEPLOYED MAGICDROP IMPLEMENTATION ============="

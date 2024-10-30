@@ -224,6 +224,7 @@ contract ERC1155MInitializableV1_0_0 is
         uint256[] memory globalWalletLimit,
         address mintCurrency,
         address fundReceiver,
+        MintStageInfo1155[] calldata initialStages,
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     ) external onlyOwner {
@@ -247,14 +248,22 @@ contract ERC1155MInitializableV1_0_0 is
 
         _setURI(uri_);
 
+        if (initialStages.length > 0) {
+            _setStages(initialStages);
+        }
+
         if (royaltyReceiver != address(0)) {
             setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
         }
     }
 
+    function setStages(MintStageInfo1155[] calldata newStages) external onlyOwner {
+        _setStages(newStages);
+    }
+
     /// @notice Sets the minting stages
     /// @param newStages An array of new minting stages
-    function setStages(MintStageInfo1155[] calldata newStages) external onlyOwner {
+    function _setStages(MintStageInfo1155[] calldata newStages) internal {
         delete _mintStages;
 
         for (uint256 i = 0; i < newStages.length; i++) {

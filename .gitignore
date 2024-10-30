@@ -16,5 +16,6 @@ coverage/
 broadcast/
 cli/deployments
 cli/collections
-cli/*whitelist*.json
-cli/*invalid*.json
+*whitelist*
+*invalid*
+*.tmp
