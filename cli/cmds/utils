@@ -328,96 +328,30 @@ set_rpc_url() {
     export RPC_URL
 }
 
-generate_merkle_root() {
-    generateMerkleRootPath="$BASE_DIR/../../scripts/utils/generateMerkleRoot.ts"
-
-    if [[ ! -f "$generateMerkleRootPath" ]]; then
-        echo "Error: generateMerkleRoot.ts not found at $generateMerkleRootPath"
-        return 1
-    fi
-
-    result=$(npx ts-node "$generateMerkleRootPath" "$1" false)
-    echo "$result" | sed -n 's/^Merkle Root: *//p'
-}
-
-load_stages_json() {
+process_stages() {
     local stages_file="$1"
-    if [[ ! -f "$stages_file" ]]; then
-        echo "Error: Stages file not found: $stages_file"
-        return 1
-    fi
-
-    # Extract whitelistPath
-    local whitelistPaths
-    whitelistPaths=$(jq -r '.[].whitelistPath' "$stages_file")
-
-    merkle_roots=()
-    for whitelistPath in $whitelistPaths; do
-        if [[ -z "$whitelistPath" || "$whitelistPath" == "null" ]]; then
-            merkle_roots+=("$DEFAULT_MERKLE_ROOT")
-        else
-            echo "Cleaning whitelist files and generating merkle roots for $whitelistPath..."
-            result=$(generate_merkle_root "$BASE_DIR/../collections/$whitelistPath")
-            if [[ $? -ne 0 ]]; then
-                echo "Error: Failed to generate merkle root"
-                return 1
-            fi
-            merkle_roots+=("$result")
-        fi
-    done
-    json_array=$(printf '%s\n' "${merkle_roots[@]}" | jq -R . | jq -s .)
-
-    # Map the stages data from the JSON file, and replace the merkle root with the generated one
-    stages_data=$(jq -c --argjson merkle_roots "$json_array" '
-        to_entries | map(
-            [
-                (.value.price | tonumber * 1e18 | floor),
-                (.value.mintFee | tonumber * 1e18 | floor),
-                (.value.walletLimit | tonumber),
-                ($merkle_roots[.key] // empty),
-                (.value.maxStageSupply // 0 | tonumber),
-                (.value.startDate | fromdateiso8601 | tonumber),
-                (.value.endDate | fromdateiso8601 | tonumber)
-            ]
-        )
-    ' "$stages_file")
-
+    local output_file="$2"
+    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$output_file"
 
     if [[ $? -ne 0 ]]; then
-        echo "Error: Failed to parse stages JSON"
+        echo "Error: Failed to get stages data"
         return 1
     fi
 
-    stages_data=$(echo "$stages_data" | sed 's/"//g') # remove any quotes
-
-    # Replace inner square brackets with parentheses, but keep the outer brackets
-    # this is necessary to format the MintStages struct correctly for `cast send`
-    RESULT=$(echo "$stages_data" | awk '{
-        gsub(/\[/, "(");
-        gsub(/\]/, ")");
-        if (NR == 1) sub(/^\(/, "[");
-        if (NR == FNR) last_line = $0;
-    } END {
-        sub(/\)$/, "]", last_line);
-        print last_line;
-    }')
-
-    export STAGES_DATA="$RESULT"
+    if [[ ! -f "$output_file" ]]; then
+        echo "Error: Output file not found: $output_file"
+        return 1
+    fi
 }
 
-extract_log_data() {
-    local log="$1"
-    echo $(echo "$log" | jq -r '.data' | sed 's/^0x//')
-}
-
-get_contract_address() {
+get_contract_address_from_logs() {
     local deployment_data="$1"
     local event_sig="$2"
     
     for log in $(echo "$deployment_data" | jq -c '.logs[]'); do
         local topic0=$(echo "$log" | jq -r '.topics[0]')
         if [ "$topic0" == "$event_sig" ]; then
-            echo $(extract_log_data "$log")
+            echo $(echo "$log" | jq -r '.data' | sed 's/^0x//')
             return
         fi
     done
@@ -586,4 +520,17 @@ print_signer_with_balance() {
     local symbol=$(chain_id_to_symbol $chain_id)
     printf "Signer: %s\nBalance: %s %s\n" "$(format_address $SIGNER)" "$balance" "$symbol" | gum style --foreground 137
     echo ""
+}
+
+print_transaction_hash() {
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
+    else
+        echo "Transaction failed."
+        exit 1
+    fi
 }

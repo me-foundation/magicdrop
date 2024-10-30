@@ -101,30 +101,21 @@ export const estimateGas = async (
   } else console.log('Estimated gas price (GWEI):', estimatedGasPriceFormat);
 
   console.log(
-    `Estimated gas cost (${getTokenName(hre)}):`,
+    `Estimated gas cost:`,
     `\x1b[33m${hre.ethers.utils.formatEther(estimatedGasCost)}\x1b[0m`,
   );
 
   return estimatedGasCost;
 };
 
-const getTokenName = (hre: HardhatRuntimeEnvironment) => {
-  switch (hre.network.name) {
-    case 'mainnet':
-    case 'sepolia':
-    case 'goerli':
-      return 'ETH';
-    case 'polygon':
-    case 'mumbai':
-      return 'MATIC';
-    default:
-      return 'ETH';
-  }
-};
-
-export const cleanVariableWalletLimit = async (variableWalletLimitPath: string, writeToFile: boolean) => {
+export const cleanVariableWalletLimit = async (
+  variableWalletLimitPath: string,
+  writeToFile: boolean,
+) => {
   console.log(`=========================================`);
-  console.log(`Cleaning variable wallet limit file: ${variableWalletLimitPath}`);
+  console.log(
+    `Cleaning variable wallet limit file: ${variableWalletLimitPath}`,
+  );
   const file = fs.readFileSync(variableWalletLimitPath, 'utf-8');
   const walletsWithLimit = new Map<string, number>();
   let invalidNum = 0;
@@ -140,9 +131,7 @@ export const cleanVariableWalletLimit = async (variableWalletLimitPath: string, 
         invalidNum++;
         return;
       }
-      const address = getAddress(
-        addressStr.trim().toLowerCase(),
-      );
+      const address = getAddress(addressStr.trim().toLowerCase());
       const limit = parseInt(limitStr, 10);
 
       if (!Number.isInteger(limit)) {
@@ -150,7 +139,10 @@ export const cleanVariableWalletLimit = async (variableWalletLimitPath: string, 
         invalidNum++;
         return;
       }
-      walletsWithLimit.set(address, (walletsWithLimit.get(address) ?? 0) + limit)
+      walletsWithLimit.set(
+        address,
+        (walletsWithLimit.get(address) ?? 0) + limit,
+      );
     });
 
   console.log(`Cleaned whitelist:\t${walletsWithLimit.size}`);
@@ -168,25 +160,28 @@ export const cleanVariableWalletLimit = async (variableWalletLimitPath: string, 
   }
   console.log(`=========================================`);
   return walletsWithLimit;
-}
+};
 
-export const cleanWhitelist = async (whitelistPath: string, writeToFile: boolean) => {
+export const cleanWhitelist = async (
+  whitelistPath: string,
+  writeToFile: boolean,
+) => {
   console.log(`=========================================`);
   console.log(`Cleaning whitelist file: ${whitelistPath}`);
 
   let invalidNum = 0;
-  const whitelist = JSON.parse(
-    fs.readFileSync(whitelistPath, 'utf-8'),
-  );
+  const whitelist = JSON.parse(fs.readFileSync(whitelistPath, 'utf-8'));
   const wallets = new Set<string>();
 
-  whitelist.forEach((address: string) => {
+  const trimmedWhitelist = whitelist.map((address: string) => address.trim());
+
+  trimmedWhitelist.forEach((address: string) => {
     if (!isAddress(address)) {
       console.log(`Ignored invalid address: ${address}`);
       invalidNum++;
       return;
     }
-    wallets.add(getAddress(address))
+    wallets.add(getAddress(address));
   });
 
   console.log(`Cleaned whitelist:\t${wallets.size}`);
@@ -204,4 +199,4 @@ export const cleanWhitelist = async (whitelistPath: string, writeToFile: boolean
   }
   console.log(`=========================================`);
   return wallets;
-}
+};
