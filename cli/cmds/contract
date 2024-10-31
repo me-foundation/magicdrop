@@ -76,12 +76,21 @@ setup_contract() {
     set_chain
     set_contract_address
     set_token_standard
-    set_max_supply
-    set_global_wallet_limit
-    set_mint_currency
-    set_royalties
     set_stages_file
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_number_of_1155_tokens
+        set_1155_uri
+    else
+        uri=""
+    fi
+
+    set_global_wallet_limit
+    set_max_mintable_supply
+    set_mint_currency
     set_fund_receiver
+    set_royalties
+
     print_signer_with_balance $chain_id
     confirm_setup
 
@@ -104,24 +113,26 @@ setup_contract() {
 
     echo "Setting up contract... this will take a moment."
 
+    echo "cast send \"$contract_address\" \"$setup_selector\" \"$uri\" \"$max_mintable_supply\" \"$global_wallet_limit\" \"$mint_currency\" \"$fund_receiver\" \"$stages_data\" \"$royalty_receiver\" \"$royalty_fee\" $password --rpc-url \"$RPC_URL\" --json"
+
     output=$(cast send $contract_address \
         "$setup_selector" \
-        $max_supply \
-        $wallet_limit \
-        $mint_currency \
-        $fund_receiver \
+        "$uri" \
+        "$max_mintable_supply" \
+        "$global_wallet_limit" \
+        "$mint_currency" \
+        "$fund_receiver" \
         "$stages_data" \
-        $royalty_receiver \
-        $royalty_fee \
+        "$royalty_receiver" \
+        "$royalty_fee" \
         $password \
-        --chain-id $chain_id \
         --rpc-url "$RPC_URL" \
         --json)
 
     print_transaction_hash
 }
 
-set_base_uri() {
+set_base_uri_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -150,7 +161,7 @@ set_base_uri() {
     print_transaction_hash
 }
 
-set_global_wallet_limit() {
+set_global_wallet_limit_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -158,28 +169,42 @@ set_global_wallet_limit() {
 
     set_contract_address
     set_chain
+    set_token_standard
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_token_id
+    fi
+
     set_global_wallet_limit
 
     print_signer_with_balance $chain_id
-    confirm_set_global_wallet_limit
 
     global_wallet_limit_selector="setGlobalWalletLimit(uint256)"
+    if [ "$token_standard" == "ERC1155" ]; then
+        echo ""
+        echo "Setting global wallet limit for token $token_id"
+        echo ""
+        global_wallet_limit_selector="setGlobalWalletLimit(uint256,uint256)"
+    fi
+
+    confirm_set_global_wallet_limit
+
     password=$(get_password_if_set)
 
     echo "Setting global wallet limit... this will take a moment."
 
     output=$(cast send $contract_address \
-        $global_wallet_limit_selector \
-        $global_wallet_limit \
+        "$global_wallet_limit_selector" \
+        "$token_id" \
+        "$global_wallet_limit" \
         $password \
-        --chain-id $chain_id \
         --rpc-url "$RPC_URL" \
         --json)
 
     print_transaction_hash
 }
 
-set_max_mintable_supply() {
+set_max_mintable_supply_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
     clear
 
@@ -216,7 +241,7 @@ set_max_mintable_supply() {
     fi
 }
 
-set_mintable() {
+set_mintable_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -252,7 +277,7 @@ set_mintable() {
     fi
 }
 
-set_stages() {
+set_stages_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
     clear 
 
@@ -289,7 +314,7 @@ set_stages() {
     fi
 }
 
-set_cosigner() {
+set_cosigner_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -326,7 +351,7 @@ set_cosigner() {
     fi
 }
 
-set_timestamp_expiry() {
+set_timestamp_expiry_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -363,7 +388,7 @@ set_timestamp_expiry() {
     fi
 }
 
-transfer_ownership() {
+transfer_ownership_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -412,7 +437,7 @@ transfer_ownership() {
     fi
 }
 
-set_token_uri_suffix() {
+set_token_uri_suffix_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
     title="Set Token URI Suffix"
@@ -440,7 +465,7 @@ set_token_uri_suffix() {
     print_transaction_hash
 }
 
-set_uri() {
+set_uri_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -476,7 +501,7 @@ set_uri() {
     fi
 }
 
-set_royalties() {
+set_royalties_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -521,7 +546,7 @@ set_royalties() {
     fi
 }
 
-owner_mint() {
+owner_mint_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -569,11 +594,11 @@ owner_mint() {
     fi
 }
 
-send_erc721_batch() {
+send_erc721_batch_contract() {
     echo "Not implemented, please use the hardhat script instead."
 }
 
-manage_authorized_minters() {
+manage_authorized_minters_contract() {
     clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
@@ -589,13 +614,13 @@ manage_authorized_minters() {
     set_authorized_minter
 
     if [ "$action" == "Add Authorized Minter" ]; then
-        add_authorized_minter $contract_address $minter $chain_id
+        add_authorized_minter_contract $contract_address $minter $chain_id
     else
-        remove_authorized_minter $contract_address $minter $chain_id
+        remove_authorized_minter_contract $contract_address $minter $chain_id
     fi
 }
 
-add_authorized_minter() {
+add_authorized_minter_contract() {
     contract_address=$1
     minter=$2
     chain_id=$3
@@ -627,7 +652,7 @@ add_authorized_minter() {
     fi
 }
 
-remove_authorized_minter() {
+remove_authorized_minter_contract() {
     contract_address=$1
     minter=$2
     chain_id=$3
@@ -659,7 +684,7 @@ remove_authorized_minter() {
     fi
 }
 
-set_cosigner() {
+set_cosigner_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
 
     title="Set Cosigner"

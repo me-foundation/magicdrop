@@ -54,38 +54,38 @@ set_stages_file() {
 set_mint_currency() {
     if [ -z "$mint_currency" ]; then
         show_title "$title" "> Set mint currency <"
-        mint_currency=$(get_ethereum_address "Mint currency (default: Native Gas Token)")
-        clear
-    else 
-        mint_currency=$DEFAULT_MINT_CURRENCY
-    fi
-}
-
-set_global_wallet_limit() {
-    if [ -z "$global_wallet_limit" ]; then
-        show_title "$title" "> Set global wallet limit <"
-        global_wallet_limit=$(get_numeric_input "Enter global wallet limit (0 for no limit)")
-        check_input "$global_wallet_limit" "global wallet limit"
-        clear
-    else 
-        global_wallet_limit=0
-    fi
-}
-
-set_max_supply() {
-    if [ -z "$max_supply" ]; then
-        show_title "$title" "> Set max supply (collection size) <"
-        max_supply=$(get_numeric_input "Enter max supply")
-        check_input "$max_supply" "max supply"
+        if gum confirm "Override default mint currency? ($DEFAULT_MINT_CURRENCY)" --default=false; then
+            mint_currency=$(get_ethereum_address "Mint currency (default: Native Gas Token)")
+        else 
+            mint_currency=$DEFAULT_MINT_CURRENCY
+        fi
         clear
     fi
 }
 
 set_max_mintable_supply() {
     if [ -z "$max_mintable_supply" ]; then
-        show_title "$title" "> Set max mintable supply <"
-        max_mintable_supply=$(get_numeric_input "Enter max mintable supply")
-        check_input "$max_mintable_supply" "max mintable supply"
+        if [ "$token_standard" = "ERC1155" ]; then
+            show_title "$title" "> Set max mintable supply for each token <"
+            max_mintable_supply="["
+            for ((i=0; i < $total_tokens; i++)); do
+                token_supply=$(get_numeric_input "Enter max mintable supply for token $i")
+                check_input "$token_supply" "max mintable supply for token $i"
+                max_mintable_supply+="$token_supply"
+                # Add comma separator if not the last token
+                if [ $i -lt $(($total_tokens-1)) ]; then
+                    max_mintable_supply+=","
+                fi
+            done
+            max_mintable_supply+="]"
+        elif [ "$token_standard" = "ERC721" ]; then
+            show_title "$title" "> Set max mintable supply <"
+            max_mintable_supply=$(get_numeric_input "Enter max mintable supply")
+            check_input "$max_mintable_supply" "max mintable supply"
+        else
+            echo "Unknown token standard"
+            exit 1
+        fi
         clear
     fi
 }
@@ -155,9 +155,36 @@ set_impl_id() {
 
 set_global_wallet_limit() {
     if [ -z "$global_wallet_limit" ]; then
-        show_title "$title" "> Enter the global wallet limit <"
-        global_wallet_limit=$(get_numeric_input "Enter global wallet limit")
-        check_input "$global_wallet_limit" "global wallet limit"
+        if [ "$token_standard" = "ERC1155" ] && [ -z "$token_id" ]; then
+            show_title "$title" "> Set global wallet limit for each token <"
+            global_wallet_limit="["
+            for ((i=0; i < $total_tokens; i++)); do
+                token_limit=$(get_numeric_input "Enter global wallet limit for token $i (0 for no limit)")
+                check_input "$token_limit" "global wallet limit for token $i"
+                global_wallet_limit+="$token_limit"
+                # Add comma separator if not the last token
+                if [ $i -lt $(($total_tokens-1)) ]; then
+                    global_wallet_limit+=","
+                fi
+            done
+            global_wallet_limit+="]"
+        elif [ "$token_standard" = "ERC721" ] || [ -n "$token_id" ]; then
+            show_title "$title" "> Set global wallet limit <"
+            global_wallet_limit=$(get_numeric_input "Enter global wallet limit (0 for no limit)")
+            check_input "$global_wallet_limit" "global wallet limit"
+        else
+            echo "Unknown token standard"
+            exit 1
+        fi
+        clear
+    fi
+}
+
+set_token_id() {
+    if [ -z "$token_id" ]; then
+        show_title "$title" "> Enter token ID <"
+        token_id=$(get_numeric_input "Enter token ID")
+        check_input "$token_id" "token ID"
         clear
     fi
 }
@@ -254,5 +281,15 @@ set_authorized_minter() {
     show_title "$title" "> Enter minter address <"
     minter=$(get_ethereum_address "Enter minter address")
     check_input "$minter" "minter address"
+    clear
+}
+
+set_number_of_1155_tokens() {
+    show_title "$title" "> Enter total tokens <"
+    echo ""
+    echo $(gum style --foreground 212 "Notice: This value should match the number of tokens in the stages file. Otherwise, the contract will revert.")
+    echo ""
+    total_tokens=$(get_numeric_input "Enter total tokens")
+    check_input "$total_tokens" "total tokens"
     clear
 }
