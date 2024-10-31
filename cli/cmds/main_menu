@@ -47,9 +47,9 @@ contract_management_menu() {
         "Set Royalties" \
         "Set Global Wallet Limit" \
         "Set Max Mintable Supply" \
-        "Set Mintable" \
+        "Set Mintable (ERC721 Only)" \
         "Set Cosigner" \
-        "Set Token URI Suffix" \
+        "Set Token URI Suffix (ERC721 Only)" \
         "Set Timestamp Expiry" \
         "Transfer Ownership" \
         "Manage Authorized Minters"\

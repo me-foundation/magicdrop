@@ -81,8 +81,6 @@ setup_contract() {
     if [ "$token_standard" == "ERC1155" ]; then
         set_number_of_1155_tokens
         set_1155_uri
-    else
-        uri=""
     fi
 
     set_global_wallet_limit
@@ -212,22 +210,36 @@ set_max_mintable_supply_contract() {
 
     set_chain
     set_contract_address
+    set_token_standard
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_token_id
+    fi
+
     set_max_mintable_supply
 
     echo ""
     echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply"
+    if [ "$token_standard" == "ERC1155" ]; then
+        echo "for token $token_id"
+    fi
     echo ""
 
     print_signer_with_balance $chain_id
 
     if gum confirm "Do you want to proceed?"; then
         set_max_mintable_supply_selector="setMaxMintableSupply(uint256)"
+        if [ "$token_standard" == "ERC1155" ]; then
+            set_max_mintable_supply_selector="setMaxMintableSupply(uint256,uint256)"
+        fi
+
         password=$(get_password_if_set)
 
         echo "Setting max mintable supply... this will take a moment."
 
         output=$(cast send $contract_address \
             $set_max_mintable_supply_selector \
+            $token_id \
             $max_mintable_supply \
             $password \
             --chain-id $chain_id \
@@ -250,6 +262,12 @@ set_mintable_contract() {
     set_chain
     set_contract_address
     set_token_standard
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        echo "setMintable is not supported for ERC1155"
+        exit 1
+    fi
+
     set_mintable
 
     echo ""
@@ -288,11 +306,17 @@ set_stages_contract() {
     set_token_standard
     set_stages_file
 
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_number_of_1155_tokens
+        set_1155_uri
+    fi
+
+    print_signer_with_balance $chain_id
+
     process_stages "$stages_file" "stagesInput.tmp" "$token_standard"
     stages_data=$(cat "stagesInput.tmp")
     rm "stagesInput.tmp"
-
-    print_signer_with_balance $chain_id
+    echo ""
 
     if gum confirm "Do you want to proceed?"; then
         set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
@@ -472,6 +496,7 @@ set_uri_contract() {
     title="Set URI (ERC1155 Only)"
 
     set_contract_address
+    set_chain
     set_1155_uri
 
     echo ""

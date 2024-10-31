@@ -28,6 +28,7 @@ set_rpc_url() {
         42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
         1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
         33139) RPC_URL="https://curtis.rpc.caldera.xyz/http" ;; # ApeChain
+        11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -44,6 +45,7 @@ set_etherscan_api_key() {
       42161) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_ARBITRUM ;;
       1329) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_SEI ;;
       33139) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_APECHAIN ;;
+      11155111) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_SEPOLIA ;;
       *) echo "Unsupported chain id"; exit 1 ;;
   esac
 
@@ -98,7 +100,6 @@ esac
 CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL FACTORY_SALT=$FACTORY_SALT FACTORY_EXPECTED_ADDRESS=$FACTORY_EXPECTED_ADDRESS INITIAL_OWNER=$INITIAL_OWNER REGISTRY_ADDRESS=$REGISTRY_ADDRESS forge script ./DeployMagicDropCloneFactory.s.sol:DeployMagicDropCloneFactory \
   --rpc-url $RPC_URL \
   --broadcast \
-  --optimizer-runs 777 \
   --via-ir # \
   # --verify $RESUME \
   # -v

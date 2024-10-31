@@ -380,6 +380,7 @@ contract ERC721CMInitializableV1_0_0 is
 
         // Check merkle proof if applicable, merkleRoot == 0x00...00 means no proof required
         if (stage.merkleRoot != 0) {
+            // TODO(adam): verify this works when there is no limit
             if (!MerkleProofLib.verify(proof, stage.merkleRoot, keccak256(abi.encodePacked(to, limit)))) {
                 revert InvalidProof();
             }

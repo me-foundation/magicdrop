@@ -65,7 +65,7 @@ set_mint_currency() {
 
 set_max_mintable_supply() {
     if [ -z "$max_mintable_supply" ]; then
-        if [ "$token_standard" = "ERC1155" ]; then
+        if [ "$token_standard" = "ERC1155" ] && [ -z "$token_id" ]; then
             show_title "$title" "> Set max mintable supply for each token <"
             max_mintable_supply="["
             for ((i=0; i < $total_tokens; i++)); do
@@ -78,7 +78,7 @@ set_max_mintable_supply() {
                 fi
             done
             max_mintable_supply+="]"
-        elif [ "$token_standard" = "ERC721" ]; then
+        elif [ "$token_standard" = "ERC721" ] || [ -n "$token_id" ]; then
             show_title "$title" "> Set max mintable supply <"
             max_mintable_supply=$(get_numeric_input "Enter max mintable supply")
             check_input "$max_mintable_supply" "max mintable supply"
