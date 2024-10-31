@@ -110,6 +110,7 @@ export const estimateGas = async (
 
 const getTokenName = (hre: HardhatRuntimeEnvironment) => {
   switch (hre.network.name) {
+    case 'base':
     case 'mainnet':
     case 'sepolia':
     case 'goerli':
@@ -117,6 +118,10 @@ const getTokenName = (hre: HardhatRuntimeEnvironment) => {
     case 'polygon':
     case 'mumbai':
       return 'MATIC';
+    case 'apechain':
+      return 'APE';
+    case 'arbitrum':
+      return 'ARB';
     default:
       return 'ETH';
   }
