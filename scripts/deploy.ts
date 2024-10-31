@@ -5,10 +5,12 @@
 // Runtime Environment's members available in the global scope.
 
 import { confirm } from '@inquirer/prompts';
+import { encodeFunctionData } from 'viem';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { ContractDetails, RESERVOIR_RELAYER_MUTLICALLER, RESERVOIR_RELAYER_ROUTER } from './common/constants';
 import { checkCodeVersion, estimateGas } from './utils/helper';
 import { Overrides } from 'ethers';
+import { getTargetListOnValidatorV3, APPLY_LIST_TO_COLLECTION_ABI } from './utils/validator';
 
 interface IDeployParams {
   name: string;
@@ -123,15 +125,32 @@ export const deploy = async (
     `npx hardhat verify --network ${hre.network.name} ${contract.address} ${paramsStr}`,
   );
 
-  // Set security policy to ME default
+  // Set validator and list to enforce royalties
   if (args.useerc721c) {
     console.log('[ERC721CM] Setting security policy to ME default...');
     const ERC721CM = await hre.ethers.getContractFactory(
       ContractDetails.ERC721CM.name,
     );
     const erc721cm = ERC721CM.attach(contract.address);
-    const tx = await erc721cm.setToDefaultSecurityPolicy();
-    console.log('[ERC721CM] Security policy set');
+    const validatorSetting = getTargetListOnValidatorV3(hre.network.name);
+    if (validatorSetting) {
+      await erc721cm.setTransferValidator(validatorSetting.validatorAddress);
+      console.log('[ERC721CM] Validator set to: ', validatorSetting.validatorAddress);
+
+      const encodedData = encodeFunctionData({
+        abi: APPLY_LIST_TO_COLLECTION_ABI,
+        functionName: 'applyListToCollection',
+        args: [contract.address, validatorSetting.listId],
+      });
+  
+      await signer.sendTransaction({
+        to: validatorSetting.validatorAddress as `0x${string}`,
+        data: encodedData,
+      });
+      console.log('[ERC721CM] Validator v3 list set to: ', validatorSetting.listId);
+    } else {
+      console.log('[ERC721CM] No validator setting found for network: ', hre.network.name);
+    }
   }
 
   // Add reservoir relay as authorized minter by default
