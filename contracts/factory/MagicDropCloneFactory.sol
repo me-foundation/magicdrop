@@ -20,12 +20,6 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address)"));
 
     /*==============================================================
-    =                           CONSTANTS                          =
-    ==============================================================*/
-    
-    uint256 public deploymentFee;
-
-    /*==============================================================
     =                             EVENTS                           =
     ==============================================================*/
 
@@ -122,7 +116,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         TokenStandard standard,
         address payable initialOwner,
         uint32 implId
-    ) external payable returns (address) {
+    ) external returns (address) {
         address impl;
         // Retrieve the implementation address from the registry
         if (implId == 0) {
@@ -184,10 +178,6 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     /*==============================================================
     =                      ADMIN OPERATIONS                        =
     ==============================================================*/
-
-    function setDeploymentFee(uint256 _newFee) external onlyOwner {
-        deploymentFee = _newFee;
-    }
 
     ///@dev Internal function to authorize an upgrade.
     ///@param newImplementation Address of the new implementation.
