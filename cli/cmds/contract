@@ -8,6 +8,15 @@ source "$BASE_DIR/utils"
 source "$BASE_DIR/common"
 trap "echo 'Exiting...'; exit 1" SIGINT
 
+get_factory_address() {
+    local chain_id="$1"
+    case $chain_id in
+        137) echo "0x000073735DD587b1e5d3E84025A1145e110D4684" ;;
+        11155111) echo "0x00000F30914D85beE86E9c461c29Ffbb15EE10b2" ;;
+        *) echo "Unknown chain id"; exit 1 ;;
+    esac
+}
+
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
     clear 
@@ -25,7 +34,7 @@ deploy_contract() {
     confirm_deployment
 
     create_contract_selector="createContract(string,string,uint8,address,uint32)"
-    factory_address="0x000073735DD587b1e5d3E84025A1145e110D4684"
+    factory_address=$(get_factory_address $chain_id)
     password=$(get_password_if_set)
 
     echo "Deploying contract... this may take a minute."
@@ -319,15 +328,23 @@ set_stages_contract() {
     echo ""
 
     if gum confirm "Do you want to proceed?"; then
-        set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+        if [ "$token_standard" == "ERC1155" ]; then
+            set_stages_selector="setStages((uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[])"
+        elif [ "$token_standard" == "ERC721" ]; then
+            set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+        else
+            echo "Unknown token standard"
+            exit 1
+        fi
+
         password=$(get_password_if_set)
 
         echo "Setting stages... this will take a moment."
 
-        output=$(cast send $deployed_contract_address \
+        output=$(cast send $contract_address \
             "$set_stages_selector" \
             "$stages_data" \
-            --chain-id $chain_id \
+            $password \
             --rpc-url "$RPC_URL" \
             --json)
         
@@ -580,23 +597,27 @@ owner_mint_contract() {
     set_chain
     set_contract_address
     set_token_standard
-    set_recipient_address
-    set_quantity
-
-    token_id=""
-    mint_selector="ownerMint(uint32,address)" # ERC721 mint(to, quantity)
-    mint_args="$quantity $recipient"
 
     if [ "$token_standard" == "ERC1155" ]; then
-        token_id=$(get_numeric_input "Enter token ID")
-        check_input "$token_id" "token ID"
-        clear
-        mint_selector="ownerMint(address,uint256,uint32)" # ERC1155 mint(to, tokenId, quantity)
-        mint_args="$recipient $token_id $quantity"
+        set_token_id
+    fi
+
+    set_receiver_address
+    set_quantity
+
+    mint_selector="ownerMint(uint32,address)"
+    mint_args="$quantity $receiver"
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        mint_selector="ownerMint(address,uint256,uint32)"
+        mint_args="$receiver $token_id $quantity"
     fi
 
     echo ""
-    echo "You are about to mint $quantity token(s) to $(format_address $recipient)"
+    echo "You are about to mint $quantity token(s) to $(format_address $receiver)"
+    if [ "$token_standard" == "ERC1155" ]; then
+        echo "for token $token_id"
+    fi
     echo ""
 
     if gum confirm "Do you want to proceed?"; then
@@ -608,7 +629,6 @@ owner_mint_contract() {
             "$mint_selector" \
             $mint_args \
             $password \
-            --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
 

@@ -12,6 +12,7 @@ SUPPORTED_CHAINS=(
     "1:Ethereum"
     "137:Polygon"
     "1329:Sei"
+    "11155111:Sepolia"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
@@ -322,6 +323,7 @@ set_rpc_url() {
         42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
         1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
         33139) RPC_URL="https://curtis.rpc.caldera.xyz/http" ;; # ApeChain
+        11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -485,6 +487,7 @@ chain_id_to_symbol() {
         42161) echo "ARB" ;;
         1329) echo "SEI" ;;
         33139) echo "APE" ;;
+        11155111) echo "SEP" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -498,6 +501,7 @@ chain_id_to_explorer_url() {
         42161) echo "https://arbiscan.io" ;;
         1329) echo "https://sei.explorer.sepolia.io" ;;
         33139) echo "https://explorer.caldera.xyz" ;;
+        11155111) echo "https://sepolia.etherscan.io" ;;
         *) echo "Unknown" ;;
     esac
 }

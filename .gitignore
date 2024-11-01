@@ -14,8 +14,8 @@ lcov.info
 lcov.info.pruned
 coverage/
 broadcast/
-cli/deployments
-cli/collections
+*deployments*
+*collections*
 *whitelist*
 *invalid*
 *.tmp
