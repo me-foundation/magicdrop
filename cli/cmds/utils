@@ -60,7 +60,8 @@ get_password_if_set() {
     if [[ -n "$KEYSTORE_PASSWORD" ]]; then
         echo "--password $KEYSTORE_PASSWORD --account $MAGIC_DROP_KEYSTORE"
     else
-        echo ""
+        local password=$(gum input --placeholder "Enter password")
+        echo "--password $password --account $MAGIC_DROP_KEYSTORE"
     fi
 }
 
@@ -97,6 +98,10 @@ load_private_key() {
     echo "You can store your password in .env to avoid entering it every time"
     echo "echo \"KEYSTORE_PASSWORD=<your_password>\" >> .env"
     echo ""
+
+    echo "Loading signer... enter password if prompted"
+    load_signer
+    clear
 }
 
 load_signer() {
