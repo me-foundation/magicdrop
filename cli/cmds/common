@@ -241,7 +241,7 @@ set_token_uri_suffix() {
 set_1155_uri() {
     if [ -z "$uri" ]; then
         show_title "$title" "> Enter new URI <"
-        uri=$(gum input --placeholder "Enter new URI")
+        uri="$(gum input --placeholder "Enter new URI")"
         check_input "$uri" "URI"
         clear
     fi

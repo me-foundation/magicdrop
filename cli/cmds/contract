@@ -120,11 +120,9 @@ setup_contract() {
 
     echo "Setting up contract... this will take a moment."
 
-    echo "cast send \"$contract_address\" \"$setup_selector\" \"$uri\" \"$max_mintable_supply\" \"$global_wallet_limit\" \"$mint_currency\" \"$fund_receiver\" \"$stages_data\" \"$royalty_receiver\" \"$royalty_fee\" $password --rpc-url \"$RPC_URL\" --json"
-
     output=$(cast send $contract_address \
         "$setup_selector" \
-        "$uri" \
+        $uri \
         "$max_mintable_supply" \
         "$global_wallet_limit" \
         "$mint_currency" \
