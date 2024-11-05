@@ -78,6 +78,7 @@ supports_icreatortoken() {
     if [ "$supports_interface" == "$TRUE_HEX" ]; then
         return 0
     else
+        echo "Contract does not support ICreatorToken, skipping transfer validator setup."
         return 1
     fi
 }
