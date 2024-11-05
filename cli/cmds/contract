@@ -87,6 +87,7 @@ set_transfer_validator() {
     output=$(cast send $contract_address "setTransferValidator(address)" $tf_address $password --rpc-url "$RPC_URL" --json)
     print_transaction_hash $output
     echo "Transfer validator set."
+    echo ""
 }
 
 set_transfer_list() {
@@ -95,6 +96,7 @@ set_transfer_list() {
     output=$(cast send $tf_address "applyListToCollection(address,uint120)" $contract_address $tf_list_id $password --rpc-url "$RPC_URL" --json)
     print_transaction_hash $output
     echo "Transfer list set."
+    echo ""
 }
 
 setup_contract() {
