@@ -18,3 +18,21 @@ LIMITBREAK_TRANSFER_VALIDATOR_V3="0x721C0078c2328597Ca70F5451ffF5A7B38D4E947"
 
 ICREATOR_TOKEN_INTERFACE_ID="0xad0d7f6c" # type(ICreatorToken).interfaceId
 TRUE_HEX="0x0000000000000000000000000000000000000000000000000000000000000001"
+
+get_factory_address() {
+    local chain_id="$1"
+    case $chain_id in
+        137) echo "0x00001E4949B59B0f52fC84227AF67ab131931256" ;;
+        11155111) echo "0x00001E4949B59B0f52fC84227AF67ab131931256" ;;
+        *) echo "Unknown chain id"; exit 1 ;;
+    esac
+}
+
+get_registry_address() {
+    local chain_id="$1"
+    case $chain_id in
+        137) echo "0x0000Dd87036aDf1477916e36BB12e19fef5517aC" ;;
+        11155111) echo "0x0000Dd87036aDf1477916e36BB12e19fef5517aC" ;;
+        *) echo "Unknown chain id"; exit 1 ;;
+    esac
+}

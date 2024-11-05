@@ -8,7 +8,7 @@ else
     exit 1
 fi
 
-source ./utils.sh
+source ./utils
 
 # Initialize variables with environment values
 CHAIN_ID=${CHAIN_ID:-""}

@@ -2,24 +2,6 @@
 
 trap "echo 'Exiting...'; exit 1" SIGINT
 
-get_factory_address() {
-    local chain_id="$1"
-    case $chain_id in
-        137) echo "0x000073735DD587b1e5d3E84025A1145e110D4684" ;;
-        11155111) echo "0x00000F30914D85beE86E9c461c29Ffbb15EE10b2" ;;
-        *) echo "Unknown chain id"; exit 1 ;;
-    esac
-}
-
-get_registry_address() {
-    local chain_id="$1"
-    case $chain_id in
-        137) echo "0x00008CCF84710496a3eF7d2701Ba6b203EA4EccE" ;;
-        11155111) echo "0x00008CCF84710496a3eF7d2701Ba6b203EA4EccE" ;;
-        *) echo "Unknown chain id"; exit 1 ;;
-    esac
-}
-
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
     clear 

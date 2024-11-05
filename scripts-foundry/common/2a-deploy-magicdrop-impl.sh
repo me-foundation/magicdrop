@@ -8,7 +8,7 @@ else
     exit 1
 fi
 
-source ./utils.sh
+source ./utils
 
 # Exit on error
 set -e
