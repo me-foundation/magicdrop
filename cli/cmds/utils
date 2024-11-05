@@ -1,113 +1,8 @@
 #!/usr/bin/env bash
 
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEFAULTS_FILE="$BASE_DIR/../defaults.json"
-
 trap "echo 'Exiting...'; exit 1" SIGINT
 
-SUPPORTED_CHAINS=(
-    "33139:ApeChain"
-    "42161:Arbitrum"
-    "8453:Base"
-    "1:Ethereum"
-    "137:Polygon"
-    "1329:Sei"
-    "11155111:Sepolia"
-)
-
-MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
-export ETH_KEYSTORE_ACCOUNT=$MAGIC_DROP_KEYSTORE
-
-#==============================================================#
-#                      HELPER FUNCTIONS                        #
-#==============================================================#
-load_defaults() {
-    CONFIG_COMPLETE=true
-
-    # Check if defaults.json exists in the expected location
-    if [[ ! -f "$DEFAULTS_FILE" ]]; then
-        echo "defaults.json not found in $DEFAULTS_FILE. Checking current directory..."
-        DEFAULTS_FILE="./defaults.json"
-    fi
-
-    if [[ ! -f "$DEFAULTS_FILE" ]]; then
-        echo "defaults.json not found in current directory. Exiting..."
-        exit 1
-    fi
-
-    # Read values from defaults.json using jq
-    DEFAULT_COSIGNER=$(jq -r '.default_cosigner // empty' "$DEFAULTS_FILE")
-    DEFAULT_TIMESTAMP_EXPIRY=$(jq -r '.default_timestamp_expiry // empty' "$DEFAULTS_FILE")
-    DEFAULT_MINT_CURRENCY=$(jq -r '.default_mint_currency // empty' "$DEFAULTS_FILE")
-    DEFAULT_TOKEN_URI_SUFFIX=$(jq -r '.default_token_uri_suffix // empty' "$DEFAULTS_FILE")
-    DEFAULT_ROYALTY_RECEIVER=$(jq -r '.default_royalty_receiver // empty' "$DEFAULTS_FILE")
-    DEFAULT_ROYALTY_FEE=$(jq -r '.default_royalty_fee // empty' "$DEFAULTS_FILE")
-    DEFAULT_MERKLE_ROOT=$(jq -r '.default_merkle_root // empty' "$DEFAULTS_FILE")
-
-    # Create collections directory if it doesn't exist
-    COLLECTIONS_DIR="$BASE_DIR/../collections"
-    if [[ ! -d "$COLLECTIONS_DIR" ]]; then
-        echo "Creating collections directory at $COLLECTIONS_DIR..."
-        mkdir -p "$COLLECTIONS_DIR"
-    fi
-
-    source "$BASE_DIR/../.env"
-
-    load_signer
-}
-
-get_password_if_set() {
-    if [[ -n "$KEYSTORE_PASSWORD" ]]; then
-        echo "--password $KEYSTORE_PASSWORD --account $MAGIC_DROP_KEYSTORE"
-    else
-        local password=$(gum input --placeholder "Enter password")
-        echo "--password $password --account $MAGIC_DROP_KEYSTORE"
-    fi
-}
-
-load_private_key() {
-    keystore_file="$HOME/.foundry/keystores/$MAGIC_DROP_KEYSTORE"
-
-    # Check if the keystore file exists
-    if [[ -f "$keystore_file" ]]; then
-        return 0
-    fi
-
-    echo "============================================================"
-    echo ""
-    echo "Magic Drop CLI requires a private key to send transactions."
-    echo "This key controls all funds in the account, so it must be protected carefully."
-    echo ""
-    echo "Magic Drop CLI will create an encrypted keystore for your private key."
-    echo "You will be prompted to enter your private key and a password to encrypt it."
-    echo "Learn more: https://book.getfoundry.sh/reference/cast/cast-wallet-import"
-    echo ""
-    echo "This password will be required to send transactions from your account."
-    echo ""
-    echo "============================================================"
-    echo ""
-
-    cast wallet import --interactive $MAGIC_DROP_KEYSTORE
-    if [[ $? -ne 0 ]]; then
-        echo "Failed to create keystore"
-        exit 1
-    fi
-
-    echo ""
-    echo "Keystore created successfully"
-    echo "You can store your password in .env to avoid entering it every time"
-    echo "echo \"KEYSTORE_PASSWORD=<your_password>\" >> .env"
-    echo ""
-
-    echo "Loading signer... enter password if prompted"
-    load_signer
-    clear
-}
-
-load_signer() {
-    password=$(get_password_if_set)
-    export SIGNER=$(cast wallet address $password)
-}
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 check_input() {
     local input_value="$1"
@@ -118,206 +13,11 @@ check_input() {
     fi
 }
 
-is_number() {
-    local input="$1"
-    [[ "$input" =~ ^[0-9]+$ ]]
-}
-
-get_numeric_input() {
-    local prompt="$1"
-    local input
-    while true; do
-        input=$(gum input --placeholder "$prompt (or 'exit' to quit)")
-        
-        if [[ -z "$input" ]]; then
-            echo "Exiting program..."
-            kill $$
-        elif [[ "$input" == "exit" || "$input" == "quit" ]]; then
-            echo "Exiting program..."
-            kill $$
-        fi
-
-        # If the input is numeric, return it
-        if is_number "$input"; then
-            echo "$input"
-            return
-        fi
-    done
-}
-
-is_valid_ethereum_address() {
-    local address="$1"
-    [[ "$address" =~ ^0x[a-fA-F0-9]{40}$ ]]
-}
-
-get_ethereum_address() {
-    local prompt="$1"
-    local address
-
-    address=$(gum input --placeholder "$prompt (or 'exit' to quit)")
-    if [[ -z "$address" ]]; then
-        echo "Exiting program..."
-        kill $$
-    elif [[ "$address" == "exit" || "$address" == "quit" ]]; then
-        echo "Exiting program..."
-        kill $$
-    fi
-
-    if is_valid_ethereum_address "$address"; then
-        echo "$address"
-    else
-        echo "Invalid input. Exiting..."
-        exit 1
-    fi
-}
-
-file_exists() {
-    local file="$1"
-    [[ -f "$file" ]]
-}
-
-get_collection_file() {
-    local prompt="$1"
-    local file file=$(gum file --directory "$BASE_DIR/../collections" --height 10)
-
-    if file_exists "$file"; then
-        echo "$file"
-    else 
-        # should never get here
-        exit 1
-    fi
-}
-
 format_address() {
     local address=$1
     local prefix=${address:0:6}
     local suffix=${address: -4}
     echo "${prefix}...${suffix}"
-}
-
-function display_info {
-    local output=""
-
-    for arg in "$@"; do
-        key=$(echo "$arg" | cut -d':' -f1)
-        value=$(echo "$arg" | cut -d':' -f2)
-        output+="$(gum style --foreground="#ffcc00" "$key"): $(gum style --foreground="#00ffcc" "$value")\n"
-    done
-
-    echo -e "$output" | gum format
-}
-
-confirm_deployment() {
-    echo ""
-    echo "==================== DEPLOYMENT DETAILS ===================="
-    echo "Name:                         $(gum style --foreground 212 "$name")"
-    echo "Symbol:                       $(gum style --foreground 212 "$symbol")"
-    echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
-    echo "Initial Owner:                $(gum style --foreground 212 "$(format_address "$initial_owner")")"
-    if [[ "$impl_id" -eq 0 ]]; then
-        echo "Impl ID:                      $(gum style --foreground 212 "DEFAULT")"
-    else
-        echo "Impl ID:                      $(gum style --foreground 212 "$impl_id")"
-    fi
-    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
-    echo "============================================================"
-    echo ""
-
-    if ! gum confirm "Do you want to proceed?"; then
-        echo "Exiting..."
-        exit 1
-    fi
-}
-
-confirm_setup() {
-    echo ""
-    echo "==================== CONTRACT DETAILS ===================="
-    echo "Chain:                        $(gum style --foreground 212 "$chain")"
-    echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
-    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
-    echo "======================= SETUP INFO ======================="
-    echo "Max Mintable Supply:          $(gum style --foreground 212 "$max_mintable_supply")"
-    echo "Global Wallet Limit:          $(gum style --foreground 212 "$global_wallet_limit")"
-    echo "Mint Currency:                $(gum style --foreground 212 "$(format_address "$mint_currency")")"
-    echo "Royalty Receiver:             $(gum style --foreground 212 "$(format_address "$royalty_receiver")")"
-    echo "Royalty Fee:                  $(gum style --foreground 212 "$royalty_fee")"
-    echo "Stages File:                  $(gum style --foreground 212 "$stages_file")"
-    echo "Fund Receiver:                $(gum style --foreground 212 "$(format_address "$fund_receiver")")"
-    echo "=========================================================="
-    echo ""
-
-    if ! gum confirm "Do you want to proceed?"; then
-        echo "Exiting..."
-        exit 1
-    fi
-}
-
-confirm_set_base_uri() {
-    echo ""
-    echo "==================== BASE URI ===================="
-    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
-    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
-    echo "Base URI:                     $(gum style --foreground 212 "$base_uri")"
-    echo "==================================================="
-    echo ""
-    
-    if ! gum confirm "Do you want to proceed?"; then
-        echo "Exiting..."
-        exit 1
-    fi
-}
-
-confirm_set_global_wallet_limit() {
-    echo ""
-    echo "==================== GLOBAL WALLET LIMIT ===================="
-    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
-    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
-    echo "Global Wallet Limit:          $(gum style --foreground 212 "$global_wallet_limit")"
-    echo "==========================================================="
-    echo ""
-
-    if ! gum confirm "Do you want to proceed?"; then
-        echo "Exiting..."
-        exit 1
-    fi
-}
-
-confirm_set_token_uri_suffix() {
-    echo ""
-    echo "==================== TOKEN URI SUFFIX ===================="
-    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
-    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
-    echo "Token URI Suffix:             $(gum style --foreground 212 "$token_uri_suffix")"
-    echo "==========================================================="
-    echo ""
-    
-    if ! gum confirm "Do you want to proceed?"; then
-        echo "Exiting..."
-        exit 1
-    fi
-}
-
-show_main_title() {
-    gum style \
-	--foreground 212 --border-foreground 212 --border double \
-	--align center --width 40 --margin "1 0" --padding "1" \
-	'Magic Drop CLI' '' 'Create and manage NFT collections'
-}
-
-show_title() {
-    local title="$1"
-    local subtitle="$2"
-    gum style \
-    --foreground 212 --border-foreground 212 --border double \
-    --align center --width 40 --margin "1 0" --padding "1" \
-    "$title" \
-    "$subtitle"
-}
-
-select_chain() {
-    local chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
-    local chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
-    echo "$chain_id:$chain"
 }
 
 set_rpc_url() {
@@ -437,7 +137,6 @@ prestart() {
     forge build --root "$BASE_DIR"
 }
 
-# TODO(adam) finish deployment loading
 load_deployment_data() {
     local deployment_file="$1"
     if [[ ! -f "$deployment_file" ]]; then
@@ -455,24 +154,6 @@ load_deployment_data() {
         .initial_owner,
         .impl_id
     ' "$deployment_file"
-}
-
-choose_deployment() {
-    local chain_id="$1"
-    local deployments_dir="./deployments/$chain_id"
-    if [[ ! -d "$deployments_dir" ]]; then
-        echo "Error: Deployments directory not found: $deployments_dir"
-        return 1
-    fi
-    
-    local deployment_files=("$deployments_dir"/*.json)
-    if [[ ${#deployment_files[@]} -eq 0 ]]; then
-        echo "No deployments found in $deployments_dir"
-        return 1
-    fi
-
-    local deployment_file=$(gum choose "${deployment_files[@]}")
-    echo "$deployment_file"
 }
 
 check_signer_native_balance() {
@@ -523,27 +204,6 @@ format_explorer_tx_url() {
     local tx_hash="$2"
     local explorer_url=$(chain_id_to_explorer_url $chain_id)
     echo "$explorer_url/tx/$tx_hash"
-}
-
-print_signer_with_balance() {
-    local chain_id="$1"
-    local balance=$(check_signer_native_balance $chain_id)
-    local symbol=$(chain_id_to_symbol $chain_id)
-    printf "Signer: %s\nBalance: %s %s\n" "$(format_address $SIGNER)" "$balance" "$symbol" | gum style --foreground 137
-    echo ""
-}
-
-print_transaction_hash() {
-    if [ $? -eq 0 ]; then
-        tx_hash=$(echo "$output" | jq -r '.transactionHash')
-        echo ""
-        echo "Transaction successful."
-        echo $(format_explorer_tx_url $chain_id $tx_hash)
-        echo ""
-    else
-        echo "Transaction failed."
-        exit 1
-    fi
 }
 
 get_standard_id() {

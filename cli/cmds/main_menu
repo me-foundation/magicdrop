@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-# Set BASE_DIR to the directory where this script is located
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source the necessary scripts, ensuring paths are quoted
-source "$BASE_DIR/contract"
+source "$BASE_DIR/const"
+source "$BASE_DIR/loaders"
 source "$BASE_DIR/utils"
+source "$BASE_DIR/display"
+source "$BASE_DIR/common"
+source "$BASE_DIR/getters"
+source "$BASE_DIR/contract"
 
 main_menu() {
     trap "echo 'Exiting...'; exit 1" SIGINT

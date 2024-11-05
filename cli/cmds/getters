@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+
+# Numeric input getter
+get_numeric_input() {
+    local prompt="$1"
+    local input
+    while true; do
+        input=$(gum input --placeholder "$prompt (or 'exit' to quit)")
+        
+        if [[ -z "$input" ]]; then
+            echo "Exiting program..."
+            kill $$
+        elif [[ "$input" == "exit" || "$input" == "quit" ]]; then
+            echo "Exiting program..."
+            kill $$
+        fi
+
+        # If the input is numeric, return it
+        if is_number "$input"; then
+            echo "$input"
+            return
+        fi
+    done
+}
+
+# Ethereum address getter
+get_ethereum_address() {
+    local prompt="$1"
+    local address
+
+    address=$(gum input --placeholder "$prompt (or 'exit' to quit)")
+    if [[ -z "$address" ]]; then
+        echo "Exiting program..."
+        kill $$
+    elif [[ "$address" == "exit" || "$address" == "quit" ]]; then
+        echo "Exiting program..."
+        kill $$
+    fi
+
+    if is_valid_ethereum_address "$address"; then
+        echo "$address"
+    else
+        echo "Invalid input. Exiting..."
+        exit 1
+    fi
+}
+
+# Collection file getter
+get_collection_file() {
+    local prompt="$1"
+    local file file=$(gum file --directory "$BASE_DIR/../collections" --height 10)
+
+    if file_exists "$file"; then
+        echo "$file"
+    else 
+        # should never get here
+        exit 1
+    fi
+}
+
+# Password getter
+get_password_if_set() {
+    if [[ -n "$KEYSTORE_PASSWORD" ]]; then
+        echo "--password $KEYSTORE_PASSWORD --account $MAGIC_DROP_KEYSTORE"
+    else
+        local password=$(gum input --placeholder "Enter password")
+        echo "--password $password --account $MAGIC_DROP_KEYSTORE"
+    fi
+}
+
+# Chain selector
+select_chain() {
+    local chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
+    local chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
+    echo "$chain_id:$chain"
+}
+
+# Deployment chooser
+choose_deployment() {
+    local chain_id="$1"
+    local deployments_dir="./deployments/$chain_id"
+    if [[ ! -d "$deployments_dir" ]]; then
+        echo "Error: Deployments directory not found: $deployments_dir"
+        return 1
+    fi
+    
+    local deployment_files=("$deployments_dir"/*.json)
+    if [[ ${#deployment_files[@]} -eq 0 ]]; then
+        echo "No deployments found in $deployments_dir"
+        return 1
+    fi
+
+    local deployment_file=$(gum choose "${deployment_files[@]}")
+    echo "$deployment_file"
+}
+
+# Helper functions needed by getters
+is_number() {
+    local input="$1"
+    [[ "$input" =~ ^[0-9]+$ ]]
+}
+
+is_valid_ethereum_address() {
+    local address="$1"
+    [[ "$address" =~ ^0x[a-fA-F0-9]{40}$ ]]
+}
+
+file_exists() {
+    local file="$1"
+    [[ -f "$file" ]]
+}

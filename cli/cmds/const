@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+SUPPORTED_CHAINS=(
+    "33139:ApeChain"
+    "42161:Arbitrum"
+    "8453:Base"
+    "1:Ethereum"
+    "137:Polygon"
+    "1329:Sei"
+    "11155111:Sepolia"
+)
+
+MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
+export ETH_KEYSTORE_ACCOUNT=$MAGIC_DROP_KEYSTORE

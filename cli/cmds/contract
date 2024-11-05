@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-# Set BASE_DIR to the directory where this script is located
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Ensure the path to the utils script is correct and the file exists
-source "$BASE_DIR/utils"
-source "$BASE_DIR/common"
 trap "echo 'Exiting...'; exit 1" SIGINT
 
 get_factory_address() {
