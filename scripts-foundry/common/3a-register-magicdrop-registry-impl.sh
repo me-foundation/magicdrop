@@ -8,6 +8,8 @@ else
     exit 1
 fi
 
+source ./utils.sh
+
 # Initialize variables with environment values
 CHAIN_ID=${CHAIN_ID:-""}
 RPC_URL=""
@@ -21,22 +23,6 @@ usage() {
     # Example Usage: ./3a-register-magicdrop-registry-impl.sh --chain-id 137 --registry-address 0x00000001bA03aD5bD3BBB5b5179A5DeBd4dAFed2 --impl-address 0x0000a7f9a573a7289c9506d6a011628acf5a4a45 --token-standard ERC721
     echo "Usage: $0 --chain-id <chain id> --registry-address <registry address> --impl-address <impl address> --token-standard <token standard>"
     exit 1
-}
-
-# Function to set RPC URL based on chain ID
-set_rpc_url() {
-    case $1 in
-        1) RPC_URL="https://cloudflare-eth.com" ;; # Ethereum
-        137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
-        8453) RPC_URL="https://mainnet.base.org" ;; # Base
-        42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
-        1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
-        33139) RPC_URL="https://curtis.rpc.caldera.xyz/http" ;; # ApeChain
-        11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
-        *) echo "Unsupported chain id"; exit 1 ;;
-    esac
-
-    export RPC_URL
 }
 
 # Process arguments
