@@ -27,13 +27,16 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     event NewContractInitialized(
         address contractAddress, address initialOwner, uint32 implId, TokenStandard standard, string name, string symbol
     );
-
+    event Withdrawal(address to, uint256 amount);
+    
     /*==============================================================
     =                             ERRORS                           =
     ==============================================================*/
 
     error InitializationFailed();
     error RegistryAddressCannotBeZero();
+    error InsufficientDeploymentFee();
+    error WithdrawalFailed();
 
     /*==============================================================
     =                          INITIALIZER                         =
@@ -73,13 +76,19 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         address payable initialOwner,
         uint32 implId,
         bytes32 salt
-    ) external returns (address) {
+    ) external payable returns (address) {
         address impl;
         // Retrieve the implementation address from the registry
         if (implId == 0) {
             impl = _registry.getDefaultImplementation(standard);
         } else {
             impl = _registry.getImplementation(standard, implId);
+        }
+
+        // Retrieve the deployment fee for the implementation and ensure the caller has sent the correct amount
+        uint256 deploymentFee = _registry.getDeploymentFee(standard, implId);
+        if (msg.value < deploymentFee) {
+            revert InsufficientDeploymentFee();
         }
 
         // Create a deterministic clone of the implementation contract
@@ -116,13 +125,19 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         TokenStandard standard,
         address payable initialOwner,
         uint32 implId
-    ) external returns (address) {
+    ) external payable returns (address) {
         address impl;
         // Retrieve the implementation address from the registry
         if (implId == 0) {
             impl = _registry.getDefaultImplementation(standard);
         } else {
             impl = _registry.getImplementation(standard, implId);
+        }
+
+        // Retrieve the deployment fee for the implementation and ensure the caller has sent the correct amount
+        uint256 deploymentFee = _registry.getDeploymentFee(standard, implId);
+        if (msg.value < deploymentFee) {
+            revert InsufficientDeploymentFee();
         }
 
         // Create a non-deterministic clone of the implementation contract
@@ -183,4 +198,20 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     ///@param newImplementation Address of the new implementation.
     ///@notice Only the contract owner can upgrade the contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    /// @notice Withdraws the contract's balance
+    function withdraw(address to) external onlyOwner {
+        (bool success,) = to.call{value: address(this).balance}("");
+        if (!success) {
+            revert WithdrawalFailed();
+        }
+
+        emit Withdrawal(to, address(this).balance);
+    }
+
+    /// @notice Receives ETH
+    receive() external payable {}
+
+    /// @notice Fallback function to receive ETH
+    fallback() external payable {}
 }

@@ -20,6 +20,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
         uint32 nextImplId;
         uint32 defaultImplId;
         mapping(uint256 => address) implementations;
+        mapping(uint256 => uint256) deploymentFees; //implementationId => deploymentFee
     }
 
     struct RegistryStorage {
@@ -38,9 +39,10 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     =                            EVENTS                            =
     ==============================================================*/
 
-    event ImplementationRegistered(TokenStandard standard, address impl, uint32 implId);
+    event ImplementationRegistered(TokenStandard standard, address impl, uint32 implId, uint256 deploymentFee);
     event ImplementationUnregistered(TokenStandard standard, uint32 implId);
     event DefaultImplementationSet(TokenStandard standard, uint32 implId);
+    event DeploymentFeeSet(TokenStandard standard, uint32 implId, uint256 deploymentFee);
 
     /*==============================================================
     =                            ERRORS                            =
@@ -156,6 +158,23 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
         }
     }
 
+    /// @dev Gets the deployment fee for a given token standard
+    /// @param standard The token standard (ERC721, ERC1155)
+    /// @param implId The implementation ID
+    /// @return deploymentFee The deployment fee for the given standard
+    function getDeploymentFee(TokenStandard standard, uint32 implId) external view returns (uint256 deploymentFee) {
+        assembly {
+            mstore(0x00, standard)
+            mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
+            let slot := keccak256(0x00, 0x40)
+
+            mstore(0x00, implId)
+            mstore(0x20, add(slot, 2))
+            let implSlot := keccak256(0x00, 0x40)
+            deploymentFee := sload(implSlot)
+        }
+    }
+
     /*==============================================================
     =                       INTERNAL HELPERS                       =
     ==============================================================*/
@@ -176,10 +195,11 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     /// @param standard The token standard (ERC721, ERC1155).
     /// @param impl The address of the implementation contract.
     /// @param isDefault Whether the implementation should be set as the default implementation
+    /// @param deploymentFee The deployment fee for the implementation
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if an implementation with the same name is already registered.
     /// @return The ID of the newly registered implementation
-    function registerImplementation(TokenStandard standard, address impl, bool isDefault)
+    function registerImplementation(TokenStandard standard, address impl, bool isDefault, uint256 deploymentFee)
         external
         onlyOwner
         returns (uint32)
@@ -197,7 +217,9 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
         uint32 implId = $.tokenStandardData[standard].nextImplId;
         $.tokenStandardData[standard].implementations[implId] = impl;
         $.tokenStandardData[standard].nextImplId = implId + 1;
-        emit ImplementationRegistered(standard, impl, implId);
+        $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
+        emit ImplementationRegistered(standard, impl, implId, deploymentFee);
+        emit DeploymentFeeSet(standard, implId, deploymentFee);
 
         if (isDefault) {
             $.tokenStandardData[standard].defaultImplId = implId;
@@ -246,6 +268,17 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
         $.tokenStandardData[standard].defaultImplId = implId;
 
         emit DefaultImplementationSet(standard, implId);
+    }
+
+    /// @dev Sets the deployment fee for an implementation
+    /// @param standard The token standard (ERC721, ERC1155)
+    /// @param implId The implementation ID
+    /// @param deploymentFee The deployment fee to set
+    /// @notice Only the contract owner can call this function
+    function setDeploymentFee(TokenStandard standard, uint32 implId, uint256 deploymentFee) external onlyOwner {
+        RegistryStorage storage $ = _loadRegistryStorage();
+        $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
+        emit DeploymentFeeSet(standard, implId, deploymentFee);
     }
 
     /// @dev Internal function to authorize an upgrade.
