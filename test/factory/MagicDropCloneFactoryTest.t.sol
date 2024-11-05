@@ -223,4 +223,9 @@ contract MagicDropCloneFactoryTest is Test {
         assertEq(user.balance, userBalanceBefore + 0.01 ether);
         vm.stopPrank();
     }
+
+    function testFailWithdrawToNonOwner() public {
+        vm.startPrank(user);
+        factory.withdraw(user);
+    }
 }
