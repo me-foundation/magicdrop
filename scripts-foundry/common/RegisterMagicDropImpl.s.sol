@@ -12,10 +12,11 @@ contract RegisterMagicDropImpl is Script {
         TokenStandard standard = parseTokenStandard(standardString);
         address impl = address(uint160(vm.envUint("IMPL_ADDRESS")));
         bool isDefault = vm.envBool("IS_DEFAULT");
+        uint256 fee = vm.envUint("FEE");
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(privateKey);
-        MagicDropTokenImplRegistry(registry).registerImplementation(standard, impl, isDefault);
+        MagicDropTokenImplRegistry(registry).registerImplementation(standard, impl, isDefault, fee);
         vm.stopBroadcast();
 
         console.log("Registered implementation standard=%s: impl=%s", standardString, impl);

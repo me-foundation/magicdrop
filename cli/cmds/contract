@@ -11,6 +11,15 @@ get_factory_address() {
     esac
 }
 
+get_registry_address() {
+    local chain_id="$1"
+    case $chain_id in
+        137) echo "0x00008CCF84710496a3eF7d2701Ba6b203EA4EccE" ;;
+        11155111) echo "0x00008CCF84710496a3eF7d2701Ba6b203EA4EccE" ;;
+        *) echo "Unknown chain id"; exit 1 ;;
+    esac
+}
+
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
     clear 
@@ -25,11 +34,20 @@ deploy_contract() {
     set_impl_id
 
     print_signer_with_balance $chain_id
-    confirm_deployment
 
     create_contract_selector="createContract(string,string,uint8,address,uint32)"
     factory_address=$(get_factory_address $chain_id)
+    registry_address=$(get_registry_address $chain_id)
+    standard_id=$(get_standard_id $token_standard)
     password=$(get_password_if_set)
+
+    echo "Fetching deployment fee..."
+    deployment_fee=$(cast call $registry_address "getDeploymentFee(uint8,uint32)" $standard_id $impl_id --rpc-url "$RPC_URL" $password)
+    if [ "$deployment_fee" == "0" ]; then
+        value="--value $deployment_fee"
+    fi
+
+    confirm_deployment
 
     echo "Deploying contract... this may take a minute."
     echo ""
@@ -40,10 +58,11 @@ deploy_contract() {
         "$create_contract_selector" \
         "$name" \
         "$symbol" \
-        "$(get_standard_id $token_standard)" \
+        "$standard_id" \
         "$initial_owner" \
         $impl_id \
         $password \
+        $value \
         --json)
 
     print_transaction_hash
