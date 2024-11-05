@@ -36,7 +36,6 @@ deploy_contract() {
 
     output=$(cast send \
         --rpc-url "$RPC_URL" \
-        --chain-id $chain_id \
         $factory_address \
         "$create_contract_selector" \
         "$name" \
@@ -59,6 +58,37 @@ deploy_contract() {
     echo ""
     save_deployment_data $chain_id $contract_address $name $symbol $token_standard $initial_owner $impl_id
     echo ""
+
+    echo "Checking if contract supports ICreatorToken..."
+    supports_interface=$(cast call $contract_address "supportsInterface(bytes4)" $ICREATOR_TOKEN_INTERFACE_ID --rpc-url "$RPC_URL" $password)
+    if [ "$supports_interface" == "$TRUE_HEX" ]; then
+        tf_address=$(get_transfer_validator_address $chain_id)
+        echo "Contract supports ICreatorToken, updating transfer validator and transfer list"
+        echo "Transfer validator address: $tf_address, setting transfer validator..."
+
+        tf_output=$(cast send $contract_address \
+            "setTransferValidator(address)" \
+            $tf_address \
+            $password \
+            --rpc-url "$RPC_URL" \
+            --json)
+    
+        echo "Transfer validator set."
+        print_transaction_hash $tf_output
+
+        tf_list_id=$(get_transfer_validator_list_id $chain_id)
+        echo "Setting transfer list to list ID $tf_list_id..."
+        tf_output=$(cast send $tf_address \
+            "applyListToCollection(address,uint120)" \
+            $contract_address \
+            $tf_list_id \
+            $password \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        echo "Transfer list set."
+        print_transaction_hash $tf_output
+    fi
 
     # ask if they would like to setup the contract now
     if gum confirm "Would you like to setup the contract?"; then

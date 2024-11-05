@@ -94,6 +94,36 @@ choose_deployment() {
     echo "$deployment_file"
 }
 
+get_transfer_validator_address() {
+    local network="$1"
+    case $network in
+        "33139"|"1329")
+            echo "$ME_TRANSFER_VALIDATOR_V3"
+            ;;
+        "42161"|"8453"|"1"|"11155111")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
+            ;;
+        *)
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
+            ;;
+    esac
+}
+
+get_transfer_validator_list_id() {
+    local network="$1"
+    case $network in
+        "33139"|"42161"|"8453"|"1")
+            echo "1"
+            ;;
+        "137")
+            echo "3"
+            ;;
+        *)
+            echo "0"
+            ;;
+    esac
+}
+
 # Helper functions needed by getters
 is_number() {
     local input="$1"
