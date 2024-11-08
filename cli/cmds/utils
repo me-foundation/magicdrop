@@ -37,10 +37,9 @@ set_rpc_url() {
 
 process_stages() {
     local stages_file="$1"
-    local output_file="$2"
-    local token_standard="$3"
+    local token_standard="$2"
 
-    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$output_file" "$token_standard"
+    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$BASE_DIR/../../collections" "$token_standard" "$WEB3STORAGE_KEY"
 
     if [[ $? -ne 0 ]]; then
         echo "Error: Failed to get stages data"
@@ -83,8 +82,9 @@ save_deployment_data() {
 
     # Get the current timestamp
     timestamp=$(date +%s)
+    deployment_date=$(date -u -r $timestamp +"%y-%m-%d_%H-%M-%S")
     # Create the directory if it doesn't exist
-    deployment_dir="./deployments/$chain_id"
+    deployment_dir="$BASE_DIR/../deployments/$chain_id"
     mkdir -p "$deployment_dir"
 
     # Create a JSON object with the provided data
@@ -97,6 +97,7 @@ save_deployment_data() {
         --arg initial_owner "$initial_owner" \
         --arg impl_id "$impl_id" \
         --arg timestamp "$timestamp" \
+        --arg deployment_date "$deployment_date" \
         '{
             chain_id: $chain_id,
             contract_address: $contract_address,
@@ -105,10 +106,11 @@ save_deployment_data() {
             token_standard: $token_standard,
             initial_owner: $initial_owner,
             impl_id: $impl_id,
-            timestamp: $timestamp
+            timestamp: $timestamp,
+            deployment_date: $deployment_date
         }')
 
-    file_name="$name-$token_standard-$timestamp.json"
+    file_name="$name-$token_standard-$deployment_date.json"
     echo "$json_data" > "$deployment_dir/$file_name"
     echo "Deployment details saved to $deployment_dir/$file_name"
 }

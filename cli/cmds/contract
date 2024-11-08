@@ -64,6 +64,10 @@ deploy_contract() {
         echo "Contract supports ICreatorToken, updating transfer validator and transfer list"
         set_transfer_validator
         set_transfer_list
+
+        if gum confirm "Would you like to freeze the collection? This will prevent transfers until the contract is unfrozen." --default=true; then
+            freeze_contract
+        fi
     fi
 
     # ask if they would like to setup the contract now
@@ -101,6 +105,44 @@ set_transfer_list() {
     echo ""
 }
 
+freeze_thaw_contract() {
+        trap "echo 'Exiting...'; exit 1" SIGINT
+    clear 
+
+    title="Deploy a new collection"
+
+    set_chain
+    set_contract_address
+
+    print_signer_with_balance $chain_id
+
+    choice=$(gum choose "Freeze" "Thaw")
+    if [ "$choice" == "Freeze" ]; then
+        freeze_contract
+    else
+        thaw_contract
+    fi
+}
+
+freeze_contract() {
+    echo "Freezing contract... this will take a moment."
+    freeze_level=8 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
+    output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 8 false false false $password --rpc-url "$RPC_URL" --json)
+    print_transaction_hash $output
+    echo "Contract frozen."
+    echo ""
+}
+
+thaw_contract() {
+    echo "Thawing contract... this will take a moment."
+    # level 3 is the default level of Magic Eden, which offers whitelisting and OTC trading
+    thaw_level=3 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
+    output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 3 false false false $password --rpc-url "$RPC_URL" --json)
+    print_transaction_hash $output
+    echo "Contract thawed."
+    echo ""
+}
+
 setup_contract() {
     clear 
     trap "echo 'Exiting...'; exit 1" SIGINT
@@ -131,9 +173,9 @@ setup_contract() {
     confirm_setup
 
     echo "Processing stages file... this will take a moment."
-    process_stages "$stages_file" "stagesInput.tmp" "$token_standard"
-    stages_data=$(cat "stagesInput.tmp")
-    rm "stagesInput.tmp"
+    process_stages "$stages_file" "$token_standard"
+    stages_data=$(cat "$BASE_DIR/../stagesInput.tmp") # this file is created by getStagesData.ts
+    rm "$BASE_DIR/../stagesInput.tmp"
     echo ""
 
     password=$(get_password_if_set)

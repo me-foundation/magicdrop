@@ -2,6 +2,7 @@ import fs from 'fs';
 import { isAddress } from 'ethers/lib/utils';
 import { BigNumber, ethers } from 'ethers';
 import { MerkleTree } from 'merkletreejs';
+import path from 'path';
 
 type Stage = {
   price: number;
@@ -173,40 +174,114 @@ const generateMerkleRoot = (whitelistEntries: WhitelistEntry[]) => {
   return mt.getHexRoot();
 };
 
-  const isNumberOrString = (value: any) =>
-    typeof value === 'string' || typeof value === 'number';
+const isNumberOrString = (value: any) =>
+  typeof value === 'string' || typeof value === 'number';
 
 function isStage(stage: any): stage is Stage {
-  return (
-    isNumberOrString(stage.price) &&
-    isNumberOrString(stage.mintFee) &&
-    isNumberOrString(stage.walletLimit) &&
-    (isNumberOrString(stage.maxStageSupply) ||
-      stage.maxStageSupply === undefined) &&
-    typeof stage.startDate === 'string' &&
-    typeof stage.endDate === 'string' &&
-    (typeof stage.whitelistPath === 'string' ||
-      stage.whitelistPath === undefined)
-  );
+  let isValid = true;
+
+  if (!isNumberOrString(stage.price)) {
+    console.error('Invalid price', stage.price);
+    isValid = false;
+  }
+
+  if (!isNumberOrString(stage.mintFee)) {
+    console.error('Invalid mintFee', stage.mintFee);
+    isValid = false;
+  }
+
+  if (!isNumberOrString(stage.walletLimit)) {
+    console.error('Invalid walletLimit', stage.walletLimit);
+    isValid = false;
+  }
+
+  if (
+    !(
+      isNumberOrString(stage.maxStageSupply) ||
+      stage.maxStageSupply === undefined
+    )
+  ) {
+    console.error('Invalid maxStageSupply', stage.maxStageSupply);
+    isValid = false;
+  }
+
+  if (typeof stage.startDate !== 'string') {
+    console.error('Invalid startDate', stage.startDate);
+    isValid = false;
+  }
+
+  if (typeof stage.endDate !== 'string') {
+    console.error('Invalid endDate', stage.endDate);
+    isValid = false;
+  }
+
+  if (
+    !(
+      typeof stage.whitelistPath === 'string' ||
+      stage.whitelistPath === undefined
+    )
+  ) {
+    console.error('Invalid whitelistPath', stage.whitelistPath);
+    isValid = false;
+  }
+
+  return isValid;
 }
 
 function isStage1155(stage: any): stage is Stage1155 {
-  return (
-    Array.isArray(stage.price) &&
-    stage.price.every(isNumberOrString) &&
-    Array.isArray(stage.mintFee) &&
-    stage.mintFee.every(isNumberOrString) &&
-    Array.isArray(stage.walletLimit) &&
-    stage.walletLimit.every(isNumberOrString) &&
-    ((Array.isArray(stage.maxStageSupply) &&
-      stage.maxStageSupply.every(isNumberOrString)) ||
-      stage.maxStageSupply === undefined) &&
-    typeof stage.startDate === 'string' &&
-    typeof stage.endDate === 'string' &&
-    ((Array.isArray(stage.whitelistPath) &&
-      stage.whitelistPath.every((value: any) => typeof value === 'string')) ||
-      stage.whitelistPath === undefined)
-  );
+  let isValid = true;
+
+  if (!Array.isArray(stage.price) || !stage.price.every(isNumberOrString)) {
+    console.error('Invalid price array', stage.price);
+    isValid = false;
+  }
+
+  if (!Array.isArray(stage.mintFee) || !stage.mintFee.every(isNumberOrString)) {
+    console.error('Invalid mintFee array', stage.mintFee);
+    isValid = false;
+  }
+
+  if (
+    !Array.isArray(stage.walletLimit) ||
+    !stage.walletLimit.every(isNumberOrString)
+  ) {
+    console.error('Invalid walletLimit array', stage.walletLimit);
+    isValid = false;
+  }
+
+  if (
+    !(
+      (Array.isArray(stage.maxStageSupply) &&
+        stage.maxStageSupply.every(isNumberOrString)) ||
+      stage.maxStageSupply === undefined
+    )
+  ) {
+    console.error('Invalid maxStageSupply array', stage.maxStageSupply);
+    isValid = false;
+  }
+
+  if (typeof stage.startDate !== 'string') {
+    console.error('Invalid startDate', stage.startDate);
+    isValid = false;
+  }
+
+  if (typeof stage.endDate !== 'string') {
+    console.error('Invalid endDate', stage.endDate);
+    isValid = false;
+  }
+
+  if (
+    !(
+      (Array.isArray(stage.whitelistPath) &&
+        stage.whitelistPath.every((value: any) => typeof value === 'string')) ||
+      stage.whitelistPath === undefined
+    )
+  ) {
+    console.error('Invalid whitelistPath array', stage.whitelistPath);
+    isValid = false;
+  }
+
+  return isValid;
 }
 
 /**
@@ -266,9 +341,19 @@ function verifyStage1155ArrayLengths(stage: Stage1155): void {
  * @param stageIdx - The index of the stage in the stages array
  * @returns Formatted stage data string
  */
-const processERC1155Stage = (stage: Stage1155, stageIdx: number): string => {
+const processERC1155Stage = async (
+  stage: Stage1155,
+  stageIdx: number,
+  outputFileDir: string,
+  web3StorageKey: string,
+): Promise<string> => {
   verifyStage1155ArrayLengths(stage);
-  const merkleRoots = generateERC1155MerkleRoots(stage, stageIdx);
+  const merkleRoots = await generateERC1155MerkleRoots(
+    stage,
+    stageIdx,
+    outputFileDir,
+    web3StorageKey,
+  );
   const maxStageSupply =
     stage.maxStageSupply ?? new Array(merkleRoots.length).fill(0);
 
@@ -289,28 +374,49 @@ const processERC1155Stage = (stage: Stage1155, stageIdx: number): string => {
  * @param stageIdx - The index of the stage
  * @returns Array of merkle root strings
  */
-const generateERC1155MerkleRoots = (
+const generateERC1155MerkleRoots = async (
   stage: Stage1155,
   stageIdx: number,
-): string[] => {
+  outputFileDir: string,
+  web3StorageKey: string,
+): Promise<string[]> => {
   if (!stage.whitelistPath) {
     return new Array(stage.price.length).fill(
       ethers.utils.hexZeroPad('0x', 32),
     );
   }
 
-  return stage.whitelistPath.map((whitelistPath) => {
-    if (whitelistPath === '') {
-      return ethers.utils.hexZeroPad('0x', 32);
-    }
+  return Promise.all(
+    stage.whitelistPath.map(async (whitelistPath) => {
+      if (whitelistPath === '') {
+        return ethers.utils.hexZeroPad('0x', 32);
+      }
 
-    const rawWhitelist = parseWhitelistFile(whitelistPath);
-    const cleanedWhitelist = cleanWhitelistData(rawWhitelist, stageIdx);
-    console.log(
-      `Processed whitelist for stage ${stageIdx} with ${cleanedWhitelist.length} entries`,
-    );
-    return generateMerkleRoot(cleanedWhitelist);
-  });
+      const rawWhitelist = parseWhitelistFile(whitelistPath);
+      const cleanedWhitelist = cleanWhitelistData(rawWhitelist, stageIdx);
+      const fs = require('fs');
+      const path = require('path');
+      const outputPath = path.join(
+        outputFileDir,
+        `cleanedWhitelist_stage_${stageIdx}.json`,
+      );
+      fs.writeFileSync(
+        outputPath,
+        JSON.stringify(
+          cleanedWhitelist.map((e) =>
+            e.limit ? `${e.address},${e.limit}` : e.address,
+          ),
+          null,
+          2,
+        ),
+      );
+
+      console.log(
+        `Processed whitelist for stage ${stageIdx} with ${cleanedWhitelist.length} entries`,
+      );
+      return generateMerkleRoot(cleanedWhitelist);
+    }),
+  );
 };
 
 /**
@@ -319,8 +425,18 @@ const generateERC1155MerkleRoots = (
  * @param stageIdx - The index of the stage in the stages array
  * @returns Formatted stage data string
  */
-const processERC721Stage = (stage: Stage, stageIdx: number): string => {
-  const merkleRoot = generateERC721MerkleRoot(stage, stageIdx);
+const processERC721Stage = async (
+  stage: Stage,
+  stageIdx: number,
+  outputFileDir: string,
+  web3StorageKey: string,
+): Promise<string> => {
+  const merkleRoot = await generateERC721MerkleRoot(
+    stage,
+    stageIdx,
+    outputFileDir,
+    web3StorageKey,
+  );
 
   return formatStageData([
     ethers.utils.parseEther(stage.price.toString()),
@@ -339,17 +455,28 @@ const processERC721Stage = (stage: Stage, stageIdx: number): string => {
  * @param stageIdx - The index of the stage
  * @returns Merkle root string
  */
-const generateERC721MerkleRoot = (stage: Stage, stageIdx: number): string => {
+const generateERC721MerkleRoot = async (
+  stage: Stage,
+  stageIdx: number,
+  outputFileDir: string,
+  web3StorageKey: string,
+): Promise<string> => {
   if (!stage.whitelistPath) {
-    return ethers.utils.hexZeroPad('0x', 32);
+    return Promise.resolve(ethers.utils.hexZeroPad('0x', 32));
   }
 
   const rawWhitelist = parseWhitelistFile(stage.whitelistPath);
   const cleanedWhitelist = cleanWhitelistData(rawWhitelist, stageIdx);
+  const outputPath = path.join(
+    outputFileDir,
+    `cleanedWhitelist_stage_${stageIdx}.json`,
+  );
+  fs.writeFileSync(outputPath, JSON.stringify(cleanedWhitelist, null, 2));
   console.log(
     `Processed whitelist for stage ${stageIdx} with ${cleanedWhitelist.length} entries`,
   );
-  return generateMerkleRoot(cleanedWhitelist);
+
+  return Promise.resolve(generateMerkleRoot(cleanedWhitelist));
 };
 
 /**
@@ -361,23 +488,37 @@ const formatStageData = (data: (string | number | BigNumber)[]): string => {
   return '(' + data.join(',') + ')';
 };
 
-const getStagesData = async () => {
-  const { stagesFilePath, outputFilePath, isERC1155 } = parseAndValidateArgs();
+const main = async () => {
+  const { stagesFilePath, outputFileDir, isERC1155, web3StorageKey } =
+    parseAndValidateArgs();
+
+  await getStagesData(stagesFilePath, isERC1155, outputFileDir, web3StorageKey);
+};
+
+const getStagesData = async (
+  stagesFilePath: string,
+  isERC1155: boolean,
+  outputFileDir: string,
+  web3StorageKey: string,
+) => {
   const rawStages = loadAndValidateStages(stagesFilePath, isERC1155);
   const typedStages = isERC1155
     ? (rawStages as Stage1155[])
     : (rawStages as Stage[]);
 
   try {
-    const stagesData = typedStages.map((stage, stageIdx) =>
-      isERC1155 && isStage1155(stage)
-        ? processERC1155Stage(stage, stageIdx)
-        : isStage(stage)
-          ? processERC721Stage(stage, stageIdx)
-          : '',
+    const stagesData = await Promise.all(
+      typedStages.map(async (stage, stageIdx) =>
+        isERC1155 && isStage1155(stage)
+          ? processERC1155Stage(stage, stageIdx, outputFileDir, web3StorageKey)
+          : isStage(stage)
+            ? processERC721Stage(stage, stageIdx, outputFileDir, web3StorageKey)
+            : '',
+      ),
     );
 
     const stagesInput = '[' + stagesData.join(',') + ']';
+    const outputFilePath = path.join(outputFileDir, `stagesInput.tmp`);
     fs.writeFileSync(outputFilePath, stagesInput, 'utf-8');
     console.log(`Stages input written to temp file: ${outputFilePath}`);
   } catch (error) {
@@ -392,8 +533,9 @@ const getStagesData = async () => {
  */
 const parseAndValidateArgs = () => {
   const stagesFilePath = process.argv[2];
-  const outputFilePath = process.argv[3];
+  const outputFileDir = process.argv[3];
   const tokenStandard = process.argv[4];
+  const web3StorageKey = process.argv[5];
 
   if (!stagesFilePath) {
     console.error('Please provide a path to the whitelist file');
@@ -402,8 +544,9 @@ const parseAndValidateArgs = () => {
 
   return {
     stagesFilePath,
-    outputFilePath,
+    outputFileDir,
     isERC1155: tokenStandard === 'ERC1155',
+    web3StorageKey,
   };
 };
 
@@ -421,16 +564,20 @@ const loadAndValidateStages = (stagesFilePath: string, isERC1155: boolean) => {
   }
 
   if (isERC1155) {
-    if (!rawStages.every(isStage1155)) {
-      throw new Error(
-        'Invalid stage format for ERC1155. Each stage must include arrays for price, mintFee, walletLimit',
-      );
+    for (let i = 0; i < rawStages.length; i++) {
+      if (!isStage1155(rawStages[i])) {
+        throw new Error(
+          `Invalid stage format for ERC1155 at index ${i}. Stage data:\n${JSON.stringify(rawStages[i], null, 2)}`,
+        );
+      }
     }
   } else {
-    if (!rawStages.every(isStage)) {
-      throw new Error(
-        'Invalid stage format for ERC721. Each stage must include single values for price, mintFee, walletLimit',
-      );
+    for (let i = 0; i < rawStages.length; i++) {
+      if (!isStage(rawStages[i])) {
+        throw new Error(
+          `Invalid stage format for ERC721 at index ${i}. Stage data:\n${JSON.stringify(rawStages[i], null, 2)}`,
+        );
+      }
     }
   }
 
@@ -438,7 +585,7 @@ const loadAndValidateStages = (stagesFilePath: string, isERC1155: boolean) => {
 };
 
 if (require.main === module) {
-  getStagesData()
+  main()
     .then(() => process.exit(0))
     .catch((error) => {
       console.error('Error:', error);

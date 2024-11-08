@@ -54,6 +54,7 @@ contract_management_menu() {
         "Set Cosigner" \
         "Set Token URI Suffix (ERC721 Only)" \
         "Set Timestamp Expiry" \
+        "Freeze Contract" \
         "Transfer Ownership" \
         "Manage Authorized Minters"\
         "Go to Main Menu")
@@ -61,6 +62,9 @@ contract_management_menu() {
     case $option in
         "Initialize contract")
             setup_contract
+            ;;
+        "Freeze/Thaw Contract")
+            freeze_thaw_contract
             ;;
         "Set Global Wallet Limit")
             set_global_wallet_limit_contract
