@@ -1,0 +1,46 @@
+{
+  "name": "name",
+  "symbol": "symbol",
+  "chainId": 137,
+  "tokenStandard": "ERC1155",
+  "maxMintableSupply": [1000],
+  "globalWalletLimit": [10],
+  "mintCurrency": "0x0000000000000000000000000000000000000000",
+  "fundReceiver": "0x0000000000000000000000000000000000000000",
+  "royaltyReceiver": "0x0000000000000000000000000000000000000000",
+  "royaltyFee": 0,
+  "mintable": true,
+  "cosigner": "0x0000000000000000000000000000000000000000",
+  "tokenUriSuffix": ".json",
+  "uri": "https://example.com/token/",
+  "stages": [
+    {
+      "price": ["0.0069"],
+      "mintFee": ["0.0001"],
+      "walletLimit": [5],
+      "startDate": "2024-11-04T16:30:00Z",
+      "endDate": "2024-11-07T16:25:00Z"
+    },
+    {
+      "price": ["0.0042"],
+      "mintFee": ["0.0001"],
+      "walletLimit": [5],
+      "maxStageSupply": [420],
+      "startDate": "2024-11-07T16:30:00Z",
+      "endDate": "2024-12-09T16:00:00Z"
+    },
+    {
+      "price": ["0.069"],
+      "mintFee": ["0.0001"],
+      "walletLimit": [5],
+      "maxStageSupply": [69],
+      "startDate": "2024-12-09T16:05:00Z",
+      "endDate": "2024-12-12T16:30:00Z"
+    }
+  ],
+  "deployment": {
+    "contract_address": "0x8ce2ec64d816ae374352ca6c40a956e3cd816170",
+    "initial_owner": "0xc327B16C33fdd558C1ad7DaaFf1a4081E91049f3",
+    "deployed_at": "2024-11-22 19:59:17"
+  }
+}
