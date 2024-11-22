@@ -549,10 +549,10 @@ const getStagesData = async (
  */
 const parseAndValidateArgs = () => {
   const stagesFilePath = process.argv[2];
-  const outputFileDir = process.argv[3];
-  const tokenStandard = process.argv[4];
-  const web3StorageKey = process.argv[5];
-  const stagesJson = process.argv[6];
+  const stagesJson = process.argv[3];
+  const outputFileDir = process.argv[4];
+  const tokenStandard = process.argv[5];
+  const web3StorageKey = process.argv[6];
 
   if (!stagesFilePath && !stagesJson) {
     console.error(

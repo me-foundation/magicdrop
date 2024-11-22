@@ -96,16 +96,25 @@ load_collection() {
     symbol=$(jq -r '.symbol' "$collection_file")
     chain_id=$(jq -r '.chainId' "$collection_file")
     token_standard=$(jq -r '.tokenStandard' "$collection_file")
-    max_mintable_supply=$(jq -r '.maxMintableSupply' "$collection_file")
-    global_wallet_limit=$(jq -r '.globalWalletLimit' "$collection_file")
+    max_mintable_supply=$(jq -c '.maxMintableSupply' "$collection_file")
+    global_wallet_limit=$(jq -c '.globalWalletLimit' "$collection_file")
     mint_currency=$(jq -r '.mintCurrency' "$collection_file")
     fund_receiver=$(jq -r '.fundReceiver' "$collection_file")
     royalty_receiver=$(jq -r '.royaltyReceiver' "$collection_file")
     royalty_fee=$(jq -r '.royaltyFee' "$collection_file")
     stages_json=$(jq -r '.stages' "$collection_file")
     deployment_data=$(jq -r '.deployment' "$collection_file")
+    mintable=$(jq -r '.mintable' "$collection_file")
+    cosigner=$(jq -r '.cosigner' "$collection_file")
+    token_uri_suffix=$(jq -r '.tokenUriSuffix' "$collection_file")
+    contract_uri=$(jq -r '.uri' "$collection_file")
 
-    chain_id=$(echo "$deployment_data" | jq -r '.chain_id')
+    if [[ "$token_standard" == "ERC721" ]]; then
+        base_uri=$contract_uri
+    elif [[ "$token_standard" == "ERC1155" ]]; then
+        uri=$contract_uri
+    fi
+
     contract_address=$(echo "$deployment_data" | jq -r '.contract_address')
 
     echo "Loaded Collection!"

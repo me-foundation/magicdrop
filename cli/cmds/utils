@@ -36,10 +36,6 @@ set_rpc_url() {
 }
 
 process_stages() {
-    local stages_file="$1"
-    local stages_json="$2"
-    local token_standard="$3"
-
     npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$stages_json" "$BASE_DIR/../collections" "$token_standard" "$WEB3STORAGE_KEY"
 
     if [[ $? -ne 0 ]]; then

@@ -19,9 +19,11 @@ main_menu() {
     echo "Please select a collection configuration file:"
     echo ""
 
-    collection_file=$(get_collection_file "Select a collection file")
-    load_collection "$collection_file"
-    echo ""
+    if [ -z "$collection_file" ]; then
+        collection_file=$(get_collection_file "Select a collection file")
+        load_collection "$collection_file"
+        echo ""
+    fi
 
     option=$(gum choose \
     "Deploy Contracts" \
@@ -41,7 +43,9 @@ main_menu() {
             token_operations_menu
             ;;
         "Load Collection Config")
-            main_menu
+            collection_file=$(get_collection_file "Select a collection file")
+            load_collection "$collection_file"
+            echo ""
             ;;
         "Quit")
             echo "Exiting..."
@@ -65,7 +69,7 @@ contract_management_menu() {
         "Set Cosigner" \
         "Set Token URI Suffix (ERC721 Only)" \
         "Set Timestamp Expiry" \
-        "Freeze Contract" \
+        "Freeze/Thaw Contract" \
         "Transfer Ownership" \
         "Manage Authorized Minters"\
         "Go to Main Menu")
@@ -83,7 +87,7 @@ contract_management_menu() {
         "Set Max Mintable Supply")
             set_max_mintable_supply_contract
             ;;
-        "Set Mintable")
+        "Set Mintable (ERC721 Only)")
             set_mintable_contract
             ;;
         "Set Stages")
@@ -104,7 +108,7 @@ contract_management_menu() {
         "Set URI (ERC1155 Only)")
             set_uri_contract
             ;;
-        "Set Token URI Suffix")
+        "Set Token URI Suffix (ERC721 Only)")
             set_token_uri_suffix_contract
             ;;
         "Set Cosigner")

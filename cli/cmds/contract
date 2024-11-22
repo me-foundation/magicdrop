@@ -61,21 +61,24 @@ deploy_contract() {
     save_deployment_data $contract_address $SIGNER
     echo ""
 
-    if supports_icreatortoken; then
+    supports_icreatortoken
+    is_icreatortoken=$?
+
+    if [ $is_icreatortoken -eq 0 ]; then
         echo "Contract supports ICreatorToken, updating transfer validator and transfer list"
         set_transfer_validator
         set_transfer_list
     fi
 
-    if supports_icreatortoken || [ "$token_standard" == "ERC1155" ]; then
+    if [ $is_icreatortoken -eq 0 ] || [ "$token_standard" == "ERC1155" ]; then
         if gum confirm "Would you like to freeze the collection?" --default=true; then
-            freeze_contract $token_standard
+            freeze_contract
         fi
     fi
 
     # ask if they would like to setup the contract now
     if gum confirm "Would you like to setup the contract?"; then
-        setup_contract "$contract_address" "$chain_id" "$token_standard" "$SIGNER"
+        setup_contract
     fi
 }
 
@@ -120,24 +123,30 @@ freeze_thaw_contract() {
 
     print_signer_with_balance $chain_id
 
+    if [ -z "$is_icreatortoken" ]; then
+        supports_icreatortoken
+        is_icreatortoken=$?
+    fi
+
     choice=$(gum choose "Freeze" "Thaw")
     if [ "$choice" == "Freeze" ]; then
-        freeze_contract $token_standard
+        freeze_contract
     else
-        thaw_contract $token_standard
+        thaw_contract
     fi
 }
 
 freeze_contract() {
-    local standard=$1
-
     echo "Freezing contract... this will take a moment."
 
-    if [ "$standard" == "ERC1155" ]; then
-        output=$(cast send $tf_address "setTransferable(bool)" $contract_address true $password --rpc-url "$RPC_URL" --json)
-    else
+    if [ "$token_standard" == "ERC1155" ]; then
+        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
+    elif [ "$token_standard" == "ERC721" ] && [ $is_icreatortoken -eq 0 ]; then
         freeze_level=8 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
         output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 8 false false false $password --rpc-url "$RPC_URL" --json)
+    else
+        echo "Contract does not support freezing."
+        exit 1
     fi
 
     print_transaction_hash $output
@@ -146,15 +155,17 @@ freeze_contract() {
 }
 
 thaw_contract() {
-    local standard=$1
     echo "Thawing contract... this will take a moment."
 
-    if [ "$standard" == "ERC1155" ]; then
-        output=$(cast send $tf_address "setTransferable(bool)" $contract_address false $password --rpc-url "$RPC_URL" --json)
-    else
+    if [ "$token_standard" == "ERC1155" ]; then
+        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
+    elif [ "$token_standard" == "ERC721" ] && [ $is_icreatortoken -eq 0 ]; then
         # level 3 is the default level of Magic Eden, which offers whitelisting and OTC trading
         thaw_level=3 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
         output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 3 false false false $password --rpc-url "$RPC_URL" --json)
+    else
+        echo "Contract does not support thawing."
+        exit 1
     fi
 
     print_transaction_hash $output
@@ -166,9 +177,6 @@ setup_contract() {
     clear 
     trap "echo 'Exiting...'; exit 1" SIGINT
 
-    local contract_address="$1"
-    local chain_id="$2"
-    local token_standard="$3"
     title="Setup an existing collection"
 
     set_chain
@@ -211,7 +219,7 @@ setup_contract() {
 
     output=$(cast send $contract_address \
         "$setup_selector" \
-        $uri \
+        "$uri" \
         "$max_mintable_supply" \
         "$global_wallet_limit" \
         "$mint_currency" \
@@ -231,6 +239,11 @@ set_base_uri_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
 
     title="Set Base URI"
+
+    if [ "$token_standard" != "ERC721" ]; then
+        echo "Base URI is not supported for $token_standard"
+        exit 1
+    fi
 
     set_contract_address
     set_chain
@@ -267,6 +280,8 @@ set_global_wallet_limit_contract() {
 
     if [ "$token_standard" == "ERC1155" ]; then
         set_token_id
+    else
+        token_id=
     fi
 
     set_global_wallet_limit
@@ -279,6 +294,12 @@ set_global_wallet_limit_contract() {
         echo "Setting global wallet limit for token $token_id"
         echo ""
         global_wallet_limit_selector="setGlobalWalletLimit(uint256,uint256)"
+        global_wallet_limit=$(echo $global_wallet_limit | jq -r ".[$token_id]")
+
+        if [ -z "$global_wallet_limit" ]; then
+            echo "Index $token_id not found in global wallet limit array"
+            exit 1
+        fi
     fi
 
     confirm_set_global_wallet_limit
@@ -289,7 +310,7 @@ set_global_wallet_limit_contract() {
 
     output=$(cast send $contract_address \
         "$global_wallet_limit_selector" \
-        "$token_id" \
+        $token_id \
         "$global_wallet_limit" \
         $password \
         --rpc-url "$RPC_URL" \
@@ -315,9 +336,18 @@ set_max_mintable_supply_contract() {
     set_max_mintable_supply
 
     echo ""
-    echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply"
     if [ "$token_standard" == "ERC1155" ]; then
-        echo "for token $token_id"
+
+        max_mintable_supply=$(echo $max_mintable_supply | jq -r ".[$token_id]")
+
+        if [ -z "$max_mintable_supply" ]; then
+            echo "Index $token_id not found in max mintable supply array"
+            exit 1
+        fi
+
+        echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply for token $token_id"
+    else
+        echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply"
     fi
     echo ""
 
@@ -409,7 +439,7 @@ set_stages_contract() {
 
     print_signer_with_balance $chain_id
 
-    process_stages "$stages_file" "$stages_json" "$token_standard"
+    process_stages
     stages_data=$(cat "$STAGES_FILE")
     rm "$STAGES_FILE"
     echo ""
@@ -599,6 +629,11 @@ set_uri_contract() {
 
     title="Set URI (ERC1155 Only)"
 
+    if [ "$token_standard" != "ERC1155" ]; then
+        echo "URI is not supported for $token_standard"
+        exit 1
+    fi
+
     set_contract_address
     set_chain
     set_1155_uri
@@ -681,6 +716,8 @@ owner_mint_contract() {
 
     title="Owner Mint"
 
+    echo $chain_id
+
     set_chain
     set_contract_address
     set_token_standard
@@ -695,15 +732,14 @@ owner_mint_contract() {
     mint_selector="ownerMint(uint32,address)"
     mint_args="$quantity $receiver"
 
+    echo ""
     if [ "$token_standard" == "ERC1155" ]; then
         mint_selector="ownerMint(address,uint256,uint32)"
         mint_args="$receiver $token_id $quantity"
-    fi
 
-    echo ""
-    echo "You are about to mint $quantity token(s) to $(format_address $receiver)"
-    if [ "$token_standard" == "ERC1155" ]; then
-        echo "for token $token_id"
+        echo "You are about to mint $quantity token(s) to $(format_address $receiver) for token $token_id"
+    else
+        echo "You are about to mint $quantity token(s) to $(format_address $receiver)"
     fi
     echo ""
 
