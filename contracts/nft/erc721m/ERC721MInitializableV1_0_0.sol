@@ -2,71 +2,59 @@
 
 pragma solidity ^0.8.22;
 
-import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
-import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 import {ERC2981} from "solady/src/tokens/ERC2981.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
+import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
+import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
+import {Initializable} from "solady/src/utils/Initializable.sol";
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol"; // Required by CreatorTokenBase
-import {ERC721ACQueryable, ERC721A, IERC721A} from "../creator-token-standards/ERC721ACQueryable.sol";
-
-import {IERC721M} from "./interfaces/IERC721M.sol";
+import {ERC721AUpgradeable, IERC721AUpgradeable} from "erc721a-upgradeable/contracts/ERC721AUpgradeable.sol";
+import {ERC721AQueryableUpgradeable, IERC721AQueryableUpgradeable} from "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol";
+import {IERC721A, ERC721A} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import {ERC721MStorage} from "./ERC721MStorage.sol";
+import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+import {MintStageInfo} from "../../common/Structs.sol";
+import {IERC721MInitializable} from "./interfaces/IERC721MInitializable.sol";
 import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
-import {MintStageInfo} from "../../common/Structs.sol";
-import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 
-/// @title ERC721CM
-/// @notice An initializable ERC721 contract with multi-stage minting, royalties, and authorized minters
-/// @dev Implements ERC721, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
-contract ERC721CM is
-    IERC721M,
-    ERC721ACQueryable,
+/**
+ * @title ERC721MInitializableV1_0_0
+ * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
+ * contract is for use with EIP-1167 Minimal Proxies (Clones).
+ */
+contract ERC721MInitializableV1_0_0 is
+    IERC721MInitializable,
+    ERC721AQueryableUpgradeable,
+    ERC2981,
     Ownable,
     ReentrancyGuard,
     Cosignable,
     AuthorizedMinterControl,
     ERC721MStorage,
-    ERC2981
+    Initializable
 {
     /*==============================================================
-    =                          CONSTRUCTOR                        =
+    =                          INITIALIZERS                        =
     ==============================================================*/
 
-    /// @notice Constructor for the ERC721CM contract
-    /// @param collectionName The name of the collection
-    /// @param collectionSymbol The symbol of the collection
-    /// @param tokenURISuffix The suffix for the token URI
-    /// @param maxMintableSupply The maximum number of tokens that can be minted
-    /// @param globalWalletLimit The global wallet limit for minting
-    /// @param cosigner The address of the cosigner
-    /// @param timestampExpirySeconds The expiry time in seconds for timestamps
-    /// @param mintCurrency The address of the mint currency
-    /// @param fundReceiver The address of the fund receiver
-    constructor(
-        string memory collectionName,
-        string memory collectionSymbol,
-        string memory tokenURISuffix,
-        uint256 maxMintableSupply,
-        uint256 globalWalletLimit,
-        address cosigner,
-        uint256 timestampExpirySeconds,
-        address mintCurrency,
-        address fundReceiver
-    ) ERC721ACQueryable(collectionName, collectionSymbol) Ownable() {
-        if (globalWalletLimit > maxMintableSupply) {
-            revert GlobalWalletLimitOverflow();
-        }
-        _mintable = true;
-        _maxMintableSupply = maxMintableSupply;
-        _globalWalletLimit = globalWalletLimit;
-        _tokenURISuffix = tokenURISuffix;
-        _mintCurrency = mintCurrency;
-        _fundReceiver = fundReceiver;
+    constructor() {
+        _disableInitializers();
+    }
 
-        _setCosigner(cosigner);
-        _setTimestampExpirySeconds(timestampExpirySeconds);
+    /// @notice Initializes the contract
+    /// @param name The name of the token collection
+    /// @param symbol The symbol of the token collection
+    /// @param initialOwner The address of the initial owner
+    function initialize(string calldata name, string calldata symbol, address initialOwner)
+        external
+        initializer
+        initializerERC721A
+    {
+        __ERC721A_init_unchained(name, symbol);
+        __ERC721AQueryable_init_unchained();
+        _initializeOwner(initialOwner);
     }
 
     /*==============================================================
@@ -76,13 +64,18 @@ contract ERC721CM is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721M", "1.0.0");
+        return ("ERC721CMInitializable", "1.0.0");
     }
 
     /// @notice Gets the token URI for a specific token ID
     /// @param tokenId The ID of the token
     /// @return The token URI
-    function tokenURI(uint256 tokenId) public view override(ERC721A, IERC721A) returns (string memory) {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721AUpgradeable, IERC721AUpgradeable)
+        returns (string memory)
+    {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _currentBaseURI;
@@ -93,20 +86,6 @@ contract ERC721CM is
     /// @return The contract URI
     function contractURI() public view returns (string memory) {
         return _contractURI;
-    }
-
-    /// @notice Checks if the contract supports a given interface
-    /// @param interfaceId The interface identifier
-    /// @return True if the contract supports the interface, false otherwise
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC2981, IERC721A, ERC721ACQueryable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
-            || ERC721ACQueryable.supportsInterface(interfaceId);
     }
 
     /*==============================================================
@@ -172,7 +151,7 @@ contract ERC721CM is
     /// @return The stage info, wallet minted count, and stage minted count
     function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
         if (index >= _mintStages.length) {
-            revert("InvalidStage");
+            revert InvalidStage();
         }
         uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
         uint256 stageMinted = _stageMintedCounts[index];
@@ -235,15 +214,58 @@ contract ERC721CM is
         revert InvalidStage();
     }
 
-    /// @notice Returns the function selector for the transfer validator's validation function to be called for transaction simulation.
-    function getTransferValidationFunction() external pure returns (bytes4 functionSignature, bool isViewFunction) {
-        functionSignature = bytes4(keccak256("validateTransfer(address,address,address,uint256)"));
-        isViewFunction = true;
+    /// @notice Checks if the contract supports a given interface
+    /// @param interfaceId The interface identifier
+    /// @return True if the contract supports the interface, false otherwise
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC2981, ERC721AUpgradeable, IERC721AUpgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
+            || ERC721AUpgradeable.supportsInterface(interfaceId);
     }
 
     /*==============================================================
     =                      ADMIN OPERATIONS                        =
     ==============================================================*/
+
+    /// @notice Sets up the contract with initial parameters
+    /// @param maxMintableSupply The maximum mintable supply
+    /// @param globalWalletLimit The global wallet limit
+    /// @param mintCurrency The address of the mint currency
+    /// @param fundReceiver The address to receive funds
+    /// @param initialStages The initial mint stages
+    /// @param royaltyReceiver The address to receive royalties
+    /// @param royaltyFeeNumerator The royalty fee numerator
+    function setup(
+        uint256 maxMintableSupply,
+        uint256 globalWalletLimit,
+        address mintCurrency,
+        address fundReceiver,
+        MintStageInfo[] calldata initialStages,
+        address royaltyReceiver,
+        uint96 royaltyFeeNumerator
+    ) external onlyOwner {
+        if (globalWalletLimit > maxMintableSupply) {
+            revert GlobalWalletLimitOverflow();
+        }
+        _mintable = true;
+        _maxMintableSupply = maxMintableSupply;
+        _globalWalletLimit = globalWalletLimit;
+        _mintCurrency = mintCurrency;
+        _fundReceiver = fundReceiver;
+        _setTimestampExpirySeconds(300); // 5 minutes
+
+        if (initialStages.length > 0) {
+            _setStages(initialStages);
+        }
+
+        if (royaltyReceiver != address(0)) {
+            setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+        }
+    }
 
     /// @notice Adds an authorized minter
     /// @param minter The address to add as an authorized minter
@@ -272,40 +294,7 @@ contract ERC721CM is
     /// @notice Sets the mint stages
     /// @param newStages The new mint stages to set
     function setStages(MintStageInfo[] calldata newStages) external onlyOwner {
-        delete _mintStages;
-
-        for (uint256 i = 0; i < newStages.length; i++) {
-            if (i >= 1) {
-                if (
-                    newStages[i].startTimeUnixSeconds
-                        < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()
-                ) {
-                    revert InsufficientStageTimeGap();
-                }
-            }
-            _assertValidStartAndEndTimestamp(newStages[i].startTimeUnixSeconds, newStages[i].endTimeUnixSeconds);
-            _mintStages.push(
-                MintStageInfo({
-                    price: newStages[i].price,
-                    mintFee: newStages[i].mintFee,
-                    walletLimit: newStages[i].walletLimit,
-                    merkleRoot: newStages[i].merkleRoot,
-                    maxStageSupply: newStages[i].maxStageSupply,
-                    startTimeUnixSeconds: newStages[i].startTimeUnixSeconds,
-                    endTimeUnixSeconds: newStages[i].endTimeUnixSeconds
-                })
-            );
-            emit UpdateStage(
-                i,
-                newStages[i].price,
-                newStages[i].mintFee,
-                newStages[i].walletLimit,
-                newStages[i].merkleRoot,
-                newStages[i].maxStageSupply,
-                newStages[i].startTimeUnixSeconds,
-                newStages[i].endTimeUnixSeconds
-            );
-        }
+        _setStages(newStages);
     }
 
     /// @notice Sets the mintable status
@@ -313,6 +302,14 @@ contract ERC721CM is
     function setMintable(bool mintable) external onlyOwner {
         _mintable = mintable;
         emit SetMintable(mintable);
+    }
+
+    /// @notice Sets the default royalty for the contract
+    /// @param receiver The address to receive royalties
+    /// @param feeNumerator The royalty fee numerator
+    function setDefaultRoyalty(address receiver, uint96 feeNumerator) public onlyOwner {
+        super._setDefaultRoyalty(receiver, feeNumerator);
+        emit DefaultRoyaltySet(receiver, feeNumerator);
     }
 
     /// @notice Sets the maximum mintable supply
@@ -478,15 +475,53 @@ contract ERC721CM is
         _safeMint(to, qty);
     }
 
+    /// @notice Sets the mint stages
+    /// @param newStages The new mint stages to set
+    function _setStages(MintStageInfo[] calldata newStages) internal {
+        delete _mintStages;
+
+        for (uint256 i = 0; i < newStages.length;) {
+            if (i >= 1) {
+                if (
+                    newStages[i].startTimeUnixSeconds
+                        < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()
+                ) {
+                    revert InsufficientStageTimeGap();
+                }
+            }
+            _assertValidStartAndEndTimestamp(newStages[i].startTimeUnixSeconds, newStages[i].endTimeUnixSeconds);
+            _mintStages.push(
+                MintStageInfo({
+                    price: newStages[i].price,
+                    mintFee: newStages[i].mintFee,
+                    walletLimit: newStages[i].walletLimit,
+                    merkleRoot: newStages[i].merkleRoot,
+                    maxStageSupply: newStages[i].maxStageSupply,
+                    startTimeUnixSeconds: newStages[i].startTimeUnixSeconds,
+                    endTimeUnixSeconds: newStages[i].endTimeUnixSeconds
+                })
+            );
+            emit UpdateStage(
+                i,
+                newStages[i].price,
+                newStages[i].mintFee,
+                newStages[i].walletLimit,
+                newStages[i].merkleRoot,
+                newStages[i].maxStageSupply,
+                newStages[i].startTimeUnixSeconds,
+                newStages[i].endTimeUnixSeconds
+            );
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
     /// @notice Validates the start and end timestamps for a stage
     /// @param start The start timestamp
     /// @param end The end timestamp
     function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
-    }
-
-    /// @notice Internal function to check if the caller is the contract owner
-    function _requireCallerIsContractOwner() internal view virtual override {
-        _checkOwner();
     }
 }

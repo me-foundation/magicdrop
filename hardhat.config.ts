@@ -45,7 +45,7 @@ import {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.20',
+    version: '0.8.22',
     settings: {
       viaIR: true,
       optimizer: {
@@ -115,6 +115,11 @@ const config: HardhatUserConfig = {
     },
     fuji: {
       url: process.env.FUJI_URL || 'https://api.avax-test.network/ext/bc/C/rpc',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    arbitrum: {
+      url: process.env.ARBITRUM_URL || 'arbitrum-one.publicnode.com',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },

@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {MintStageInfo} from "../../../common/Structs.sol";
 import "erc721a/contracts/extensions/IERC721AQueryable.sol";

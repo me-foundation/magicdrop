@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {ERC2981} from "solady/src/tokens/ERC2981.sol";

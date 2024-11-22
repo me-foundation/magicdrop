@@ -2,6 +2,9 @@
 
 trap "echo 'Exiting...'; exit 1" SIGINT
 
+STAGES_FILE="$BASE_DIR/../collections/stagesInput.tmp"
+DEFAULT_IMPL_ID="0"
+
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
     clear 
@@ -12,8 +15,6 @@ deploy_contract() {
     set_token_standard
     set_collection_name
     set_collection_symbol
-    set_contract_owner
-    set_impl_id
 
     print_signer_with_balance $chain_id
 
@@ -24,7 +25,7 @@ deploy_contract() {
     password=$(get_password_if_set)
 
     echo "Fetching deployment fee..."
-    deployment_fee=$(cast call $registry_address "getDeploymentFee(uint8,uint32)" $standard_id $impl_id --rpc-url "$RPC_URL" $password)
+    deployment_fee=$(cast call $registry_address "getDeploymentFee(uint8,uint32)" $standard_id $DEFAULT_IMPL_ID --rpc-url "$RPC_URL" $password)
     if [ "$deployment_fee" == "0" ]; then
         value="--value $deployment_fee"
     fi
@@ -41,8 +42,8 @@ deploy_contract() {
         "$name" \
         "$symbol" \
         "$standard_id" \
-        "$initial_owner" \
-        $impl_id \
+        "$SIGNER" \
+        $DEFAULT_IMPL_ID \
         $password \
         $value \
         --json)
@@ -57,22 +58,24 @@ deploy_contract() {
     echo "Deployed Contract Address: $contract_address"
     echo $(format_explorer_contract_url $chain_id $contract_address)
     echo ""
-    save_deployment_data $chain_id $contract_address $name $symbol $token_standard $initial_owner $impl_id
+    save_deployment_data $contract_address $SIGNER
     echo ""
 
     if supports_icreatortoken; then
         echo "Contract supports ICreatorToken, updating transfer validator and transfer list"
         set_transfer_validator
         set_transfer_list
+    fi
 
-        if gum confirm "Would you like to freeze the collection? This will prevent transfers until the contract is unfrozen." --default=true; then
-            freeze_contract
+    if supports_icreatortoken || [ "$token_standard" == "ERC1155" ]; then
+        if gum confirm "Would you like to freeze the collection?" --default=true; then
+            freeze_contract $token_standard
         fi
     fi
 
     # ask if they would like to setup the contract now
     if gum confirm "Would you like to setup the contract?"; then
-        setup_contract "$contract_address" "$chain_id" "$token_standard" "$initial_owner"
+        setup_contract "$contract_address" "$chain_id" "$token_standard" "$SIGNER"
     fi
 }
 
@@ -106,38 +109,54 @@ set_transfer_list() {
 }
 
 freeze_thaw_contract() {
-        trap "echo 'Exiting...'; exit 1" SIGINT
+    trap "echo 'Exiting...'; exit 1" SIGINT
     clear 
 
     title="Deploy a new collection"
 
     set_chain
     set_contract_address
+    set_token_standard
 
     print_signer_with_balance $chain_id
 
     choice=$(gum choose "Freeze" "Thaw")
     if [ "$choice" == "Freeze" ]; then
-        freeze_contract
+        freeze_contract $token_standard
     else
-        thaw_contract
+        thaw_contract $token_standard
     fi
 }
 
 freeze_contract() {
+    local standard=$1
+
     echo "Freezing contract... this will take a moment."
-    freeze_level=8 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
-    output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 8 false false false $password --rpc-url "$RPC_URL" --json)
+
+    if [ "$standard" == "ERC1155" ]; then
+        output=$(cast send $tf_address "setTransferable(bool)" $contract_address true $password --rpc-url "$RPC_URL" --json)
+    else
+        freeze_level=8 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
+        output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 8 false false false $password --rpc-url "$RPC_URL" --json)
+    fi
+
     print_transaction_hash $output
     echo "Contract frozen."
     echo ""
 }
 
 thaw_contract() {
+    local standard=$1
     echo "Thawing contract... this will take a moment."
-    # level 3 is the default level of Magic Eden, which offers whitelisting and OTC trading
-    thaw_level=3 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
-    output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 3 false false false $password --rpc-url "$RPC_URL" --json)
+
+    if [ "$standard" == "ERC1155" ]; then
+        output=$(cast send $tf_address "setTransferable(bool)" $contract_address false $password --rpc-url "$RPC_URL" --json)
+    else
+        # level 3 is the default level of Magic Eden, which offers whitelisting and OTC trading
+        thaw_level=3 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
+        output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 3 false false false $password --rpc-url "$RPC_URL" --json)
+    fi
+
     print_transaction_hash $output
     echo "Contract thawed."
     echo ""
@@ -147,10 +166,9 @@ setup_contract() {
     clear 
     trap "echo 'Exiting...'; exit 1" SIGINT
 
-    local deployed_contract_address="$1"
+    local contract_address="$1"
     local chain_id="$2"
     local token_standard="$3"
-    local initial_owner="$4"
     title="Setup an existing collection"
 
     set_chain
@@ -173,9 +191,9 @@ setup_contract() {
     confirm_setup
 
     echo "Processing stages file... this will take a moment."
-    process_stages "$stages_file" "$token_standard"
-    stages_data=$(cat "$BASE_DIR/../stagesInput.tmp") # this file is created by getStagesData.ts
-    rm "$BASE_DIR/../stagesInput.tmp"
+    process_stages "$stages_file" "$stages_json" "$token_standard"
+    stages_data=$(cat "$STAGES_FILE") # this file is created by getStagesData.ts
+    rm "$STAGES_FILE"
     echo ""
 
     password=$(get_password_if_set)
@@ -391,9 +409,9 @@ set_stages_contract() {
 
     print_signer_with_balance $chain_id
 
-    process_stages "$stages_file" "stagesInput.tmp" "$token_standard"
-    stages_data=$(cat "stagesInput.tmp")
-    rm "stagesInput.tmp"
+    process_stages "$stages_file" "$stages_json" "$token_standard"
+    stages_data=$(cat "$STAGES_FILE")
+    rm "$STAGES_FILE"
     echo ""
 
     if gum confirm "Do you want to proceed?"; then

@@ -37,17 +37,18 @@ set_rpc_url() {
 
 process_stages() {
     local stages_file="$1"
-    local token_standard="$2"
+    local stages_json="$2"
+    local token_standard="$3"
 
-    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$BASE_DIR/../../collections" "$token_standard" "$WEB3STORAGE_KEY"
+    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$stages_json" "$BASE_DIR/../collections" "$token_standard" "$WEB3STORAGE_KEY"
 
     if [[ $? -ne 0 ]]; then
         echo "Error: Failed to get stages data"
         return 1
     fi
 
-    if [[ ! -f "$output_file" ]]; then
-        echo "Error: Output file not found: $output_file"
+    if [[ ! -f "$STAGES_FILE" ]]; then
+        echo "Error: Output file not found: $STAGES_FILE"
         return 1
     fi
 }
@@ -72,47 +73,33 @@ decode_address() {
 }
 
 save_deployment_data() {
-    chain_id=$1
-    contract_address=$2
-    name=$3
-    symbol=$4
-    token_standard=$5
-    initial_owner=$6
-    impl_id=$7
+    contract_address=$1
+    initial_owner=$2
 
     # Get the current timestamp
     timestamp=$(date +%s)
-    deployment_date=$(date -u -r $timestamp +"%y-%m-%d_%H-%M-%S")
-    # Create the directory if it doesn't exist
-    deployment_dir="$BASE_DIR/../deployments/$chain_id"
-    mkdir -p "$deployment_dir"
-
-    # Create a JSON object with the provided data
-    json_data=$(jq -n \
-        --arg chain_id "$chain_id" \
+    deployed_at=$(date -u -r $timestamp +"%Y-%m-%d %H:%M:%S")
+    
+    # Create deployment object
+    deployment_data=$(jq -n \
         --arg contract_address "$contract_address" \
-        --arg name "$name" \
-        --arg symbol "$symbol" \
-        --arg token_standard "$token_standard" \
         --arg initial_owner "$initial_owner" \
-        --arg impl_id "$impl_id" \
-        --arg timestamp "$timestamp" \
-        --arg deployment_date "$deployment_date" \
+        --arg deployed_at "$deployed_at" \
         '{
-            chain_id: $chain_id,
             contract_address: $contract_address,
-            name: $name,
-            symbol: $symbol,
-            token_standard: $token_standard,
             initial_owner: $initial_owner,
-            impl_id: $impl_id,
-            timestamp: $timestamp,
-            deployment_date: $deployment_date
+            deployed_at: $deployed_at
         }')
+    
+    if [[ ! -f "$collection_file" ]]; then
+        echo "Error: Collection file not found: $collection_file"
+        return 1
+    fi
 
-    file_name="$name-$token_standard-$deployment_date.json"
-    echo "$json_data" > "$deployment_dir/$file_name"
-    echo "Deployment details saved to $deployment_dir/$file_name"
+    # Add deployment data to the existing JSON file
+    jq --argjson deployment "$deployment_data" '.deployment = $deployment' "$collection_file" > "$collection_file.tmp" && mv "$collection_file.tmp" "$collection_file"
+    
+    echo "Deployment details added to $collection_file"
 }
 
 prestart() {
@@ -137,25 +124,6 @@ prestart() {
     fi
 
     forge build --root "$BASE_DIR"
-}
-
-load_deployment_data() {
-    local deployment_file="$1"
-    if [[ ! -f "$deployment_file" ]]; then
-        echo "Error: Deployment file not found: $deployment_file"
-        return 1
-    fi
-
-
-    jq -r '
-        .chain_id,
-        .contract_address,
-        .name,
-        .symbol,
-        .token_standard,
-        .initial_owner,
-        .impl_id
-    ' "$deployment_file"
 }
 
 check_signer_native_balance() {

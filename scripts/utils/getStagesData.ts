@@ -489,19 +489,35 @@ const formatStageData = (data: (string | number | BigNumber)[]): string => {
 };
 
 const main = async () => {
-  const { stagesFilePath, outputFileDir, isERC1155, web3StorageKey } =
-    parseAndValidateArgs();
+  const {
+    stagesFilePath,
+    outputFileDir,
+    isERC1155,
+    web3StorageKey,
+    stagesJson,
+  } = parseAndValidateArgs();
 
-  await getStagesData(stagesFilePath, isERC1155, outputFileDir, web3StorageKey);
+  await getStagesData(
+    stagesFilePath,
+    isERC1155,
+    outputFileDir,
+    web3StorageKey,
+    stagesJson,
+  );
 };
 
 const getStagesData = async (
-  stagesFilePath: string,
+  stagesFilePath: string | undefined,
   isERC1155: boolean,
   outputFileDir: string,
   web3StorageKey: string,
+  stagesJson?: string,
 ) => {
-  const rawStages = loadAndValidateStages(stagesFilePath, isERC1155);
+  const rawStages = loadAndValidateStages(
+    stagesFilePath,
+    stagesJson,
+    isERC1155,
+  );
   const typedStages = isERC1155
     ? (rawStages as Stage1155[])
     : (rawStages as Stage[]);
@@ -536,9 +552,12 @@ const parseAndValidateArgs = () => {
   const outputFileDir = process.argv[3];
   const tokenStandard = process.argv[4];
   const web3StorageKey = process.argv[5];
+  const stagesJson = process.argv[6];
 
-  if (!stagesFilePath) {
-    console.error('Please provide a path to the whitelist file');
+  if (!stagesFilePath && !stagesJson) {
+    console.error(
+      'Please provide either a path to the stages file or a JSON string of stages',
+    );
     process.exit(1);
   }
 
@@ -547,6 +566,7 @@ const parseAndValidateArgs = () => {
     outputFileDir,
     isERC1155: tokenStandard === 'ERC1155',
     web3StorageKey,
+    stagesJson,
   };
 };
 
@@ -556,8 +576,24 @@ const parseAndValidateArgs = () => {
  * @param isERC1155 - Whether the stages are for ERC1155
  * @returns Validated stages array
  */
-const loadAndValidateStages = (stagesFilePath: string, isERC1155: boolean) => {
-  const rawStages = JSON.parse(fs.readFileSync(stagesFilePath, 'utf-8'));
+const loadAndValidateStages = (
+  stagesFilePath: string | undefined,
+  stagesJson: string | undefined,
+  isERC1155: boolean,
+) => {
+  let rawStages;
+
+  if (stagesFilePath) {
+    rawStages = JSON.parse(fs.readFileSync(stagesFilePath, 'utf-8'));
+  } else if (stagesJson) {
+    try {
+      rawStages = JSON.parse(stagesJson);
+    } catch (error) {
+      throw new Error(`Failed to parse stages JSON string: ${error}`);
+    }
+  } else {
+    throw new Error('Neither stages file path nor JSON string provided');
+  }
 
   if (!Array.isArray(rawStages)) {
     throw new Error('Stages must be an array');

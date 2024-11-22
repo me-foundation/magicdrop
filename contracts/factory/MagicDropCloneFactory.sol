@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
 import {Initializable} from "solady/src/utils/Initializable.sol";
@@ -28,7 +28,7 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         address contractAddress, address initialOwner, uint32 implId, TokenStandard standard, string name, string symbol
     );
     event Withdrawal(address to, uint256 amount);
-    
+
     /*==============================================================
     =                             ERRORS                           =
     ==============================================================*/

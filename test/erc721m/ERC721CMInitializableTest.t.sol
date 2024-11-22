@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";

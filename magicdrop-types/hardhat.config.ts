@@ -4,7 +4,7 @@ import { HardhatUserConfig } from 'hardhat/config';
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.20',
+    version: '0.8.22',
     settings: {
       viaIR: true,
       optimizer: {
@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
         runs: 20,
         details: {
           yulDetails: {
-            optimizerSteps: "dhfoD[xarrscLMcCTU]uljmul",
+            optimizerSteps: 'dhfoD[xarrscLMcCTU]uljmul',
           },
         },
       },

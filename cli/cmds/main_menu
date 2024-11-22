@@ -16,10 +16,18 @@ main_menu() {
     show_main_title
     load_private_key
 
+    echo "Please select a collection configuration file:"
+    echo ""
+
+    collection_file=$(get_collection_file "Select a collection file")
+    load_collection "$collection_file"
+    echo ""
+
     option=$(gum choose \
     "Deploy Contracts" \
     "Manage Contracts" \
     "Token Operations" \
+    "Load Collection Config" \
     "Quit")
 
     case $option in
@@ -31,6 +39,9 @@ main_menu() {
             ;;
         "Token Operations")
             token_operations_menu
+            ;;
+        "Load Collection Config")
+            main_menu
             ;;
         "Quit")
             echo "Exiting..."

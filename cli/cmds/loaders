@@ -84,3 +84,40 @@ load_private_key() {
     
     clear
 }
+
+load_collection() {
+    local collection_file="$1"
+    if [[ ! -f "$collection_file" ]]; then
+        echo "Collection file not found: $collection_file"
+        exit 1
+    fi
+
+    name=$(jq -r '.name' "$collection_file")
+    symbol=$(jq -r '.symbol' "$collection_file")
+    chain_id=$(jq -r '.chainId' "$collection_file")
+    token_standard=$(jq -r '.tokenStandard' "$collection_file")
+    max_mintable_supply=$(jq -r '.maxMintableSupply' "$collection_file")
+    global_wallet_limit=$(jq -r '.globalWalletLimit' "$collection_file")
+    mint_currency=$(jq -r '.mintCurrency' "$collection_file")
+    fund_receiver=$(jq -r '.fundReceiver' "$collection_file")
+    royalty_receiver=$(jq -r '.royaltyReceiver' "$collection_file")
+    royalty_fee=$(jq -r '.royaltyFee' "$collection_file")
+    stages_json=$(jq -r '.stages' "$collection_file")
+    deployment_data=$(jq -r '.deployment' "$collection_file")
+
+    chain_id=$(echo "$deployment_data" | jq -r '.chain_id')
+    contract_address=$(echo "$deployment_data" | jq -r '.contract_address')
+
+    echo "Loaded Collection!"
+    echo ""
+    echo "Name: $name"
+
+    if [[ -n "$chain_id" ]]; then   
+        echo "Chain: $chain_id"
+    fi
+
+    if [[ -n "$contract_address" ]]; then
+        echo "Contract: $contract_address"
+        echo $(format_explorer_contract_url $chain_id $contract_address)
+    fi
+}

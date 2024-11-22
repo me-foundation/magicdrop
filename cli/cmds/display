@@ -72,7 +72,7 @@ confirm_deployment() {
     echo "Name:                         $(gum style --foreground 212 "$name")"
     echo "Symbol:                       $(gum style --foreground 212 "$symbol")"
     echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
-    echo "Initial Owner:                $(gum style --foreground 212 "$(format_address "$initial_owner")")"
+    echo "Initial Owner:                $(gum style --foreground 212 "$(format_address "$SIGNER")")"
     if [[ "$impl_id" -eq 0 ]]; then
         echo "Impl ID:                      $(gum style --foreground 212 "DEFAULT")"
     else

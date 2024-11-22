@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {Script, console} from "forge-std/Script.sol";
 import {ERC721CMInitializableV1_0_0} from "contracts/nft/erc721m/ERC721CMInitializableV1_0_0.sol";

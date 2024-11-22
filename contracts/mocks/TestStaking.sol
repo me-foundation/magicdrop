@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";

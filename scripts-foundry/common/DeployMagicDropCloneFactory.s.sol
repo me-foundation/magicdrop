@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {Script} from "forge-std/Script.sol";
 import {MagicDropCloneFactory} from "contracts/factory/MagicDropCloneFactory.sol";

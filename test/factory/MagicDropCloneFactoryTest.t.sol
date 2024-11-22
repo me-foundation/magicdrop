@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import {console} from "forge-std/console.sol";
 import {Test} from "forge-std/Test.sol";
@@ -38,7 +38,6 @@ contract MagicDropCloneFactoryTest is Test {
     function setUp() public {
         vm.startPrank(owner);
 
-
         // Deploy and initialize registry
         MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry();
         registry = MagicDropTokenImplRegistry(LibClone.deployERC1967(address(registryImpl)));
@@ -66,8 +65,9 @@ contract MagicDropCloneFactoryTest is Test {
     function testCreateERC721Contract() public {
         vm.startPrank(user);
 
-        address newContract =
-            factory.createContract{value: 0.01 ether}("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId);
+        address newContract = factory.createContract{value: 0.01 ether}(
+            "TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId
+        );
 
         MockERC721Initializable nft = MockERC721Initializable(newContract);
 
@@ -81,9 +81,8 @@ contract MagicDropCloneFactoryTest is Test {
     function testCreateERC721ContractWithDefaultImplementation() public {
         vm.startPrank(user);
 
-        address newContract = factory.createContract{value: 0.01 ether}(
-            "TestNFT", "TNFT", TokenStandard.ERC721, payable(user), 0
-        );
+        address newContract =
+            factory.createContract{value: 0.01 ether}("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), 0);
 
         MockERC721Initializable nft = MockERC721Initializable(newContract);
         // Test minting
@@ -112,9 +111,8 @@ contract MagicDropCloneFactoryTest is Test {
     function testCreateERC1155ContractWithDefaultImplementation() public {
         vm.startPrank(user);
 
-        address newContract = factory.createContract{value: 0.01 ether}(
-            "TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0
-        );
+        address newContract =
+            factory.createContract{value: 0.01 ether}("TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0);
 
         MockERC1155Initializable nft = MockERC1155Initializable(newContract);
 
@@ -210,9 +208,8 @@ contract MagicDropCloneFactoryTest is Test {
 
     function testWithdraw() public {
         vm.startPrank(user);
-        address newContract = factory.createContract{value: 0.01 ether}(
-            "TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0
-        );
+        address newContract =
+            factory.createContract{value: 0.01 ether}("TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0);
         vm.stopPrank();
 
         vm.startPrank(owner);
