@@ -10,8 +10,8 @@ type Stage = {
   walletLimit: number;
   whitelistPath?: string;
   maxStageSupply: number;
-  startDate: string;
-  endDate: string;
+  startTime: string;
+  endTime: string;
 };
 
 type Stage1155 = {
@@ -20,8 +20,8 @@ type Stage1155 = {
   walletLimit: number[];
   whitelistPath?: string[];
   maxStageSupply: number[];
-  startDate: string;
-  endDate: string;
+  startTime: string;
+  endTime: string;
 };
 
 type WhitelistEntry = {
@@ -29,15 +29,31 @@ type WhitelistEntry = {
   limit?: number;
 };
 
+// const parseWhitelistFile = (filePath: string): string[] => {
+//   try {
+//     const content = fs.readFileSync(filePath, 'utf-8');
+//     return content
+//       .split('\n')
+//       .map((line) => line.trim())
+//       .filter((line) => line.length > 0);
+//   } catch (error: any) {
+//     throw new Error(`Failed to read whitelist file: ${error.message}`);
+//   }
+// };
+
 const parseWhitelistFile = (filePath: string): string[] => {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
-    return content
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+    const jsonData = JSON.parse(content);
+    
+    // Handle both array of strings and array of objects formats
+    if (!Array.isArray(jsonData)) {
+      throw new Error('Whitelist file must contain an array');
+    }
+
+    return jsonData;
   } catch (error: any) {
-    throw new Error(`Failed to read whitelist file: ${error.message}`);
+    throw new Error(`Failed to parse whitelist file: ${error.message}`);
   }
 };
 
@@ -142,7 +158,7 @@ const cleanWhitelistData = (
  */
 const generateMerkleRoot = (whitelistEntries: WhitelistEntry[]) => {
   // Determine if this whitelist includes per-address mint limits
-  const isVariableWalletLimit = whitelistEntries[0].limit !== undefined;
+  const isVariableWalletLimit = whitelistEntries[0]?.limit !== undefined;
   let leaves: string[] = [];
 
   if (isVariableWalletLimit) {
@@ -205,13 +221,13 @@ function isStage(stage: any): stage is Stage {
     isValid = false;
   }
 
-  if (typeof stage.startDate !== 'string') {
-    console.error('Invalid startDate', stage.startDate);
+  if (typeof stage.startTime !== 'string') {
+    console.error('Invalid startTime', stage.startTime);
     isValid = false;
   }
 
-  if (typeof stage.endDate !== 'string') {
-    console.error('Invalid endDate', stage.endDate);
+  if (typeof stage.endTime !== 'string') {
+    console.error('Invalid endTime', stage.endTime);
     isValid = false;
   }
 
@@ -260,13 +276,13 @@ function isStage1155(stage: any): stage is Stage1155 {
     isValid = false;
   }
 
-  if (typeof stage.startDate !== 'string') {
-    console.error('Invalid startDate', stage.startDate);
+  if (typeof stage.startTime !== 'string') {
+    console.error('Invalid startTime', stage.startTime);
     isValid = false;
   }
 
-  if (typeof stage.endDate !== 'string') {
-    console.error('Invalid endDate', stage.endDate);
+  if (typeof stage.endTime !== 'string') {
+    console.error('Invalid endTime', stage.endTime);
     isValid = false;
   }
 
@@ -363,8 +379,8 @@ const processERC1155Stage = async (
     `[${stage.walletLimit.join(',')}]`,
     `[${merkleRoots.join(',')}]`,
     `[${maxStageSupply.join(',')}]`,
-    new Date(stage.startDate).getTime() / 1000,
-    new Date(stage.endDate).getTime() / 1000,
+    new Date(stage.startTime).getTime() / 1000,
+    new Date(stage.endTime).getTime() / 1000,
   ]);
 };
 
@@ -444,8 +460,8 @@ const processERC721Stage = async (
     stage.walletLimit,
     merkleRoot,
     stage.maxStageSupply ?? 0,
-    new Date(stage.startDate).getTime() / 1000,
-    new Date(stage.endDate).getTime() / 1000,
+    new Date(stage.startTime).getTime() / 1000,
+    new Date(stage.endTime).getTime() / 1000,
   ]);
 };
 
