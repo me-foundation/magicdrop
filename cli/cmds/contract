@@ -120,13 +120,18 @@ freeze_thaw_contract() {
     set_chain
     set_contract_address
     set_token_standard
-
+    
     print_signer_with_balance $chain_id
 
     if [ -z "$is_icreatortoken" ]; then
         supports_icreatortoken
         is_icreatortoken=$?
     fi
+
+    if [ -z "$tf_address" ] && [ $is_icreatortoken -eq 0 ]; then
+        tf_address=$(get_transfer_validator_address $chain_id)
+    fi
+
 
     choice=$(gum choose "Freeze" "Thaw")
     if [ "$choice" == "Freeze" ]; then
@@ -187,6 +192,8 @@ setup_contract() {
     if [ "$token_standard" == "ERC1155" ]; then
         set_number_of_1155_tokens
         set_1155_uri
+    else
+        uri=
     fi
 
     set_global_wallet_limit
