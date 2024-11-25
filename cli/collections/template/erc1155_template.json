@@ -12,7 +12,6 @@
     "royaltyFee": "Percentage of secondary sales paid as royalties (in basis points, e.g., 0 = 0%)",
     "mintable": "Whether minting is enabled or disabled",
     "cosigner": "Address of the wallet authorized to sign mint transactions (zero address if unused)",
-    "tokenUriSuffix": "File extension for metadata uri",
     "uri": "Base URI for token metadata",
     "stages": {
       "_description": "Array of mint stages with different conditions",
@@ -42,15 +41,14 @@
   "royaltyFee": 0,
   "mintable": true,
   "cosigner": "0x0000000000000000000000000000000000000000",
-  "tokenUriSuffix": ".json",
   "uri": "",
   "stages": [
     {
       "price": [""],
       "mintFee": [""],
       "walletLimit": [0],
-      "startDate": "2024-11-04T16:30:00Z",
-      "endDate": "2024-11-07T16:25:00Z"
+      "startTime": "2024-11-04T16:30:00Z",
+      "endTime": "2024-11-07T16:25:00Z"
     }
   ]
 }

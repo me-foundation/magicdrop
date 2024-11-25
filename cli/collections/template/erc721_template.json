@@ -49,8 +49,8 @@
       "price": "",
       "mintFee": "",
       "walletLimit": 0,
-      "startDate": "2024-11-04T16:30:00Z",
-      "endDate": "2024-11-07T16:25:00Z"
+      "startTime": "2024-11-04T16:30:00Z",
+      "endTime": "2024-11-07T16:25:00Z"
     }
   ]
 }
