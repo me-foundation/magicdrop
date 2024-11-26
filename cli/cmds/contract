@@ -226,7 +226,7 @@ setup_contract() {
 
     output=$(cast send $contract_address \
         "$setup_selector" \
-        "$uri" \
+        $uri \
         "$max_mintable_supply" \
         "$global_wallet_limit" \
         "$mint_currency" \
