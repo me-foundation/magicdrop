@@ -79,19 +79,25 @@ const cleanWhitelistData = (
   entries: string[],
   stageIdx: number,
 ): WhitelistEntry[] => {
-  // Determine the format based on the first entry
-  // If it contains a comma, we expect all entries to have a limit
   const firstEntry = entries[0];
   const isVariableWalletLimit = firstEntry.includes(',');
   const invalidEntries: string[] = [];
   const cleanedEntries: WhitelistEntry[] = [];
 
+  // Use a Set to track unique addresses
+  const seenAddresses = new Set<string>();
+
   for (const entry of entries) {
-    // Split entry into parts and clean whitespace
     const parts = entry.split(',').map((x) => x.trim());
     const [address] = parts;
 
-    // Check if entry matches expected format (address only OR address,limit)
+    // Skip if we've already seen this address
+    if (seenAddresses.has(address.toLowerCase())) {
+      invalidEntries.push(`${entry} (duplicate)`);
+      continue;
+    }
+
+    // Check if entry matches expected format
     if (parts.length !== (isVariableWalletLimit ? 2 : 1)) {
       invalidEntries.push(entry);
       continue;
@@ -103,16 +109,17 @@ const cleanWhitelistData = (
       continue;
     }
 
+    // Add lowercase address to seen set
+    seenAddresses.add(address.toLowerCase());
+
     // Handle entries with wallet limits
     if (isVariableWalletLimit) {
       const limitStr = parts[1];
-      // Check if limit exists
       if (!limitStr) {
         invalidEntries.push(entry);
         continue;
       }
 
-      // Parse and validate the limit value
       const limit = parseInt(limitStr);
       if (isNaN(limit) || limit <= 0) {
         invalidEntries.push(entry);
@@ -121,7 +128,6 @@ const cleanWhitelistData = (
 
       cleanedEntries.push({ address, limit });
     } else {
-      // Handle entries without wallet limits
       cleanedEntries.push({ address });
     }
   }
@@ -175,7 +181,10 @@ const generateMerkleRoot = (whitelistEntries: WhitelistEntry[]) => {
   } else {
     // Generate leaves for simple whitelist entries (address only)
     leaves = whitelistEntries.map((entry) => {
-      return ethers.utils.solidityKeccak256(['address'], [entry.address]);
+      return ethers.utils.solidityKeccak256(
+        ['address', 'uint32'],
+        [entry.address, 0],
+      );
     });
   }
 
@@ -487,7 +496,16 @@ const generateERC721MerkleRoot = async (
     outputFileDir,
     `cleanedWhitelist_stage_${stageIdx}.json`,
   );
-  fs.writeFileSync(outputPath, JSON.stringify(cleanedWhitelist, null, 2));
+  fs.writeFileSync(
+    outputPath,
+    JSON.stringify(
+      cleanedWhitelist.map((e) =>
+        e.limit ? `${e.address},${e.limit}` : e.address,
+      ),
+      null,
+      2,
+    ),
+  );
   console.log(
     `Processed whitelist for stage ${stageIdx} with ${cleanedWhitelist.length} entries`,
   );
