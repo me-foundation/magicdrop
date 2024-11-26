@@ -3,7 +3,8 @@ pragma solidity ^0.8.22;
 
 enum TokenStandard {
     ERC721,
-    ERC1155
+    ERC1155,
+    ERC20
 }
 
 struct MintStageInfo {

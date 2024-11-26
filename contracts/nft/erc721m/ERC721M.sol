@@ -462,4 +462,9 @@ contract ERC721M is
     function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
+
+    /// @dev Overriden to prevent double-initialization of the owner.
+    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+        return true;
+    }
 }

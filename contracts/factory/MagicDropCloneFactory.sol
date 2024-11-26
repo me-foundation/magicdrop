@@ -37,10 +37,15 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     error RegistryAddressCannotBeZero();
     error InsufficientDeploymentFee();
     error WithdrawalFailed();
+    error InitialOwnerCannotBeZero();
 
     /*==============================================================
     =                          INITIALIZER                         =
     ==============================================================*/
+
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @notice Initializes the contract
     /// @param initialOwner The address of the initial owner
@@ -83,6 +88,10 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             impl = _registry.getDefaultImplementation(standard);
         } else {
             impl = _registry.getImplementation(standard, implId);
+        }
+
+        if (initialOwner == address(0)) {
+            revert InitialOwnerCannotBeZero();
         }
 
         // Retrieve the deployment fee for the implementation and ensure the caller has sent the correct amount
@@ -132,6 +141,10 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
             impl = _registry.getDefaultImplementation(standard);
         } else {
             impl = _registry.getImplementation(standard, implId);
+        }
+
+        if (initialOwner == address(0)) {
+            revert InitialOwnerCannotBeZero();
         }
 
         // Retrieve the deployment fee for the implementation and ensure the caller has sent the correct amount
@@ -207,6 +220,11 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
         }
 
         emit Withdrawal(to, address(this).balance);
+    }
+
+    /// @dev Overriden to prevent double-initialization of the owner.
+    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+        return true;
     }
 
     /// @notice Receives ETH

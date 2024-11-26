@@ -113,7 +113,7 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testGetDefaultImplementation() public {
         vm.prank(owner);
-        uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), true, 0.01 ether);
+        registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), true, 0.01 ether);
         address impl = registry.getDefaultImplementation(TokenStandard.ERC721);
         assertEq(impl, address(mockERC721));
     }

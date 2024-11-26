@@ -548,4 +548,9 @@ contract ERC1155M is
             revert NotTransferable();
         }
     }
+
+    /// @dev Overriden to prevent double-initialization of the owner.
+    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+        return true;
+    }
 }

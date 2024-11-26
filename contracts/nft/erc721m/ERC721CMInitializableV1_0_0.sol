@@ -51,6 +51,10 @@ contract ERC721CMInitializableV1_0_0 is
         initializer
         initializerERC721A
     {
+        if (initialOwner == address(0)) {
+            revert InitialOwnerCannotBeZero();
+        }
+
         __ERC721ACQueryableInitializable_init(name, symbol);
         _initializeOwner(initialOwner);
     }
@@ -526,5 +530,10 @@ contract ERC721CMInitializableV1_0_0 is
     /// @notice Requires the caller to be the contract owner
     function _requireCallerIsContractOwner() internal view override {
         return _checkOwner();
+    }
+
+    /// @dev Overriden to prevent double-initialization of the owner.
+    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+        return true;
     }
 }

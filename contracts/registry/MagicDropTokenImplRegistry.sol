@@ -57,6 +57,10 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     =                          INITIALIZER                         =
     ==============================================================*/
 
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @dev Initializes the contract, setting up the owner and UUPS upgradeability.
     /// This function replaces the constructor for upgradeable contracts.
     function initialize(address initialOwner) public initializer {
@@ -159,7 +163,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     }
 
     /// @dev Gets the deployment fee for a given token standard
-    /// @param standard The token standard (ERC721, ERC1155)
+    /// @param standard The token standard (ERC721, ERC1155, ERC20)
     /// @param implId The implementation ID
     /// @return deploymentFee The deployment fee for the given standard
     function getDeploymentFee(TokenStandard standard, uint32 implId) external view returns (uint256 deploymentFee) {
@@ -192,7 +196,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     ==============================================================*/
 
     /// @dev Registers a new implementation for a given token standard.
-    /// @param standard The token standard (ERC721, ERC1155).
+    /// @param standard The token standard (ERC721, ERC1155, ERC20).
     /// @param impl The address of the implementation contract.
     /// @param isDefault Whether the implementation should be set as the default implementation
     /// @param deploymentFee The deployment fee for the implementation
@@ -253,7 +257,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     }
 
     /// @dev Sets the default implementation ID for a given token standard
-    /// @param standard The token standard (ERC721, ERC1155)
+    /// @param standard The token standard (ERC721, ERC1155, ERC20)
     /// @param implId The ID of the implementation to set as default
     /// @notice Reverts if the implementation is not registered.
     /// @notice Only the contract owner can call this function
@@ -271,7 +275,7 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     }
 
     /// @dev Sets the deployment fee for an implementation
-    /// @param standard The token standard (ERC721, ERC1155)
+    /// @param standard The token standard (ERC721, ERC1155, ERC20)
     /// @param implId The implementation ID
     /// @param deploymentFee The deployment fee to set
     /// @notice Only the contract owner can call this function
@@ -285,4 +289,9 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     /// @param newImplementation Address of the new implementation.
     /// @notice Only the contract owner can upgrade the contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    /// @dev Overriden to prevent double-initialization of the owner.
+    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+        return true;
+    }
 }

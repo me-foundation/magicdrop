@@ -52,6 +52,10 @@ contract ERC721MInitializableV1_0_0 is
         initializer
         initializerERC721A
     {
+        if (initialOwner == address(0)) {
+            revert InitialOwnerCannotBeZero();
+        }
+
         __ERC721A_init_unchained(name, symbol);
         __ERC721AQueryable_init_unchained();
         _initializeOwner(initialOwner);
@@ -523,5 +527,10 @@ contract ERC721MInitializableV1_0_0 is
     /// @param end The end timestamp
     function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
+    }
+
+    /// @dev Overriden to prevent double-initialization of the owner.
+    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+        return true;
     }
 }

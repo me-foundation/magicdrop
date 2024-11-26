@@ -208,8 +208,7 @@ contract MagicDropCloneFactoryTest is Test {
 
     function testWithdraw() public {
         vm.startPrank(user);
-        address newContract =
-            factory.createContract{value: 0.01 ether}("TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0);
+        factory.createContract{value: 0.01 ether}("TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0);
         vm.stopPrank();
 
         vm.startPrank(owner);
