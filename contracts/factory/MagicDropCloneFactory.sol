@@ -44,7 +44,6 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
 
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
-    /// @dev This function can only be called once
     constructor(address initialOwner, address registry) public {
         if (registry == address(0)) {
             revert RegistryAddressCannotBeZero();

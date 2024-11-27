@@ -42,50 +42,32 @@ The composability of the stages is generic enough to enable flexible and complic
 - Native TypeScript and Typechain-Types Support
 
 ## Contracts
-| Contract                | Description                                                                           |
-|-------------------------|---------------------------------------------------------------------------------------|
-| ERC721M                 | The basic minting contract based on ERC721A.                                          |
-| ERC721CM                | The basic minting contract based on ERC721C and ERC721M.                                         |
-| ERC721CMRoyalties       | Based on ERC721CM, implementing ERC2981 for on-chain royalty.                         |
-| ERC721MOperatorFilterer | ERC721M with OpenSea Operator Filterer                                                |
-| BucketAuction           | Bucket auction style minting contract. The contract is on beta. Use at your own risk. |
+| Contract                    | Description                                                                        |
+|-----------------------------|------------------------------------------------------------------------------------|
+| ERC721M                     | The basic minting contract based on ERC721A.                                       |
+| ERC721CM                    | The basic minting contract based on ERC721C and ERC721M.                           |
+| ERC1155M                    | The basic minting contract based on ERC1155.                                       |
+| MagicDropTokenImplRegistry  | The implementation registry for MagicDrop contracts.                               |
+| MagicDropCloneFactory       | The factory contract for cloning MagicDrop contracts.                              |
+| ERC721MInitializableV1_0_0  | The initializable implementation for ERC721M.                                      |
+| ERC721CMInitializableV1_0_0 | The initializable implementation for ERC721CM.                                     |
+| ERC1155MInitializableV1_0_0 | The initializable implementation for ERC1155M.                                     |
 
-Please read [ERC721M Contract Usage Guide](./docs/ContractUsageGuide.md) for more details.
+## Deployment Address & Salts
+| Name                        | Address     | Salt |
+|-----------------------------|-------------------------------------------|-----------------------------------------|
+| MagicDropTokenImplRegistry | 0x00000000caF1E3978e291c5Fb53FeedB957eC146 |0x78c643228c532b1aee1930fedd4a4b0e6d3d8723987c0809d76a222b0d59b461 |
+| MagicDropCloneFactory | 0x000000009e44eBa131196847C685F20Cd4b68aC4 | 0xd8c5a3057ccf31c5fd5cee4e4a5ad9005d0a9a7f4983365010b8785805b44eb1
+| ERC721MInitializableV1_0_0 | 0x00000000b55a1126458841Cc756E565C50759484 | 0x4ca859ec4f4daad3d92dcc2959e01718def5eb520350e3e93bd31fc8d2b3beff
+| ERC721CMInitializableV1_0_0 | 0x00000000760644De6b7b40362288e944f4154121 | 0x8ae63539ad30ece1889c0999c70b900ffaf0e10ee23b777924c310ad548b6266
+| ERC1155MInitializableV1_0_0 | 0x000000009B3dC659D26BD2f3D38136E2b270C28d | 0x8b72ee316ce281e983b3694fc794164ce2eac8c3b8d7751c42edfc89310c6665
 
-## Installation
-Provide step by step series of examples and explanations about how to get a development env running.
-
-
-```bash
-npm add @magiceden-oss/erc721m
-```
-
-## Code Example
-
-```typescript
-import { ERC721M, ERC721M__factory } from '@magiceden-oss/erc721m';
-
-const contract = ERC721M__factory.connect(
-  contractAddress,
-  signerOrProvider,
-);
-```
-
-## API Reference
-
-```bash
-# Compile the contract
-npm run build
-
-# Get the auto generated typechain-types
-./typechain-types
-```
-
-## Tests
-
-```bash
-npm run test
-```
+### Supported Chains
+- Polygon
+- Base
+- Sei
+- Arbitrum
+- Apechain
 
 ## Using Foundry
 
@@ -118,10 +100,6 @@ This project includes a script to generate and view a test coverage report. The 
 ```bash
 ./test/generate-coverage-report.sh
 ```
-
-We are targeting 100% lines coverage.
-
-![](https://bafkreic3dyzp5i2fi7co2fekkbgmyxgv342irjy5zfiuhvjqic6fuu53ju.ipfs.nftstorage.link/)
 
 ## Security
 - [ERC721M Kudelski Security Audit](./docs/AUDIT-PUBLIC-RELEASE-MagicEden-ERC721M1.pdf)

@@ -69,6 +69,5 @@ esac
 CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL FACTORY_SALT=$FACTORY_SALT FACTORY_EXPECTED_ADDRESS=$FACTORY_EXPECTED_ADDRESS INITIAL_OWNER=$INITIAL_OWNER REGISTRY_ADDRESS=$REGISTRY_ADDRESS forge script ./DeployMagicDropCloneFactory.s.sol:DeployMagicDropCloneFactory \
   --rpc-url $RPC_URL \
   --broadcast \
-  --via-ir # \
-  # --verify $RESUME \
-  # -v
+  --via-ir \
+  --verify

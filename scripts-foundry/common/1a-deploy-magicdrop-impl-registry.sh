@@ -67,6 +67,6 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECT
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \
-  --via-ir # \
-  # --verify $RESUME \
-  # -v
+  --via-ir \
+  --verify \
+  -v

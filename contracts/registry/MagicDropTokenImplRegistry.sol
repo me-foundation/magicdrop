@@ -56,8 +56,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     =                          CONSTRUCTOR                         =
     ==============================================================*/
 
-    /// @dev Initializes the contract, setting up the owner and UUPS upgradeability.
-    /// This function replaces the constructor for upgradeable contracts.
+    /// @param initialOwner The address of the initial owner
     constructor(address initialOwner) public {
         _initializeOwner(initialOwner);
 
