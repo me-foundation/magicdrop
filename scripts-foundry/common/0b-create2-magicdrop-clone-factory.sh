@@ -13,7 +13,7 @@ fi
 echo "create2 MagicDropCloneFactory START"
 factoryCode="$(forge inspect contracts/factory/MagicDropCloneFactory.sol:MagicDropCloneFactory bytecode --optimizer-runs 777 --via-ir)"
 factoryInitCode="$factoryCode"
-cast create2 --starts-with 0000 --case-sensitive --init-code $factoryInitCode
+cast create2 --starts-with 00000000 --case-sensitive --init-code $factoryInitCode
 echo "create2 MagicDropCloneFactory END"
 echo "-------------------------------------"
 echo ""

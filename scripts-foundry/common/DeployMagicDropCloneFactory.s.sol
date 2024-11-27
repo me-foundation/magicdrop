@@ -16,14 +16,12 @@ contract DeployMagicDropCloneFactory is Script {
 
         vm.startBroadcast(privateKey);
         // Deploy the contract using CREATE2 directly
-        MagicDropCloneFactory factoryImpl = new MagicDropCloneFactory{salt: salt}();
+        MagicDropCloneFactory factoryImpl = new MagicDropCloneFactory{salt: salt}(initialOwner, registry);
 
         // Verify the deployed address matches the predicted address
         if (address(factoryImpl) != expectedAddress) {
             revert AddressMismatch();
         }
-
-        factoryImpl.initialize(initialOwner, registry);
 
         vm.stopBroadcast();
     }

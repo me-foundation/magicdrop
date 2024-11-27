@@ -2,7 +2,6 @@
 pragma solidity ^0.8.22;
 
 import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
-import {Initializable} from "solady/src/utils/Initializable.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {TokenStandard} from "../common/Structs.sol";
@@ -10,8 +9,8 @@ import {MagicDropTokenImplRegistry} from "../registry/MagicDropTokenImplRegistry
 
 /// @title MagicDropCloneFactory
 /// @notice A factory contract for creating and managing clones of MagicDrop contracts
-/// @dev This contract uses the UUPS proxy pattern and is initializable
-contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
+/// @dev This contract uses the UUPS proxy pattern
+contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     /*==============================================================
     =                           CONSTANTS                          =
     ==============================================================*/
@@ -40,18 +39,13 @@ contract MagicDropCloneFactory is Initializable, Ownable, UUPSUpgradeable {
     error InitialOwnerCannotBeZero();
 
     /*==============================================================
-    =                          INITIALIZER                         =
+    =                          CONSTRUCTOR                         =
     ==============================================================*/
 
-    constructor() {
-        _disableInitializers();
-    }
-
-    /// @notice Initializes the contract
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
     /// @dev This function can only be called once
-    function initialize(address initialOwner, address registry) public initializer {
+    constructor(address initialOwner, address registry) public {
         if (registry == address(0)) {
             revert RegistryAddressCannotBeZero();
         }

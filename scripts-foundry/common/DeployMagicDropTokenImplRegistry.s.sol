@@ -16,14 +16,12 @@ contract DeployMagicDropTokenImplRegistry is Script {
         vm.startBroadcast(privateKey);
 
         // Deploy the contract using CREATE2 directly
-        MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry{salt: salt}();
+        MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry{salt: salt}(initialOwner);
 
         // Verify the deployed address matches the predicted address
         if (address(registryImpl) != expectedAddress) {
             revert AddressMismatch();
         }
-
-        registryImpl.initialize(initialOwner);
 
         vm.stopBroadcast();
     }

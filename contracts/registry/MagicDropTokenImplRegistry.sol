@@ -2,7 +2,6 @@
 pragma solidity ^0.8.22;
 
 import {Ownable} from "solady/src/auth/Ownable.sol";
-import {Initializable} from "solady/src/utils/Initializable.sol";
 import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
 import {IMagicDropTokenImplRegistry, TokenStandard} from "./interfaces/IMagicDropTokenImplRegistry.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -10,7 +9,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 /// @title MagicDropTokenImplRegistry
 /// @dev A registry for managing token implementation addresses for different token standards.
 /// This contract is upgradeable and uses the UUPS pattern.
-contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, IMagicDropTokenImplRegistry {
+contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropTokenImplRegistry {
     /*==============================================================
     =                            STRUCTS                           =
     ==============================================================*/
@@ -54,16 +53,12 @@ contract MagicDropTokenImplRegistry is Initializable, UUPSUpgradeable, Ownable, 
     error DefaultImplementationNotRegistered();
 
     /*==============================================================
-    =                          INITIALIZER                         =
+    =                          CONSTRUCTOR                         =
     ==============================================================*/
-
-    constructor() {
-        _disableInitializers();
-    }
 
     /// @dev Initializes the contract, setting up the owner and UUPS upgradeability.
     /// This function replaces the constructor for upgradeable contracts.
-    function initialize(address initialOwner) public initializer {
+    constructor(address initialOwner) public {
         _initializeOwner(initialOwner);
 
         // Initialize nextImplId and interface IDs for each token standard

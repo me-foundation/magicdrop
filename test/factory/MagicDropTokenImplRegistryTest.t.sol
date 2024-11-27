@@ -16,9 +16,7 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function setUp() public {
         vm.startPrank(owner);
-        MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry();
-        registry = MagicDropTokenImplRegistry(LibClone.deployERC1967(address(registryImpl)));
-        registry.initialize(owner);
+        registry = new MagicDropTokenImplRegistry(owner);
         vm.stopPrank();
         mockERC721 = new MockERC721();
     }

@@ -12,6 +12,8 @@ contract DeployMagicDropImplementation is Script {
     error InvalidTokenStandard(string standard);
     error FailedToGetContractVersion();
     function run() external {
+        bytes32 salt = vm.envBytes32("IMPL_SALT");
+        address expectedAddress = address(uint160(vm.envUint("IMPL_EXPECTED_ADDRESS")));
         TokenStandard standard = parseTokenStandard(vm.envString("TOKEN_STANDARD"));
         string memory version = vm.envString("CONTRACT_VERSION");
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
@@ -21,9 +23,13 @@ contract DeployMagicDropImplementation is Script {
         address deployedAddress;
 
         if (standard == TokenStandard.ERC721) {
-            deployedAddress = address(new ERC721CMInitializableV1_0_0());
+            deployedAddress = address(new ERC721CMInitializableV1_0_0{salt: salt}());
         } else if (standard == TokenStandard.ERC1155) {
-            deployedAddress = address(new ERC1155MInitializableV1_0_0());
+            deployedAddress = address(new ERC1155MInitializableV1_0_0{salt: salt}());
+        }
+
+        if (address(deployedAddress) != expectedAddress) {
+            revert AddressMismatch(expectedAddress, address(deployedAddress));
         }
 
         bytes memory data = abi.encodeWithSignature("contractNameAndVersion()");

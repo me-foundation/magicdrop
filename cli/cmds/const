@@ -8,6 +8,8 @@ SUPPORTED_CHAINS=(
     "137:Polygon"
     "1329:Sei"
     "11155111:Sepolia"
+    "56:BSC"
+    "43114:Avalanche"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
