@@ -40,6 +40,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Configure git safe directory
+        run: git config --global --add safe.directory /github/workspace
       - uses: crytic/slither-action@35510b34cfdfb137d9816d27378ee8c217f1fa1c
         with:
           fail-on: low
