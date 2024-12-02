@@ -26,8 +26,6 @@ jobs:
         run: npm ci
       - name: Install Cosign Server dependencies
         run: cd cosign-server && npm ci
-      - name: Build magicdrop-types
-        run: cd magicdrop-types && npm ci && npm run build
       - name: Build magicdrop
         run: npm run build
       - name: Run lint
