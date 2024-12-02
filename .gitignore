@@ -1,8 +1,5 @@
 node_modules
 .env
-.env
-coverage
-converage/
 coverage.json
 typechain
 typechain-types
@@ -12,3 +9,13 @@ artifacts
 .vscode
 dist
 .DS_Store
+out/
+lcov.info
+lcov.info.pruned
+coverage/
+broadcast/
+*deployments*
+*collections*
+*whitelist*
+*invalid*
+*.tmp

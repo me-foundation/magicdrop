@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "$BASE_DIR/const"
+source "$BASE_DIR/loaders"
+source "$BASE_DIR/utils"
+source "$BASE_DIR/display"
+source "$BASE_DIR/common"
+source "$BASE_DIR/getters"
+source "$BASE_DIR/contract"
+
+main_menu() {
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    show_main_title
+    load_private_key
+
+    echo "Please select a collection configuration file:"
+    echo ""
+
+    if [ -z "$collection_file" ]; then
+        collection_file=$(get_collection_file "Select a collection file")
+        load_collection "$collection_file"
+        echo ""
+    fi
+
+    option=$(gum choose \
+    "Deploy Contracts" \
+    "Manage Contracts" \
+    "Token Operations" \
+    "Load Collection Config" \
+    "Quit")
+
+    case $option in
+        "Deploy Contracts")
+            deploy_contract
+            ;;
+        "Manage Contracts")
+            contract_management_menu
+            ;;
+        "Token Operations")
+            token_operations_menu
+            ;;
+        "Load Collection Config")
+            collection_file=$(get_collection_file "Select a collection file")
+            load_collection "$collection_file"
+            echo ""
+            ;;
+        "Quit")
+            echo "Exiting..."
+            exit 0
+            ;;
+    esac
+
+    go_to_main_menu_or_exit
+}
+
+contract_management_menu() {
+    local option=$(gum choose \
+        "Initialize contract" \
+        "Set Base URI (ERC721 Only)" \
+        "Set URI (ERC1155 Only)" \
+        "Set Stages" \
+        "Set Royalties" \
+        "Set Global Wallet Limit" \
+        "Set Max Mintable Supply" \
+        "Set Mintable (ERC721 Only)" \
+        "Set Cosigner" \
+        "Set Token URI Suffix (ERC721 Only)" \
+        "Set Timestamp Expiry" \
+        "Freeze/Thaw Contract" \
+        "Transfer Ownership" \
+        "Manage Authorized Minters"\
+        "Go to Main Menu")
+
+    case $option in
+        "Initialize contract")
+            setup_contract
+            ;;
+        "Freeze/Thaw Contract")
+            freeze_thaw_contract
+            ;;
+        "Set Global Wallet Limit")
+            set_global_wallet_limit_contract
+            ;;
+        "Set Max Mintable Supply")
+            set_max_mintable_supply_contract
+            ;;
+        "Set Mintable (ERC721 Only)")
+            set_mintable_contract
+            ;;
+        "Set Stages")
+            set_stages_contract
+            ;;
+        "Set Timestamp Expiry")
+            set_timestamp_expiry_contract
+            ;;
+        "Transfer Ownership")
+            transfer_ownership_contract
+            ;;
+        "Set Royalties")
+            set_royalties_contract
+            ;;
+        "Set Base URI (ERC721 Only)")
+            set_base_uri_contract
+            ;;
+        "Set URI (ERC1155 Only)")
+            set_uri_contract
+            ;;
+        "Set Token URI Suffix (ERC721 Only)")
+            set_token_uri_suffix_contract
+            ;;
+        "Set Cosigner")
+            set_cosigner_contract
+            ;;
+        "Manage Authorized Minters")
+            manage_authorized_minters_contract
+            ;;
+        "Go to Main Menu")
+            main_menu
+            ;;
+    esac
+}
+
+token_operations_menu() {
+    local option=$(gum choose \
+        "Owner Mint" \
+        "Send ERC721 Batch"\
+        "Go to Main Menu")
+
+    case $option in
+        "Owner Mint")
+            owner_mint_contract
+            ;;
+        "Send ERC721 Batch")
+            send_erc721_batch_contract
+            ;;
+        "Go to Main Menu")
+            main_menu
+            ;;
+    esac
+}
+
+go_to_main_menu_or_exit() {
+    if gum confirm "Go to main menu?"; then
+        clear
+        main_menu
+    else
+        echo "Exiting..."
+        exit 0
+    fi
+}

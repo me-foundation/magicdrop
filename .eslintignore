@@ -6,3 +6,4 @@ gasReporterOutput.json
 dist
 rollup.cache
 docs
+lib/

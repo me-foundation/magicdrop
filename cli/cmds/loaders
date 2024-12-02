@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULTS_FILE="$BASE_DIR/../defaults.json"
+
+
+load_signer() {
+    password=$(get_password_if_set)
+    export SIGNER=$(cast wallet address $password)
+}
+
+load_defaults() {
+    CONFIG_COMPLETE=true
+
+    # Check if defaults.json exists in the expected location
+    if [[ ! -f "$DEFAULTS_FILE" ]]; then
+        echo "defaults.json not found in $DEFAULTS_FILE. Checking current directory..."
+        DEFAULTS_FILE="./defaults.json"
+    fi
+
+    if [[ ! -f "$DEFAULTS_FILE" ]]; then
+        echo "defaults.json not found in current directory. Exiting..."
+        exit 1
+    fi
+
+    # Read values from defaults.json using jq
+    DEFAULT_COSIGNER=$(jq -r '.default_cosigner // empty' "$DEFAULTS_FILE")
+    DEFAULT_TIMESTAMP_EXPIRY=$(jq -r '.default_timestamp_expiry // empty' "$DEFAULTS_FILE")
+    DEFAULT_MINT_CURRENCY=$(jq -r '.default_mint_currency // empty' "$DEFAULTS_FILE")
+    DEFAULT_TOKEN_URI_SUFFIX=$(jq -r '.default_token_uri_suffix // empty' "$DEFAULTS_FILE")
+    DEFAULT_ROYALTY_RECEIVER=$(jq -r '.default_royalty_receiver // empty' "$DEFAULTS_FILE")
+    DEFAULT_ROYALTY_FEE=$(jq -r '.default_royalty_fee // empty' "$DEFAULTS_FILE")
+    DEFAULT_MERKLE_ROOT=$(jq -r '.default_merkle_root // empty' "$DEFAULTS_FILE")
+
+    # Create collections directory if it doesn't exist
+    COLLECTIONS_DIR="$BASE_DIR/../collections"
+    if [[ ! -d "$COLLECTIONS_DIR" ]]; then
+        echo "Creating collections directory at $COLLECTIONS_DIR..."
+        mkdir -p "$COLLECTIONS_DIR"
+    fi
+
+    source "$BASE_DIR/../.env"
+
+    load_signer
+}
+
+load_private_key() {
+    keystore_file="$HOME/.foundry/keystores/$MAGIC_DROP_KEYSTORE"
+
+    # Check if the keystore file exists
+    if [[ -f "$keystore_file" ]]; then
+        return 0
+    fi
+
+    echo "============================================================"
+    echo ""
+    echo "Magic Drop CLI requires a private key to send transactions."
+    echo "This key controls all funds in the account, so it must be protected carefully."
+    echo ""
+    echo "Magic Drop CLI will create an encrypted keystore for your private key."
+    echo "You will be prompted to enter your private key and a password to encrypt it."
+    echo "Learn more: https://book.getfoundry.sh/reference/cast/cast-wallet-import"
+    echo ""
+    echo "This password will be required to send transactions from your account."
+    echo ""
+    echo "============================================================"
+    echo ""
+
+    cast wallet import --interactive $MAGIC_DROP_KEYSTORE
+    if [[ $? -ne 0 ]]; then
+        echo "Failed to create keystore"
+        exit 1
+    fi
+
+    echo ""
+    echo "Keystore created successfully"
+    echo "You can store your password in .env to avoid entering it every time"
+    echo "echo \"KEYSTORE_PASSWORD=<your_password>\" >> .env"
+    echo ""
+
+    echo "Loading signer... enter password if prompted"
+
+    load_signer
+    
+    clear
+}
+
+load_collection() {
+    local collection_file="$1"
+    if [[ ! -f "$collection_file" ]]; then
+        echo "Collection file not found: $collection_file"
+        exit 1
+    fi
+
+    name=$(jq -r '.name' "$collection_file")
+    symbol=$(jq -r '.symbol' "$collection_file")
+    chain_id=$(jq -r '.chainId' "$collection_file")
+    token_standard=$(jq -r '.tokenStandard' "$collection_file")
+    max_mintable_supply=$(jq -c '.maxMintableSupply' "$collection_file")
+    global_wallet_limit=$(jq -c '.globalWalletLimit' "$collection_file")
+    mint_currency=$(jq -r '.mintCurrency' "$collection_file")
+    fund_receiver=$(jq -r '.fundReceiver' "$collection_file")
+    royalty_receiver=$(jq -r '.royaltyReceiver' "$collection_file")
+    royalty_fee=$(jq -r '.royaltyFee' "$collection_file")
+    stages_json=$(jq -r '.stages' "$collection_file")
+    deployment_data=$(jq -r '.deployment' "$collection_file")
+    mintable=$(jq -r '.mintable' "$collection_file")
+    cosigner=$(jq -r '.cosigner' "$collection_file")
+    token_uri_suffix=$(jq -r '.tokenUriSuffix' "$collection_file")
+    contract_uri=$(jq -r '.uri' "$collection_file")
+
+    if [[ "$token_standard" == "ERC721" ]]; then
+        base_uri=$contract_uri
+    elif [[ "$token_standard" == "ERC1155" ]]; then
+        uri=$contract_uri
+    fi
+
+    contract_address=$(echo "$deployment_data" | jq -r '.contract_address')
+
+    echo "Loaded Collection!"
+    echo ""
+    echo "Name: $name"
+
+    if [[ -n "$chain_id" ]]; then   
+        echo "Chain: $chain_id"
+    fi
+
+    if [[ -n "$contract_address" ]]; then
+        echo "Contract: $contract_address"
+        echo $(format_explorer_contract_url $chain_id $contract_address)
+    fi
+}

@@ -14,9 +14,7 @@ import {
   setMintable,
   deploy,
   deploy1155,
-  deployClone,
   setBaseURI,
-  setCrossmintAddress,
   mint,
   ownerMint,
   setGlobalWalletLimit,
@@ -44,19 +42,18 @@ import {
   cleanWhitelist,
   ownerMint1155,
 } from './scripts';
-import { deployCloneFactory } from './scripts/deployCloneFactory';
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.20',
+    version: '0.8.22',
     settings: {
       viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 20,
+        runs: 100,
         details: {
           yulDetails: {
-            optimizerSteps: "dhfoD[xarrscLMcCTU]uljmul",
+            optimizerSteps: 'dhfoD[xarrscLMcCTU]uljmul',
           },
         },
       },
@@ -77,8 +74,8 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       accounts: {
-        accountsBalance: '1000000000000000000000'
-      }
+        accountsBalance: '1000000000000000000000',
+      },
     },
     apechain: {
       url: 'https://apechain.calderachain.xyz/http',
@@ -86,7 +83,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     base: {
-      url: process.env.BASE_URL || '',
+      url: process.env.BASE_URL || 'https://mainnet.base.org',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -107,7 +104,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     mainnet: {
-      url: process.env.MAINNET_URL || '',
+      url: process.env.MAINNET_URL || 'https://cloudflare-eth.com',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -117,12 +114,17 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     polygon: {
-      url: process.env.POLYGON_URL || '',
+      url: process.env.POLYGON_URL || 'https://polygon-rpc.com',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     fuji: {
       url: process.env.FUJI_URL || 'https://api.avax-test.network/ext/bc/C/rpc',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    arbitrum: {
+      url: process.env.ARBITRUM_URL || 'arbitrum-one.publicnode.com',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
@@ -145,8 +147,8 @@ const config: HardhatUserConfig = {
     ]
   },
   sourcify: {
-    enabled: true
-  }
+    enabled: true,
+  },
 };
 
 task('setStages', 'Set stages for ERC721M')
@@ -301,11 +303,6 @@ task('setBaseURI', 'Set the base uri')
     types.int,
   )
   .setAction(setBaseURI);
-
-task('setCrossmintAddress', 'Set crossmint address')
-  .addParam('contract', 'contract address')
-  .addParam('crossmintaddress', 'new crossmint address')
-  .setAction(setCrossmintAddress);
 
 task('mint', 'Mint token(s)')
   .addParam('contract', 'contract address')
@@ -482,31 +479,5 @@ task('cleanWhitelist', 'Clean up whitelist')
   .addOptionalParam('whitelistpath', 'plain whitelist path')
   .addOptionalParam('variablewalletlimitpath', 'variable wallet limit whitelist path')
   .setAction(cleanWhitelist)
-
-task('deployCloneFactory', 'Deploy 721CMRoyalties clone factory')
-  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
-  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
-  .setAction(deployCloneFactory)
-
-task('deployClone', 'Create 721CMRoyalties cline')
-  .addParam('name', 'name')
-  .addParam('symbol', 'symbol')
-  .addParam('maxsupply', 'max supply')
-  .addParam('tokenurisuffix', 'token uri suffix', '.json')
-  .addParam('globalwalletlimit', 'global wallet limit', '0')
-  .addParam('timestampexpiryseconds', 'timestamp expiry in seconds', '300')
-  .addParam('mintcurrency','ERC-20 contract address. 0x0 if using native token','0x0000000000000000000000000000000000000000')
-  .addParam('fundreceiver', 'The treasury wallet to receive mint fund')
-  .addParam('royaltyreceiver', 'erc2198 royalty receiver address')
-  .addParam('royaltyfeenumerator', 'erc2198 royalty fee numerator')
-  .addParam<boolean>(
-    'openedition',
-    'whether or not a open edition mint (unlimited supply, 999,999,999)',
-    false,
-    types.boolean,
-  )
-  .addOptionalParam('gaspricegwei', 'Set gas price in Gwei')
-  .addOptionalParam('gaslimit', 'Set maximum gas units to spend on transaction')
-  .setAction(deployClone);
 
 export default config;

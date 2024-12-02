@@ -1,0 +1,56 @@
+{
+  "_documentation": {
+    "name": "The name of the NFT collection displayed on marketplaces",
+    "symbol": "Trading symbol for the collection (e.g., BAYC)",
+    "chainId": "The blockchain network ID (137 for Polygon)",
+    "tokenStandard": "The NFT standard implementation (ERC721)",
+    "maxMintableSupply": "Maximum number of tokens that can be minted in total",
+    "globalWalletLimit": "Maximum number of tokens that can be minted per wallet across all stages",
+    "mintCurrency": "Token address used for payment (zero address for native currency)",
+    "fundReceiver": "Wallet address that receives the mint payments",
+    "royaltyReceiver": "Wallet address that receives royalties from secondary sales",
+    "royaltyFee": "Percentage of secondary sales paid as royalties (in basis points, e.g., 500 = 5%)",
+    "mintable": "Whether minting is enabled or disabled",
+    "cosigner": "Address of the wallet authorized to sign mint transactions (zero address if unused)",
+    "tokenUriSuffix": "File extension for token metadata files",
+    "uri": "Base URI for token metadata",
+    "stages": {
+      "_description": "Array of mint stages with different conditions",
+      "price": "Price per token in native currency",
+      "mintFee": "Additional fee per mint transaction",
+      "walletLimit": "Maximum tokens that can be minted per wallet in this stage",
+      "maxStageSupply": "Maximum tokens that can be minted in this stage (optional)",
+      "startDate": "UTC timestamp when the stage begins",
+      "endDate": "UTC timestamp when the stage ends"
+    },
+    "deployment": {
+      "contract_address": "Deployed smart contract address",
+      "initial_owner": "Initial owner/admin of the smart contract",
+      "deployed_at": "Timestamp of contract deployment"
+    }
+  },
+
+  "name": "",
+  "symbol": "",
+  "chainId": 0,
+  "tokenStandard": "",
+  "maxMintableSupply": 0,
+  "globalWalletLimit": 0,
+  "mintCurrency": "0x0000000000000000000000000000000000000000",
+  "fundReceiver": "0x0000000000000000000000000000000000000000",
+  "royaltyReceiver": "0x0000000000000000000000000000000000000000",
+  "royaltyFee": 0,
+  "mintable": true,
+  "cosigner": "0x0000000000000000000000000000000000000000",
+  "tokenUriSuffix": ".json",
+  "uri": "",
+  "stages": [
+    {
+      "price": "",
+      "mintFee": "",
+      "walletLimit": 0,
+      "startTime": "2024-11-04T16:30:00Z",
+      "endTime": "2024-11-07T16:25:00Z"
+    }
+  ]
+}

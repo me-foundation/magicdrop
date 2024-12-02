@@ -1,0 +1,8 @@
+solady/=lib/solady/
+solemate/=/lib/solemate/src/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+forge-std/=lib/forge-std/src/
+erc721a/contracts=lib/ERC721A/contracts/
+erc721a-upgradeable/contracts=lib/ERC721A-Upgradeable/contracts/
+@limitbreak/creator-token-standards/src/=lib/creator-token-standards/src/

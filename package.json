@@ -1,7 +1,7 @@
 {
   "name": "@me-foundation/magicdrop",
   "version": "0.2.0",
-  "description": "MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and crossmint support.",
+  "description": "MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and authorized minter support.",
   "files": [
     "/contracts/**/*.sol",
     "/artifacts/contracts/**/*.json",
@@ -27,19 +27,20 @@
     "test:gas": "REPORT_GAS=true hardhat test",
     "coverage": "REPORT_COVERAGE=true hardhat coverage",
     "precommit": "lint-staged",
-    "lint": "npm run lint:js && npm run lint:sol",
-    "lint:js": "eslint --ignore-path .gitignore . --fix",
-    "lint:sol": "prettier --write \"contracts/**/*.sol\""
+    "lint": "npm run lint:js",
+    "lint:js": "eslint . --fix",
+    "fmt": "forge fmt"
   },
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
     "@layerzerolabs/solidity-examples": "^0.0.13",
-    "@limitbreak/creator-token-standards": "^2.0.1",
-    "@openzeppelin/contracts": "^5.0.2",
-    "@openzeppelin/contracts-upgradeable": "^5.0.2",
+    "@limitbreak/creator-token-standards": "^3.0.0",
+    "@openzeppelin/contracts": "^4.8.3",
+    "@openzeppelin/contracts-upgradeable": "^4.8.3",
     "erc721a": "^4.2.3",
     "erc721a-upgradeable": "^4.3.0",
-    "operator-filter-registry": "^1.4.2"
+    "operator-filter-registry": "^1.4.2",
+    "solady": "^0.0.249"
   },
   "peerDependencies": {
     "ethers": "^5.0.0"
@@ -86,7 +87,7 @@
     "solidity-coverage": "^0.8.11",
     "ts-node": "^10.7.0",
     "typechain": "^8.1.0",
-    "typescript": "^5.6.3",
+    "typescript": "~5.1.6",
     "viem": "^2.21.37"
   },
   "lint-staged": {

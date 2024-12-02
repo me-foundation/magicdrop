@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+print_signer_with_balance() {
+    local chain_id="$1"
+    local balance=$(check_signer_native_balance $chain_id)
+    local symbol=$(chain_id_to_symbol $chain_id)
+    printf "Signer: %s\nBalance: %s %s\n" "$(format_address $SIGNER)" "$balance" "$symbol" | gum style --foreground 137
+    echo ""
+}
+
+print_transaction_hash() {
+    if [ $? -eq 0 ]; then
+        tx_hash=$(echo "$output" | jq -r '.transactionHash')
+        echo ""
+        echo "Transaction successful."
+        echo $(format_explorer_tx_url $chain_id $tx_hash)
+        echo ""
+    else
+        echo "Transaction failed."
+        exit 1
+    fi
+}
+
+confirm_set_token_uri_suffix() {
+    echo ""
+    echo "==================== TOKEN URI SUFFIX ===================="
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
+    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
+    echo "Token URI Suffix:             $(gum style --foreground 212 "$token_uri_suffix")"
+    echo "==========================================================="
+    echo ""
+    
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
+confirm_set_base_uri() {
+    echo ""
+    echo "==================== BASE URI ===================="
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
+    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
+    echo "Base URI:                     $(gum style --foreground 212 "$base_uri")"
+    echo "==================================================="
+    echo ""
+    
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
+confirm_set_global_wallet_limit() {
+    echo ""
+    echo "==================== GLOBAL WALLET LIMIT ===================="
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
+    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
+    echo "Global Wallet Limit:          $(gum style --foreground 212 "$global_wallet_limit")"
+    echo "==========================================================="
+    echo ""
+
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
+confirm_deployment() {
+    echo ""
+    echo "==================== DEPLOYMENT DETAILS ===================="
+    echo "Name:                         $(gum style --foreground 212 "$name")"
+    echo "Symbol:                       $(gum style --foreground 212 "$symbol")"
+    echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
+    echo "Initial Owner:                $(gum style --foreground 212 "$(format_address "$SIGNER")")"
+    if [[ "$impl_id" -eq 0 ]]; then
+        echo "Impl ID:                      $(gum style --foreground 212 "DEFAULT")"
+    else
+        echo "Impl ID:                      $(gum style --foreground 212 "$impl_id")"
+    fi
+    echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
+    echo "Deployment Fee:               $(gum style --foreground 212 "$deployment_fee")"
+    echo "============================================================"
+    echo ""
+
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
+confirm_setup() {
+    echo ""
+    echo "==================== CONTRACT DETAILS ===================="
+    echo "Chain:                        $(gum style --foreground 212 "$chain")"
+    echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
+    echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
+    echo "======================= SETUP INFO ======================="
+    echo "Max Mintable Supply:          $(gum style --foreground 212 "$max_mintable_supply")"
+    echo "Global Wallet Limit:          $(gum style --foreground 212 "$global_wallet_limit")"
+    echo "Mint Currency:                $(gum style --foreground 212 "$(format_address "$mint_currency")")"
+    echo "Royalty Receiver:             $(gum style --foreground 212 "$(format_address "$royalty_receiver")")"
+    echo "Royalty Fee:                  $(gum style --foreground 212 "$royalty_fee")"
+    echo "Stages File:                  $(gum style --foreground 212 "$stages_file")"
+    echo "Fund Receiver:                $(gum style --foreground 212 "$(format_address "$fund_receiver")")"
+    echo "=========================================================="
+    echo ""
+
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
+show_main_title() {
+    gum style \
+	--foreground 212 --border-foreground 212 --border double \
+	--align center --width 40 --margin "1 0" --padding "1" \
+	'Magic Drop CLI' '' 'Create and manage NFT collections'
+}
+
+show_title() {
+    local title="$1"
+    local subtitle="$2"
+    gum style \
+    --foreground 212 --border-foreground 212 --border double \
+    --align center --width 40 --margin "1 0" --padding "1" \
+    "$title" \
+    "$subtitle"
+}

@@ -1,0 +1,14 @@
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+[profile.default]
+src = "contracts"
+out = "out"
+libs = ["lib", "node_modules"]
+solc_version = "0.8.22"
+evm_version = "cancun"
+via_ir = true
+optimizer_runs = 777
+
+[etherscan]
+apechain = {key = "${VERIFICATION_API_KEY_APECHAIN}", chain = 33139, url = "https://api.apescan.io/api"}
+sei = {key = "${VERIFICATION_API_KEY_SEI}", chain = 1329, url = "https://api.seiscan.io/api"}

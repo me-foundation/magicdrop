@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+
+trap "echo 'Exiting...'; exit 1" SIGINT
+
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+check_input() {
+    local input_value="$1"
+    local input_name="$2"
+    if [[ -z "$input_value" ]]; then
+        echo "No input received for $input_name. Exiting..."
+        exit 1
+    fi
+}
+
+format_address() {
+    local address=$1
+    local prefix=${address:0:6}
+    local suffix=${address: -4}
+    echo "${prefix}...${suffix}"
+}
+
+set_rpc_url() {
+    case $1 in
+        1) RPC_URL="https://cloudflare-eth.com" ;; # Ethereum
+        137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
+        8453) RPC_URL="https://mainnet.base.org" ;; # Base
+        42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
+        1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
+        33139) RPC_URL="https://rpc.apechain.com/http" ;; # ApeChain
+        11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
+        *) echo "Unsupported chain id"; exit 1 ;;
+    esac
+
+    export RPC_URL
+}
+
+process_stages() {
+    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$stages_json" "$BASE_DIR/../collections" "$token_standard" "$WEB3STORAGE_KEY"
+
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to get stages data"
+        return 1
+    fi
+
+    if [[ ! -f "$STAGES_FILE" ]]; then
+        echo "Error: Output file not found: $STAGES_FILE"
+        return 1
+    fi
+}
+
+get_contract_address_from_logs() {
+    local deployment_data="$1"
+    local event_sig="$2"
+    
+    for log in $(echo "$deployment_data" | jq -c '.logs[]'); do
+        local topic0=$(echo "$log" | jq -r '.topics[0]')
+        if [ "$topic0" == "$event_sig" ]; then
+            echo $(echo "$log" | jq -r '.data' | sed 's/^0x//')
+            return
+        fi
+    done
+}
+
+decode_address() {
+  chunk=$1
+  # Take the last 40 characters (20 bytes for an address)
+  echo "0x${chunk:24}"
+}
+
+save_deployment_data() {
+    contract_address=$1
+    initial_owner=$2
+
+    # Get the current timestamp
+    timestamp=$(date +%s)
+    deployed_at=$(date -u -r $timestamp +"%Y-%m-%d %H:%M:%S")
+    
+    # Create deployment object
+    deployment_data=$(jq -n \
+        --arg contract_address "$contract_address" \
+        --arg initial_owner "$initial_owner" \
+        --arg deployed_at "$deployed_at" \
+        '{
+            contract_address: $contract_address,
+            initial_owner: $initial_owner,
+            deployed_at: $deployed_at
+        }')
+    
+    if [[ ! -f "$collection_file" ]]; then
+        echo "Error: Collection file not found: $collection_file"
+        return 1
+    fi
+
+    # Add deployment data to the existing JSON file
+    jq --argjson deployment "$deployment_data" '.deployment = $deployment' "$collection_file" > "$collection_file.tmp" && mv "$collection_file.tmp" "$collection_file"
+    
+    echo "Deployment details added to $collection_file"
+}
+
+prestart() {
+    # Fetch the latest changes from the remote
+    git -C "$BASE_DIR" fetch
+
+    # Check if the local main is behind the remote main
+    LOCAL=$(git -C "$BASE_DIR" rev-parse @)
+    REMOTE=$(git -C "$BASE_DIR" rev-parse @{u})
+    BASE=$(git -C "$BASE_DIR" merge-base @ @{u})
+
+    if [ $LOCAL = $REMOTE ]; then
+        echo "You are up-to-date with the main branch."
+    elif [ $LOCAL = $BASE ]; then
+        echo "Your local main branch is behind the remote. Please pull the latest changes."
+        exit 1
+    elif [ $REMOTE = $BASE ]; then
+        echo "Your local main branch is ahead of the remote."
+    else
+        echo "Your local main branch has diverged from the remote."
+        exit 1
+    fi
+
+    forge build --root "$BASE_DIR"
+}
+
+check_signer_native_balance() {
+    local chain_id="$1"
+    set_rpc_url $chain_id
+    local balance=$(cast balance $SIGNER --rpc-url "$RPC_URL")
+    local from_wei=$(cast from-wei $balance)
+    printf "%.3f\n" $from_wei
+}
+
+chain_id_to_symbol() {
+    local chain_id="$1"
+    case $chain_id in
+        1) echo "ETH" ;;
+        137) echo "MATIC" ;;
+        8453) echo "BASE" ;;
+        42161) echo "ARB" ;;
+        1329) echo "SEI" ;;
+        33139) echo "APE" ;;
+        11155111) echo "SEP" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
+chain_id_to_explorer_url() {
+    local chain_id="$1"
+    case $chain_id in
+        1) echo "https://etherscan.io" ;;
+        137) echo "https://polygonscan.com" ;;
+        8453) echo "https://explorer.base.org" ;;
+        42161) echo "https://arbiscan.io" ;;
+        1329) echo "https://sei.explorer.sepolia.io" ;;
+        33139) echo "https://explorer.caldera.xyz" ;;
+        11155111) echo "https://sepolia.etherscan.io" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
+format_explorer_contract_url() {
+    local chain_id="$1"
+    local contract_address="$2"
+    local explorer_url=$(chain_id_to_explorer_url $chain_id)
+    echo "$explorer_url/address/$contract_address"
+}
+
+format_explorer_tx_url() {
+    local chain_id="$1"
+    local tx_hash="$2"
+    local explorer_url=$(chain_id_to_explorer_url $chain_id)
+    echo "$explorer_url/tx/$tx_hash"
+}
+
+get_standard_id() {
+    case $1 in
+        "ERC721") echo "0" ;;
+        "ERC1155") echo "1" ;;
+        *) echo "Unknown" ;;
+    esac
+}
