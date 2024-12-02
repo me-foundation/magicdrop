@@ -18,11 +18,7 @@ contract ERC721MOperatorFilterer is ERC721M, UpdatableOperatorFilterer {
         address mintCurrency,
         address fundReceiver
     )
-        UpdatableOperatorFilterer(
-            CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS,
-            ME_SUBSCRIPTION,
-            true
-        )
+        UpdatableOperatorFilterer(CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION, true)
         ERC721M(
             collectionName,
             collectionSymbol,
@@ -36,37 +32,34 @@ contract ERC721MOperatorFilterer is ERC721M, UpdatableOperatorFilterer {
         )
     {}
 
-    function owner()
-        public
-        view
-        override(Ownable, UpdatableOperatorFilterer)
-        returns (address)
-    {
+    function owner() public view override(Ownable, UpdatableOperatorFilterer) returns (address) {
         return Ownable.owner();
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public payable override(ERC721A, IERC721A) onlyAllowedOperator(from) {
+    function transferFrom(address from, address to, uint256 tokenId)
+        public
+        payable
+        override(ERC721A, IERC721A)
+        onlyAllowedOperator(from)
+    {
         super.transferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public payable override(ERC721A, IERC721A) onlyAllowedOperator(from) {
+    function safeTransferFrom(address from, address to, uint256 tokenId)
+        public
+        payable
+        override(ERC721A, IERC721A)
+        onlyAllowedOperator(from)
+    {
         super.safeTransferFrom(from, to, tokenId);
     }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    ) public payable override(ERC721A, IERC721A) onlyAllowedOperator(from) {
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)
+        public
+        payable
+        override(ERC721A, IERC721A)
+        onlyAllowedOperator(from)
+    {
         super.safeTransferFrom(from, to, tokenId, data);
     }
 }

@@ -23,8 +23,7 @@ abstract contract Cosignable {
     ==============================================================*/
 
     // keccak256(abi.encode(uint256(keccak256("magicdrop.common.Cosignable")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant COSIGNER_STORAGE =
-        0x7a773b7a6a1a56c71d7c444f8c85789ff8084674fcb1b3c236aa236aec141e00;
+    bytes32 private constant COSIGNER_STORAGE = 0x7a773b7a6a1a56c71d7c444f8c85789ff8084674fcb1b3c236aa236aec141e00;
 
     /*==============================================================
     =                             EVENTS                           =
@@ -61,9 +60,7 @@ abstract contract Cosignable {
     /// @notice Sets the expiry time for timestamps
     /// @dev This function should be overridden with appropriate access control
     /// @param timestampExpirySeconds The number of seconds after which a timestamp is considered expired
-    function setTimestampExpirySeconds(
-        uint256 timestampExpirySeconds
-    ) external virtual {}
+    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external virtual {}
 
     /*==============================================================
     =                      PUBLIC VIEW METHODS                     =
@@ -76,31 +73,21 @@ abstract contract Cosignable {
     /// @param timestamp The timestamp of the request
     /// @param cosignNonce A nonce to prevent replay attacks
     /// @return The generated digest
-    function getCosignDigest(
-        address minter,
-        uint32 qty,
-        bool waiveMintFee,
-        uint256 timestamp,
-        uint256 cosignNonce
-    ) public view returns (bytes32) {
+    function getCosignDigest(address minter, uint32 qty, bool waiveMintFee, uint256 timestamp, uint256 cosignNonce)
+        public
+        view
+        returns (bytes32)
+    {
         CosignerStorage storage $ = _loadCosignerStorage();
         if ($.cosigner == address(0)) revert CosignerNotSet();
 
-        return
-            SignatureCheckerLib.toEthSignedMessageHash(
-                keccak256(
-                    abi.encodePacked(
-                        address(this),
-                        minter,
-                        qty,
-                        waiveMintFee,
-                        $.cosigner,
-                        timestamp,
-                        block.chainid,
-                        cosignNonce
-                    )
+        return SignatureCheckerLib.toEthSignedMessageHash(
+            keccak256(
+                abi.encodePacked(
+                    address(this), minter, qty, waiveMintFee, $.cosigner, timestamp, block.chainid, cosignNonce
                 )
-            );
+            )
+        );
     }
 
     /// @notice Verifies the validity of a cosign signature
@@ -121,9 +108,7 @@ abstract contract Cosignable {
 
         if (
             SignatureCheckerLib.isValidSignatureNow(
-                $.cosigner,
-                getCosignDigest(minter, qty, true, timestamp, cosignNonce),
-                signature
+                $.cosigner, getCosignDigest(minter, qty, true, timestamp, cosignNonce), signature
             )
         ) {
             return true;
@@ -131,9 +116,7 @@ abstract contract Cosignable {
 
         if (
             SignatureCheckerLib.isValidSignatureNow(
-                $.cosigner,
-                getCosignDigest(minter, qty, false, timestamp, cosignNonce),
-                signature
+                $.cosigner, getCosignDigest(minter, qty, false, timestamp, cosignNonce), signature
             )
         ) {
             return false;
@@ -184,9 +167,7 @@ abstract contract Cosignable {
 
     /// @notice Sets the expiry time for timestamps
     /// @param timestampExpirySeconds The number of seconds after which a timestamp is considered expired
-    function _setTimestampExpirySeconds(
-        uint256 timestampExpirySeconds
-    ) internal {
+    function _setTimestampExpirySeconds(uint256 timestampExpirySeconds) internal {
         assembly {
             sstore(add(COSIGNER_STORAGE, 1), timestampExpirySeconds)
         }
@@ -195,11 +176,7 @@ abstract contract Cosignable {
 
     /// @notice Loads the cosigner storage
     /// @return $ The cosigner storage
-    function _loadCosignerStorage()
-        internal
-        pure
-        returns (CosignerStorage storage $)
-    {
+    function _loadCosignerStorage() internal pure returns (CosignerStorage storage $) {
         assembly {
             $.slot := COSIGNER_STORAGE
         }

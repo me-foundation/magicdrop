@@ -9,11 +9,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 /// @title MagicDropTokenImplRegistry
 /// @dev A registry for managing token implementation addresses for different token standards.
 /// This contract is upgradeable and uses the UUPS pattern.
-contract MagicDropTokenImplRegistry is
-    UUPSUpgradeable,
-    Ownable,
-    IMagicDropTokenImplRegistry
-{
+contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropTokenImplRegistry {
     /*==============================================================
     =                            STRUCTS                           =
     ==============================================================*/
@@ -42,19 +38,10 @@ contract MagicDropTokenImplRegistry is
     =                            EVENTS                            =
     ==============================================================*/
 
-    event ImplementationRegistered(
-        TokenStandard standard,
-        address impl,
-        uint32 implId,
-        uint256 deploymentFee
-    );
+    event ImplementationRegistered(TokenStandard standard, address impl, uint32 implId, uint256 deploymentFee);
     event ImplementationUnregistered(TokenStandard standard, uint32 implId);
     event DefaultImplementationSet(TokenStandard standard, uint32 implId);
-    event DeploymentFeeSet(
-        TokenStandard standard,
-        uint32 implId,
-        uint256 deploymentFee
-    );
+    event DeploymentFeeSet(TokenStandard standard, uint32 implId, uint256 deploymentFee);
 
     /*==============================================================
     =                            ERRORS                            =
@@ -91,10 +78,7 @@ contract MagicDropTokenImplRegistry is
     /// @param implId The ID of the implementation.
     /// @notice Reverts if the implementation is not registered.
     /// @return implAddress The address of the implementation contract.
-    function getImplementation(
-        TokenStandard standard,
-        uint32 implId
-    ) external view returns (address implAddress) {
+    function getImplementation(TokenStandard standard, uint32 implId) external view returns (address implAddress) {
         assembly {
             // Compute s1 = keccak256(abi.encode(standard, MAGICDROP_REGISTRY_STORAGE))
             mstore(0x00, standard)
@@ -119,9 +103,7 @@ contract MagicDropTokenImplRegistry is
     /// @param standard The token standard (ERC721, ERC1155)
     /// @notice Reverts if the default implementation is not registered.
     /// @return defaultImplId The default implementation ID for the given standard
-    function getDefaultImplementationID(
-        TokenStandard standard
-    ) external view returns (uint32 defaultImplId) {
+    function getDefaultImplementationID(TokenStandard standard) external view returns (uint32 defaultImplId) {
         assembly {
             // Compute storage slot for tokenStandardData[standard]
             mstore(0x00, standard)
@@ -147,9 +129,7 @@ contract MagicDropTokenImplRegistry is
     /// @param standard The token standard (ERC721, ERC1155)
     /// @notice Reverts if the default implementation is not registered.
     /// @return implAddress The default implementation address for the given standard
-    function getDefaultImplementation(
-        TokenStandard standard
-    ) external view returns (address implAddress) {
+    function getDefaultImplementation(TokenStandard standard) external view returns (address implAddress) {
         assembly {
             mstore(0x00, standard)
             mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
@@ -180,10 +160,7 @@ contract MagicDropTokenImplRegistry is
     /// @param standard The token standard (ERC721, ERC1155, ERC20)
     /// @param implId The implementation ID
     /// @return deploymentFee The deployment fee for the given standard
-    function getDeploymentFee(
-        TokenStandard standard,
-        uint32 implId
-    ) external view returns (uint256 deploymentFee) {
+    function getDeploymentFee(TokenStandard standard, uint32 implId) external view returns (uint256 deploymentFee) {
         assembly {
             mstore(0x00, standard)
             mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
@@ -202,11 +179,7 @@ contract MagicDropTokenImplRegistry is
 
     /// @dev Loads the registry storage.
     /// @return $ The registry storage.
-    function _loadRegistryStorage()
-        internal
-        pure
-        returns (RegistryStorage storage $)
-    {
+    function _loadRegistryStorage() internal pure returns (RegistryStorage storage $) {
         assembly {
             $.slot := MAGICDROP_REGISTRY_STORAGE
         }
@@ -224,12 +197,11 @@ contract MagicDropTokenImplRegistry is
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if an implementation with the same name is already registered.
     /// @return The ID of the newly registered implementation
-    function registerImplementation(
-        TokenStandard standard,
-        address impl,
-        bool isDefault,
-        uint256 deploymentFee
-    ) external onlyOwner returns (uint32) {
+    function registerImplementation(TokenStandard standard, address impl, bool isDefault, uint256 deploymentFee)
+        external
+        onlyOwner
+        returns (uint32)
+    {
         RegistryStorage storage $ = _loadRegistryStorage();
         bytes4 interfaceId = $.tokenStandardData[standard].interfaceId;
         if (interfaceId == 0) {
@@ -260,14 +232,9 @@ contract MagicDropTokenImplRegistry is
     /// @param implId The ID of the implementation to unregister.
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if the implementation is not registered.
-    function unregisterImplementation(
-        TokenStandard standard,
-        uint32 implId
-    ) external onlyOwner {
+    function unregisterImplementation(TokenStandard standard, uint32 implId) external onlyOwner {
         RegistryStorage storage $ = _loadRegistryStorage();
-        address implData = $.tokenStandardData[standard].implementations[
-            implId
-        ];
+        address implData = $.tokenStandardData[standard].implementations[implId];
 
         if (implData == address(0)) {
             revert InvalidImplementation();
@@ -288,14 +255,9 @@ contract MagicDropTokenImplRegistry is
     /// @param implId The ID of the implementation to set as default
     /// @notice Reverts if the implementation is not registered.
     /// @notice Only the contract owner can call this function
-    function setDefaultImplementation(
-        TokenStandard standard,
-        uint32 implId
-    ) external onlyOwner {
+    function setDefaultImplementation(TokenStandard standard, uint32 implId) external onlyOwner {
         RegistryStorage storage $ = _loadRegistryStorage();
-        address implData = $.tokenStandardData[standard].implementations[
-            implId
-        ];
+        address implData = $.tokenStandardData[standard].implementations[implId];
 
         if (implData == address(0)) {
             revert InvalidImplementation();
@@ -311,11 +273,7 @@ contract MagicDropTokenImplRegistry is
     /// @param implId The implementation ID
     /// @param deploymentFee The deployment fee to set
     /// @notice Only the contract owner can call this function
-    function setDeploymentFee(
-        TokenStandard standard,
-        uint32 implId,
-        uint256 deploymentFee
-    ) external onlyOwner {
+    function setDeploymentFee(TokenStandard standard, uint32 implId, uint256 deploymentFee) external onlyOwner {
         RegistryStorage storage $ = _loadRegistryStorage();
         $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
         emit DeploymentFeeSet(standard, implId, deploymentFee);
@@ -324,18 +282,10 @@ contract MagicDropTokenImplRegistry is
     /// @dev Internal function to authorize an upgrade.
     /// @param newImplementation Address of the new implementation.
     /// @notice Only the contract owner can upgrade the contract.
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /// @dev Overriden to prevent double-initialization of the owner.
-    function _guardInitializeOwner()
-        internal
-        pure
-        virtual
-        override
-        returns (bool)
-    {
+    function _guardInitializeOwner() internal pure virtual override returns (bool) {
         return true;
     }
 }

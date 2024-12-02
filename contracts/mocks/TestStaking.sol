@@ -14,10 +14,7 @@ contract TestStaking {
         _nft = IERC721A(nft);
     }
 
-    function isStaked(
-        address staker,
-        uint256 tokenId
-    ) public view returns (bool) {
+    function isStaked(address staker, uint256 tokenId) public view returns (bool) {
         return _stakers[staker].contains(tokenId);
     }
 
@@ -27,10 +24,7 @@ contract TestStaking {
     }
 
     function stakeFor(address staker, uint256 tokenId) public {
-        require(
-            msg.sender == address(_nft),
-            "Only NFT contract can stake on behalf"
-        );
+        require(msg.sender == address(_nft), "Only NFT contract can stake on behalf");
         _nft.transferFrom(staker, address(this), tokenId);
         _stakers[staker].add(tokenId);
     }

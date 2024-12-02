@@ -33,9 +33,5 @@ interface ErrorsAndEvents {
     event Withdraw(uint256 value);
     event WithdrawERC20(address mintCurrency, uint256 value);
     event DefaultRoyaltySet(address indexed receiver, uint96 feeNumerator);
-    event TokenRoyaltySet(
-        uint256 indexed tokenId,
-        address indexed receiver,
-        uint96 feeNumerator
-    );
+    event TokenRoyaltySet(uint256 indexed tokenId, address indexed receiver, uint96 feeNumerator);
 }
