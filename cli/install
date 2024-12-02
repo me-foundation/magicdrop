@@ -55,7 +55,7 @@ else
     echo "Forge installed. Installing project dependencies..."
     forge install
     # build contracts
-    forge build
+    forge build --via-ir
 fi
 
 echo "Checking for Git..."
