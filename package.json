@@ -28,7 +28,7 @@
     "coverage": "REPORT_COVERAGE=true hardhat coverage",
     "precommit": "lint-staged",
     "lint": "npm run lint:js && npm run lint:sol",
-    "lint:js": "eslint . --fix",
+    "lint:js": "eslint .",
     "lint:sol": "prettier --write \"contracts/**/*.sol\""
   },
   "dependencies": {
