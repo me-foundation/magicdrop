@@ -42,24 +42,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           path: workspace
-      - name: Configure git safe directory
-        run: git config --global --add safe.directory /github/workspace
-      - name: Debug ownership
-        run: |
-          ls -l /github
-          ls -l /github/workspace
-          whoami
-          id
-      - name: Fix workspace ownership
-        run: sudo chown -R $(id -u):$(id -g) /github/workspace
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-      - name: Install dependencies
-        run: |
-          cd workspace
-          forge install
       - uses: crytic/slither-action@35510b34cfdfb137d9816d27378ee8c217f1fa1c
         with:
           fail-on: low
