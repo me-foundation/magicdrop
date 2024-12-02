@@ -43,16 +43,14 @@ export async function generateMerkleRootCLI() {
   const isVariableWalletLimit = process.argv[3] === 'true';
 
   if (!path) {
-    console.error('Please provide a path to the whitelist file');
-    process.exit(1);
+    throw new Error('Please provide a path to the whitelist file');
   }
 
   try {
     const merkleRoot = await generateMerkleRoot(path, isVariableWalletLimit);
     console.log('Merkle Root:', merkleRoot);
   } catch (error) {
-    console.error('Error generating Merkle root:', error);
-    process.exit(1);
+    throw new Error(`Error generating Merkle root: ${error}`);
   }
 }
 
