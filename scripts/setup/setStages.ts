@@ -46,6 +46,8 @@ export const setStages = async (
     overrides.gasLimit = ethers.BigNumber.from(args.gaslimit);
   }
 
+  overrides.maxFeePerGas = 80000000;
+
   const merkleRoots = await Promise.all(
     stagesConfig.map(async (stage) => {
       const isVariableWalletLimit = !!stage.variableWalletLimitPath;

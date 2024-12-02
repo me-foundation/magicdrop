@@ -27,7 +27,7 @@
     "test:gas": "REPORT_GAS=true hardhat test",
     "coverage": "REPORT_COVERAGE=true hardhat coverage",
     "precommit": "lint-staged",
-    "lint": "npm run lint:js && npm run fmt",
+    "lint": "npm run lint:js",
     "lint:js": "eslint . --fix",
     "fmt": "forge fmt"
   },
