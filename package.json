@@ -27,9 +27,9 @@
     "test:gas": "REPORT_GAS=true hardhat test",
     "coverage": "REPORT_COVERAGE=true hardhat coverage",
     "precommit": "lint-staged",
-    "lint": "npm run lint:js && npm run lint:sol",
-    "lint:js": "eslint .",
-    "lint:sol": "prettier --write \"contracts/**/*.sol\""
+    "lint": "npm run lint:js && npm run fmt",
+    "lint:js": "eslint . --fix",
+    "fmt": "forge fmt"
   },
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
