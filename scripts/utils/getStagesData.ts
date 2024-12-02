@@ -29,23 +29,11 @@ type WhitelistEntry = {
   limit?: number;
 };
 
-// const parseWhitelistFile = (filePath: string): string[] => {
-//   try {
-//     const content = fs.readFileSync(filePath, 'utf-8');
-//     return content
-//       .split('\n')
-//       .map((line) => line.trim())
-//       .filter((line) => line.length > 0);
-//   } catch (error: any) {
-//     throw new Error(`Failed to read whitelist file: ${error.message}`);
-//   }
-// };
-
 const parseWhitelistFile = (filePath: string): string[] => {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     const jsonData = JSON.parse(content);
-    
+
     // Handle both array of strings and array of objects formats
     if (!Array.isArray(jsonData)) {
       throw new Error('Whitelist file must contain an array');
@@ -572,8 +560,7 @@ const getStagesData = async (
     fs.writeFileSync(outputFilePath, stagesInput, 'utf-8');
     console.log(`Stages input written to temp file: ${outputFilePath}`);
   } catch (error) {
-    console.error('Error processing stages:', error);
-    process.exit(1);
+    throw new Error(`Error processing stages: ${error}`);
   }
 };
 
@@ -589,10 +576,9 @@ const parseAndValidateArgs = () => {
   const web3StorageKey = process.argv[6];
 
   if (!stagesFilePath && !stagesJson) {
-    console.error(
+    throw new Error(
       'Please provide either a path to the stages file or a JSON string of stages',
     );
-    process.exit(1);
   }
 
   return {
@@ -655,10 +641,5 @@ const loadAndValidateStages = (
 };
 
 if (require.main === module) {
-  main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error('Error:', error);
-      process.exit(1);
-    });
+  main();
 }

@@ -7,7 +7,8 @@
     "/artifacts/contracts/**/*.json",
     "/dist/**/*",
     "!/contracts/mocks/**/*",
-    "!/artifacts/contracts/mocks"
+    "!/artifacts/contracts/mocks",
+    "/scripts/**/*.ts"
   ],
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
