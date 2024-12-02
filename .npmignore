@@ -1,3 +1,4 @@
 hardhat.config.ts
-scripts
 test
+lib
+scripts

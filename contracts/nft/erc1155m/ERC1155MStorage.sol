@@ -17,6 +17,8 @@ contract ERC1155MStorage {
     uint256 internal _numTokens;
     address internal _fundReceiver;
 
-    mapping(uint256 => mapping(uint256 => mapping(address => uint32))) internal _stageMintedCountsPerTokenPerWallet;
-    mapping(uint256 => mapping(uint256 => uint256)) internal _stageMintedCountsPerToken;
+    mapping(uint256 => mapping(uint256 => mapping(address => uint32)))
+        internal _stageMintedCountsPerTokenPerWallet;
+    mapping(uint256 => mapping(uint256 => uint256))
+        internal _stageMintedCountsPerToken;
 }

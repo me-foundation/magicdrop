@@ -7,8 +7,7 @@
     "/artifacts/contracts/**/*.json",
     "/dist/**/*",
     "!/contracts/mocks/**/*",
-    "!/artifacts/contracts/mocks",
-    "/scripts/**/*.ts"
+    "!/artifacts/contracts/mocks"
   ],
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -29,11 +28,8 @@
     "coverage": "REPORT_COVERAGE=true hardhat coverage",
     "precommit": "lint-staged",
     "lint": "npm run lint:js && npm run lint:sol",
-    "lint:js": "eslint --ignore-path .gitignore . --fix",
+    "lint:js": "eslint . --fix",
     "lint:sol": "prettier --write \"contracts/**/*.sol\""
-  },
-  "bin": {
-    "generateMerkleRoot": "./scripts/utils/generateMerkleRoot.ts"
   },
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
@@ -91,7 +87,7 @@
     "solidity-coverage": "^0.8.11",
     "ts-node": "^10.7.0",
     "typechain": "^8.1.0",
-    "typescript": "^5.6.3",
+    "typescript": "~5.1.6",
     "viem": "^2.21.37"
   },
   "lint-staged": {

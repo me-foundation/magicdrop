@@ -10,7 +10,10 @@ import {ERC721MErrorsAndEvents} from "../ERC721MErrorsAndEvents.sol";
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAndEvents {
+interface IERC721MInitializable is
+    IERC721AQueryableUpgradeable,
+    ERC721MErrorsAndEvents
+{
     function getNumberStages() external view returns (uint256);
 
     function getGlobalWalletLimit() external view returns (uint256);
@@ -19,11 +22,17 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAn
 
     function totalMintedByAddress(address a) external view returns (uint256);
 
-    function getStageInfo(uint256 index) external view returns (MintStageInfo memory, uint32, uint256);
+    function getStageInfo(
+        uint256 index
+    ) external view returns (MintStageInfo memory, uint32, uint256);
 
-    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
-        external
-        payable;
+    function mint(
+        uint32 qty,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint256 timestamp,
+        bytes calldata signature
+    ) external payable;
 
     function authorizedMint(
         uint32 qty,

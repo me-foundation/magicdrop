@@ -20,7 +20,12 @@ interface IBucketAuction {
         bool refundClaimed; // has user been refunded yet
     }
 
-    event Bid(address indexed bidder, uint256 bidAmount, uint256 bidderTotal, uint256 bucketTotal);
+    event Bid(
+        address indexed bidder,
+        uint256 bidAmount,
+        uint256 bidderTotal,
+        uint256 bucketTotal
+    );
     event SetMinimumContribution(uint256 minimumContributionInWei);
     event SetPrice(uint256 price);
     event SetClaimable(bool claimable);

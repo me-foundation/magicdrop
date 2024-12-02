@@ -23,7 +23,8 @@ contract ERC721MStorage {
     MintStageInfo[] internal _mintStages;
 
     // Minted count per stage per wallet.
-    mapping(uint256 => mapping(address => uint32)) internal _stageMintedCountsPerWallet;
+    mapping(uint256 => mapping(address => uint32))
+        internal _stageMintedCountsPerWallet;
 
     // Minted count per stage.
     mapping(uint256 => uint256) internal _stageMintedCounts;

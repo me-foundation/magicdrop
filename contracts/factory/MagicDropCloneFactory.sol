@@ -16,7 +16,8 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     ==============================================================*/
 
     MagicDropTokenImplRegistry private _registry;
-    bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address)"));
+    bytes4 private constant INITIALIZE_SELECTOR =
+        bytes4(keccak256("initialize(string,string,address)"));
 
     /*==============================================================
     =                             EVENTS                           =
@@ -24,7 +25,12 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
 
     event MagicDropFactoryInitialized();
     event NewContractInitialized(
-        address contractAddress, address initialOwner, uint32 implId, TokenStandard standard, string name, string symbol
+        address contractAddress,
+        address initialOwner,
+        uint32 implId,
+        TokenStandard standard,
+        string name,
+        string symbol
     );
     event Withdrawal(address to, uint256 amount);
 
@@ -97,7 +103,14 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
         address instance = LibClone.cloneDeterministic(impl, salt);
 
         // Initialize the newly created contract
-        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        (bool success, ) = instance.call(
+            abi.encodeWithSelector(
+                INITIALIZE_SELECTOR,
+                name,
+                symbol,
+                initialOwner
+            )
+        );
         if (!success) {
             revert InitializationFailed();
         }
@@ -150,7 +163,14 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
         address instance = LibClone.clone(impl);
 
         // Initialize the newly created contract
-        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        (bool success, ) = instance.call(
+            abi.encodeWithSelector(
+                INITIALIZE_SELECTOR,
+                name,
+                symbol,
+                initialOwner
+            )
+        );
         if (!success) {
             revert InitializationFailed();
         }
@@ -176,11 +196,11 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     /// @param implId The implementation ID
     /// @param salt The salt used for address generation
     /// @return The predicted deployment address
-    function predictDeploymentAddress(TokenStandard standard, uint32 implId, bytes32 salt)
-        external
-        view
-        returns (address)
-    {
+    function predictDeploymentAddress(
+        TokenStandard standard,
+        uint32 implId,
+        bytes32 salt
+    ) external view returns (address) {
         address impl;
         if (implId == 0) {
             impl = _registry.getDefaultImplementation(standard);
@@ -203,11 +223,13 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     ///@dev Internal function to authorize an upgrade.
     ///@param newImplementation Address of the new implementation.
     ///@notice Only the contract owner can upgrade the contract.
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
 
     /// @notice Withdraws the contract's balance
     function withdraw(address to) external onlyOwner {
-        (bool success,) = to.call{value: address(this).balance}("");
+        (bool success, ) = to.call{value: address(this).balance}("");
         if (!success) {
             revert WithdrawalFailed();
         }
@@ -216,7 +238,13 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     }
 
     /// @dev Overriden to prevent double-initialization of the owner.
-    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+    function _guardInitializeOwner()
+        internal
+        pure
+        virtual
+        override
+        returns (bool)
+    {
         return true;
     }
 
