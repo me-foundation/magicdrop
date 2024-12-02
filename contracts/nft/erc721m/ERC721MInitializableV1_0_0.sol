@@ -10,7 +10,10 @@ import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 import {Initializable} from "solady/src/utils/Initializable.sol";
 
 import {ERC721AUpgradeable, IERC721AUpgradeable} from "erc721a-upgradeable/contracts/ERC721AUpgradeable.sol";
-import {ERC721AQueryableUpgradeable, IERC721AQueryableUpgradeable} from "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol";
+import {
+    ERC721AQueryableUpgradeable,
+    IERC721AQueryableUpgradeable
+} from "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol";
 import {IERC721A, ERC721A} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import {ERC721MStorage} from "./ERC721MStorage.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
