@@ -52,6 +52,7 @@ const parseWhitelistFile = (filePath: string): string[] => {
  *                 - A single address (e.g., "0x123...")
  *                 - An address with a mint limit (e.g., "0x123...,5")
  * @param stageIdx - The index of the current stage, used for naming the invalid entries file
+ * @param outputFileDir - The directory to write the invalid entries file to
  *
  * @returns An array of WhitelistEntry objects containing validated addresses and optional limits
  *
@@ -66,6 +67,7 @@ const parseWhitelistFile = (filePath: string): string[] => {
 const cleanWhitelistData = (
   entries: string[],
   stageIdx: number,
+  outputFileDir: string,
 ): WhitelistEntry[] => {
   const firstEntry = entries[0];
   const isVariableWalletLimit = firstEntry.includes(',');
@@ -124,8 +126,9 @@ const cleanWhitelistData = (
   if (invalidEntries.length > 0) {
     const invalidEntriesPath = `invalid_entries_stage_${stageIdx}.txt`;
     try {
-      fs.writeFileSync(invalidEntriesPath, invalidEntries.join('\n'), 'utf-8');
-      console.log(`Invalid entries have been written to ${invalidEntriesPath}`);
+      const invalidEntriesFile = path.join(outputFileDir, invalidEntriesPath);
+      fs.writeFileSync(invalidEntriesFile, invalidEntries.join('\n'), 'utf-8');
+      console.log(`Invalid entries have been written to ${invalidEntriesFile}`);
     } catch (error: any) {
       console.error(
         `Failed to write invalid entries to file: ${error.message}`,
@@ -406,9 +409,11 @@ const generateERC1155MerkleRoots = async (
       }
 
       const rawWhitelist = parseWhitelistFile(whitelistPath);
-      const cleanedWhitelist = cleanWhitelistData(rawWhitelist, stageIdx);
-      const fs = require('fs');
-      const path = require('path');
+      const cleanedWhitelist = cleanWhitelistData(
+        rawWhitelist,
+        stageIdx,
+        outputFileDir,
+      );
       const outputPath = path.join(
         outputFileDir,
         `cleanedWhitelist_stage_${stageIdx}.json`,
@@ -479,7 +484,11 @@ const generateERC721MerkleRoot = async (
   }
 
   const rawWhitelist = parseWhitelistFile(stage.whitelistPath);
-  const cleanedWhitelist = cleanWhitelistData(rawWhitelist, stageIdx);
+  const cleanedWhitelist = cleanWhitelistData(
+    rawWhitelist,
+    stageIdx,
+    outputFileDir,
+  );
   const outputPath = path.join(
     outputFileDir,
     `cleanedWhitelist_stage_${stageIdx}.json`,

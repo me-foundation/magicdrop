@@ -92,7 +92,7 @@ confirm_deployment() {
 confirm_setup() {
     echo ""
     echo "==================== CONTRACT DETAILS ===================="
-    echo "Chain:                        $(gum style --foreground 212 "$chain")"
+    echo "Chain:                        $(gum style --foreground 212 "$chain_id")"
     echo "Token Standard:               $(gum style --foreground 212 "$token_standard")"
     echo "Contract Address:             $(gum style --foreground 212 "$(format_address "$contract_address")")"
     echo "======================= SETUP INFO ======================="
@@ -101,7 +101,8 @@ confirm_setup() {
     echo "Mint Currency:                $(gum style --foreground 212 "$(format_address "$mint_currency")")"
     echo "Royalty Receiver:             $(gum style --foreground 212 "$(format_address "$royalty_receiver")")"
     echo "Royalty Fee:                  $(gum style --foreground 212 "$royalty_fee")"
-    echo "Stages File:                  $(gum style --foreground 212 "$stages_file")"
+    echo "Stages File:                  $(gum style --foreground 212 "${stages_file:-N/A}")"
+    echo "Stages JSON:                  $(gum style --foreground 212 "$(echo "$stages_json" | tr -d '\n\t ' | cut -c 1-30)$([ ${#stages_json} -gt 30 ] && echo "... rest omitted")")"
     echo "Fund Receiver:                $(gum style --foreground 212 "$(format_address "$fund_receiver")")"
     echo "=========================================================="
     echo ""

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set_contract_address() {
-    if [ -z "$contract_address" ]; then
+    if is_unset_or_null "$contract_address"; then
         show_title "$title" "> Enter contract address <"
         contract_address=$(get_ethereum_address "Enter contract address")
         check_input "$contract_address" "contract address"
@@ -10,7 +10,7 @@ set_contract_address() {
 }
 
 set_fund_receiver() {
-    if [ -z "$fund_receiver" ]; then
+    if is_unset_or_null "$fund_receiver"; then
         show_title "$title" "> Set fund receiver <"
         if gum confirm "Override fund receiver? (default: $(format_address $SIGNER))" --default=false; then
             fund_receiver=$(get_ethereum_address "Fund receiver (eg: 0x000...000)")
@@ -22,7 +22,7 @@ set_fund_receiver() {
 }
 
 set_royalties() {
-    if [ -z "$royalty_receiver" ] && [ -z "$royalty_fee" ]; then
+    if is_unset_or_null "$royalty_receiver" && is_unset_or_null "$royalty_fee"; then
         show_title "$title" "> Do you want to set royalties? <"
         if gum confirm "Use royalties?" --default=false; then
             # Set royalty receiver
@@ -44,7 +44,7 @@ set_royalties() {
 }
 
 set_stages_file() {
-    if [ -z "$stages_file" ] && [ -z "$stages_json" ]; then
+    if is_unset_or_null "$stages_file" && is_unset_or_null "$stages_json"; then
         show_title "$title" "> Set stages file <"
         stages_file=$(get_collection_file "Enter stages JSON file")
         clear
@@ -52,7 +52,7 @@ set_stages_file() {
 }
 
 set_mint_currency() {
-    if [ -z "$mint_currency" ]; then
+    if is_unset_or_null "$mint_currency"; then
         show_title "$title" "> Set mint currency <"
         if gum confirm "Override default mint currency? ($DEFAULT_MINT_CURRENCY)" --default=false; then
             mint_currency=$(get_ethereum_address "Mint currency (default: Native Gas Token)")
@@ -64,7 +64,7 @@ set_mint_currency() {
 }
 
 set_max_mintable_supply() {
-    if [ -z "$max_mintable_supply" ]; then
+    if is_unset_or_null "$max_mintable_supply"; then
         if [ "$token_standard" = "ERC1155" ] && [ -z "$token_id" ]; then
             show_title "$title" "> Set max mintable supply for each token <"
             max_mintable_supply="["
@@ -91,7 +91,7 @@ set_max_mintable_supply() {
 }
 
 set_token_standard() {
-    if [ -z "$token_standard" ]; then
+    if is_unset_or_null "$token_standard"; then
         show_title "$title" "> Set token standard <"
         token_standard=$(gum choose "ERC721" "ERC1155")
         clear
@@ -99,7 +99,7 @@ set_token_standard() {
 }
 
 set_chain() {
-    if [ -z "$chain_id" ]; then
+    if is_unset_or_null "$chain_id"; then
         show_title "$title" "> Choose a chain to deploy on <"
         chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
         # Extract the chain ID based on the selected chain name
@@ -111,7 +111,7 @@ set_chain() {
 }
 
 set_base_uri() {
-    if [ -z "$base_uri" ]; then
+    if is_unset_or_null "$base_uri"; then
         show_title "$title" "> Enter the base URI <"
         base_uri=$(gum input --placeholder "Enter base URI")
         check_input "$base_uri" "base URI"
@@ -120,7 +120,7 @@ set_base_uri() {
 }
 
 set_collection_name() {
-    if [ -z "$name" ]; then
+    if is_unset_or_null "$name"; then
         show_title "$title" "> Enter the collection name <"
         name=$(gum input --placeholder "Enter collection name")
         check_input "$name" "name"
@@ -129,7 +129,7 @@ set_collection_name() {
 }
 
 set_collection_symbol() {
-    if [ -z "$symbol" ]; then
+    if is_unset_or_null "$symbol"; then
         show_title "$title" "> Enter the collection symbol <"
         symbol=$(gum input --placeholder "Enter collection symbol")
         check_input "$symbol" "symbol"
@@ -138,7 +138,7 @@ set_collection_symbol() {
 }
 
 set_contract_owner() {
-    if [ -z "$initial_owner" ]; then
+    if is_unset_or_null "$initial_owner"; then
         show_title "$title" "> Set initial contract owner <"
         if gum confirm "Override initial contract owner? ($(format_address $SIGNER))" --default=false; then
             initial_owner=$(get_ethereum_address "Initial contract owner")
@@ -150,7 +150,7 @@ set_contract_owner() {
 }
 
 set_impl_id() {
-    if [ -z "$impl_id" ]; then
+    if is_unset_or_null "$impl_id"; then
         show_title "$title" "> Set implementation ID <"
         if gum confirm "Override default implementation?" --default=false; then
             impl_id=$(get_numeric_input "Enter implementation ID")
@@ -163,7 +163,7 @@ set_impl_id() {
 }
 
 set_global_wallet_limit() {
-    if [ -z "$global_wallet_limit" ]; then
+    if is_unset_or_null "$global_wallet_limit"; then
         if [ "$token_standard" = "ERC1155" ] && [ -z "$token_id" ]; then
             show_title "$title" "> Set global wallet limit for each token <"
             global_wallet_limit="["
@@ -190,7 +190,7 @@ set_global_wallet_limit() {
 }
 
 set_token_id() {
-    if [ -z "$token_id" ]; then
+    if is_unset_or_null "$token_id"; then
         show_title "$title" "> Enter token ID <"
         token_id=$(get_numeric_input "Enter token ID")
         check_input "$token_id" "token ID"
@@ -199,7 +199,7 @@ set_token_id() {
 }
 
 set_mintable() {
-    if [ -z "$mintable" ]; then
+    if is_unset_or_null "$mintable"; then
         show_title "$title" "> Set mintable <"
         if gum confirm "Set mintable?" --default=false; then
             mintable=true
@@ -211,7 +211,7 @@ set_mintable() {
 }
 
 set_cosigner_address() {
-    if [ -z "$cosigner" ]; then
+    if is_unset_or_null "$cosigner"; then
         show_title "$title" "> Enter cosigner address <"
         cosigner=$(get_ethereum_address "Enter cosigner address")
         check_input "$cosigner" "cosigner address"
@@ -220,7 +220,7 @@ set_cosigner_address() {
 }
 
 set_timestamp_expiry() {
-    if [ -z "$timestamp_expiry" ]; then
+    if is_unset_or_null "$timestamp_expiry"; then
         show_title "$title" "> Enter the timestamp expiry <"
         timestamp_expiry=$(get_numeric_input "Enter timestamp expiry in seconds")
         check_input "$timestamp_expiry" "timestamp expiry"
@@ -229,7 +229,7 @@ set_timestamp_expiry() {
 }
 
 set_new_owner() {
-    if [ -z "$new_owner" ]; then
+    if is_unset_or_null "$new_owner"; then
         show_title "$title" "> Enter new owner address <"
         new_owner=$(get_ethereum_address "Enter new owner address")
         check_input "$new_owner" "new owner address"
@@ -238,7 +238,7 @@ set_new_owner() {
 }
 
 set_token_uri_suffix() {
-    if [ -z "$token_uri_suffix" ]; then
+    if is_unset_or_null "$token_uri_suffix"; then
         show_title "$title" "> Set token URI suffix <"
         if gum confirm "Override default token URI suffix? ($DEFAULT_TOKEN_URI_SUFFIX)" --default=false; then
             token_uri_suffix=$(gum input --placeholder ".json")
@@ -250,7 +250,7 @@ set_token_uri_suffix() {
 }
 
 set_1155_uri() {
-    if [ -z "$uri" ]; then
+    if is_unset_or_null "$uri"; then
         show_title "$title" "> Enter new URI <"
         uri="$(gum input --placeholder "Enter new URI")"
         check_input "$uri" "URI"
@@ -259,7 +259,7 @@ set_1155_uri() {
 }
 
 set_receiver_address() {
-    if [ -z "$receiver" ]; then
+    if is_unset_or_null "$receiver"; then
         show_title "$title" "> Enter receiver address <"
         receiver=$(get_ethereum_address "Enter receiver address")
         check_input "$receiver" "receiver address"
@@ -268,7 +268,7 @@ set_receiver_address() {
 }
 
 set_fee_numerator() {
-    if [ -z "$fee_numerator" ]; then
+    if is_unset_or_null "$fee_numerator"; then
         show_title "$title" "> Enter fee numerator <"
         echo "Notice: The fee numerator is a number from 0 to 10000."
         echo "It shows the royalty fee as a percentage."
@@ -282,7 +282,7 @@ set_fee_numerator() {
 }
 
 set_quantity() {
-    if [ -z "$quantity" ]; then
+    if is_unset_or_null "$quantity"; then
         show_title "$title" "> Enter quantity <"
         quantity=$(get_numeric_input "Enter quantity")
         check_input "$quantity" "quantity"
@@ -291,7 +291,7 @@ set_quantity() {
 }
 
 set_authorized_minter() {
-    if [ -z "$minter" ]; then
+    if is_unset_or_null "$minter"; then
         show_title "$title" "> Enter minter address <"
         minter=$(get_ethereum_address "Enter minter address")
         check_input "$minter" "minter address"
@@ -300,7 +300,7 @@ set_authorized_minter() {
 }
 
 set_number_of_1155_tokens() {
-    if [ -z "$total_tokens" ]; then
+    if is_unset_or_null "$total_tokens"; then
         show_title "$title" "> Enter total tokens <"
         echo ""
         echo $(gum style --foreground 212 "Notice: This value should match the number of tokens in the stages file. Otherwise, the contract will revert.")

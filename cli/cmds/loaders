@@ -5,8 +5,15 @@ DEFAULTS_FILE="$BASE_DIR/../defaults.json"
 
 
 load_signer() {
+    echo "Loading signer... enter password if prompted"
     password=$(get_password_if_set)
-    export SIGNER=$(cast wallet address $password)
+    if [ -n "$password" ]; then
+        if ! SIGNER=$(cast wallet address $password 2>&1); then
+            echo "Error loading wallet: $SIGNER, check your password"
+            exit 1
+        fi
+        export SIGNER
+    fi
 }
 
 load_defaults() {
@@ -39,7 +46,9 @@ load_defaults() {
         mkdir -p "$COLLECTIONS_DIR"
     fi
 
-    source "$BASE_DIR/../.env"
+    if [[ -f "$BASE_DIR/../.env" ]]; then
+        source "$BASE_DIR/../.env"
+    fi
 
     load_signer
 }
@@ -75,14 +84,12 @@ load_private_key() {
     echo ""
     echo "Keystore created successfully"
     echo "You can store your password in .env to avoid entering it every time"
-    echo "echo \"KEYSTORE_PASSWORD=<your_password>\" >> .env"
+    gum style --foreground 212 "echo \"KEYSTORE_PASSWORD=<your_password>\" >> cli/.env"
     echo ""
-
-    echo "Loading signer... enter password if prompted"
 
     load_signer
     
-    clear
+    exit 0
 }
 
 load_collection() {
@@ -108,6 +115,7 @@ load_collection() {
     cosigner=$(jq -r '.cosigner' "$collection_file")
     token_uri_suffix=$(jq -r '.tokenUriSuffix' "$collection_file")
     contract_uri=$(jq -r '.uri' "$collection_file")
+    use_erc721c=$(jq -r '.useERC721C' "$collection_file")
 
     if [[ "$token_standard" == "ERC721" ]]; then
         base_uri=$contract_uri
