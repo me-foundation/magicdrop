@@ -1,34 +1,4 @@
 {
-  "_documentation": {
-    "name": "The name of the NFT collection displayed on marketplaces",
-    "symbol": "Trading symbol for the collection",
-    "chainId": "The blockchain network ID (137 for Polygon)",
-    "tokenStandard": "The NFT standard implementation (ERC1155)",
-    "maxMintableSupply": "Array of maximum supply limits for each token ID",
-    "globalWalletLimit": "Array of maximum tokens that can be minted per wallet across all stages, per token ID",
-    "mintCurrency": "Token address used for payment (zero address for native currency)",
-    "fundReceiver": "Wallet address that receives the mint payments",
-    "royaltyReceiver": "Wallet address that receives royalties from secondary sales",
-    "royaltyFee": "Percentage of secondary sales paid as royalties (in basis points, e.g., 0 = 0%)",
-    "mintable": "Whether minting is enabled or disabled",
-    "cosigner": "Address of the wallet authorized to sign mint transactions (zero address if unused)",
-    "uri": "Base URI for token metadata",
-    "stages": {
-      "_description": "Array of mint stages with different conditions",
-      "price": "Array of prices per token ID in native currency",
-      "mintFee": "Array of additional fees per mint transaction per token ID",
-      "walletLimit": "Array of maximum tokens that can be minted per wallet in this stage, per token ID",
-      "maxStageSupply": "Array of maximum tokens that can be minted in this stage per token ID (optional)",
-      "startDate": "UTC timestamp when the stage begins",
-      "endDate": "UTC timestamp when the stage ends"
-    },
-    "deployment": {
-      "contract_address": "Deployed smart contract address",
-      "initial_owner": "Initial owner/admin of the smart contract",
-      "deployed_at": "Timestamp of contract deployment"
-    }
-  },
-
   "name": "",
   "symbol": "",
   "chainId": 0,

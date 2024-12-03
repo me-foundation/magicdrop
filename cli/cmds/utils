@@ -36,16 +36,18 @@ set_rpc_url() {
 }
 
 process_stages() {
-    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$stages_json" "$BASE_DIR/../collections" "$token_standard" "$WEB3STORAGE_KEY"
+    output_file_dir="$(dirname "$collection_file")"
+    echo "Output file directory: $output_file_dir"
+    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$stages_json" "$output_file_dir" "$token_standard" "$WEB3STORAGE_KEY"
 
     if [[ $? -ne 0 ]]; then
         echo "Error: Failed to get stages data"
-        return 1
+        exit 1
     fi
 
-    if [[ ! -f "$STAGES_FILE" ]]; then
-        echo "Error: Output file not found: $STAGES_FILE"
-        return 1
+    if [[ ! -f "$output_file_dir/stagesInput.tmp" ]]; then
+        echo "Error: Output file not found: $output_file_dir/stagesInput.tmp"
+        exit 1
     fi
 }
 
@@ -107,12 +109,12 @@ prestart() {
     REMOTE=$(git -C "$BASE_DIR" rev-parse @{u})
     BASE=$(git -C "$BASE_DIR" merge-base @ @{u})
 
-    if [ $LOCAL = $REMOTE ]; then
+    if [ "$LOCAL" = "$REMOTE" ]; then
         echo "You are up-to-date with the main branch."
-    elif [ $LOCAL = $BASE ]; then
+    elif [ "$LOCAL" = "$BASE" ]; then
         echo "Your local main branch is behind the remote. Please pull the latest changes."
         exit 1
-    elif [ $REMOTE = $BASE ]; then
+    elif [ "$REMOTE" = "$BASE" ]; then
         echo "Your local main branch is ahead of the remote."
     else
         echo "Your local main branch has diverged from the remote."
@@ -178,4 +180,9 @@ get_standard_id() {
         "ERC1155") echo "1" ;;
         *) echo "Unknown" ;;
     esac
+}
+
+is_unset_or_null() {
+    local var="$1"
+    [ -z "$var" ] || [ "$var" = "null" ]
 }

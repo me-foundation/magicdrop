@@ -13,6 +13,7 @@ SUPPORTED_CHAINS=(
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
+MAGIC_DROP_KEYSTORE_FILE="$HOME/.foundry/keystores/$MAGIC_DROP_KEYSTORE"
 export ETH_KEYSTORE_ACCOUNT=$MAGIC_DROP_KEYSTORE
 
 ME_TRANSFER_VALIDATOR_V3="0x721C00D4FB075b22a5469e9CF2440697F729aA13"
@@ -22,19 +23,9 @@ ICREATOR_TOKEN_INTERFACE_ID="0xad0d7f6c" # type(ICreatorToken).interfaceId
 TRUE_HEX="0x0000000000000000000000000000000000000000000000000000000000000001"
 
 get_factory_address() {
-    local chain_id="$1"
-    case $chain_id in
-        137) echo "0x00001E4949B59B0f52fC84227AF67ab131931256" ;;
-        11155111) echo "0x00001E4949B59B0f52fC84227AF67ab131931256" ;;
-        *) echo "Unknown chain id"; exit 1 ;;
-    esac
+    echo "0x000000009e44eBa131196847C685F20Cd4b68aC4"
 }
 
 get_registry_address() {
-    local chain_id="$1"
-    case $chain_id in
-        137) echo "0x0000Dd87036aDf1477916e36BB12e19fef5517aC" ;;
-        11155111) echo "0x0000Dd87036aDf1477916e36BB12e19fef5517aC" ;;
-        *) echo "Unknown chain id"; exit 1 ;;
-    esac
+    echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
 }

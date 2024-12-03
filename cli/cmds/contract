@@ -2,8 +2,15 @@
 
 trap "echo 'Exiting...'; exit 1" SIGINT
 
-STAGES_FILE="$BASE_DIR/../collections/stagesInput.tmp"
 DEFAULT_IMPL_ID="0"
+
+get_impl_id() {
+    if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
+        echo "2" # ERC721C implementation ID
+    else
+        echo $DEFAULT_IMPL_ID
+    fi
+}
 
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
@@ -24,8 +31,10 @@ deploy_contract() {
     standard_id=$(get_standard_id $token_standard)
     password=$(get_password_if_set)
 
+    impl_id=$(get_impl_id)
+
     echo "Fetching deployment fee..."
-    deployment_fee=$(cast call $registry_address "getDeploymentFee(uint8,uint32)" $standard_id $DEFAULT_IMPL_ID --rpc-url "$RPC_URL" $password)
+    deployment_fee=$(cast call $registry_address "getDeploymentFee(uint8,uint32)" $standard_id $impl_id --rpc-url "$RPC_URL" $password)
     if [ "$deployment_fee" == "0" ]; then
         value="--value $deployment_fee"
     fi
@@ -43,7 +52,7 @@ deploy_contract() {
         "$symbol" \
         "$standard_id" \
         "$SIGNER" \
-        $DEFAULT_IMPL_ID \
+        $impl_id \
         $password \
         $value \
         --json)
@@ -206,9 +215,10 @@ setup_contract() {
     confirm_setup
 
     echo "Processing stages file... this will take a moment."
-    process_stages "$stages_file" "$stages_json" "$token_standard"
-    stages_data=$(cat "$STAGES_FILE") # this file is created by getStagesData.ts
-    rm "$STAGES_FILE"
+    process_stages
+    output_file_dir="$(dirname "$collection_file")"
+    stages_data=$(cat "$output_file_dir/stagesInput.tmp") # this file is created by getStagesData.ts
+    rm "$output_file_dir/stagesInput.tmp"
     echo ""
 
     password=$(get_password_if_set)
@@ -447,8 +457,9 @@ set_stages_contract() {
     print_signer_with_balance $chain_id
 
     process_stages
-    stages_data=$(cat "$STAGES_FILE")
-    rm "$STAGES_FILE"
+    output_file_dir="$(dirname "$collection_file")"
+    stages_data=$(cat "$output_file_dir/stagesInput.tmp") # this file is created by getStagesData.ts
+    rm "$output_file_dir/stagesInput.tmp"
     echo ""
 
     if gum confirm "Do you want to proceed?"; then

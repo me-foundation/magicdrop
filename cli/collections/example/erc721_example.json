@@ -13,6 +13,7 @@
   "cosigner": "0x0000000000000000000000000000000000000000",
   "tokenUriSuffix": ".json",
   "uri": "https://example.com/token/",
+  "useERC721C": false,
   "stages": [
     {
       "price": "0.0069",

@@ -45,9 +45,13 @@ get_ethereum_address() {
 
 get_collection_file() {
     local prompt="$1"
-    local file file=$(gum file --directory "$BASE_DIR/../collections" --height 10)
+    local directory="${2:-$BASE_DIR/../collections}"  # Use provided directory or default
+    local file=$(gum file --directory "$directory" --height 10)
 
-    if file_exists "$file"; then
+    if [[ -d "$file" ]]; then
+        # Recursively call with the selected directory
+        get_collection_file "$prompt" "$file"
+    elif file_exists "$file"; then
         echo "$file"
     else 
         exit 1
@@ -57,7 +61,7 @@ get_collection_file() {
 get_password_if_set() {
     if [[ -n "$KEYSTORE_PASSWORD" ]]; then
         echo "--password $KEYSTORE_PASSWORD --account $MAGIC_DROP_KEYSTORE"
-    else
+    elif file_exists "$MAGIC_DROP_KEYSTORE_FILE"; then
         local password=$(gum input --placeholder "Enter password")
         echo "--password $password --account $MAGIC_DROP_KEYSTORE"
     fi
