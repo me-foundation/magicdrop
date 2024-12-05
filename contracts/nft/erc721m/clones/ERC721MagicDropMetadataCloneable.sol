@@ -11,7 +11,12 @@ import {ERC721ACloneable} from "./ERC721ACloneable.sol";
 import {ERC721AQueryableCloneable} from "./ERC721AQueryableCloneable.sol";
 import {IERC721MagicDropMetadata} from "../interfaces/IERC721MagicDropMetadata.sol";
 
-contract ERC721MagicDropMetadata is ERC721AConduitPreapprovedCloneable, IERC721MagicDropMetadata, ERC2981, Ownable {
+contract ERC721MagicDropMetadataCloneable is
+    ERC721AConduitPreapprovedCloneable,
+    IERC721MagicDropMetadata,
+    ERC2981,
+    Ownable
+{
     /*==============================================================
     =                            STORAGE                           =
     ==============================================================*/
