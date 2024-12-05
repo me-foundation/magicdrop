@@ -4,7 +4,10 @@ pragma solidity ^0.8.22;
 import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 
+import {IERC721A} from "erc721a/contracts/IERC721A.sol";
+
 import {ERC721AConduitPreapprovedCloneable} from "./ERC721AConduitPreapprovedCloneable.sol";
+import {ERC721ACloneable} from "./ERC721ACloneable.sol";
 import {ERC721AQueryableCloneable} from "./ERC721AQueryableCloneable.sol";
 import {IERC721MagicDropMetadata} from "../interfaces/IERC721MagicDropMetadata.sol";
 
@@ -80,14 +83,29 @@ contract ERC721MagicDropMetadata is ERC721AConduitPreapprovedCloneable, IERC721M
         return _royaltyBps;
     }
 
+    /// @notice Returns true if the contract implements the interface
+    /// @param interfaceId The interface ID to check
+    /// @return True if the contract implements the interface
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721ACloneable, IERC721A, ERC2981)
+        returns (bool)
+    {
+        return interfaceId == 0x2a55205a // ERC-2981
+            || interfaceId == 0x49064906 // ERC-4906
+            || super.supportsInterface(interfaceId);
+    }
+
     /*==============================================================
     =                      ADMIN OPERATIONS                        =
     ==============================================================*/
 
     /// @notice Sets the base URI for the token URIs
-    /// @param baseURI The base URI to set
-    function setBaseURI(string calldata baseURI) external override onlyOwner {
-        _tokenBaseURI = baseURI;
+    /// @param newBaseURI The base URI to set
+    function setBaseURI(string calldata newBaseURI) external override onlyOwner {
+        _tokenBaseURI = newBaseURI;
 
         if (totalSupply() != 0) {
             emit BatchMetadataUpdate(0, totalSupply() - 1);
@@ -95,11 +113,11 @@ contract ERC721MagicDropMetadata is ERC721AConduitPreapprovedCloneable, IERC721M
     }
 
     /// @notice Sets the contract URI for contract metadata
-    /// @param contractURI The contract URI to set
-    function setContractURI(string calldata contractURI) external override onlyOwner {
-        _contractURI = contractURI;
+    /// @param newContractURI The contract URI to set
+    function setContractURI(string calldata newContractURI) external override onlyOwner {
+        _contractURI = newContractURI;
 
-        emit ContractURIUpdated(contractURI);
+        emit ContractURIUpdated(newContractURI);
     }
 
     /// @notice Sets the max supply of tokens to be minted

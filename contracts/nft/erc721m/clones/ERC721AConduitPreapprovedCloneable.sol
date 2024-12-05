@@ -2,7 +2,7 @@
 pragma solidity ^0.8.22;
 
 import {ERC721AQueryableCloneable} from "./ERC721AQueryableCloneable.sol";
-import {ERC721A} from "erc721a/contracts/ERC721A.sol";
+import {ERC721ACloneable} from "./ERC721ACloneable.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 
 /**
@@ -21,12 +21,12 @@ abstract contract ERC721AConduitPreapprovedCloneable is ERC721AQueryableCloneabl
         public
         view
         virtual
-        override(ERC721A, IERC721A)
+        override(ERC721ACloneable, IERC721A)
         returns (bool)
     {
         if (operator == _CONDUIT) {
             return true;
         }
-        return ERC721A.isApprovedForAll(owner, operator);
+        return ERC721ACloneable.isApprovedForAll(owner, operator);
     }
 }

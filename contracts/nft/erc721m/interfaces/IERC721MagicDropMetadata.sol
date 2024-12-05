@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
-
-interface IERC721MagicDropMetadata is IERC2981 {
+interface IERC721MagicDropMetadata {
     /*==============================================================
     =                             EVENTS                           =
     ==============================================================*/
