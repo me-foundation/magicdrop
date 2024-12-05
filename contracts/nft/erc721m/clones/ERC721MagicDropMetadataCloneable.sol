@@ -88,7 +88,7 @@ contract ERC721MagicDropMetadata is ERC721AConduitPreapprovedCloneable, IERC721M
     /// @param baseURI The base URI to set
     function setBaseURI(string calldata baseURI) external override onlyOwner {
         _tokenBaseURI = baseURI;
-        
+
         if (totalSupply() != 0) {
             emit BatchMetadataUpdate(0, totalSupply() - 1);
         }

@@ -11,8 +11,7 @@ import {IERC721A} from "erc721a/contracts/IERC721A.sol";
  */
 abstract contract ERC721AConduitPreapprovedCloneable is ERC721AQueryableCloneable {
     /// @dev The canonical MagicEden conduit.
-    address internal constant _CONDUIT =
-        0x2052f8A2Ff46283B30084e5d84c89A2fdBE7f74b;
+    address internal constant _CONDUIT = 0x2052f8A2Ff46283B30084e5d84c89A2fdBE7f74b;
 
     /**
      * @dev Returns if the `operator` is allowed to manage all of the
@@ -22,7 +21,7 @@ abstract contract ERC721AConduitPreapprovedCloneable is ERC721AQueryableCloneabl
         public
         view
         virtual
-        override (ERC721A, IERC721A)
+        override(ERC721A, IERC721A)
         returns (bool)
     {
         if (operator == _CONDUIT) {
