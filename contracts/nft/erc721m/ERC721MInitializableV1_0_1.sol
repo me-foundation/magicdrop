@@ -7,11 +7,14 @@ import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
+import {Initializable} from "solady/src/utils/Initializable.sol";
+
+import {ERC721AUpgradeable, IERC721AUpgradeable} from "erc721a-upgradeable/contracts/ERC721AUpgradeable.sol";
 import {
-    ERC721ACQueryableInitializable,
-    ERC721AUpgradeable,
-    IERC721AUpgradeable
-} from "../creator-token-standards/ERC721ACQueryableInitializable.sol";
+    ERC721AQueryableUpgradeable,
+    IERC721AQueryableUpgradeable
+} from "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol";
+import {IERC721A, ERC721A} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import {ERC721MStorage} from "./ERC721MStorage.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 import {MintStageInfo} from "../../common/Structs.sol";
@@ -20,19 +23,20 @@ import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 /**
- * @title ERC721CMInitializableV1_0_0
+ * @title ERC721MInitializableV1_0_1
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-contract ERC721CMInitializableV1_0_0 is
+contract ERC721MInitializableV1_0_1 is
     IERC721MInitializable,
-    ERC721ACQueryableInitializable,
+    ERC721AQueryableUpgradeable,
     ERC2981,
     Ownable,
     ReentrancyGuard,
     Cosignable,
     AuthorizedMinterControl,
-    ERC721MStorage
+    ERC721MStorage,
+    Initializable
 {
     /*==============================================================
     =                          INITIALIZERS                        =
@@ -55,7 +59,8 @@ contract ERC721CMInitializableV1_0_0 is
             revert InitialOwnerCannotBeZero();
         }
 
-        __ERC721ACQueryableInitializable_init(name, symbol);
+        __ERC721A_init_unchained(name, symbol);
+        __ERC721AQueryable_init_unchained();
         _initializeOwner(initialOwner);
     }
 
@@ -66,7 +71,7 @@ contract ERC721CMInitializableV1_0_0 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721CMInitializable", "1.0.0");
+        return ("ERC721CMInitializable", "1.0.1");
     }
 
     /// @notice Gets the token URI for a specific token ID
@@ -88,6 +93,10 @@ contract ERC721CMInitializableV1_0_0 is
     /// @return The contract URI
     function contractURI() public view returns (string memory) {
         return _contractURI;
+    }
+
+    function isFrozen() public view returns (bool) {
+        return _frozen;
     }
 
     /*==============================================================
@@ -222,11 +231,11 @@ contract ERC721CMInitializableV1_0_0 is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC2981, IERC721AUpgradeable, ERC721ACQueryableInitializable)
+        override(ERC2981, ERC721AUpgradeable, IERC721AUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
-            || ERC721ACQueryableInitializable.supportsInterface(interfaceId);
+            || ERC721AUpgradeable.supportsInterface(interfaceId);
     }
 
     /*==============================================================
@@ -234,6 +243,8 @@ contract ERC721CMInitializableV1_0_0 is
     ==============================================================*/
 
     /// @notice Sets up the contract with initial parameters
+    /// @param baseURI The base URI for the token URIs
+    /// @param tokenURISuffix The suffix for the token URIs
     /// @param maxMintableSupply The maximum mintable supply
     /// @param globalWalletLimit The global wallet limit
     /// @param mintCurrency The address of the mint currency
@@ -242,6 +253,8 @@ contract ERC721CMInitializableV1_0_0 is
     /// @param royaltyReceiver The address to receive royalties
     /// @param royaltyFeeNumerator The royalty fee numerator
     function setup(
+        string calldata baseURI,
+        string calldata tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address mintCurrency,
@@ -258,6 +271,8 @@ contract ERC721CMInitializableV1_0_0 is
         _globalWalletLimit = globalWalletLimit;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
+        _currentBaseURI = baseURI;
+        _tokenURISuffix = tokenURISuffix;
         _setTimestampExpirySeconds(300); // 5 minutes
 
         if (initialStages.length > 0) {
@@ -394,6 +409,13 @@ contract ERC721CMInitializableV1_0_0 is
         emit SetContractURI(uri);
     }
 
+    /// @notice Sets the frozen status
+    /// @param frozen The frozen status to set
+    function setFrozen(bool frozen) external onlyOwner {
+        _frozen = frozen;
+        emit SetFrozen(frozen);
+    }
+
     /*==============================================================
     =                      INTERNAL HELPERS                        =
     ==============================================================*/
@@ -520,16 +542,22 @@ contract ERC721CMInitializableV1_0_0 is
         }
     }
 
+    /// @notice Blocks token transfers when the contract is frozen
+    /// @dev Overrides the _beforeTokenTransfers function from ERC721A
+    function _beforeTokenTransfers(address from, address to, uint256 startTokenId, uint256 quantity)
+        internal
+        virtual
+        override
+    {
+        if (_frozen && from != address(0)) revert TransfersAreFrozen();
+        super._beforeTokenTransfers(from, to, startTokenId, quantity);
+    }
+
     /// @notice Validates the start and end timestamps for a stage
     /// @param start The start timestamp
     /// @param end The end timestamp
     function _assertValidStartAndEndTimestamp(uint256 start, uint256 end) internal pure {
         if (start >= end) revert InvalidStartAndEndTimestamp();
-    }
-
-    /// @notice Requires the caller to be the contract owner
-    function _requireCallerIsContractOwner() internal view override {
-        return _checkOwner();
     }
 
     /// @dev Overriden to prevent double-initialization of the owner.
