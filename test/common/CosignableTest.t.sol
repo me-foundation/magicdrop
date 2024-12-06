@@ -47,7 +47,7 @@ contract CosignableTest is Test {
         assertEq(cosignable.getTimestampExpirySeconds(), newExpirySeconds);
     }
 
-    function testGetCosignDigest() public {
+    function testGetCosignDigest() public view {
         address minter = address(0x3);
         uint32 qty = 5;
         bool waiveMintFee = true;
@@ -58,7 +58,7 @@ contract CosignableTest is Test {
         assertTrue(digest != bytes32(0));
     }
 
-    function testFuzzAssertValidCosign(address minter, uint32 qty, uint256 timestamp, uint256 cosignNonce) public {
+    function testFuzzAssertValidCosign(address minter, uint32 qty, uint256 timestamp, uint256 cosignNonce) public view {
         // Ensure timestamp is within a reasonable range
         timestamp = bound(timestamp, block.timestamp, block.timestamp + 365 days);
 
