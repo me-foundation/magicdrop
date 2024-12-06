@@ -4,20 +4,10 @@ pragma solidity ^0.8.22;
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
-import {ERC721CMInitializableV1_0_1 as ERC721CMInitializable} from
-    "../../contracts/nft/erc721m/ERC721CMInitializableV1_0_1.sol";
+import {ERC721CMInitializableV1_0_0 as ERC721CMInitializable} from
+    "../../contracts/nft/erc721m/ERC721CMInitializableV1_0_0.sol";
 import {MintStageInfo} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
-
-contract MockERC721CMInitializable is ERC721CMInitializable {
-    function baseURI() public view returns (string memory) {
-        return _currentBaseURI;
-    }
-
-    function tokenURISuffix() public view returns (string memory) {
-        return _tokenURISuffix;
-    }
-}
 
 contract ERC721CMInitializableTest is Test {
     MockERC721CMInitializable public nft;
@@ -37,12 +27,10 @@ contract ERC721CMInitializableTest is Test {
         vm.deal(owner, 10 ether);
         vm.deal(minter, 2 ether);
 
-        address clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
-        nft = MockERC721CMInitializable(clone);
+        address clone = LibClone.deployERC1967(address(new ERC721CMInitializable()));
+        nft = ERC721CMInitializable(clone);
         nft.initialize("Test", "TEST", owner);
         nft.setup(
-            "base_uri_",
-            ".json",
             INITIAL_SUPPLY,
             GLOBAL_WALLET_LIMIT,
             address(0),
@@ -186,13 +174,5 @@ contract ERC721CMInitializableTest is Test {
         string memory uri = "ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4";
         nft.setContractURI(uri);
         assertEq(nft.contractURI(), uri);
-    }
-
-    function testBaseURISetup() public {
-        assertEq(nft.baseURI(), "base_uri_");
-    }
-
-    function testTokenURISuffixSetup() public {
-        assertEq(nft.tokenURISuffix(), ".json");
     }
 }
