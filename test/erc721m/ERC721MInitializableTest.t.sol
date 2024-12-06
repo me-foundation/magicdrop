@@ -7,6 +7,7 @@ import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
 import {ERC721MInitializableV1_0_1 as ERC721MInitializable} from
     "../../contracts/nft/erc721m/ERC721MInitializableV1_0_1.sol";
+import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
@@ -73,7 +74,7 @@ contract ERC721MInitializableTest is Test {
         nft.ownerMint(1, minter);
         vm.stopPrank();
 
-        vm.expectRevert(ERC721MInitializable.TransfersAreFrozen.selector);
+        vm.expectRevert(IERC721MInitializable.TransfersAreFrozen.selector);
         vm.prank(minter);
         nft.safeTransferFrom(minter, readonly, 0);
     }
@@ -84,6 +85,14 @@ contract ERC721MInitializableTest is Test {
 
     function testBaseURISuffixSetup() public view {
         assertEq(nft.tokenURISuffix(), ".json");
+    }
+
+    function testIsFrozen() public {
+        assertEq(nft.isFrozen(), false);
+
+        vm.startPrank(owner);
+        nft.setFrozen(true);
+        assertEq(nft.isFrozen(), true);
     }
 
     function testSetBaseURI() public {

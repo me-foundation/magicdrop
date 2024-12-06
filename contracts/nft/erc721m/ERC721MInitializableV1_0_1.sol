@@ -39,21 +39,6 @@ contract ERC721MInitializableV1_0_1 is
     Initializable
 {
     /*==============================================================
-    =                            STORAGE                           =
-    ==============================================================*/
-    bool public frozen;
-
-    /*==============================================================
-    =                             EVENTS                           =
-    ==============================================================*/
-    event SetFrozen(bool frozen);
-
-    /*==============================================================
-    =                             ERRORS                           =
-    ==============================================================*/
-    error TransfersAreFrozen();
-
-    /*==============================================================
     =                          INITIALIZERS                        =
     ==============================================================*/
 
@@ -108,6 +93,10 @@ contract ERC721MInitializableV1_0_1 is
     /// @return The contract URI
     function contractURI() public view returns (string memory) {
         return _contractURI;
+    }
+
+    function isFrozen() public view returns (bool) {
+        return _frozen;
     }
 
     /*==============================================================
@@ -421,10 +410,10 @@ contract ERC721MInitializableV1_0_1 is
     }
 
     /// @notice Sets the frozen status
-    /// @param _frozen The frozen status to set
-    function setFrozen(bool _frozen) external onlyOwner {
-        frozen = _frozen;
-        emit SetFrozen(_frozen);
+    /// @param frozen The frozen status to set
+    function setFrozen(bool frozen) external onlyOwner {
+        _frozen = frozen;
+        emit SetFrozen(frozen);
     }
 
     /*==============================================================
@@ -560,7 +549,7 @@ contract ERC721MInitializableV1_0_1 is
         virtual
         override
     {
-        if (frozen && from != address(0)) revert TransfersAreFrozen();
+        if (_frozen && from != address(0)) revert TransfersAreFrozen();
         super._beforeTokenTransfers(from, to, startTokenId, quantity);
     }
 

@@ -70,7 +70,7 @@ contract CosignableTest is Test {
         assertTrue(valid);
     }
 
-    function testAssertValidCosignFalse() public {
+    function testAssertValidCosignFalse() public view {
         address minter = address(0x3);
         uint32 qty = 5;
         uint256 timestamp = block.timestamp;
