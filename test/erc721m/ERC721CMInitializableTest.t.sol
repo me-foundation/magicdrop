@@ -10,7 +10,7 @@ import {MintStageInfo} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
 contract ERC721CMInitializableTest is Test {
-    MockERC721CMInitializable public nft;
+    ERC721CMInitializable public nft;
     address public owner;
     address public minter;
     address public fundReceiver;
@@ -31,13 +31,7 @@ contract ERC721CMInitializableTest is Test {
         nft = ERC721CMInitializable(clone);
         nft.initialize("Test", "TEST", owner);
         nft.setup(
-            INITIAL_SUPPLY,
-            GLOBAL_WALLET_LIMIT,
-            address(0),
-            fundReceiver,
-            new MintStageInfo[](0),
-            address(this),
-            0
+            INITIAL_SUPPLY, GLOBAL_WALLET_LIMIT, address(0), fundReceiver, new MintStageInfo[](0), address(this), 0
         );
     }
 
