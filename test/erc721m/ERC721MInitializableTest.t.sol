@@ -78,11 +78,11 @@ contract ERC721MInitializableTest is Test {
         nft.safeTransferFrom(minter, readonly, 0);
     }
 
-    function testBaseURISetup() public {
+    function testBaseURISetup() public view {
         assertEq(nft.baseURI(), "base_uri_");
     }
 
-    function testBaseURISuffixSetup() public {
+    function testBaseURISuffixSetup() public view {
         assertEq(nft.tokenURISuffix(), ".json");
     }
 
