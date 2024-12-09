@@ -11,12 +11,6 @@ import {ERC721MErrorsAndEvents} from "../ERC721MErrorsAndEvents.sol";
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
 interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAndEvents {
-    event SetFrozen(bool frozen);
-
-    error TransfersAreFrozen();
-
-    error ContractAlreadySetup();
-
     function getNumberStages() external view returns (uint256);
 
     function getGlobalWalletLimit() external view returns (uint256);

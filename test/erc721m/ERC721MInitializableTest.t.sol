@@ -74,7 +74,7 @@ contract ERC721MInitializableTest is Test {
         nft.ownerMint(1, minter);
         vm.stopPrank();
 
-        vm.expectRevert(IERC721MInitializable.TransfersAreFrozen.selector);
+        vm.expectRevert(ErrorsAndEvents.TransfersAreFrozen.selector);
         vm.prank(minter);
         nft.safeTransferFrom(minter, readonly, 0);
     }
@@ -109,7 +109,7 @@ contract ERC721MInitializableTest is Test {
 
     function testSetupLockedRevert() public {
         vm.startPrank(owner);
-        vm.expectRevert(IERC721MInitializable.ContractAlreadySetup.selector);
+        vm.expectRevert(ErrorsAndEvents.ContractAlreadySetup.selector);
         nft.setup(
             "base_uri_",
             ".json",

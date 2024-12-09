@@ -203,7 +203,7 @@ contract ERC721CMInitializableTest is Test {
 
     function testSetupLockedRevert() public {
         vm.startPrank(owner);
-        vm.expectRevert(IERC721MInitializable.ContractAlreadySetup.selector);
+        vm.expectRevert(ErrorsAndEvents.ContractAlreadySetup.selector);
         nft.setup(
             "base_uri_",
             ".json",
