@@ -39,4 +39,10 @@ contract ERC721MStorage {
 
     // The uri for the storefront-level metadata for better indexing. e.g. "ipfs://UyNGgv3jx2HHfBjQX9RnKtxj2xv2xQDtbVXoRi5rJ31234"
     string internal _contractURI;
+
+    // Whether transfers are frozen.
+    bool internal _frozen;
+
+    // Whether the contract has been setup.
+    bool internal _setupLocked;
 }

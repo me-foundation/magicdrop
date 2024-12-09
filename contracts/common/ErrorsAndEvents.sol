@@ -24,7 +24,10 @@ interface ErrorsAndEvents {
     error NewSupplyLessThanTotalSupply();
     error NotTransferable();
     error InitialOwnerCannotBeZero();
+    error TransfersAreFrozen();
+    error ContractAlreadySetup();
 
+    event SetFrozen(bool frozen);
     event SetMintable(bool mintable);
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);

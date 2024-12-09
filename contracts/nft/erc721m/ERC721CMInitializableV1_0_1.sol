@@ -20,11 +20,11 @@ import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 /**
- * @title ERC721CMInitializableV1_0_0
+ * @title ERC721CMInitializableV1_0_1
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-contract ERC721CMInitializableV1_0_0 is
+contract ERC721CMInitializableV1_0_1 is
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
     ERC2981,
@@ -66,7 +66,7 @@ contract ERC721CMInitializableV1_0_0 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721CMInitializable", "1.0.0");
+        return ("ERC721CMInitializable", "1.0.1");
     }
 
     /// @notice Gets the token URI for a specific token ID
@@ -216,6 +216,12 @@ contract ERC721CMInitializableV1_0_0 is
         revert InvalidStage();
     }
 
+    /// @notice Checks if the contract is setup locked
+    /// @return Whether the contract is setup locked
+    function isSetupLocked() external view returns (bool) {
+        return _setupLocked;
+    }
+
     /// @notice Checks if the contract supports a given interface
     /// @param interfaceId The interface identifier
     /// @return True if the contract supports the interface, false otherwise
@@ -234,6 +240,8 @@ contract ERC721CMInitializableV1_0_0 is
     ==============================================================*/
 
     /// @notice Sets up the contract with initial parameters
+    /// @param baseURI The base URI for the token URIs
+    /// @param tokenURISuffix The suffix for the token URIs
     /// @param maxMintableSupply The maximum mintable supply
     /// @param globalWalletLimit The global wallet limit
     /// @param mintCurrency The address of the mint currency
@@ -242,6 +250,8 @@ contract ERC721CMInitializableV1_0_0 is
     /// @param royaltyReceiver The address to receive royalties
     /// @param royaltyFeeNumerator The royalty fee numerator
     function setup(
+        string calldata baseURI,
+        string calldata tokenURISuffix,
         uint256 maxMintableSupply,
         uint256 globalWalletLimit,
         address mintCurrency,
@@ -250,14 +260,22 @@ contract ERC721CMInitializableV1_0_0 is
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     ) external onlyOwner {
+        if (_setupLocked) {
+            revert ContractAlreadySetup();
+        }
+
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
         }
+
+        _setupLocked = true;
         _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
+        _currentBaseURI = baseURI;
+        _tokenURISuffix = tokenURISuffix;
         _setTimestampExpirySeconds(300); // 5 minutes
 
         if (initialStages.length > 0) {
