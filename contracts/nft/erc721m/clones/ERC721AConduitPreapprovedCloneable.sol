@@ -23,7 +23,7 @@ abstract contract ERC721AConduitPreapprovedCloneable is ERC721AQueryableCloneabl
         if (operator == _CONDUIT) {
             return true;
         }
-        
+
         return ERC721ACloneable.isApprovedForAll(owner, operator);
     }
 }

@@ -12,12 +12,10 @@ import {ERC721ACloneable} from "./ERC721ACloneable.sol";
 import {IERC721MagicDropMetadata} from "../interfaces/IERC721MagicDropMetadata.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 
-
 /// @title ERC721MagicDropCloneable
 /// @notice ERC721A with Public and Allowlist minting stages.
 /// @dev This contract is cloneable and provides minting functionality with public and allowlist stages.
 contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, ReentrancyGuard {
-
     /*==============================================================
     =                            STORAGE                           =
     ==============================================================*/
@@ -71,6 +69,12 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
 
     /// @notice Thrown when the proof is invalid.
     error InvalidProof();
+
+    /// @notice Thrown when the stage time is invalid.
+    error InvalidStageTime();
+
+    /// @notice Thrown when the allowlist stage is invalid.
+    error InvalidAllowlistStageTime();
 
     /*==============================================================
     =                          INITIALIZERS                        =
@@ -164,12 +168,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
         return _payoutRecipient;
     }
 
-    /// @notice Gets the fee recipient.
-    /// @return The fee recipient.
-    function feeRecipient() external view returns (address) {
-        return _feeRecipient;
-    }
-
     /// @notice Supports the ERC721MagicDropMetadata interface.
     /// @param interfaceId The interface ID.
     /// @return True if the interface is supported, false otherwise.
@@ -220,24 +218,45 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             this.setPayoutRecipient(config.payoutRecipient);
         }
 
-        if (config.feeRecipient != address(0)) {
-            _feeRecipient = config.feeRecipient;
-        }
-
         if (config.provenanceHash != bytes32(0)) {
             this.setProvenanceHash(config.provenanceHash);
         }
     }
 
     /// @notice Sets the public mint stage.
+    /// @dev The public stage must end before the allowlist stage begins.
     /// @param stage The configuration for the public mint stage.
     function setPublicStage(PublicStage calldata stage) external onlyOwner {
+        if (stage.startTime >= stage.endTime) {
+            revert InvalidStageTime();
+        }
+
+        // If the allowlist stage is set, ensure the public stage ends before the allowlist stage begins
+        if (_allowlistStage.startTime != 0 && _allowlistStage.endTime != 0) {
+            if (stage.endTime > _allowlistStage.startTime) {
+                revert InvalidAllowlistStageTime();
+            }
+        }
+
         _publicStage = stage;
     }
 
     /// @notice Sets the allowlist mint stage.
+    /// @dev The allowlist stage must end before the public stage begins.
     /// @param stage The configuration for the allowlist mint stage.
     function setAllowlistStage(AllowlistStage calldata stage) external onlyOwner {
+        // Validate that the start time is before the end time
+        if (stage.startTime >= stage.endTime) {
+            revert InvalidStageTime();
+        }
+
+        // If the public stage is set, ensure the allowlist stage ends before the public stage begins
+        if (_publicStage.startTime != 0 && _publicStage.endTime != 0) {
+            if (stage.endTime > _publicStage.startTime) {
+                revert InvalidAllowlistStageTime();
+            }
+        }
+
         _allowlistStage = stage;
     }
 
@@ -275,7 +294,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
         return ("ERC721MagicDropCloneable", "1.0.0");
     }
 
-
     /// @notice Gets the token URI for a given token ID.
     /// @param tokenId The token ID.
     /// @return The token URI.
@@ -302,6 +320,10 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
 
         return string(abi.encodePacked(baseURI, _toString(tokenId)));
     }
+
+    /*==============================================================
+    =                             MISC                             =
+    ==============================================================*/
 
     /// @dev Overriden to prevent double-initialization of the owner.
     function _guardInitializeOwner() internal pure virtual override returns (bool) {
