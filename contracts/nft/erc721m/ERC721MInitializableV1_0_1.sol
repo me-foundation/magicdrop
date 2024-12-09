@@ -95,10 +95,6 @@ contract ERC721MInitializableV1_0_1 is
         return _contractURI;
     }
 
-    function isFrozen() public view returns (bool) {
-        return _frozen;
-    }
-
     /*==============================================================
     =                             MODIFIERS                        =
     ==============================================================*/
@@ -229,6 +225,12 @@ contract ERC721MInitializableV1_0_1 is
     /// @return Whether the contract is setup locked
     function isSetupLocked() external view returns (bool) {
         return _setupLocked;
+    }
+
+    /// @notice Checks if the contract is frozen
+    /// @return Whether the contract is frozen
+    function isFrozen() public view returns (bool) {
+        return _frozen;
     }
 
     /// @notice Checks if the contract supports a given interface
