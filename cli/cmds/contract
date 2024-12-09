@@ -194,8 +194,7 @@ thaw_contract() {
 check_setup_locked() {
     setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password)
     if [ "$setup_locked" == "$TRUE_HEX" ]; then
-        echo "Contract has already been setup. Please redeploy the contract if you need to change any settings."
-        echo "If you only need to change the max supply, you can use the 'Set Max Mintable Supply' command to reduce the max supply."
+        echo "This contract has already been setup. Please use other commands from the 'Manage Contracts' menu to update the contract."
         exit 1
     fi
 }
