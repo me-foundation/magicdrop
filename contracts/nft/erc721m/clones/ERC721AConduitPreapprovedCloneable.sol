@@ -5,18 +5,14 @@ import {ERC721AQueryableCloneable} from "./ERC721AQueryableCloneable.sol";
 import {ERC721ACloneable} from "./ERC721ACloneable.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 
-/**
- * @title  ERC721AConduitPreapprovedCloneable
- * @notice ERC721A with the MagicEden conduit preapproved.
- */
+/// @title  ERC721AConduitPreapprovedCloneable
+/// @notice ERC721A with the MagicEden conduit preapproved.
 abstract contract ERC721AConduitPreapprovedCloneable is ERC721AQueryableCloneable {
     /// @dev The canonical MagicEden conduit.
     address internal constant _CONDUIT = 0x2052f8A2Ff46283B30084e5d84c89A2fdBE7f74b;
 
-    /**
-     * @dev Returns if the `operator` is allowed to manage all of the
-     *      assets of `owner`. Always returns true for the conduit.
-     */
+    /// @dev Returns if the `operator` is allowed to manage all of the
+    ///     assets of `owner`. Always returns true for the conduit.
     function isApprovedForAll(address owner, address operator)
         public
         view
@@ -27,6 +23,7 @@ abstract contract ERC721AConduitPreapprovedCloneable is ERC721AQueryableCloneabl
         if (operator == _CONDUIT) {
             return true;
         }
+        
         return ERC721ACloneable.isApprovedForAll(owner, operator);
     }
 }
