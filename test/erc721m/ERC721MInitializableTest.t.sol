@@ -95,6 +95,15 @@ contract ERC721MInitializableTest is Test {
         assertEq(nft.isFrozen(), true);
     }
 
+    function testUnfreeze() public {
+        vm.startPrank(owner);
+        nft.setFrozen(true);
+        assertEq(nft.isFrozen(), true);
+
+        nft.setFrozen(false);
+        assertEq(nft.isFrozen(), false);
+    }
+
     function testSetBaseURI() public {
         vm.startPrank(owner);
         nft.setBaseURI("new_base_uri_");
