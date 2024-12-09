@@ -106,4 +106,22 @@ contract ERC721MInitializableTest is Test {
         nft.setTokenURISuffix(".txt");
         assertEq(nft.tokenURISuffix(), ".txt");
     }
+
+    function testSetupLockedRevert() public {
+        vm.startPrank(owner);
+        vm.expectRevert(IERC721MInitializable.ContractAlreadySetup.selector);
+        nft.setup(
+            "base_uri_",
+            ".json",
+            INITIAL_SUPPLY,
+            GLOBAL_WALLET_LIMIT,
+            address(0),
+            fundReceiver,
+            new MintStageInfo[](0),
+            address(this),
+            0
+        );
+
+        assertEq(nft.isSetupLocked(), true);
+    }
 }

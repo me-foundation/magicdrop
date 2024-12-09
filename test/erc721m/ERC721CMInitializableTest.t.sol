@@ -6,6 +6,7 @@ import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
 import {ERC721CMInitializableV1_0_1 as ERC721CMInitializable} from
     "../../contracts/nft/erc721m/ERC721CMInitializableV1_0_1.sol";
+import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
@@ -198,5 +199,23 @@ contract ERC721CMInitializableTest is Test {
         vm.startPrank(owner);
         nft.setTokenURISuffix(".txt");
         assertEq(nft.tokenURISuffix(), ".txt");
+    }
+
+    function testSetupLockedRevert() public {
+        vm.startPrank(owner);
+        vm.expectRevert(IERC721MInitializable.ContractAlreadySetup.selector);
+        nft.setup(
+            "base_uri_",
+            ".json",
+            INITIAL_SUPPLY,
+            GLOBAL_WALLET_LIMIT,
+            address(0),
+            fundReceiver,
+            new MintStageInfo[](0),
+            address(this),
+            0
+        );
+
+        assertEq(nft.isSetupLocked(), true);
     }
 }

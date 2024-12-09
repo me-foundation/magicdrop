@@ -15,6 +15,8 @@ interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAn
 
     error TransfersAreFrozen();
 
+    error ContractAlreadySetup();
+
     function getNumberStages() external view returns (uint256);
 
     function getGlobalWalletLimit() external view returns (uint256);

@@ -191,11 +191,22 @@ thaw_contract() {
     echo ""
 }
 
+check_setup_locked() {
+    setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password)
+    if [ "$setup_locked" == "$TRUE_HEX" ]; then
+        echo "Contract has already been setup. Please redeploy the contract if you need to change any settings."
+        echo "If you only need to change the max supply, you can use the 'Set Max Mintable Supply' command to reduce the max supply."
+        exit 1
+    fi
+}
+
 setup_contract() {
     clear 
     trap "echo 'Exiting...'; exit 1" SIGINT
 
     title="Setup an existing collection"
+
+    check_setup_locked
 
     set_chain
     set_contract_address

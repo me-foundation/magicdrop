@@ -225,6 +225,12 @@ contract ERC721MInitializableV1_0_1 is
         revert InvalidStage();
     }
 
+    /// @notice Checks if the contract is setup locked
+    /// @return Whether the contract is setup locked
+    function isSetupLocked() external view returns (bool) {
+        return _setupLocked;
+    }
+
     /// @notice Checks if the contract supports a given interface
     /// @param interfaceId The interface identifier
     /// @return True if the contract supports the interface, false otherwise
@@ -263,9 +269,15 @@ contract ERC721MInitializableV1_0_1 is
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     ) external onlyOwner {
+        if (_setupLocked) {
+            revert ContractAlreadySetup();
+        }
+
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
         }
+
+        _setupLocked = true;
         _mintable = true;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;

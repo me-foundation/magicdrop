@@ -42,4 +42,7 @@ contract ERC721MStorage {
 
     // Whether transfers are frozen.
     bool internal _frozen;
+
+    // Whether the contract has been setup.
+    bool internal _setupLocked;
 }
