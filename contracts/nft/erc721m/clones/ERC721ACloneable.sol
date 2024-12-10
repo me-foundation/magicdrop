@@ -148,7 +148,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
         _symbol = symbol_;
         _currentIndex = _startTokenId();
 
-        if (_sequentialUpTo() < _startTokenId()) _revert(SequentialUpToTooSmall.selector);
+        if (_sequentialUpTo() < _startTokenId()) {
+            _revert(SequentialUpToTooSmall.selector);
+        }
     }
 
     // =============================================================
@@ -395,7 +397,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
 
             // If the data at the starting slot does not exist, start the scan.
             if (packed == 0) {
-                if (tokenId >= _currentIndex) _revert(OwnerQueryForNonexistentToken.selector);
+                if (tokenId >= _currentIndex) {
+                    _revert(OwnerQueryForNonexistentToken.selector);
+                }
                 // Invariant:
                 // There will always be an initialized ownership slot
                 // (i.e. `ownership.addr != address(0) && ownership.burned == false`)
@@ -482,7 +486,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
      * - `tokenId` must exist.
      */
     function getApproved(uint256 tokenId) public view virtual override returns (address) {
-        if (!_exists(tokenId)) _revert(ApprovalQueryForNonexistentToken.selector);
+        if (!_exists(tokenId)) {
+            _revert(ApprovalQueryForNonexistentToken.selector);
+        }
 
         return _tokenApprovals[tokenId].value;
     }
@@ -521,7 +527,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
      */
     function _exists(uint256 tokenId) internal view virtual returns (bool result) {
         if (_startTokenId() <= tokenId) {
-            if (tokenId > _sequentialUpTo()) return _packedOwnershipExists(_packedOwnerships[tokenId]);
+            if (tokenId > _sequentialUpTo()) {
+                return _packedOwnershipExists(_packedOwnerships[tokenId]);
+            }
 
             if (tokenId < _currentIndex) {
                 uint256 packed;
@@ -599,13 +607,17 @@ contract ERC721ACloneable is IERC721A, Initializable {
         // Mask `from` to the lower 160 bits, in case the upper bits somehow aren't clean.
         from = address(uint160(uint256(uint160(from)) & _BITMASK_ADDRESS));
 
-        if (address(uint160(prevOwnershipPacked)) != from) _revert(TransferFromIncorrectOwner.selector);
+        if (address(uint160(prevOwnershipPacked)) != from) {
+            _revert(TransferFromIncorrectOwner.selector);
+        }
 
         (uint256 approvedAddressSlot, address approvedAddress) = _getApprovedSlotAndAddress(tokenId);
 
         // The nested ifs save around 20+ gas over a compound boolean condition.
         if (!_isSenderApprovedOrOwner(approvedAddress, from, _msgSenderERC721A())) {
-            if (!isApprovedForAll(from, _msgSenderERC721A())) _revert(TransferCallerNotOwnerNorApproved.selector);
+            if (!isApprovedForAll(from, _msgSenderERC721A())) {
+                _revert(TransferCallerNotOwnerNorApproved.selector);
+            }
         }
 
         _beforeTokenTransfers(from, to, tokenId, 1);
@@ -813,7 +825,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
             uint256 end = startTokenId + quantity;
             uint256 tokenId = startTokenId;
 
-            if (end - 1 > _sequentialUpTo()) _revert(SequentialMintExceedsLimit.selector);
+            if (end - 1 > _sequentialUpTo()) {
+                _revert(SequentialMintExceedsLimit.selector);
+            }
 
             do {
                 assembly {
@@ -861,7 +875,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
         uint256 startTokenId = _currentIndex;
         if (to == address(0)) _revert(MintToZeroAddress.selector);
         if (quantity == 0) _revert(MintZeroQuantity.selector);
-        if (quantity > _MAX_MINT_ERC2309_QUANTITY_LIMIT) _revert(MintERC2309QuantityExceedsLimit.selector);
+        if (quantity > _MAX_MINT_ERC2309_QUANTITY_LIMIT) {
+            _revert(MintERC2309QuantityExceedsLimit.selector);
+        }
 
         _beforeTokenTransfers(address(0), to, startTokenId, quantity);
 
@@ -882,7 +898,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
             _packedOwnerships[startTokenId] =
                 _packOwnershipData(to, _nextInitializedFlag(quantity) | _nextExtraData(address(0), to, 0));
 
-            if (startTokenId + quantity - 1 > _sequentialUpTo()) _revert(SequentialMintExceedsLimit.selector);
+            if (startTokenId + quantity - 1 > _sequentialUpTo()) {
+                _revert(SequentialMintExceedsLimit.selector);
+            }
 
             emit ConsecutiveTransfer(startTokenId, startTokenId + quantity - 1, address(0), to);
 
@@ -944,9 +962,13 @@ contract ERC721ACloneable is IERC721A, Initializable {
      * Emits a {Transfer} event for each mint.
      */
     function _mintSpot(address to, uint256 tokenId) internal virtual {
-        if (tokenId <= _sequentialUpTo()) _revert(SpotMintTokenIdTooSmall.selector);
+        if (tokenId <= _sequentialUpTo()) {
+            _revert(SpotMintTokenIdTooSmall.selector);
+        }
         uint256 prevOwnershipPacked = _packedOwnerships[tokenId];
-        if (_packedOwnershipExists(prevOwnershipPacked)) _revert(TokenAlreadyExists.selector);
+        if (_packedOwnershipExists(prevOwnershipPacked)) {
+            _revert(TokenAlreadyExists.selector);
+        }
 
         _beforeTokenTransfers(address(0), to, tokenId, 1);
 
@@ -1098,7 +1120,9 @@ contract ERC721ACloneable is IERC721A, Initializable {
         if (approvalCheck) {
             // The nested ifs save around 20+ gas over a compound boolean condition.
             if (!_isSenderApprovedOrOwner(approvedAddress, from, _msgSenderERC721A())) {
-                if (!isApprovedForAll(from, _msgSenderERC721A())) _revert(TransferCallerNotOwnerNorApproved.selector);
+                if (!isApprovedForAll(from, _msgSenderERC721A())) {
+                    _revert(TransferCallerNotOwnerNorApproved.selector);
+                }
             }
         }
 

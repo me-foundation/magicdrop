@@ -40,12 +40,6 @@ struct SetupConfig {
     AllowlistStage allowlistStage;
     /// @dev The payout recipient of the token.
     address payoutRecipient;
-    /// @dev The recipient of mint fees.
-    /// @notice Mint fees are sent when funds are withdrawn.
-    address feeRecipient;
-    /// @dev The mint fee.
-    /// @notice This is the fee charged for each mint.
-    uint256 mintFee;
     /// @dev The provenance hash of the token.
     /// @notice This is used to ensure the metadata is not tampered with.
     ///     A value of 0 is used to indicate that the provenance hash is not set.

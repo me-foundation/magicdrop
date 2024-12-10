@@ -130,7 +130,9 @@ abstract contract ERC721AQueryableCloneable is ERC721ACloneable, IERC721AQueryab
      */
     function tokensOfOwner(address owner) external view virtual override returns (uint256[] memory) {
         // If spot mints are enabled, full-range scan is disabled.
-        if (_sequentialUpTo() != type(uint256).max) _revert(NotCompatibleWithSpotMints.selector);
+        if (_sequentialUpTo() != type(uint256).max) {
+            _revert(NotCompatibleWithSpotMints.selector);
+        }
         uint256 start = _startTokenId();
         uint256 stop = _nextTokenId();
         uint256[] memory tokenIds;
@@ -165,7 +167,9 @@ abstract contract ERC721AQueryableCloneable is ERC721ACloneable, IERC721AQueryab
             // If there are one or more tokens to scan.
             if (tokenIdsMaxLength != 0) {
                 // Set `tokenIdsMaxLength = min(balanceOf(owner), tokenIdsMaxLength)`.
-                if (stop - start <= tokenIdsMaxLength) tokenIdsMaxLength = stop - start;
+                if (stop - start <= tokenIdsMaxLength) {
+                    tokenIdsMaxLength = stop - start;
+                }
                 uint256 m; // Start of available memory.
                 assembly {
                     // Grab the free memory pointer.
@@ -192,7 +196,9 @@ abstract contract ERC721AQueryableCloneable is ERC721ACloneable, IERC721AQueryab
                         // Skip the remaining unused sequential slots.
                         if (start == nextTokenId) start = _sequentialUpTo() + 1;
                         // Reset `currOwnershipAddr`, as each spot-minted token is a batch of one.
-                        if (start > _sequentialUpTo()) currOwnershipAddr = address(0);
+                        if (start > _sequentialUpTo()) {
+                            currOwnershipAddr = address(0);
+                        }
                     }
                     ownership = _ownershipAt(start); // This implicitly allocates memory.
                     assembly {
