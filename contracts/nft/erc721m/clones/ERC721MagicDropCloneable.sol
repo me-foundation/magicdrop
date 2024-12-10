@@ -4,6 +4,7 @@ pragma solidity ^0.8.22;
 
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
+import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 
@@ -87,6 +88,9 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     /// @notice Thrown when the public stage timing conflicts with the allowlist stage timing.
     error InvalidPublicStageTime();
 
+    /// @notice Thrown when the payout recipient is set to a zero address.
+    error PayoutRecipientCannotBeZeroAddress();
+
     /*==============================================================
     =                          INITIALIZERS                        =
     ==============================================================*/
@@ -127,6 +131,10 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             revert WalletLimitExceeded();
         }
 
+        if (stage.price != 0) {
+            _splitProceeds();
+        }
+
         _safeMint(to, qty);
     }
 
@@ -153,6 +161,10 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
 
         if (_numberMinted(to) + qty > this.walletLimit()) {
             revert WalletLimitExceeded();
+        }
+
+        if (stage.price != 0) {
+            _splitProceeds();
         }
 
         _safeMint(to, qty);
@@ -262,22 +274,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
         _payoutRecipient = newPayoutRecipient;
     }
 
-    /// @notice Withdraws the entire contract balance, distributing protocol fees and sending the remainder to the payout recipient.
-    /// @dev Only callable by the owner. Reverts if transfer fails.
-    function withdraw() external onlyOwner {
-        uint256 balance = address(this).balance;
-        uint256 protocolFee = (balance * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
-        uint256 remainingBalance = balance - protocolFee;
-
-        (bool feeSuccess,) = PROTOCOL_FEE_RECIPIENT.call{value: protocolFee}("");
-        if (!feeSuccess) revert WithdrawFailed();
-
-        (bool success,) = _payoutRecipient.call{value: remainingBalance}("");
-        if (!success) revert WithdrawFailed();
-
-        emit Withdraw(balance);
-    }
-
     /*==============================================================
     =                      INTERNAL HELPERS                        =
     ==============================================================*/
@@ -290,9 +286,9 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             revert InvalidStageTime();
         }
 
-        // Ensure no timing overlap if allowlist stage is set
+        // Ensure the public stage starts after the allowlist stage ends
         if (_allowlistStage.startTime != 0 && _allowlistStage.endTime != 0) {
-            if (stage.endTime > _allowlistStage.startTime) {
+            if (stage.startTime < _allowlistStage.endTime) {
                 revert InvalidPublicStageTime();
             }
         }
@@ -308,7 +304,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             revert InvalidStageTime();
         }
 
-        // Ensure no timing overlap if public stage is set
+        // Ensure the public stage starts after the allowlist stage ends
         if (_publicStage.startTime != 0 && _publicStage.endTime != 0) {
             if (stage.endTime > _publicStage.startTime) {
                 revert InvalidAllowlistStageTime();
@@ -323,6 +319,28 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     /// @param newPayoutRecipient The address to receive the payout from mint proceeds.
     function _setPayoutRecipient(address newPayoutRecipient) internal {
         _payoutRecipient = newPayoutRecipient;
+    }
+
+    /// @notice Internal function to split the proceeds of a mint.
+    /// @dev This function is called by the mint functions to split the proceeds into a protocol fee and a payout.
+    function _splitProceeds() internal {
+        if (_payoutRecipient == address(0)) {
+            revert PayoutRecipientCannotBeZeroAddress();
+        }
+
+        uint256 protocolFee = (msg.value * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
+
+        /// @dev Remaining balance is the balance minus the protocol fee.
+        uint256 remainingBalance;
+        unchecked {
+            remainingBalance = msg.value - protocolFee;
+        }
+
+        /// @dev Transfer the protocol fee to the protocol fee recipient.
+        SafeTransferLib.safeTransferETH(PROTOCOL_FEE_RECIPIENT, protocolFee);
+
+        /// @dev Transfer the remaining balance to the payout recipient.
+        SafeTransferLib.safeTransferETH(_payoutRecipient, remainingBalance);
     }
 
     /*==============================================================
