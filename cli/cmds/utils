@@ -101,16 +101,6 @@ save_deployment_data() {
 }
 
 prestart() {
-    # Check Node.js version
-    NODE_VERSION=$(node -v)
-    REQUIRED_VERSION="v20.9.0"
-    if [[ "$(printf '%s\n' "$REQUIRED_VERSION" "$NODE_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]]; then
-        echo "Node.js version is $NODE_VERSION. Please upgrade to version 20.9 or greater."
-        echo "You can use nvm to install and switch versions: https://github.com/nvm-sh/nvm"
-        echo "nvm install 20.9 or nvm use 20.9"
-        exit 1
-    fi
-
     # Fetch the latest changes from the remote
     git -C "$BASE_DIR" fetch
 

@@ -21,6 +21,13 @@ contract ERC721MagicDropMetadataCloneable is
     ERC2981,
     Ownable
 {
+    /*==============================================================
+    =                          INITIALIZERS                        =
+    ==============================================================*/
+
+    /// @notice Initializes the contract.
+    /// @dev This function is called by the initializer of the parent contract.
+    /// @param owner The address of the contract owner.
     function __ERC721MagicDropMetadataCloneable__init(address owner) internal onlyInitializing {
         _initializeOwner(owner);
     }
