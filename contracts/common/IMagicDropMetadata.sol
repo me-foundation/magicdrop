@@ -50,11 +50,6 @@ interface IMagicDropMetadata {
     /// @return The URI string pointing to the contract's metadata JSON
     function contractURI() external view returns (string memory);
 
-    /// @notice Returns the maximum number of tokens that can be minted
-    /// @dev This value cannot be increased once set, only decreased
-    /// @return The maximum supply cap for the collection
-    function maxSupply() external view returns (uint256);
-
     /// @notice Returns the address that receives royalty payments
     /// @dev Used in conjunction with royaltyBps for EIP-2981 royalty standard
     /// @return The address designated to receive royalty payments
@@ -80,12 +75,6 @@ interface IMagicDropMetadata {
     ///      Should point to a JSON file following collection metadata standards
     /// @param contractURI The new URI string pointing to the contract's metadata JSON
     function setContractURI(string calldata contractURI) external;
-
-    /// @notice Updates the maximum supply cap for the collection
-    /// @dev Can only decrease the max supply, never increase it
-    ///      Must be greater than or equal to the current total supply
-    /// @param maxSupply The new maximum number of tokens that can be minted
-    function setMaxSupply(uint256 maxSupply) external;
 
     /// @notice Updates the royalty configuration for the collection
     /// @dev Implements EIP-2981 for NFT royalty standards

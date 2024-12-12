@@ -14,17 +14,13 @@ interface IERC1155MagicDropMetadata is IMagicDropMetadata {
 
     event MaxSupplyUpdated(uint256 tokenId, uint256 oldMaxSupply, uint256 newMaxSupply);
 
-    event ProvenanceHashUpdated(uint256 tokenId, bytes32 oldHash, bytes32 newHash);
-
-    error ProvenanceHashCannotBeUpdated(uint256 tokenId);
-
     error WalletLimitExceeded(uint256 tokenId);
+
+    event WalletLimitUpdated(uint256 tokenId, uint256 newWalletLimit);
 
     function setMaxSupply(uint256 tokenId, uint256 newMaxSupply) external;
 
-    function setWalletLimit(uint256 tokenId, uint256 walletLimit) external;
-
-    function setProvenanceHash(uint256 tokenId, bytes32 provenanceHash) external;
+    function setWalletLimit(uint256 tokenId, uint256 newWalletLimit) external;
 
     function name() external view returns (string memory);
 
@@ -35,8 +31,6 @@ interface IERC1155MagicDropMetadata is IMagicDropMetadata {
     function totalSupply(uint256 tokenId) external view returns (uint256);
 
     function totalMinted(uint256 tokenId) external view returns (uint256);
-
-    function provenanceHash(uint256 tokenId) external view returns (bytes32);
 
     function walletLimit(uint256 tokenId) external view returns (uint256);
 }

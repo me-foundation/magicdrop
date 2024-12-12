@@ -5,7 +5,9 @@ import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {Initializable} from "solady/src/utils/Initializable.sol";
 
+import {ERC1155} from "solady/src/tokens/ERC1155.sol";
 import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
+import {ERC1155ConduitPreapprovedCloneable} from "./ERC1155ConduitPreapprovedCloneable.sol";
 
 contract ERC1155MagicDropMetadataCloneable is
     ERC1155ConduitPreapprovedCloneable,
@@ -35,16 +37,11 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @dev The base URI for the collection.
     string internal _baseURI;
 
-    /// @dev The provenance hash of the collection.
-    bytes32 internal _provenanceHash;
-
     /// @dev The address that receives royalty payments.
     address internal _royaltyReceiver;
 
     /// @dev The royalty basis points.
     uint256 internal _royaltyBps;
-
-    event MagicDropTokenDeployed();
 
     /*==============================================================
     =                          INITIALIZERS                        =
@@ -52,9 +49,9 @@ contract ERC1155MagicDropMetadataCloneable is
 
     /// @notice Initializes the contract with a name, symbol, and owner.
     /// @dev Can only be called once. It sets the owner, emits a deploy event, and prepares the token for minting stages.
-    /// @param _name The ERC-1155 name of the collection.
-    /// @param _symbol The ERC-1155 symbol of the collection.
-    /// @param _owner The address designated as the initial owner of the contract.
+    /// @param name_ The ERC-1155 name of the collection.
+    /// @param symbol_ The ERC-1155 symbol of the collection.
+    /// @param owner_ The address designated as the initial owner of the contract.
     function __ERC1155MagicDropMetadataCloneable__init(string memory name_, string memory symbol_, address owner_)
         internal
         onlyInitializing
@@ -62,20 +59,30 @@ contract ERC1155MagicDropMetadataCloneable is
         _name = name_;
         _symbol = symbol_;
         _initializeOwner(owner_);
+
+        emit MagicDropTokenDeployed();
     }
 
     /*==============================================================
     =                      PUBLIC VIEW METHODS                     =
     ==============================================================*/
 
+    /// @notice Returns the name of the collection.
+    function name() public view returns (string memory) {
+        return _name;
+    }
+
+    /// @notice Returns the symbol of the collection.
+    function symbol() public view returns (string memory) {
+        return _symbol;
+    }
+
     /// @notice Returns the current base URI used to construct token URIs.
-    /// @return The base URI as a string.
     function baseURI() public view override returns (string memory) {
         return _baseURI;
     }
 
     /// @notice Returns a URI representing contract-level metadata, often used by marketplaces.
-    /// @return The contract-level metadata URI.
     function contractURI() public view override returns (string memory) {
         return _contractURI;
     }
@@ -108,12 +115,6 @@ contract ERC1155MagicDropMetadataCloneable is
         return _walletLimit[tokenId];
     }
 
-    /// @notice The assigned provenance hash used to ensure the integrity of the metadata ordering.
-    /// @return The provenance hash of the token.
-    function provenanceHash(uint256 tokenId) public view returns (bytes32) {
-        return _provenanceHash[tokenId];
-    }
-
     /// @notice The address designated to receive royalty payments on secondary sales.
     /// @return The royalty receiver address.
     function royaltyAddress() public view returns (address) {
@@ -130,13 +131,7 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @dev Supports ERC-2981 (royalties) and ERC-4906 (batch metadata updates), in addition to inherited interfaces.
     /// @param interfaceId The interface ID to check for compliance.
     /// @return True if the contract implements the specified interface, otherwise false.
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC1155ConduitPreapprovedCloneable, IERC1155ConduitPreapproved, ERC2981)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC2981) returns (bool) {
         return interfaceId == 0x2a55205a // ERC-2981 royalties
             || interfaceId == 0x49064906 // ERC-4906 metadata updates
             || super.supportsInterface(interfaceId);
@@ -144,9 +139,8 @@ contract ERC1155MagicDropMetadataCloneable is
 
     /// @notice Returns the URI for a given token ID.
     /// @dev This returns the base URI for all tokens.
-    /// @param tokenId The ID of the token.
     /// @return The URI for the token.
-    function uri(uint256 /* tokenId */) public view returns (string memory) {
+    function uri(uint256 /* tokenId */ ) public view override returns (string memory) {
         return _baseURI;
     }
 
@@ -176,28 +170,12 @@ contract ERC1155MagicDropMetadataCloneable is
         _setMaxSupply(tokenId, newMaxSupply);
     }
 
-
     /// @notice Updates the per-wallet minting limit.
     /// @dev This can be changed at any time to adjust distribution constraints.
     /// @param tokenId The ID of the token.
     /// @param newWalletLimit The new per-wallet limit on minted tokens.
     function setWalletLimit(uint256 tokenId, uint256 newWalletLimit) external onlyOwner {
         _setWalletLimit(tokenId, newWalletLimit);
-    }
-
-    /// @notice Sets the provenance hash, used to verify metadata integrity and prevent tampering.
-    /// @dev Can only be set before any tokens are minted.
-    /// @param newProvenanceHash The new provenance hash.
-    function setProvenanceHash(bytes32 newProvenanceHash) external onlyOwner {
-        _setProvenanceHash(newProvenanceHash);
-    }
-
-    /// @notice Configures the royalty information for secondary sales.
-    /// @dev Sets a new receiver and basis points for royalties. Basis points define the percentage rate.
-    /// @param newReceiver The address to receive royalties.
-    /// @param newBps The royalty rate in basis points (e.g., 100 = 1%).
-    function setRoyaltyInfo(address newReceiver, uint96 newBps) external onlyOwner {
-        _setRoyaltyInfo(newReceiver, newBps);
     }
 
     /// @notice Configures the royalty information for secondary sales.
@@ -223,12 +201,19 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @notice Internal function setting the base URI for token metadata.
     /// @param newBaseURI The new base URI string.
     function _setBaseURI(string calldata newBaseURI) internal {
-        _tokenBaseURI = newBaseURI;
+        _baseURI = newBaseURI;
 
-        if (totalSupply() != 0) {
-            // Notify EIP-4906 compliant observers of a metadata update.
-            emit BatchMetadataUpdate(0, totalSupply() - 1);
-        }
+        // Notify EIP-4906 compliant observers of a metadata update.
+        emit BatchMetadataUpdate(0, type(uint256).max);
+    }
+
+    function _setContractURI(string calldata newContractURI) internal {
+        _contractURI = newContractURI;
+    }
+
+    function _setRoyaltyInfo(address newReceiver, uint96 newBps) internal {
+        _royaltyReceiver = newReceiver;
+        _royaltyBps = newBps;
     }
 
     /// @notice Internal function setting the maximum token supply.
@@ -236,11 +221,12 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @param tokenId The ID of the token.
     /// @param newMaxSupply The new maximum supply.
     function _setMaxSupply(uint256 tokenId, uint256 newMaxSupply) internal {
-        if (_maxSupply != 0 && newMaxSupply > _maxSupply) {
+        uint256 oldMaxSupply = _tokenSupply[tokenId].maxSupply;
+        if (oldMaxSupply != 0 && newMaxSupply > oldMaxSupply) {
             revert MaxSupplyCannotBeIncreased();
         }
 
-        if (newMaxSupply < _tokenSupply[tokenId].maxSupply) {
+        if (newMaxSupply < oldMaxSupply) {
             revert MaxSupplyCannotBeLessThanCurrentSupply();
         }
 
@@ -250,7 +236,7 @@ contract ERC1155MagicDropMetadataCloneable is
 
         _tokenSupply[tokenId].maxSupply = uint64(newMaxSupply);
 
-        emit MaxSupplyUpdated(tokenId, newMaxSupply);
+        emit MaxSupplyUpdated(tokenId, oldMaxSupply, newMaxSupply);
     }
 
     /// @notice Internal function setting the per-wallet minting limit.
@@ -259,18 +245,5 @@ contract ERC1155MagicDropMetadataCloneable is
     function _setWalletLimit(uint256 tokenId, uint256 newWalletLimit) internal {
         _walletLimit[tokenId] = newWalletLimit;
         emit WalletLimitUpdated(tokenId, newWalletLimit);
-    }
-
-    /// @notice Internal function setting the provenance hash.
-    /// @param tokenId The ID of the token.
-    /// @param newProvenanceHash The new provenance hash.
-    function _setProvenanceHash(uint256 tokenId, bytes32 newProvenanceHash) internal {
-        if (_tokenSupply[tokenId].totalMinted > 0) {
-            revert ProvenanceHashCannotBeUpdated();
-        }
-
-        bytes32 oldProvenanceHash = _provenanceHash[tokenId];
-        _provenanceHash[tokenId] = newProvenanceHash;
-        emit ProvenanceHashUpdated(tokenId, oldProvenanceHash, newProvenanceHash);
     }
 }

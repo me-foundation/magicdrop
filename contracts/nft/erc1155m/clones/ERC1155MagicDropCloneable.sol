@@ -2,9 +2,13 @@
 pragma solidity ^0.8.22;
 
 import {ERC1155MagicDropMetadataCloneable} from "./ERC1155MagicDropMetadataCloneable.sol";
+import {ERC1155ConduitPreapprovedCloneable} from "./ERC1155ConduitPreapprovedCloneable.sol";
+import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
+import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
 
-contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
+import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 
+contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, ReentrancyGuard {
     mapping(uint256 => PublicStage) internal _publicStages; // tokenId => publicStage
 
     mapping(uint256 => AllowlistStage) internal _allowlistStages; // tokenId => allowlistStage
@@ -33,14 +37,14 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @notice Returns the current public stage configuration (startTime, endTime, price).
     /// @return The current public stage settings.
-    function getPublicStage() external view returns (PublicStage memory) {
-        return _publicStage;
+    function getPublicStage(uint256 tokenId) external view returns (PublicStage memory) {
+        return _publicStages[tokenId];
     }
 
     /// @notice Returns the current allowlist stage configuration (startTime, endTime, price, merkleRoot).
     /// @return The current allowlist stage settings.
-    function getAllowlistStage() external view returns (AllowlistStage memory) {
-        return _allowlistStage;
+    function getAllowlistStage(uint256 tokenId) external view returns (AllowlistStage memory) {
+        return _allowlistStages[tokenId];
     }
 
     /// @notice Indicates whether the contract implements a given interface.
@@ -50,7 +54,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         public
         view
         virtual
-        override(ERC1155ConduitPreapprovedCloneable)
+        override(ERC1155MagicDropMetadataCloneable)
         returns (bool)
     {
         return interfaceId == type(IERC1155MagicDropMetadata).interfaceId || super.supportsInterface(interfaceId);
