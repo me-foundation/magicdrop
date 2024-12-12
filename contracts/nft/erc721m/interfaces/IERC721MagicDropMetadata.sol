@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {IMagicDropMetadata} from "contracts/common/IMagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
 interface IERC721MagicDropMetadata is IMagicDropMetadata {
     /// @notice Emitted when the wallet limit is updated.

@@ -74,7 +74,6 @@ contract ERC721MagicDropMetadataCloneable is
     function contractURI() public view override returns (string memory) {
         return _contractURI;
     }
-
     /// @notice The maximum number of tokens that can ever be minted by this contract.
     /// @return The maximum supply of tokens.
     function maxSupply() public view returns (uint256) {
@@ -167,6 +166,12 @@ contract ERC721MagicDropMetadataCloneable is
     =                      INTERNAL HELPERS                        =
     ==============================================================*/
 
+    /// @notice Internal function returning the current base URI for token metadata.
+    /// @return The current base URI string.
+    function _baseURI() internal view override returns (string memory) {
+        return _tokenBaseURI;
+    }
+    
     /// @notice Internal function setting the base URI for token metadata.
     /// @param newBaseURI The new base URI string.
     function _setBaseURI(string calldata newBaseURI) internal {

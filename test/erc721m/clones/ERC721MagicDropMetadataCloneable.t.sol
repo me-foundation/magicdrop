@@ -9,7 +9,7 @@ import {LibClone} from "solady/src/utils/LibClone.sol";
 
 import {ERC721MagicDropMetadataCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropMetadataCloneable.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
-import {IMagicDropMetadata} from "contracts/common/IMagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
 interface IERC2981 {
     function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256);
