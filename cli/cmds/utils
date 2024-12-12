@@ -23,6 +23,7 @@ format_address() {
 set_rpc_url() {
     case $1 in
         1) RPC_URL="https://cloudflare-eth.com" ;; # Ethereum
+        56) RPC_URL="https://bsc-dataseed.binance.org" ;; # BSC
         137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
         8453) RPC_URL="https://mainnet.base.org" ;; # Base
         42161) RPC_URL="https://arb1.arbitrum.io/rpc" ;; # Arbitrum
@@ -141,6 +142,7 @@ chain_id_to_symbol() {
         42161) echo "ARB" ;;
         1329) echo "SEI" ;;
         33139) echo "APE" ;;
+        56) echo "BNB" ;;
         11155111) echo "SEP" ;;
         *) echo "Unknown" ;;
     esac
@@ -150,6 +152,7 @@ chain_id_to_explorer_url() {
     local chain_id="$1"
     case $chain_id in
         1) echo "https://etherscan.io" ;;
+        56) echo "https://bscscan.com" ;;
         137) echo "https://polygonscan.com" ;;
         8453) echo "https://explorer.base.org" ;;
         42161) echo "https://arbiscan.io" ;;
