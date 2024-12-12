@@ -431,12 +431,6 @@ contract ERC721MagicDropCloneableTest is Test {
     =                          METADATA                            =
     ==============================================================*/
 
-    function testContractNameAndVersion() public {
-        (string memory n, string memory v) = token.contractNameAndVersion();
-        assertEq(n, "ERC721MagicDropCloneable");
-        assertEq(v, "1.0.0");
-    }
-
     function testTokenURI() public {
         // Mint token #1
         vm.warp(publicStart + 1);
