@@ -84,11 +84,7 @@ contract ERC721MagicDropCloneableTest is Test {
                 price: 0.005 ether,
                 merkleRoot: merkleHelper.getRoot()
             }),
-            publicStage: PublicStage({
-                startTime: uint64(publicStart),
-                endTime: uint64(publicEnd),
-                price: 0.01 ether
-            }),
+            publicStage: PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0.01 ether}),
             payoutRecipient: payoutRecipient,
             provenanceHash: keccak256("some-provenance")
         });
@@ -417,11 +413,7 @@ contract ERC721MagicDropCloneableTest is Test {
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         vm.prank(owner);
-        token.setPublicStage(PublicStage({
-            startTime: uint64(publicStart),
-            endTime: uint64(publicEnd),
-            price: 0
-        }));
+        token.setPublicStage(PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0}));
 
         // Move to public sale time
         vm.warp(publicStart + 1);
