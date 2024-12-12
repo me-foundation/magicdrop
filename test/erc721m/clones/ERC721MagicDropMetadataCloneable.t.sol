@@ -9,6 +9,7 @@ import {LibClone} from "solady/src/utils/LibClone.sol";
 
 import {ERC721MagicDropMetadataCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropMetadataCloneable.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
 interface IERC2981 {
     function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256);
@@ -43,11 +44,10 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
     =                         INITIALIZATION                       =
     ==============================================================*/
 
-    function testInitialization() public {
+    function testInitialization() public view {
         assertEq(token.owner(), owner);
         assertEq(token.maxSupply(), 0);
         assertEq(token.walletLimit(), 0);
-        assertEq(token.provenanceHash(), bytes32(0));
         assertEq(token.baseURI(), "");
         assertEq(token.contractURI(), "");
         assertEq(token.royaltyAddress(), address(0));
@@ -86,7 +86,7 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
         vm.startPrank(owner);
         token.mintForTest(user, 5); // now totalSupply = 5
         vm.expectEmit(true, true, true, true);
-        emit IERC721MagicDropMetadata.BatchMetadataUpdate(0, 4);
+        emit IMagicDropMetadata.BatchMetadataUpdate(0, 4);
         token.setBaseURI("https://example.com/metadata/");
         vm.stopPrank();
 
@@ -100,7 +100,7 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
     function testSetContractURI() public {
         vm.prank(owner);
         vm.expectEmit(false, false, false, true);
-        emit IERC721MagicDropMetadata.ContractURIUpdated("https://new-contract-uri.json");
+        emit IMagicDropMetadata.ContractURIUpdated("https://new-contract-uri.json");
         token.setContractURI("https://new-contract-uri.json");
         assertEq(token.contractURI(), "https://new-contract-uri.json");
     }
@@ -108,7 +108,7 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
     function testSetEmptyContractURI() public {
         vm.prank(owner);
         vm.expectEmit(false, false, false, true);
-        emit IERC721MagicDropMetadata.ContractURIUpdated("");
+        emit IMagicDropMetadata.ContractURIUpdated("");
         token.setContractURI("");
         assertEq(token.contractURI(), "");
     }
@@ -129,7 +129,7 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
         vm.startPrank(owner);
         token.mintForTest(user, 10);
         // Currently minted = 10
-        vm.expectRevert(IERC721MagicDropMetadata.MaxSupplyCannotBeLessThanCurrentSupply.selector);
+        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeLessThanCurrentSupply.selector);
         token.setMaxSupply(5);
 
         // Setting exactly to 10 should pass
@@ -140,7 +140,7 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
     function testSetMaxSupplyCannotIncreaseBeyondOriginal() public {
         vm.startPrank(owner);
         token.setMaxSupply(1000);
-        vm.expectRevert(IERC721MagicDropMetadata.MaxSupplyCannotBeIncreased.selector);
+        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeIncreased.selector);
         token.setMaxSupply(2000);
     }
 
@@ -165,34 +165,13 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
     }
 
     /*==============================================================
-    =                        PROVENANCE HASH                       =
-    ==============================================================*/
-
-    function testSetProvenanceHashBeforeMint() public {
-        vm.prank(owner);
-        bytes32 ph = keccak256("test-provenance");
-        vm.expectEmit(false, false, false, true);
-        emit IERC721MagicDropMetadata.ProvenanceHashUpdated(bytes32(0), ph);
-        token.setProvenanceHash(ph);
-        assertEq(token.provenanceHash(), ph);
-    }
-
-    function testSetProvenanceHashAfterMintReverts() public {
-        vm.startPrank(owner);
-        token.mintForTest(user, 1); // now minted = 1
-        bytes32 ph = keccak256("another-ph");
-        vm.expectRevert(IERC721MagicDropMetadata.ProvenanceHashCannotBeUpdated.selector);
-        token.setProvenanceHash(ph);
-    }
-
-    /*==============================================================
     =                         ROYALTY INFO                         =
     ==============================================================*/
 
     function testSetRoyaltyInfo() public {
         vm.prank(owner);
         vm.expectEmit(false, false, false, true);
-        emit IERC721MagicDropMetadata.RoyaltyInfoUpdated(royaltyReceiver, 500);
+        emit IMagicDropMetadata.RoyaltyInfoUpdated(royaltyReceiver, 500);
         token.setRoyaltyInfo(royaltyReceiver, 500);
 
         assertEq(token.royaltyAddress(), royaltyReceiver);
@@ -221,7 +200,7 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
         token.mintForTest(user, 10);
 
         vm.expectEmit(true, true, true, true);
-        emit IERC721MagicDropMetadata.BatchMetadataUpdate(2, 5);
+        emit IMagicDropMetadata.BatchMetadataUpdate(2, 5);
         token.emitBatchMetadataUpdate(2, 5);
         vm.stopPrank();
     }
@@ -230,7 +209,7 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
     =                         SUPPORTS INTERFACE                   =
     ==============================================================*/
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // ERC2981 interfaceId = 0x2a55205a
         assertTrue(token.supportsInterface(0x2a55205a));
         // ERC4906 interfaceId = 0x49064906
@@ -247,22 +226,8 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
     function testCannotSetMaxSupplyLessThanMintedEvenIfNotSetBefore() public {
         vm.startPrank(owner);
         token.mintForTest(user, 5);
-        vm.expectRevert(IERC721MagicDropMetadata.MaxSupplyCannotBeLessThanCurrentSupply.selector);
+        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeLessThanCurrentSupply.selector);
         token.setMaxSupply(1);
-    }
-
-    function testSettingProvenanceHashTwiceBeforeMintIsAllowed() public {
-        vm.startPrank(owner);
-        bytes32 ph1 = keccak256("ph1");
-        token.setProvenanceHash(ph1);
-        assertEq(token.provenanceHash(), ph1);
-
-        // Setting again before mint (though unusual) is possible since no tokens minted yet
-        bytes32 ph2 = keccak256("ph2");
-        vm.expectEmit(false, false, false, true);
-        emit IERC721MagicDropMetadata.ProvenanceHashUpdated(ph1, ph2);
-        token.setProvenanceHash(ph2);
-        assertEq(token.provenanceHash(), ph2);
     }
 
     function testSetBaseURIEmptyString() public {

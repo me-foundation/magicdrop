@@ -47,17 +47,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     AllowlistStage private _allowlistStage;
 
     /*==============================================================
-    =                             EVENTS                           =
-    ==============================================================*/
-
-    /// @notice Emitted once when the token contract is deployed and initialized.
-    event MagicDropTokenDeployed();
-
-    /// @notice Emitted upon a successful withdrawal of funds.
-    /// @param amount The total amount of ETH withdrawn (including protocol fee).
-    event Withdraw(uint256 amount);
-
-    /*==============================================================
     =                             ERRORS                           =
     ==============================================================*/
 
@@ -69,12 +58,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
 
     /// @notice Thrown when the provided ETH value for a mint is insufficient.
     error NotEnoughValue();
-
-    /// @notice Thrown when a mint would exceed the wallet-specific minting limit.
-    error WalletLimitExceeded();
-
-    /// @notice Thrown when a withdrawal call fails to transfer funds.
-    error WithdrawFailed();
 
     /// @notice Thrown when the provided Merkle proof for an allowlist mint is invalid.
     error InvalidProof();
@@ -103,8 +86,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     function initialize(string memory _name, string memory _symbol, address _owner) public initializer {
         __ERC721ACloneable__init(_name, _symbol);
         __ERC721MagicDropMetadataCloneable__init(_owner);
-
-        emit MagicDropTokenDeployed();
     }
 
     /*==============================================================
@@ -217,7 +198,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     ==============================================================*/
 
     /// @notice Sets up the contract parameters in a single call.
-    /// @dev Only callable by the owner. Configures max supply, wallet limit, URIs, stages, payout recipient, and provenance.
+    /// @dev Only callable by the owner. Configures max supply, wallet limit, URIs, stages, payout recipient.
     /// @param config A struct containing all setup parameters.
     function setup(SetupConfig calldata config) external onlyOwner {
         if (config.maxSupply > 0) {
@@ -246,10 +227,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
 
         if (config.payoutRecipient != address(0)) {
             _setPayoutRecipient(config.payoutRecipient);
-        }
-
-        if (config.provenanceHash != bytes32(0)) {
-            _setProvenanceHash(config.provenanceHash);
         }
     }
 

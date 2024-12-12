@@ -12,9 +12,8 @@ import {ERC721AQueryableCloneable} from "./ERC721AQueryableCloneable.sol";
 import {IERC721MagicDropMetadata} from "../interfaces/IERC721MagicDropMetadata.sol";
 
 /// @title ERC721MagicDropMetadataCloneable
-/// @notice A cloneable ERC-721A implementation that supports adjustable metadata URIs, royalty configuration,
-///         and optional provenance hashing for metadata integrity. Inherits conduit-based preapprovals,
-///         making distribution more gas-efficient.
+/// @notice A cloneable ERC-721A implementation that supports adjustable metadata URIs, royalty configuration.
+///         Inherits conduit-based preapprovals, making distribution more gas-efficient.
 contract ERC721MagicDropMetadataCloneable is
     ERC721AConduitPreapprovedCloneable,
     IERC721MagicDropMetadata,
@@ -30,6 +29,8 @@ contract ERC721MagicDropMetadataCloneable is
     /// @param owner The address of the contract owner.
     function __ERC721MagicDropMetadataCloneable__init(address owner) internal onlyInitializing {
         _initializeOwner(owner);
+
+        emit MagicDropTokenDeployed();
     }
 
     /*==============================================================
@@ -52,11 +53,6 @@ contract ERC721MagicDropMetadataCloneable is
     /// @notice The per-wallet minting limit, restricting how many tokens a single address can mint.
     uint256 private _walletLimit;
 
-    /// @notice A provenance hash ensuring metadata integrity and fair distribution.
-    /// @dev Once tokens are minted, this value cannot be changed. Commonly used to verify that
-    ///      the metadata ordering has not been manipulated post-reveal.
-    bytes32 private _provenanceHash;
-
     /// @notice The address receiving royalty payments.
     address private _royaltyReceiver;
 
@@ -78,7 +74,6 @@ contract ERC721MagicDropMetadataCloneable is
     function contractURI() public view override returns (string memory) {
         return _contractURI;
     }
-
     /// @notice The maximum number of tokens that can ever be minted by this contract.
     /// @return The maximum supply of tokens.
     function maxSupply() public view returns (uint256) {
@@ -89,12 +84,6 @@ contract ERC721MagicDropMetadataCloneable is
     /// @return The minting limit per wallet.
     function walletLimit() public view returns (uint256) {
         return _walletLimit;
-    }
-
-    /// @notice The assigned provenance hash used to ensure the integrity of the metadata ordering.
-    /// @return The provenance hash.
-    function provenanceHash() public view returns (bytes32) {
-        return _provenanceHash;
     }
 
     /// @notice The address designated to receive royalty payments on secondary sales.
@@ -157,13 +146,6 @@ contract ERC721MagicDropMetadataCloneable is
         _setWalletLimit(newWalletLimit);
     }
 
-    /// @notice Sets the provenance hash, used to verify metadata integrity and prevent tampering.
-    /// @dev Can only be set before any tokens are minted.
-    /// @param newProvenanceHash The new provenance hash.
-    function setProvenanceHash(bytes32 newProvenanceHash) external onlyOwner {
-        _setProvenanceHash(newProvenanceHash);
-    }
-
     /// @notice Configures the royalty information for secondary sales.
     /// @dev Sets a new receiver and basis points for royalties. Basis points define the percentage rate.
     /// @param newReceiver The address to receive royalties.
@@ -189,7 +171,7 @@ contract ERC721MagicDropMetadataCloneable is
     function _baseURI() internal view override returns (string memory) {
         return _tokenBaseURI;
     }
-
+    
     /// @notice Internal function setting the base URI for token metadata.
     /// @param newBaseURI The new base URI string.
     function _setBaseURI(string calldata newBaseURI) internal {
@@ -222,18 +204,6 @@ contract ERC721MagicDropMetadataCloneable is
     function _setWalletLimit(uint256 newWalletLimit) internal {
         _walletLimit = newWalletLimit;
         emit WalletLimitUpdated(newWalletLimit);
-    }
-
-    /// @notice Internal function setting the provenance hash.
-    /// @param newProvenanceHash The new provenance hash.
-    function _setProvenanceHash(bytes32 newProvenanceHash) internal {
-        if (_totalMinted() > 0) {
-            revert ProvenanceHashCannotBeUpdated();
-        }
-
-        bytes32 oldProvenanceHash = _provenanceHash;
-        _provenanceHash = newProvenanceHash;
-        emit ProvenanceHashUpdated(oldProvenanceHash, newProvenanceHash);
     }
 
     /// @notice Internal function setting the royalty information.

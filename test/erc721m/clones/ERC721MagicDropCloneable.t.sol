@@ -8,6 +8,7 @@ import {LibClone} from "solady/src/utils/LibClone.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 
 import {ERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropCloneable.sol";
+import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc721m/clones/Types.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 
@@ -84,13 +85,8 @@ contract ERC721MagicDropCloneableTest is Test {
                 price: 0.005 ether,
                 merkleRoot: merkleHelper.getRoot()
             }),
-            publicStage: PublicStage({
-                startTime: uint64(publicStart),
-                endTime: uint64(publicEnd),
-                price: 0.01 ether
-            }),
-            payoutRecipient: payoutRecipient,
-            provenanceHash: keccak256("some-provenance")
+            publicStage: PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0.01 ether}),
+            payoutRecipient: payoutRecipient
         });
 
         vm.prank(owner);
@@ -169,7 +165,7 @@ contract ERC721MagicDropCloneableTest is Test {
         assertEq(token.balanceOf(user), 5);
 
         // Attempt to mint one more
-        vm.expectRevert(ERC721MagicDropCloneable.WalletLimitExceeded.selector);
+        vm.expectRevert(IERC721MagicDropMetadata.WalletLimitExceeded.selector);
         token.mintPublic{value: 0.01 ether}(1, user);
         vm.stopPrank();
     }
@@ -241,7 +237,7 @@ contract ERC721MagicDropCloneableTest is Test {
         token.mintAllowlist{value: 0.025 ether}(5, allowedAddr, proof);
         assertEq(token.balanceOf(allowedAddr), 5);
 
-        vm.expectRevert(ERC721MagicDropCloneable.WalletLimitExceeded.selector);
+        vm.expectRevert(IERC721MagicDropMetadata.WalletLimitExceeded.selector);
         token.mintAllowlist{value: 0.005 ether}(1, allowedAddr, proof);
         vm.stopPrank();
     }
@@ -417,11 +413,7 @@ contract ERC721MagicDropCloneableTest is Test {
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         vm.prank(owner);
-        token.setPublicStage(PublicStage({
-            startTime: uint64(publicStart),
-            endTime: uint64(publicEnd),
-            price: 0
-        }));
+        token.setPublicStage(PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0}));
 
         // Move to public sale time
         vm.warp(publicStart + 1);
@@ -438,12 +430,6 @@ contract ERC721MagicDropCloneableTest is Test {
     /*==============================================================
     =                          METADATA                            =
     ==============================================================*/
-
-    function testContractNameAndVersion() public {
-        (string memory n, string memory v) = token.contractNameAndVersion();
-        assertEq(n, "ERC721MagicDropCloneable");
-        assertEq(v, "1.0.0");
-    }
 
     function testTokenURI() public {
         // Mint token #1
