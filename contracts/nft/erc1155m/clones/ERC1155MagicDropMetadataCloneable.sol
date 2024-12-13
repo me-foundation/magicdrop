@@ -16,15 +16,6 @@ contract ERC1155MagicDropMetadataCloneable is
     Ownable,
     Initializable
 {
-    /// @dev The total supply of each token.
-    mapping(uint256 => TokenSupply) internal _tokenSupply;
-
-    /// @dev The maximum number of tokens that can be minted by a single wallet.
-    mapping(uint256 => uint256) internal _walletLimit;
-
-    /// @dev The total number of tokens minted by each user per token.
-    mapping(address => mapping(uint256 => uint256)) internal _totalMintedByUserPerToken;
-
     /// @dev The name of the collection.
     string internal _name;
 
@@ -42,6 +33,15 @@ contract ERC1155MagicDropMetadataCloneable is
 
     /// @dev The royalty basis points.
     uint256 internal _royaltyBps;
+
+    /// @dev The total supply of each token.
+    mapping(uint256 => TokenSupply) internal _tokenSupply;
+
+    /// @dev The maximum number of tokens that can be minted by a single wallet.
+    mapping(uint256 => uint256) internal _walletLimit;
+
+    /// @dev The total number of tokens minted by each user per token.
+    mapping(address => mapping(uint256 => uint256)) internal _totalMintedByUserPerToken;
 
     /*==============================================================
     =                          INITIALIZERS                        =
@@ -87,6 +87,18 @@ contract ERC1155MagicDropMetadataCloneable is
         return _contractURI;
     }
 
+    /// @notice The address designated to receive royalty payments on secondary sales.
+    /// @return The royalty receiver address.
+    function royaltyAddress() public view returns (address) {
+        return _royaltyReceiver;
+    }
+
+    /// @notice The royalty rate in basis points (e.g. 100 = 1%) for secondary sales.
+    /// @return The royalty fee in basis points.
+    function royaltyBps() public view returns (uint256) {
+        return _royaltyBps;
+    }
+
     /// @notice The maximum number of tokens that can ever be minted by this contract.
     /// @param tokenId The ID of the token.
     /// @return The maximum supply of tokens.
@@ -115,18 +127,6 @@ contract ERC1155MagicDropMetadataCloneable is
         return _walletLimit[tokenId];
     }
 
-    /// @notice The address designated to receive royalty payments on secondary sales.
-    /// @return The royalty receiver address.
-    function royaltyAddress() public view returns (address) {
-        return _royaltyReceiver;
-    }
-
-    /// @notice The royalty rate in basis points (e.g. 100 = 1%) for secondary sales.
-    /// @return The royalty fee in basis points.
-    function royaltyBps() public view returns (uint256) {
-        return _royaltyBps;
-    }
-
     /// @notice Indicates whether this contract implements a given interface.
     /// @dev Supports ERC-2981 (royalties) and ERC-4906 (batch metadata updates), in addition to inherited interfaces.
     /// @param interfaceId The interface ID to check for compliance.
@@ -134,7 +134,7 @@ contract ERC1155MagicDropMetadataCloneable is
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC2981) returns (bool) {
         return interfaceId == 0x2a55205a // ERC-2981 royalties
             || interfaceId == 0x49064906 // ERC-4906 metadata updates
-            || super.supportsInterface(interfaceId);
+            || interfaceId == type(IERC1155MagicDropMetadata).interfaceId || ERC1155.supportsInterface(interfaceId);
     }
 
     /// @notice Returns the URI for a given token ID.

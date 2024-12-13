@@ -23,6 +23,8 @@ struct AllowlistStage {
 }
 
 struct SetupConfig {
+    /// @dev The token ID of the token.
+    uint256 tokenId;
     /// @dev The maximum number of tokens that can be minted.
     ///      - Can be decreased if current supply < new max supply
     ///      - Cannot be increased once set
