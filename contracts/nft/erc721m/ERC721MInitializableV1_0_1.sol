@@ -227,10 +227,10 @@ contract ERC721MInitializableV1_0_1 is
         return _setupLocked;
     }
 
-    /// @notice Checks if the contract is frozen
-    /// @return Whether the contract is frozen
-    function isFrozen() public view returns (bool) {
-        return _frozen;
+    /// @notice Checks if the contract is transferable
+    /// @return Whether the contract is transferable
+    function isTransferable() public view returns (bool) {
+        return _transferable;
     }
 
     /// @notice Checks if the contract supports a given interface
@@ -287,6 +287,7 @@ contract ERC721MInitializableV1_0_1 is
         _fundReceiver = fundReceiver;
         _currentBaseURI = baseURI;
         _tokenURISuffix = tokenURISuffix;
+        _transferable = true;
         _setTimestampExpirySeconds(300); // 5 minutes
 
         if (initialStages.length > 0) {
@@ -423,11 +424,11 @@ contract ERC721MInitializableV1_0_1 is
         emit SetContractURI(uri);
     }
 
-    /// @notice Sets the frozen status
-    /// @param frozen The frozen status to set
-    function setFrozen(bool frozen) external onlyOwner {
-        _frozen = frozen;
-        emit SetFrozen(frozen);
+    /// @notice Sets the transferable status
+    /// @param transferable The transferable status to set
+    function setTransferable(bool transferable) external onlyOwner {
+        _transferable = transferable;
+        emit SetTransferable(transferable);
     }
 
     /*==============================================================
@@ -563,7 +564,7 @@ contract ERC721MInitializableV1_0_1 is
         virtual
         override
     {
-        if (_frozen && from != address(0)) revert TransfersAreFrozen();
+        if (!_transferable && from != address(0)) revert NotTransferable();
         super._beforeTokenTransfers(from, to, startTokenId, quantity);
     }
 

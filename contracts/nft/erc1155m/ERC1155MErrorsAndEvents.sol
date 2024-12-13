@@ -19,5 +19,4 @@ interface ERC1155MErrorsAndEvents is ErrorsAndEvents {
     );
     event SetMaxMintableSupply(uint256 indexed tokenId, uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 indexed tokenId, uint256 globalWalletLimit);
-    event SetTransferable(bool transferable);
 }

@@ -55,9 +55,9 @@ contract ERC721MInitializableTest is Test {
         );
     }
 
-    function testTransferWhenNotFrozen() public {
+    function testTransferWhenTransferable() public {
         vm.startPrank(owner);
-        nft.setFrozen(false);
+        nft.setTransferable(true);
         nft.ownerMint(1, minter);
         vm.stopPrank();
 
@@ -68,13 +68,13 @@ contract ERC721MInitializableTest is Test {
         assertEq(nft.balanceOf(readonly), 1);
     }
 
-    function testTransferWhenFrozen() public {
+    function testTransferWhenNotTransferable() public {
         vm.startPrank(owner);
-        nft.setFrozen(true);
+        nft.setTransferable(false);
         nft.ownerMint(1, minter);
         vm.stopPrank();
 
-        vm.expectRevert(ErrorsAndEvents.TransfersAreFrozen.selector);
+        vm.expectRevert(ErrorsAndEvents.NotTransferable.selector);
         vm.prank(minter);
         nft.safeTransferFrom(minter, readonly, 0);
     }
@@ -87,21 +87,13 @@ contract ERC721MInitializableTest is Test {
         assertEq(nft.tokenURISuffix(), ".json");
     }
 
-    function testIsFrozen() public {
-        assertEq(nft.isFrozen(), false);
-
+    function testSetTransferable() public {
         vm.startPrank(owner);
-        nft.setFrozen(true);
-        assertEq(nft.isFrozen(), true);
-    }
+        nft.setTransferable(false);
+        assertEq(nft.isTransferable(), false);
 
-    function testUnfreeze() public {
-        vm.startPrank(owner);
-        nft.setFrozen(true);
-        assertEq(nft.isFrozen(), true);
-
-        nft.setFrozen(false);
-        assertEq(nft.isFrozen(), false);
+        nft.setTransferable(true);
+        assertEq(nft.isTransferable(), true);
     }
 
     function testSetBaseURI() public {

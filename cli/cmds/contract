@@ -159,7 +159,7 @@ freeze_contract() {
         freeze_level=8 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
         output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 8 false false false $password --rpc-url "$RPC_URL" --json)
     elif [ "$token_standard" == "ERC721" ]; then
-        output=$(cast send $contract_address "setFrozen(bool)" true $password --rpc-url "$RPC_URL" --json)
+        output=$(cast send $contract_address "setTransferable(bool)" false $password --rpc-url "$RPC_URL" --json)
     else
         echo "Contract does not support freezing."
         exit 1
@@ -180,7 +180,7 @@ thaw_contract() {
         thaw_level=3 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
         output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 3 false false false $password --rpc-url "$RPC_URL" --json)
     elif [ "$token_standard" == "ERC721" ]; then
-        output=$(cast send $contract_address "setFrozen(bool)" true $password --rpc-url "$RPC_URL" --json)
+        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
     else
         echo "Contract does not support thawing."
         exit 1

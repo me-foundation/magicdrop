@@ -276,6 +276,7 @@ contract ERC721CMInitializableV1_0_1 is
         _fundReceiver = fundReceiver;
         _currentBaseURI = baseURI;
         _tokenURISuffix = tokenURISuffix;
+        _transferable = true;
         _setTimestampExpirySeconds(300); // 5 minutes
 
         if (initialStages.length > 0) {
