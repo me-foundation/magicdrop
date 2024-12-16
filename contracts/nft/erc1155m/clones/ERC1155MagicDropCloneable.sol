@@ -11,11 +11,13 @@ import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 
 contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, ReentrancyGuard {
+    address internal _payoutRecipient;
+
     mapping(uint256 => PublicStage) internal _publicStages; // tokenId => publicStage
 
     mapping(uint256 => AllowlistStage) internal _allowlistStages; // tokenId => allowlistStage
 
-    address internal _payoutRecipient;
+    error InvalidProof();
 
     error InvalidStageTime();
 
@@ -27,11 +29,13 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
 
     error InvalidAllowlistStageTime();
 
+    error NotEnoughValue();
+
     /*==============================================================
     =                     PUBLIC WRITE METHODS                     =
     ==============================================================*/
 
-    function mintPublic(uint256 tokenId, uint256 qty, address to, bytes memory data) external {
+    function mintPublic(uint256 tokenId, uint256 qty, address to, bytes memory data) external payable nonReentrant {
         PublicStage memory stage = _publicStages[tokenId];
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert PublicStageNotActive();
@@ -43,7 +47,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         }
 
         if (_totalMintedByUserPerToken[to][tokenId] + qty > this.walletLimit(tokenId)) {
-            revert WalletLimitExceeded();
+            revert WalletLimitExceeded(tokenId);
         }
 
         if (stage.price != 0) {
@@ -53,7 +57,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         _mint(to, tokenId, qty, data);
     }
 
-    function mintAllowlist(uint256 tokenId, uint256 qty, address to, bytes32[] calldata proof, bytes memory data) external {
+    function mintAllowlist(uint256 tokenId, uint256 qty, address to, bytes32[] calldata proof, bytes memory data) external payable nonReentrant {
         AllowlistStage memory stage = _allowlistStages[tokenId];
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert AllowlistStageNotActive();
@@ -95,7 +99,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
             }
         }
 
-        _burnBatch(by, from, ids, qty);
+        _batchBurn(by, from, ids, qty);
     }
 
     /*==============================================================
@@ -167,24 +171,28 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         }
     }
 
-    function setPublicStage(PublicStage calldata stage) external onlyOwner {
+    function setPublicStage(uint256 tokenId, PublicStage calldata stage) external onlyOwner {
         if (stage.startTime >= stage.endTime) {
             revert InvalidStageTime();
         }
 
         // Ensure the public stage starts after the allowlist stage ends
-        if (_allowlistStages[stage.tokenId].startTime != 0 && _allowlistStages[stage.tokenId].endTime != 0) {
-            if (stage.startTime < _allowlistStages[stage.tokenId].endTime) {
+        if (_allowlistStages[tokenId].startTime != 0 && _allowlistStages[tokenId].endTime != 0) {
+            if (stage.startTime < _allowlistStages[tokenId].endTime) {
                 revert InvalidPublicStageTime();
             }
         }
 
-        _publicStages[stage.tokenId] = stage;
+        _publicStages[tokenId] = stage;
     }
 
-    function setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) external onlyOwner {}
+    function setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) external onlyOwner {
+        _allowlistStages[tokenId] = stage;
+    }
 
-    function setPayoutRecipient(address newPayoutRecipient) external onlyOwner {}
+    function setPayoutRecipient(address newPayoutRecipient) external onlyOwner {
+        _setPayoutRecipient(newPayoutRecipient);
+    }
 
     /*==============================================================
     =                      INTERNAL HELPERS                        =
@@ -201,7 +209,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     function _reduceSupplyOnBurn(uint256 tokenId, uint256 qty) internal {
         TokenSupply storage supply = _tokenSupply[tokenId];
         unchecked {
-            supply.totalSupply -= qty;
+            supply.totalSupply -= uint64(qty);
         }
     }
 

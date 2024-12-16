@@ -295,7 +295,7 @@ contract ERC721MagicDropCloneableTest is Test {
         assertEq(ps.price, 0.01 ether);
     }
 
-    function testGetAllowlistStage() public {
+    function testGetAllowlistStage() public view {
         AllowlistStage memory als = token.getAllowlistStage();
         assertEq(als.startTime, allowlistStart);
         assertEq(als.endTime, allowlistEnd);
@@ -311,7 +311,7 @@ contract ERC721MagicDropCloneableTest is Test {
     =                        SUPPORTSINTERFACE                     =
     ==============================================================*/
 
-    function testSupportsInterface() public {
+    function testSupportsInterface() public view {
         // Just checks a known supported interface
         assertTrue(token.supportsInterface(type(IERC721MagicDropMetadata).interfaceId));
     }

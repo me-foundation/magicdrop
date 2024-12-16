@@ -97,7 +97,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     ///      Reverts if the buyer does not send enough ETH, or if the wallet limit would be exceeded.
     /// @param qty The number of tokens to mint.
     /// @param to The recipient address for the minted tokens.
-    function mintPublic(uint256 qty, address to) external payable {
+    function mintPublic(uint256 qty, address to) external payable nonReentrant {
         PublicStage memory stage = _publicStage;
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert PublicStageNotActive();
