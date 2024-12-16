@@ -157,7 +157,7 @@ chain_id_to_explorer_url() {
         8453) echo "https://explorer.base.org" ;;
         42161) echo "https://arbiscan.io" ;;
         1329) echo "https://sei.explorer.sepolia.io" ;;
-        33139) echo "https://explorer.caldera.xyz" ;;
+        33139) echo "https://apescan.io/" ;;
         11155111) echo "https://sepolia.etherscan.io" ;;
         *) echo "Unknown" ;;
     esac
