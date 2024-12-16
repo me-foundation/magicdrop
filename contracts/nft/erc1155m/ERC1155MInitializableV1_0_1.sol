@@ -18,10 +18,10 @@ import {ERC1155MStorage} from "./ERC1155MStorage.sol";
 import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
-/// @title ERC1155MInitializableV1_0_0
+/// @title ERC1155MInitializableV1_0_1
 /// @notice An initializable ERC1155 contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC1155, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
-contract ERC1155MInitializableV1_0_0 is
+contract ERC1155MInitializableV1_0_1 is
     IERC1155M,
     ERC1155SupplyUpgradeable,
     Ownable,
@@ -62,7 +62,7 @@ contract ERC1155MInitializableV1_0_0 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC1155MInitializable", "1.0.0");
+        return ("ERC1155MInitializable", "1.0.1");
     }
 
     /*==============================================================
@@ -196,6 +196,18 @@ contract ERC1155MInitializableV1_0_0 is
         return totalMinted;
     }
 
+    /// @notice Checks if the contract is setup locked
+    /// @return Whether the contract is setup locked
+    function isSetupLocked() external view returns (bool) {
+        return _setupLocked;
+    }
+
+    /// @notice Checks if the contract is transferable
+    /// @return Whether the contract is transferable
+    function isTransferable() public view returns (bool) {
+        return _transferable;
+    }
+
     /// @notice Checks if the contract supports a given interface
     /// @param interfaceId The interface identifier
     /// @return True if the contract supports the interface, false otherwise
@@ -232,6 +244,10 @@ contract ERC1155MInitializableV1_0_0 is
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     ) external onlyOwner {
+        if (_setupLocked) {
+            revert ContractAlreadySetup();
+        }
+
         if (maxMintableSupply.length != globalWalletLimit.length) {
             revert InvalidLimitArgsLength();
         }
@@ -242,6 +258,7 @@ contract ERC1155MInitializableV1_0_0 is
             }
         }
 
+        _setupLocked = true;
         _numTokens = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
@@ -581,14 +598,15 @@ contract ERC1155MInitializableV1_0_0 is
         uint256[] memory amounts,
         bytes memory data
     ) internal virtual override {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-
         bool fromZeroAddress = from == address(0);
         bool toZeroAddress = to == address(0);
 
+        // If the transfer is not from a mint or burn, revert if not transferable
         if (!fromZeroAddress && !toZeroAddress && !_transferable) {
             revert NotTransferable();
         }
+
+        ERC1155SupplyUpgradeable._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     /// @dev Overriden to prevent double-initialization of the owner.

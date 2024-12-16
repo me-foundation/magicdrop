@@ -222,6 +222,12 @@ contract ERC721CMInitializableV1_0_1 is
         return _setupLocked;
     }
 
+    /// @notice Checks if the contract is transferable
+    /// @return Whether the contract is transferable
+    function isTransferable() public view returns (bool) {
+        return _transferable;
+    }
+
     /// @notice Checks if the contract supports a given interface
     /// @param interfaceId The interface identifier
     /// @return True if the contract supports the interface, false otherwise
@@ -413,6 +419,13 @@ contract ERC721CMInitializableV1_0_1 is
         emit SetContractURI(uri);
     }
 
+    /// @notice Sets whether tokens are transferable
+    /// @param transferable True if tokens should be transferable, false otherwise
+    function setTransferable(bool transferable) external onlyOwner {
+        _transferable = transferable;
+        emit SetTransferable(transferable);
+    }
+
     /*==============================================================
     =                      INTERNAL HELPERS                        =
     ==============================================================*/
@@ -554,5 +567,22 @@ contract ERC721CMInitializableV1_0_1 is
     /// @dev Overriden to prevent double-initialization of the owner.
     function _guardInitializeOwner() internal pure virtual override returns (bool) {
         return true;
+    }
+
+    function _beforeTokenTransfers(address from, address to, uint256 startTokenId, uint256 quantity)
+        internal
+        virtual
+        override
+    {
+
+        bool fromZeroAddress = from == address(0);
+        bool toZeroAddress = to == address(0);
+
+        // If the transfer is not from a mint or burn, revert if not transferable
+        if (!fromZeroAddress && !toZeroAddress && !_transferable) {
+            revert NotTransferable();
+        }
+
+        ERC721ACQueryableInitializable._beforeTokenTransfers(from, to, startTokenId, quantity);
     }
 }

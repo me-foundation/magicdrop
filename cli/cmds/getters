@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+MAGIC_EDEN_DEFAULT_LIST_ID="1"
+
+
 get_numeric_input() {
     local prompt="$1"
     local input
@@ -91,14 +94,11 @@ get_transfer_validator_address() {
 get_transfer_validator_list_id() {
     local network="$1"
     case $network in
-        "33139"|"42161"|"8453"|"1")
-            echo "1"
-            ;;
         "137")
             echo "3"
             ;;
         *)
-            echo "0" # default list id
+            echo $MAGIC_EDEN_DEFAULT_LIST_ID
             ;;
     esac
 }

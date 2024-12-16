@@ -128,19 +128,8 @@ freeze_thaw_contract() {
 
     set_chain
     set_contract_address
-    set_token_standard
     
     print_signer_with_balance $chain_id
-
-    if [ -z "$is_icreatortoken" ]; then
-        supports_icreatortoken
-        is_icreatortoken=$?
-    fi
-
-    if [ -z "$tf_address" ] && [ $is_icreatortoken -eq 0 ]; then
-        tf_address=$(get_transfer_validator_address $chain_id)
-    fi
-
 
     choice=$(gum choose "Freeze" "Thaw")
     if [ "$choice" == "Freeze" ]; then
@@ -153,41 +142,20 @@ freeze_thaw_contract() {
 freeze_contract() {
     echo "Freezing contract... this will take a moment."
 
-    if [ "$token_standard" == "ERC1155" ]; then
-        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
-    elif [ "$token_standard" == "ERC721" ] && [ $is_icreatortoken -eq 0 ]; then
-        freeze_level=8 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
-        output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 8 false false false $password --rpc-url "$RPC_URL" --json)
-    elif [ "$token_standard" == "ERC721" ]; then
-        output=$(cast send $contract_address "setTransferable(bool)" false $password --rpc-url "$RPC_URL" --json)
-    else
-        echo "Contract does not support freezing."
-        exit 1
-    fi
+    output=$(cast send $contract_address "setTransferable(bool)" false $password --rpc-url "$RPC_URL" --json)
 
     print_transaction_hash $output
-    echo "Contract frozen."
+    echo "Token transfers frozen."
     echo ""
 }
 
 thaw_contract() {
     echo "Thawing contract... this will take a moment."
 
-    if [ "$token_standard" == "ERC1155" ]; then
-        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
-    elif [ "$token_standard" == "ERC721" ] && [ $is_icreatortoken -eq 0 ]; then
-        # level 3 is the default level of Magic Eden, which offers whitelisting and OTC trading
-        thaw_level=3 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
-        output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 3 false false false $password --rpc-url "$RPC_URL" --json)
-    elif [ "$token_standard" == "ERC721" ]; then
-        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
-    else
-        echo "Contract does not support thawing."
-        exit 1
-    fi
+    output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
 
     print_transaction_hash $output
-    echo "Contract thawed."
+    echo "Token transfers thawed."
     echo ""
 }
 
