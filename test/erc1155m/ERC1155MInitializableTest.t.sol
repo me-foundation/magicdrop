@@ -40,14 +40,7 @@ contract ERC1155MInitializableTest is Test {
         initialStages = new MintStageInfo1155[](0);
 
         nft.setup(
-            "base_uri_",
-            maxMintableSupply,
-            globalWalletLimit,
-            address(0),
-            fundReceiver,
-            initialStages,
-            address(this),
-            0
+            "base_uri_", maxMintableSupply, globalWalletLimit, address(0), fundReceiver, initialStages, address(this), 0
         );
     }
 
@@ -55,14 +48,7 @@ contract ERC1155MInitializableTest is Test {
         vm.startPrank(owner);
         vm.expectRevert(ErrorsAndEvents.ContractAlreadySetup.selector);
         nft.setup(
-            "base_uri_",
-            maxMintableSupply,
-            globalWalletLimit,
-            address(0),
-            fundReceiver,
-            initialStages,
-            address(this),
-            0
+            "base_uri_", maxMintableSupply, globalWalletLimit, address(0), fundReceiver, initialStages, address(this), 0
         );
 
         assertEq(nft.isSetupLocked(), true);

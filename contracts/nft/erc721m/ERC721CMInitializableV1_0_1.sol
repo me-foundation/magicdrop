@@ -574,7 +574,6 @@ contract ERC721CMInitializableV1_0_1 is
         virtual
         override
     {
-
         bool fromZeroAddress = from == address(0);
         bool toZeroAddress = to == address(0);
 
