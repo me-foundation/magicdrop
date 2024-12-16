@@ -22,7 +22,7 @@ format_address() {
 
 set_rpc_url() {
     case $1 in
-        1) RPC_URL="https://mainnet.infura.io" ;; # Ethereum
+        1) RPC_URL="https://eth.llamarpc.com" ;; # Ethereum
         56) RPC_URL="https://bsc-dataseed.binance.org" ;; # BSC
         137) RPC_URL="https://polygon-rpc.com" ;; # Polygon
         8453) RPC_URL="https://mainnet.base.org" ;; # Base
