@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 MAGIC_EDEN_DEFAULT_LIST_ID="1"
+# We use list 3 for Polygon because list 1 was already taken.
+MAGIC_EDEN_POLYGON_LIST_ID="3"
 
 
 get_numeric_input() {
@@ -95,7 +97,7 @@ get_transfer_validator_list_id() {
     local network="$1"
     case $network in
         "137")
-            echo "3"
+            echo $MAGIC_EDEN_POLYGON_LIST_ID
             ;;
         *)
             echo $MAGIC_EDEN_DEFAULT_LIST_ID
