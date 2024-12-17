@@ -427,6 +427,8 @@ contract ERC721MInitializableV1_0_1 is
     /// @notice Sets the transferable status
     /// @param transferable The transferable status to set
     function setTransferable(bool transferable) external onlyOwner {
+        if (_transferable == transferable) revert TransferableAlreadySet();
+
         _transferable = transferable;
         emit SetTransferable(transferable);
     }

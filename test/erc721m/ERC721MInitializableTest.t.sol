@@ -96,6 +96,13 @@ contract ERC721MInitializableTest is Test {
         assertEq(nft.isTransferable(), true);
     }
 
+    function testSetTransferableRevertAlreadySet() public {
+        vm.startPrank(owner);
+        nft.setTransferable(true);
+        vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
+        nft.setTransferable(true);
+    }
+
     function testSetBaseURI() public {
         vm.startPrank(owner);
         nft.setBaseURI("new_base_uri_");

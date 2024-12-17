@@ -25,6 +25,7 @@ interface ErrorsAndEvents {
     error NotTransferable();
     error InitialOwnerCannotBeZero();
     error ContractAlreadySetup();
+    error TransferableAlreadySet();
 
     event SetMintable(bool mintable);
     event SetTransferable(bool transferable);

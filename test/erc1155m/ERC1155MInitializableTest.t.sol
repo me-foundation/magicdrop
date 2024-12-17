@@ -86,4 +86,11 @@ contract ERC1155MInitializableTest is Test {
         assertEq(nft.balanceOf(minter, 0), 0);
         assertEq(nft.balanceOf(readonly, 0), 1);
     }
+
+    function testSetTransferableRevertAlreadySet() public {
+        vm.startPrank(owner);
+        nft.setTransferable(true);
+        vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
+        nft.setTransferable(true);
+    }
 }

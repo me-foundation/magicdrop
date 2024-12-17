@@ -422,6 +422,8 @@ contract ERC721CMInitializableV1_0_1 is
     /// @notice Sets whether tokens are transferable
     /// @param transferable True if tokens should be transferable, false otherwise
     function setTransferable(bool transferable) external onlyOwner {
+        if (_transferable == transferable) revert TransferableAlreadySet();
+
         _transferable = transferable;
         emit SetTransferable(transferable);
     }
