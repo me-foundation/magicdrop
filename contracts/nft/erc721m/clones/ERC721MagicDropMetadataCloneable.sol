@@ -74,6 +74,7 @@ contract ERC721MagicDropMetadataCloneable is
     function contractURI() public view override returns (string memory) {
         return _contractURI;
     }
+    
     /// @notice The maximum number of tokens that can ever be minted by this contract.
     /// @return The maximum supply of tokens.
 
