@@ -76,7 +76,6 @@ contract ERC1155MInitializableTest is Test {
 
     function testTransferWhenTransferable() public {
         vm.startPrank(owner);
-        nft.setTransferable(true);
         nft.ownerMint(minter, 0, 1);
         vm.stopPrank();
 
@@ -89,7 +88,6 @@ contract ERC1155MInitializableTest is Test {
 
     function testSetTransferableRevertAlreadySet() public {
         vm.startPrank(owner);
-        nft.setTransferable(true);
         vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
         nft.setTransferable(true);
     }
