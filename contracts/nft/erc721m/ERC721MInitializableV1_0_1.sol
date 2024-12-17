@@ -71,7 +71,7 @@ contract ERC721MInitializableV1_0_1 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721CMInitializable", "1.0.1");
+        return ("ERC721MInitializable", "1.0.1");
     }
 
     /// @notice Gets the token URI for a specific token ID
