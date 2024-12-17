@@ -93,7 +93,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
             revert NotEnoughValue();
         }
 
-        if (_totalMintedByUserPerToken[to][tokenId] + qty > this.walletLimit(tokenId)) {
+        if (_walletLimit[tokenId] > 0 && _totalMintedByUserPerToken[to][tokenId] + qty > _walletLimit[tokenId]) {
             revert WalletLimitExceeded(tokenId);
         }
 
@@ -131,7 +131,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
             revert NotEnoughValue();
         }
 
-        if (_totalMintedByUserPerToken[to][tokenId] + qty > this.walletLimit(tokenId)) {
+        if (_walletLimit[tokenId] > 0 && _totalMintedByUserPerToken[to][tokenId] + qty > _walletLimit[tokenId]) {
             revert WalletLimitExceeded(tokenId);
         }
 

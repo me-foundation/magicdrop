@@ -108,8 +108,12 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             revert NotEnoughValue();
         }
 
-        if (_numberMinted(to) + qty > this.walletLimit()) {
+        if (_walletLimit > 0 && _numberMinted(to) + qty > _walletLimit) {
             revert WalletLimitExceeded();
+        }
+
+        if (_totalMinted() + qty > _maxSupply) {
+            revert CannotExceedMaxSupply();
         }
 
         if (stage.price != 0) {
@@ -140,8 +144,12 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             revert NotEnoughValue();
         }
 
-        if (_numberMinted(to) + qty > this.walletLimit()) {
+        if (_walletLimit > 0 && _numberMinted(to) + qty > _walletLimit) {
             revert WalletLimitExceeded();
+        }
+
+        if (_totalMinted() + qty > _maxSupply) {
+            revert CannotExceedMaxSupply();
         }
 
         if (stage.price != 0) {
@@ -367,12 +375,5 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     ///      By always returning true, we ensure that the inherited initializer does not re-run.
     function _guardInitializeOwner() internal pure virtual override returns (bool) {
         return true;
-    }
-
-    /// @notice Returns the token ID where enumeration starts.
-    /// @dev Overridden to start from token ID 1 instead of 0.
-    /// @return The first valid token ID.
-    function _startTokenId() internal view virtual override returns (uint256) {
-        return 1;
     }
 }

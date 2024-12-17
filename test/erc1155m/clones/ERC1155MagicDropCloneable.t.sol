@@ -12,6 +12,7 @@ import {MerkleTestHelper} from "test/helpers/MerkleTestHelper.sol";
 import {ERC1155MagicDropCloneable} from "contracts/nft/erc1155m/clones/ERC1155MagicDropCloneable.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc1155m/clones/Types.sol";
 import {IERC1155MagicDropMetadata} from "contracts/nft/erc1155m/interfaces/IERC1155MagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/IMagicDropMetadata.sol";
 
 contract ERC1155MagicDropCloneableTest is Test {
     ERC1155MagicDropCloneable public token;
@@ -141,6 +142,19 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.stopPrank();
     }
 
+    function testMintPublicMaxSupplyExceededReverts() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 10.01 ether);
+
+        vm.prank(owner);
+        // unlimited wallet limit for the purpose of this test
+        token.setWalletLimit(tokenId, 0);
+
+        vm.prank(user);
+        vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
+        token.mintPublic{value: 10.01 ether}(user, tokenId, 1001, "");
+    }
+
     /*==============================================================
     =                  TEST ALLOWLIST MINTING STAGE                =
     ==============================================================*/
@@ -211,6 +225,23 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.expectRevert(abi.encodeWithSelector(IERC1155MagicDropMetadata.WalletLimitExceeded.selector, tokenId));
         token.mintAllowlist{value: 0.005 ether}(allowedAddr, tokenId, 1, proof, "");
         vm.stopPrank();
+    }
+
+    function testMintAllowlistMaxSupplyExceededReverts() public {
+        vm.warp(allowlistStart + 1);
+
+        vm.prank(owner);
+        // unlimited wallet limit for the purpose of this test
+        token.setWalletLimit(tokenId, 0);
+
+        address allowedAddr = merkleHelper.getAllowedAddress();
+        vm.deal(allowedAddr, 11 ether);
+        vm.prank(allowedAddr);
+
+        bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
+
+        vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
+        token.mintAllowlist{value: 11 ether}(allowedAddr, tokenId, 1001, proof, "");
     }
 
     /*==============================================================

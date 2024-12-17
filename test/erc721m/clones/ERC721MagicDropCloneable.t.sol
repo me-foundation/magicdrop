@@ -13,6 +13,7 @@ import {ERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/ERC721Magic
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc721m/clones/Types.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/IMagicDropMetadata.sol";
 
 contract ERC721MagicDropCloneableTest is Test {
     ERC721MagicDropCloneable public token;
@@ -138,6 +139,19 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.stopPrank();
     }
 
+    function testMintPublicMaxSupplyExceededReverts() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 11 ether);
+
+        vm.prank(owner);
+        // unlimited wallet limit for the purpose of this test
+        token.setWalletLimit(0);
+
+        vm.prank(user);
+        vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
+        token.mintPublic{value: 11 ether}(user, 1001);
+    }
+
     /*==============================================================
     =                  TEST ALLOWLIST MINTING STAGE                =
     ==============================================================*/
@@ -210,6 +224,24 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.stopPrank();
     }
 
+    function testMintAllowlistMaxSupplyExceededReverts() public {
+        // Move time to allowlist
+        vm.warp(allowlistStart + 1);
+
+        vm.prank(owner);
+        // unlimited wallet limit for the purpose of this test
+        token.setWalletLimit(0);
+
+        address allowedAddr = merkleHelper.getAllowedAddress();
+        bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
+        vm.deal(allowedAddr, 11 ether);
+
+        vm.prank(allowedAddr);
+        vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
+        token.mintAllowlist{value: 11 ether}(allowedAddr, 1001, proof);
+    }
+
+
     /*==============================================================
     =                            BURNING                           =
     ==============================================================*/
@@ -222,7 +254,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.prank(user);
         token.mintPublic{value: 0.01 ether}(user, 1);
 
-        uint256 tokenId = 1;
+        uint256 tokenId = 0;
         assertEq(token.ownerOf(tokenId), user);
 
         vm.prank(user);
@@ -405,8 +437,8 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
         vm.prank(user);
         token.mintPublic{value: 0.01 ether}(user, 1);
-        string memory uri = token.tokenURI(1);
-        assertEq(uri, "https://example.com/metadata/1");
+        string memory uri = token.tokenURI(0);
+        assertEq(uri, "https://example.com/metadata/0");
     }
 
     function testTokenURIForNonexistentTokenReverts() public {
