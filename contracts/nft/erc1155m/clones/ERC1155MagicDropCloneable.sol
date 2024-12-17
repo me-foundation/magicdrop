@@ -11,25 +11,41 @@ import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 
 contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, ReentrancyGuard {
+    /// @dev Address that receives the primary sale proceeds of minted tokens.
+    ///      Configurable by the owner. If unset, withdrawals may fail.
     address internal _payoutRecipient;
 
+    /// @dev Configuration of the public mint stage, including timing and price.
+    /// @notice Public mints occur only if the current timestamp is within [startTime, endTime].
     mapping(uint256 => PublicStage) internal _publicStages; // tokenId => publicStage
 
+    /// @dev Configuration of the allowlist mint stage, including timing, price, and a merkle root for verification.
+    /// @notice Only addresses proven by a valid Merkle proof can mint during this stage.
     mapping(uint256 => AllowlistStage) internal _allowlistStages; // tokenId => allowlistStage
 
-    error InvalidProof();
-
-    error InvalidStageTime();
-
+    /// @notice Thrown when attempting to mint during a public stage that is not currently active.
     error PublicStageNotActive();
 
+    /// @notice Thrown when attempting to mint during an allowlist stage that is not currently active.
     error AllowlistStageNotActive();
 
+    /// @notice Thrown when the provided ETH value for a mint is insufficient.
+    error NotEnoughValue();
+
+    /// @notice Thrown when the provided Merkle proof for an allowlist mint is invalid.
+    error InvalidProof();
+
+    /// @notice Thrown when a stage's start or end time configuration is invalid.
+    error InvalidStageTime();
+
+    /// @notice Thrown when the public stage timing conflicts with the allowlist stage timing.
     error InvalidPublicStageTime();
 
+    /// @notice Thrown when the allowlist stage timing conflicts with the public stage timing.
     error InvalidAllowlistStageTime();
 
-    error NotEnoughValue();
+    /// @notice Thrown when the payout recipient is set to a zero address.
+    error PayoutRecipientCannotBeZeroAddress();
 
     /*==============================================================
     =                     PUBLIC WRITE METHODS                     =
@@ -200,7 +216,9 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
 
     function _splitProceeds() internal {}
 
-    function _setPayoutRecipient(address newPayoutRecipient) internal {}
+    function _setPayoutRecipient(address newPayoutRecipient) internal {
+        _payoutRecipient = newPayoutRecipient;
+    }
 
     function _setPublicStage(uint256 tokenId, PublicStage calldata stage) internal {}
 
