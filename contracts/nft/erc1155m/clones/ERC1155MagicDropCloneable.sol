@@ -2,18 +2,30 @@
 pragma solidity ^0.8.22;
 
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
+import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
+import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {ERC1155MagicDropMetadataCloneable} from "./ERC1155MagicDropMetadataCloneable.sol";
 import {ERC1155ConduitPreapprovedCloneable} from "./ERC1155ConduitPreapprovedCloneable.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
 
-import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
-
 contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, ReentrancyGuard {
     /// @dev Address that receives the primary sale proceeds of minted tokens.
     ///      Configurable by the owner. If unset, withdrawals may fail.
     address internal _payoutRecipient;
+
+    /// @dev The address that receives protocol fees on withdrawal.
+    /// @notice This is fixed and cannot be changed.
+    address public constant PROTOCOL_FEE_RECIPIENT = 0xA3833016a4eC61f5c253D71c77522cC8A1cC1106;
+
+    /// @dev The protocol fee expressed in basis points (e.g., 500 = 5%).
+    /// @notice This fee is taken from the contract's entire balance upon withdrawal.
+    uint256 public constant PROTOCOL_FEE_BPS = 500; // 5%
+
+    /// @dev The denominator used for calculating basis points.
+    /// @notice 10,000 BPS = 100%. A fee of 500 BPS is therefore 5%.
+    uint256 public constant BPS_DENOMINATOR = 10_000;
 
     /// @dev Configuration of the public mint stage, including timing and price.
     /// @notice Public mints occur only if the current timestamp is within [startTime, endTime].
@@ -51,7 +63,13 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     =                     PUBLIC WRITE METHODS                     =
     ==============================================================*/
 
-    function mintPublic(uint256 tokenId, uint256 qty, address to, bytes memory data) external payable nonReentrant {
+    /// @notice Mints tokens during the public stage.
+    /// @dev Requires that the current time is within the configured public stage interval.
+    ///      Reverts if the buyer does not send enough ETH, or if the wallet limit would be exceeded.
+    /// @param to The recipient address for the minted tokens.
+    /// @param tokenId The ID of the token to mint.
+    /// @param qty The number of tokens to mint.
+    function mintPublic(address to, uint256 tokenId, uint256 qty, bytes memory data) external payable nonReentrant {
         PublicStage memory stage = _publicStages[tokenId];
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert PublicStageNotActive();
@@ -73,7 +91,18 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         _mint(to, tokenId, qty, data);
     }
 
-    function mintAllowlist(uint256 tokenId, uint256 qty, address to, bytes32[] calldata proof, bytes memory data) external payable nonReentrant {
+    /// @notice Mints tokens during the allowlist stage.
+    /// @dev Requires a valid Merkle proof and the current time within the allowlist stage interval.
+    ///      Reverts if the buyer sends insufficient ETH or if the wallet limit is exceeded.
+    /// @param to The recipient address for the minted tokens.
+    /// @param tokenId The ID of the token to mint.
+    /// @param qty The number of tokens to mint.
+    /// @param proof The Merkle proof verifying `to` is eligible for the allowlist.
+    function mintAllowlist(address to, uint256 tokenId, uint256 qty, bytes32[] calldata proof, bytes memory data)
+        external
+        payable
+        nonReentrant
+    {
         AllowlistStage memory stage = _allowlistStages[tokenId];
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert AllowlistStageNotActive();
@@ -96,19 +125,36 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         _mint(to, tokenId, qty, data);
     }
 
+    /// @notice Burns a specific quantity of tokens from a given address.
+    /// @dev Reduces the total supply and calls the internal `_burn` function.
+    /// @param tokenId The ID of the token to burn.
+    /// @param qty The quantity of tokens to burn.
+    /// @param from The address from which the tokens will be burned.
     function burn(uint256 tokenId, uint256 qty, address from) external {
         _reduceSupplyOnBurn(tokenId, qty);
         _burn(from, tokenId, qty);
     }
 
+    /// @notice Burns a specific quantity of tokens on behalf of a given address.
+    /// @dev Reduces the total supply and calls the internal `_burn` function.
+    /// @param by The address initiating the burn. Must be an approved operator or the owner of the tokens.
+    /// @param from The address from which the tokens will be burned.
+    /// @param id The ID of the token to burn.
+    /// @param qty The quantity of tokens to burn.
     function burn(address by, address from, uint256 id, uint256 qty) external {
         _reduceSupplyOnBurn(id, qty);
         _burn(by, from, id, qty);
     }
 
-    function burnBatch(address by, address from, uint256[] calldata ids, uint256[] calldata qty) external {
+    /// @notice Burns multiple types of tokens in a single batch operation.
+    /// @dev Iterates over each token ID and quantity to reduce supply and burn tokens.
+    /// @param by The address initiating the batch burn.
+    /// @param from The address from which the tokens will be burned.
+    /// @param ids An array of token IDs to burn.
+    /// @param qty An array of quantities corresponding to each token ID to burn.
+    function batchBurn(address by, address from, uint256[] calldata ids, uint256[] calldata qty) external {
         uint256 length = ids.length;
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < length;) {
             _reduceSupplyOnBurn(ids[i], qty[i]);
             unchecked {
                 ++i;
@@ -122,12 +168,6 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     =                     PUBLIC VIEW METHODS                      =
     ==============================================================*/
 
-    /// @notice Returns the current payout recipient who receives primary sales proceeds after protocol fees.
-    /// @return The address currently set to receive payout funds.
-    function payoutRecipient() external view returns (address) {
-        return _payoutRecipient;
-    }
-
     /// @notice Returns the current public stage configuration (startTime, endTime, price).
     /// @return The current public stage settings.
     function getPublicStage(uint256 tokenId) external view returns (PublicStage memory) {
@@ -138,6 +178,12 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     /// @return The current allowlist stage settings.
     function getAllowlistStage(uint256 tokenId) external view returns (AllowlistStage memory) {
         return _allowlistStages[tokenId];
+    }
+
+    /// @notice Returns the current payout recipient who receives primary sales proceeds after protocol fees.
+    /// @return The address currently set to receive payout funds.
+    function payoutRecipient() external view returns (address) {
+        return _payoutRecipient;
     }
 
     /// @notice Indicates whether the contract implements a given interface.
@@ -157,6 +203,9 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     =                      ADMIN OPERATIONS                        =
     ==============================================================*/
 
+    /// @notice Sets up the contract parameters in a single call.
+    /// @dev Only callable by the owner. Configures max supply, wallet limit, URIs, stages, payout recipient.
+    /// @param config A struct containing all setup parameters.
     function setup(SetupConfig calldata config) external onlyOwner {
         if (config.maxSupply > 0) {
             _setMaxSupply(config.tokenId, config.maxSupply);
@@ -187,7 +236,35 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         }
     }
 
+    /// @notice Sets the configuration of the public mint stage.
+    /// @dev Only callable by the owner. Ensures the public stage does not overlap improperly with the allowlist stage.
+    /// @param stage A struct defining the public stage timing and price.
     function setPublicStage(uint256 tokenId, PublicStage calldata stage) external onlyOwner {
+        _setPublicStage(tokenId, stage);
+    }
+
+    /// @notice Sets the configuration of the allowlist mint stage.
+    /// @dev Only callable by the owner. Ensures the allowlist stage does not overlap improperly with the public stage.
+    /// @param stage A struct defining the allowlist stage timing, price, and merkle root.
+    function setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) external onlyOwner {
+        _setAllowlistStage(tokenId, stage);
+    }
+
+    /// @notice Sets the payout recipient address for primary sale proceeds (after the protocol fee is deducted).
+    /// @dev Only callable by the owner.
+    /// @param newPayoutRecipient The address to receive future withdrawals.
+    function setPayoutRecipient(address newPayoutRecipient) external onlyOwner {
+        _setPayoutRecipient(newPayoutRecipient);
+    }
+
+    /*==============================================================
+    =                      INTERNAL HELPERS                        =
+    ==============================================================*/
+
+    /// @notice Internal function to set the public mint stage configuration.
+    /// @dev Reverts if timing is invalid or conflicts with the allowlist stage.
+    /// @param stage A struct defining public stage timings and price.
+    function _setPublicStage(uint256 tokenId, PublicStage calldata stage) internal {
         if (stage.startTime >= stage.endTime) {
             revert InvalidStageTime();
         }
@@ -202,28 +279,60 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         _publicStages[tokenId] = stage;
     }
 
-    function setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) external onlyOwner {
+    /// @notice Internal function to set the allowlist mint stage configuration.
+    /// @dev Reverts if timing is invalid or conflicts with the public stage.
+    /// @param tokenId The ID of the token to set the allowlist stage for.
+    /// @param stage A struct defining allowlist stage timings, price, and merkle root.
+    function _setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) internal {
+        if (stage.startTime >= stage.endTime) {
+            revert InvalidStageTime();
+        }
+
+        // Ensure the public stage starts after the allowlist stage ends
+        if (_publicStages[tokenId].startTime != 0 && _publicStages[tokenId].endTime != 0) {
+            if (stage.endTime > _publicStages[tokenId].startTime) {
+                revert InvalidAllowlistStageTime();
+            }
+        }
+
         _allowlistStages[tokenId] = stage;
     }
 
-    function setPayoutRecipient(address newPayoutRecipient) external onlyOwner {
-        _setPayoutRecipient(newPayoutRecipient);
-    }
-
-    /*==============================================================
-    =                      INTERNAL HELPERS                        =
-    ==============================================================*/
-
-    function _splitProceeds() internal {}
-
+    /// @notice Internal function to set the payout recipient.
+    /// @dev This function does not revert if given a zero address, but no payouts would succeed if so.
+    /// @param newPayoutRecipient The address to receive the payout from mint proceeds.
     function _setPayoutRecipient(address newPayoutRecipient) internal {
         _payoutRecipient = newPayoutRecipient;
     }
 
-    function _setPublicStage(uint256 tokenId, PublicStage calldata stage) internal {}
+    /// @notice Internal function to split the proceeds of a mint.
+    /// @dev This function is called by the mint functions to split the proceeds into a protocol fee and a payout.
+    function _splitProceeds() internal {
+        if (_payoutRecipient == address(0)) {
+            revert PayoutRecipientCannotBeZeroAddress();
+        }
 
-    function _setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) internal {}
+        uint256 protocolFee = (msg.value * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
 
+        /// @dev Remaining balance is the balance minus the protocol fee.
+        uint256 remainingBalance;
+        unchecked {
+            remainingBalance = msg.value - protocolFee;
+        }
+
+        /// @dev Transfer the protocol fee to the protocol fee recipient.
+        SafeTransferLib.safeTransferETH(PROTOCOL_FEE_RECIPIENT, protocolFee);
+
+        /// @dev Transfer the remaining balance to the payout recipient.
+        SafeTransferLib.safeTransferETH(_payoutRecipient, remainingBalance);
+    }
+
+    /// @notice Internal function to reduce the total supply when tokens are burned.
+    /// @dev Decreases the `totalSupply` for a given `tokenId` by the specified `qty`.
+    ///      Uses `unchecked` to save gas, assuming that underflow is impossible
+    ///      because burn operations should not exceed the current supply.
+    /// @param tokenId The ID of the token being burned.
+    /// @param qty The quantity of tokens to burn.
     function _reduceSupplyOnBurn(uint256 tokenId, uint256 qty) internal {
         TokenSupply storage supply = _tokenSupply[tokenId];
         unchecked {
@@ -231,6 +340,15 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         }
     }
 
+    /// @notice Internal function to increase the total supply when tokens are minted.
+    /// @dev Increases the `totalSupply` and `totalMinted` for a given `tokenId` by the specified `qty`.
+    ///      Ensures that the new total minted amount does not exceed the `maxSupply`.
+    ///      Uses `unchecked` to save gas, assuming that overflow is impossible
+    ///      because the maximum values are constrained by `maxSupply`.
+    /// @param to The address receiving the minted tokens.
+    /// @param tokenId The ID of the token being minted.
+    /// @param qty The quantity of tokens to mint.
+    /// @custom:reverts {CannotExceedMaxSupply} If the minting would exceed the maximum supply for the `tokenId`.
     function _increaseSupplyOnMint(address to, uint256 tokenId, uint256 qty) internal {
         TokenSupply storage supply = _tokenSupply[tokenId];
 
@@ -241,7 +359,6 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         unchecked {
             supply.totalSupply += uint64(qty);
             supply.totalMinted += uint64(qty);
-
             _totalMintedByUserPerToken[to][tokenId] += uint64(qty);
         }
     }
@@ -250,6 +367,9 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     =                             META                             =
     ==============================================================*/
 
+    /// @notice Returns the contract name and version.
+    /// @dev Useful for external tools or metadata standards.
+    /// @return The contract name and version strings.
     function contractNameAndVersion() public pure returns (string memory, string memory) {
         return ("ERC1155MagicDropCloneable", "1.0.0");
     }
@@ -258,6 +378,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     =                             MISC                             =
     ==============================================================*/
 
+    /// @dev Overridden to allow this contract to properly manage owner initialization.
+    ///      By always returning true, we ensure that the inherited initializer does not re-run.
     function _guardInitializeOwner() internal pure virtual override returns (bool) {
         return true;
     }
