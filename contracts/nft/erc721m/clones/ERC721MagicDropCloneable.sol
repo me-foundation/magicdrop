@@ -95,9 +95,9 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     /// @notice Mints tokens during the public stage.
     /// @dev Requires that the current time is within the configured public stage interval.
     ///      Reverts if the buyer does not send enough ETH, or if the wallet limit would be exceeded.
-    /// @param qty The number of tokens to mint.
     /// @param to The recipient address for the minted tokens.
-    function mintPublic(uint256 qty, address to) external payable {
+    /// @param qty The number of tokens to mint.
+    function mintPublic(address to, uint256 qty) external payable nonReentrant {
         PublicStage memory stage = _publicStage;
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert PublicStageNotActive();
@@ -122,10 +122,10 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     /// @notice Mints tokens during the allowlist stage.
     /// @dev Requires a valid Merkle proof and the current time within the allowlist stage interval.
     ///      Reverts if the buyer sends insufficient ETH or if the wallet limit is exceeded.
-    /// @param qty The number of tokens to mint.
     /// @param to The recipient address for the minted tokens.
+    /// @param qty The number of tokens to mint.
     /// @param proof The Merkle proof verifying `to` is eligible for the allowlist.
-    function mintAllowlist(uint256 qty, address to, bytes32[] calldata proof) external payable {
+    function mintAllowlist(address to, uint256 qty, bytes32[] calldata proof) external payable {
         AllowlistStage memory stage = _allowlistStage;
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert AllowlistStageNotActive();
