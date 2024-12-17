@@ -44,10 +44,10 @@ interface IERC1155MagicDropMetadata is IMagicDropMetadata {
     ==============================================================*/
 
     /// @notice Returns the name of the token
-    function name(uint256 tokenId) external view returns (string memory);
+    function name() external view returns (string memory);
 
     /// @notice Returns the symbol of the token
-    function symbol(uint256 tokenId) external view returns (string memory);
+    function symbol() external view returns (string memory);
 
     /// @notice Returns the maximum number of tokens that can be minted
     /// @dev This value cannot be increased once set, only decreased

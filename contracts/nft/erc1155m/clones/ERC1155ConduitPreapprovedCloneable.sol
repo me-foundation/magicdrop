@@ -15,13 +15,11 @@ abstract contract ERC1155ConduitPreapprovedCloneable is ERC1155 {
     /// @param id The token type identifier.
     /// @param amount The number of tokens to transfer.
     /// @param data Additional data with no specified format.
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes calldata data
-    ) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data)
+        public
+        virtual
+        override
+    {
         _safeTransfer(_by(), from, to, id, amount, data);
     }
 

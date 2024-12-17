@@ -60,6 +60,19 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     error PayoutRecipientCannotBeZeroAddress();
 
     /*==============================================================
+    =                          INITIALIZERS                        =
+    ==============================================================*/
+
+    /// @notice Initializes the contract with a name, symbol, and owner.
+    /// @dev Can only be called once. It sets the owner, emits a deploy event, and prepares the token for minting stages.
+    /// @param _name The ERC-1155 name of the collection.
+    /// @param _symbol The ERC-1155 symbol of the collection.
+    /// @param _owner The address designated as the initial owner of the contract.
+    function initialize(string memory _name, string memory _symbol, address _owner) public initializer {
+        __ERC1155MagicDropMetadataCloneable__init(_name, _symbol, _owner);
+    }
+
+    /*==============================================================
     =                     PUBLIC WRITE METHODS                     =
     ==============================================================*/
 
@@ -88,6 +101,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
             _splitProceeds();
         }
 
+        _increaseSupplyOnMint(to, tokenId, qty);
         _mint(to, tokenId, qty, data);
     }
 
@@ -117,6 +131,10 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
             revert NotEnoughValue();
         }
 
+        if (_totalMintedByUserPerToken[to][tokenId] + qty > this.walletLimit(tokenId)) {
+            revert WalletLimitExceeded(tokenId);
+        }
+
         if (stage.price != 0) {
             _splitProceeds();
         }
@@ -127,10 +145,10 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
 
     /// @notice Burns a specific quantity of tokens from a given address.
     /// @dev Reduces the total supply and calls the internal `_burn` function.
+    /// @param from The address from which the tokens will be burned.
     /// @param tokenId The ID of the token to burn.
     /// @param qty The quantity of tokens to burn.
-    /// @param from The address from which the tokens will be burned.
-    function burn(uint256 tokenId, uint256 qty, address from) external {
+    function burn(address from, uint256 tokenId, uint256 qty) external {
         _reduceSupplyOnBurn(tokenId, qty);
         _burn(from, tokenId, qty);
     }
