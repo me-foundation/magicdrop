@@ -2,7 +2,6 @@
 pragma solidity ^0.8.22;
 
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
-import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {ERC1155MagicDropMetadataCloneable} from "./ERC1155MagicDropMetadataCloneable.sol";
@@ -10,7 +9,7 @@ import {ERC1155ConduitPreapprovedCloneable} from "./ERC1155ConduitPreapprovedClo
 import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
 
-contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, ReentrancyGuard {
+contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @dev Address that receives the primary sale proceeds of minted tokens.
     ///      Configurable by the owner. If unset, withdrawals may fail.
     address internal _payoutRecipient;
@@ -82,7 +81,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     /// @param to The recipient address for the minted tokens.
     /// @param tokenId The ID of the token to mint.
     /// @param qty The number of tokens to mint.
-    function mintPublic(address to, uint256 tokenId, uint256 qty, bytes memory data) external payable nonReentrant {
+    function mintPublic(address to, uint256 tokenId, uint256 qty, bytes memory data) external payable {
         PublicStage memory stage = _publicStages[tokenId];
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert PublicStageNotActive();
@@ -97,11 +96,12 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
             revert WalletLimitExceeded(tokenId);
         }
 
+        _increaseSupplyOnMint(to, tokenId, qty);
+
         if (stage.price != 0) {
             _splitProceeds();
         }
 
-        _increaseSupplyOnMint(to, tokenId, qty);
         _mint(to, tokenId, qty, data);
     }
 
@@ -115,7 +115,6 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
     function mintAllowlist(address to, uint256 tokenId, uint256 qty, bytes32[] calldata proof, bytes memory data)
         external
         payable
-        nonReentrant
     {
         AllowlistStage memory stage = _allowlistStages[tokenId];
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
@@ -135,11 +134,12 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
             revert WalletLimitExceeded(tokenId);
         }
 
+        _increaseSupplyOnMint(to, tokenId, qty);
+
         if (stage.price != 0) {
             _splitProceeds();
         }
 
-        _increaseSupplyOnMint(to, tokenId, qty);
         _mint(to, tokenId, qty, data);
     }
 

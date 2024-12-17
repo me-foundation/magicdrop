@@ -332,6 +332,49 @@ contract ERC1155MagicDropCloneableTest is Test {
     =                       ADMIN OPERATIONS                       =
     ==============================================================*/
 
+    function testSetupRevertsNotOwner() public {
+        vm.prank(user);
+        vm.expectRevert();
+        token.setup(config);
+    }
+
+    function testSetupEmptyConfigHasNoEffect() public {
+        vm.prank(owner);
+        token.setup(SetupConfig({
+            tokenId: tokenId,
+            maxSupply: 0,
+            walletLimit: 0,
+            baseURI: "",
+            contractURI: "",
+            allowlistStage: AllowlistStage({
+                startTime: uint64(0),
+                endTime: uint64(0),
+                price: 0,
+                merkleRoot: bytes32(0)
+            }),
+            publicStage: PublicStage({
+                startTime: uint64(0),
+                endTime: uint64(0),
+                price: 0
+            }),
+            payoutRecipient: address(0)
+        }));
+
+        // check that the config has no effect because it's using the zero values
+        assertEq(token.maxSupply(tokenId), config.maxSupply);
+        assertEq(token.walletLimit(tokenId), config.walletLimit);
+        assertEq(token.baseURI(), config.baseURI);
+        assertEq(token.contractURI(), config.contractURI);
+        assertEq(token.getAllowlistStage(tokenId).startTime, config.allowlistStage.startTime);
+        assertEq(token.getAllowlistStage(tokenId).endTime, config.allowlistStage.endTime);
+        assertEq(token.getAllowlistStage(tokenId).price, config.allowlistStage.price);
+        assertEq(token.getAllowlistStage(tokenId).merkleRoot, config.allowlistStage.merkleRoot);
+        assertEq(token.getPublicStage(tokenId).startTime, config.publicStage.startTime);
+        assertEq(token.getPublicStage(tokenId).endTime, config.publicStage.endTime);
+        assertEq(token.getPublicStage(tokenId).price, config.publicStage.price);
+        assertEq(token.payoutRecipient(), config.payoutRecipient);
+    }
+
     function testSetPublicStageInvalidTimesReverts() public {
         PublicStage memory invalidStage = PublicStage({
             startTime: uint64(block.timestamp + 1000),
@@ -461,5 +504,31 @@ contract ERC1155MagicDropCloneableTest is Test {
 
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance + expectedProtocolFee);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
+    }
+
+    function testSplitProceedsPayoutRecipientZeroAddressReverts() public {
+        // Move to public sale time
+        vm.warp(publicStart + 1);
+
+        vm.prank(owner);
+        token.setPayoutRecipient(address(0));
+        assertEq(token.payoutRecipient(), address(0));
+
+        vm.deal(user, 1 ether);
+
+        vm.prank(user);
+        vm.expectRevert(ERC1155MagicDropCloneable.PayoutRecipientCannotBeZeroAddress.selector);
+        token.mintPublic{value: 0.01 ether}(user, tokenId, 1, "");
+    }
+
+    /*==============================================================
+    =                             MISC                             =
+    ==============================================================*/
+
+    function testContractNameAndVersion() public {
+        (string memory name, string memory version) = token.contractNameAndVersion();
+        // check that a value is returned
+        assert(bytes(name).length > 0);
+        assert(bytes(version).length > 0);
     }
 }

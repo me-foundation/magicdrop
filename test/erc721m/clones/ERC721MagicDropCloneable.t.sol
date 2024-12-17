@@ -427,6 +427,21 @@ contract ERC721MagicDropCloneableTest is Test {
         assertEq(payoutRecipient.balance, initialPayoutBalance);
     }
 
+    function testSplitProceedsPayoutRecipientZeroAddressReverts() public {
+        // Move to public sale time
+        vm.warp(publicStart + 1);
+
+        vm.prank(owner);
+        token.setPayoutRecipient(address(0));
+        assertEq(token.payoutRecipient(), address(0));
+
+        vm.deal(user, 1 ether);
+
+        vm.prank(user);
+        vm.expectRevert(ERC721MagicDropCloneable.PayoutRecipientCannotBeZeroAddress.selector);
+        token.mintPublic{value: 0.01 ether}(user, 1);
+    }
+
     /*==============================================================
     =                          METADATA                            =
     ==============================================================*/
@@ -444,5 +459,12 @@ contract ERC721MagicDropCloneableTest is Test {
     function testTokenURIForNonexistentTokenReverts() public {
         vm.expectRevert();
         token.tokenURI(9999);
+    }
+
+    function testContractNameAndVersion() public {
+        (string memory name, string memory version) = token.contractNameAndVersion();
+        // check that a value is returned
+        assert(bytes(name).length > 0);
+        assert(bytes(version).length > 0);
     }
 }
