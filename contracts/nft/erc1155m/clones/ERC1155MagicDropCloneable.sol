@@ -143,16 +143,6 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable, Reentra
         _mint(to, tokenId, qty, data);
     }
 
-    /// @notice Burns a specific quantity of tokens from a given address.
-    /// @dev Reduces the total supply and calls the internal `_burn` function.
-    /// @param from The address from which the tokens will be burned.
-    /// @param tokenId The ID of the token to burn.
-    /// @param qty The quantity of tokens to burn.
-    function burn(address from, uint256 tokenId, uint256 qty) external {
-        _reduceSupplyOnBurn(tokenId, qty);
-        _burn(from, tokenId, qty);
-    }
-
     /// @notice Burns a specific quantity of tokens on behalf of a given address.
     /// @dev Reduces the total supply and calls the internal `_burn` function.
     /// @param by The address initiating the burn. Must be an approved operator or the owner of the tokens.

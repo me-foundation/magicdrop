@@ -228,7 +228,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         assertEq(token.balanceOf(user, tokenId), 1);
 
         vm.prank(user);
-        token.burn(user, tokenId, 1);
+        token.burn(user, user, tokenId, 1);
 
         assertEq(token.balanceOf(user, tokenId), 0);
     }
@@ -236,11 +236,10 @@ contract ERC1155MagicDropCloneableTest is Test {
     function testBurnInvalidTokenReverts() public {
         vm.prank(user);
         vm.expectRevert();
-        token.burn(user, 9999, 1); // non-existent token
+        token.burn(user, user, 9999, 1); // non-existent token
     }
 
     function testBurnNotOwnerReverts() public {
-        // mint to user
         vm.warp(publicStart + 1);
         vm.deal(user, 1 ether);
 
@@ -249,7 +248,21 @@ contract ERC1155MagicDropCloneableTest is Test {
 
         vm.prank(user2);
         vm.expectRevert();
-        token.burn(user, tokenId, 1);
+        token.burn(user2, user, tokenId, 1);
+    }
+
+    function testBurnFromAuthorizedNonOwner() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+
+        vm.startPrank(user);
+        token.mintPublic{value: 0.01 ether}(user, tokenId, 1, "");
+        token.setApprovalForAll(user2, true);
+        vm.stopPrank();
+
+        vm.prank(user2);
+        token.burn(user2, user, tokenId, 1);
+        assertEq(token.balanceOf(user, tokenId), 0);
     }
 
     /*==============================================================
