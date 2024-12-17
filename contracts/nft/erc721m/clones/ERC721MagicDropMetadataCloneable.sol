@@ -77,7 +77,6 @@ contract ERC721MagicDropMetadataCloneable is
     
     /// @notice The maximum number of tokens that can ever be minted by this contract.
     /// @return The maximum supply of tokens.
-
     function maxSupply() public view returns (uint256) {
         return _maxSupply;
     }
