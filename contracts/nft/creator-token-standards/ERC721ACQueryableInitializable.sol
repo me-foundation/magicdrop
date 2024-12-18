@@ -10,6 +10,7 @@ import "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
 
 /// @title ERC721ACQueryableInitializable
 /// @notice An ERC721AC extension with queryable and initialization features.
+/// @dev The purpose of this contract is for use with EIP-1167 Minimal Proxies (Clones).
 abstract contract ERC721ACQueryableInitializable is
     ERC721AConduitPreapprovedCloneable,
     CreatorTokenBase,
