@@ -8,6 +8,8 @@ import {ERC721A, IERC721A} from "erc721a/contracts/ERC721A.sol";
 
 import "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
 
+/// @title ERC721ACQueryableInitializable
+/// @notice An ERC721AC extension with queryable and initialization features.
 abstract contract ERC721ACQueryableInitializable is
     ERC721AConduitPreapprovedCloneable,
     CreatorTokenBase,
