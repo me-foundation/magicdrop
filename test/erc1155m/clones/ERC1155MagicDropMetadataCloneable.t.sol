@@ -64,6 +64,8 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
         // maxSupply, walletLimit, and royalty not set for tokenId yet
         assertEq(token.maxSupply(TOKEN_ID), 0);
         assertEq(token.walletLimit(TOKEN_ID), 0);
+        assertEq(token.totalSupply(TOKEN_ID), 0);
+        assertEq(token.totalMinted(TOKEN_ID), 0);
         assertEq(token.royaltyAddress(), address(0));
         assertEq(token.royaltyBps(), 0);
     }
@@ -157,6 +159,20 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
         vm.stopPrank();
     }
 
+    function testMintIncreasesTotalSupply() public {
+        vm.startPrank(owner);
+        token.mintForTest(user, TOKEN_ID, 10);
+        assertEq(token.totalSupply(TOKEN_ID), 10);
+        vm.stopPrank();
+    }
+
+    function testMintIncreasesTotalMinted() public {
+        vm.startPrank(owner);
+        token.mintForTest(user, TOKEN_ID, 10);
+        assertEq(token.totalMinted(TOKEN_ID), 10);
+        vm.stopPrank();
+    }
+
     function testSetWalletLimit() public {
         vm.startPrank(owner);
         token.setWalletLimit(TOKEN_ID, 20);
@@ -192,8 +208,30 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
         vm.stopPrank();
     }
 
+    function testSetURI() public {
+        vm.startPrank(owner);
+        token.setBaseURI("https://example.com/metadata/");
+        assertEq(token.uri(TOKEN_ID), "https://example.com/metadata/");
+        vm.stopPrank();
+    }
+
+    function testEmitBatchMetadataUpdate() public {
+        vm.startPrank(owner);
+        vm.expectEmit(true, true, true, true);
+        emit IMagicDropMetadata.BatchMetadataUpdate(TOKEN_ID, 10);
+        token.emitBatchMetadataUpdate(TOKEN_ID, 10);
+        vm.stopPrank();
+    }
+
+    function testMaxSupplyCannotBeGreaterThan2ToThe64thPower() public {
+        vm.startPrank(owner);
+        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeGreaterThan2ToThe64thPower.selector);
+        token.setMaxSupply(TOKEN_ID, 2 ** 64);
+        vm.stopPrank();
+    }
+
     /*==============================================================
-    =                         SUPPORTS INTERFACE                   =
+    =                         METADATA TESTS                       =
     ==============================================================*/
 
     function testSupportsInterface() public view {

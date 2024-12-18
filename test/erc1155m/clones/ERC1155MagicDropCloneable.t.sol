@@ -296,6 +296,30 @@ contract ERC1155MagicDropCloneableTest is Test {
         assertEq(token.balanceOf(user, tokenId), 0);
     }
 
+    function testBatchBurn() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+
+        vm.startPrank(user);
+        token.mintPublic{value: 0.05 ether}(user, tokenId, 5, "");
+        token.setApprovalForAll(user2, true);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(user, tokenId), 5);
+        assertEq(token.totalSupply(tokenId), 5);
+
+        uint256[] memory ids = new uint256[](1);
+        ids[0] = tokenId;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 2;
+
+        vm.prank(user);
+        token.batchBurn(user, user, ids, amounts);
+        assertEq(token.balanceOf(user, tokenId), 3);
+        assertEq(token.totalSupply(tokenId), 3);
+        assertEq(token.totalMinted(tokenId), 5);
+    }
+
     /*==============================================================
     =                            GETTERS                           =
     ==============================================================*/
@@ -491,10 +515,10 @@ contract ERC1155MagicDropCloneableTest is Test {
             merkleHelper.getAllowedAddress(), tokenId, 1, merkleHelper.getProofFor(merkleHelper.getAllowedAddress()), ""
         );
 
-        // Check balances after minting
         uint256 expectedProtocolFee = (0.005 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.005 ether - expectedProtocolFee;
 
+        // Check balances after minting
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance + expectedProtocolFee);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
