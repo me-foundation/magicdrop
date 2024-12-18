@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+
 import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 
@@ -39,25 +41,25 @@ contract ERC721MagicDropMetadataCloneable is
 
     /// @notice The base URI used to construct `tokenURI` results.
     /// @dev This value can be updated by the contract owner. Typically points to an off-chain IPFS/HTTPS endpoint.
-    string private _tokenBaseURI;
+    string internal _tokenBaseURI;
 
     /// @notice A URI providing contract-level metadata (e.g., for marketplaces).
     /// @dev Can be updated by the owner. Often returns metadata in a JSON format describing the project.
-    string private _contractURI;
+    string internal _contractURI;
 
     /// @notice The maximum total number of tokens that can ever be minted.
     /// @dev Acts as a cap on supply. Decreasing is allowed (if no tokens are over that limit),
     ///      but increasing supply is forbidden after initialization.
-    uint256 private _maxSupply;
+    uint256 internal _maxSupply;
 
     /// @notice The per-wallet minting limit, restricting how many tokens a single address can mint.
-    uint256 private _walletLimit;
+    uint256 internal _walletLimit;
 
     /// @notice The address receiving royalty payments.
-    address private _royaltyReceiver;
+    address internal _royaltyReceiver;
 
     /// @notice The royalty amount (in basis points) for secondary sales (e.g., 100 = 1%).
-    uint96 private _royaltyBps;
+    uint96 internal _royaltyBps;
 
     /*==============================================================
     =                      PUBLIC VIEW METHODS                     =
@@ -74,7 +76,7 @@ contract ERC721MagicDropMetadataCloneable is
     function contractURI() public view override returns (string memory) {
         return _contractURI;
     }
-    
+
     /// @notice The maximum number of tokens that can ever be minted by this contract.
     /// @return The maximum supply of tokens.
     function maxSupply() public view returns (uint256) {
@@ -107,12 +109,12 @@ contract ERC721MagicDropMetadataCloneable is
         public
         view
         virtual
-        override(ERC721ACloneable, IERC721A, ERC2981)
+        override(ERC2981, ERC721ACloneable, IERC721A)
         returns (bool)
     {
         return interfaceId == 0x2a55205a // ERC-2981 royalties
             || interfaceId == 0x49064906 // ERC-4906 metadata updates
-            || super.supportsInterface(interfaceId);
+            || ERC721ACloneable.supportsInterface(interfaceId);
     }
 
     /*==============================================================
@@ -192,8 +194,12 @@ contract ERC721MagicDropMetadataCloneable is
             revert MaxSupplyCannotBeIncreased();
         }
 
-        if (newMaxSupply < totalSupply()) {
+        if (newMaxSupply < _totalMinted()) {
             revert MaxSupplyCannotBeLessThanCurrentSupply();
+        }
+
+        if (newMaxSupply > 2 ** 64 - 1) {
+            revert MaxSupplyCannotBeGreaterThan2ToThe64thPower();
         }
 
         _maxSupply = newMaxSupply;

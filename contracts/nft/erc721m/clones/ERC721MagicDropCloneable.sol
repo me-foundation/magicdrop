@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.22;
 
-import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
@@ -17,7 +16,7 @@ import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 /// @notice A cloneable ERC-721A drop contract that supports both a public minting stage and an allowlist minting stage.
 /// @dev This contract extends metadata configuration, ownership, and royalty support from its parent, while adding
 ///      time-gated, price-defined minting stages. It also incorporates a payout recipient and protocol fee structure.
-contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, ReentrancyGuard {
+contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     /*==============================================================
     =                            STORAGE                           =
     ==============================================================*/
@@ -97,7 +96,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     ///      Reverts if the buyer does not send enough ETH, or if the wallet limit would be exceeded.
     /// @param to The recipient address for the minted tokens.
     /// @param qty The number of tokens to mint.
-    function mintPublic(address to, uint256 qty) external payable nonReentrant {
+    function mintPublic(address to, uint256 qty) external payable {
         PublicStage memory stage = _publicStage;
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert PublicStageNotActive();
@@ -108,15 +107,19 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             revert NotEnoughValue();
         }
 
-        if (_numberMinted(to) + qty > this.walletLimit()) {
+        if (_walletLimit > 0 && _numberMinted(to) + qty > _walletLimit) {
             revert WalletLimitExceeded();
         }
+
+        if (_totalMinted() + qty > _maxSupply) {
+            revert CannotExceedMaxSupply();
+        }
+
+        _safeMint(to, qty);
 
         if (stage.price != 0) {
             _splitProceeds();
         }
-
-        _safeMint(to, qty);
     }
 
     /// @notice Mints tokens during the allowlist stage.
@@ -140,15 +143,19 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
             revert NotEnoughValue();
         }
 
-        if (_numberMinted(to) + qty > this.walletLimit()) {
+        if (_walletLimit > 0 && _numberMinted(to) + qty > _walletLimit) {
             revert WalletLimitExceeded();
         }
+
+        if (_totalMinted() + qty > _maxSupply) {
+            revert CannotExceedMaxSupply();
+        }
+
+        _safeMint(to, qty);
 
         if (stage.price != 0) {
             _splitProceeds();
         }
-
-        _safeMint(to, qty);
     }
 
     /// @notice Burns a specific token.
@@ -367,12 +374,5 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable, Reentranc
     ///      By always returning true, we ensure that the inherited initializer does not re-run.
     function _guardInitializeOwner() internal pure virtual override returns (bool) {
         return true;
-    }
-
-    /// @notice Returns the token ID where enumeration starts.
-    /// @dev Overridden to start from token ID 1 instead of 0.
-    /// @return The first valid token ID.
-    function _startTokenId() internal view virtual override returns (uint256) {
-        return 1;
     }
 }
