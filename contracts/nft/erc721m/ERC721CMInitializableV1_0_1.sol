@@ -576,14 +576,11 @@ contract ERC721CMInitializableV1_0_1 is
         virtual
         override
     {
-        bool fromZeroAddress = from == address(0);
-        bool toZeroAddress = to == address(0);
-
         // If the transfer is not from a mint or burn, revert if not transferable
-        if (!fromZeroAddress && !toZeroAddress && !_transferable) {
+        if (from != address(0) && to != address(0) && !_transferable) {
             revert NotTransferable();
         }
 
-        ERC721ACQueryableInitializable._beforeTokenTransfers(from, to, startTokenId, quantity);
+        super._beforeTokenTransfers(from, to, startTokenId, quantity);
     }
 }

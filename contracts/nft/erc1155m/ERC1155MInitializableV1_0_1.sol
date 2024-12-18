@@ -600,15 +600,12 @@ contract ERC1155MInitializableV1_0_1 is
         uint256[] memory amounts,
         bytes memory data
     ) internal virtual override {
-        bool fromZeroAddress = from == address(0);
-        bool toZeroAddress = to == address(0);
-
         // If the transfer is not from a mint or burn, revert if not transferable
-        if (!fromZeroAddress && !toZeroAddress && !_transferable) {
+        if (from != address(0) && to != address(0) && !_transferable) {
             revert NotTransferable();
         }
 
-        ERC1155SupplyUpgradeable._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     /// @dev Overriden to prevent double-initialization of the owner.
