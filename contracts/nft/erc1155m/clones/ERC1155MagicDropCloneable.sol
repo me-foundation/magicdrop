@@ -279,7 +279,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
         // Ensure the public stage starts after the allowlist stage ends
         if (_allowlistStages[tokenId].startTime != 0 && _allowlistStages[tokenId].endTime != 0) {
-            if (stage.startTime < _allowlistStages[tokenId].endTime) {
+            if (stage.startTime <= _allowlistStages[tokenId].endTime) {
                 revert InvalidPublicStageTime();
             }
         }
@@ -298,7 +298,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
         // Ensure the public stage starts after the allowlist stage ends
         if (_publicStages[tokenId].startTime != 0 && _publicStages[tokenId].endTime != 0) {
-            if (stage.endTime > _publicStages[tokenId].startTime) {
+            if (stage.endTime >= _publicStages[tokenId].startTime) {
                 revert InvalidAllowlistStageTime();
             }
         }
