@@ -247,4 +247,10 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
         token.setMaxSupply(10);
         assertEq(token.maxSupply(), 10);
     }
+
+    function testMaxSupplyCannotBeGreaterThan2ToThe64thPower() public {
+        vm.startPrank(owner);
+        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeGreaterThan2ToThe64thPower.selector);
+        token.setMaxSupply(2 ** 64);
+    }
 }

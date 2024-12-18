@@ -446,13 +446,34 @@ contract ERC721MagicDropCloneableTest is Test {
     ==============================================================*/
 
     function testTokenURI() public {
-        // Mint token #1
         vm.warp(publicStart + 1);
         vm.deal(user, 1 ether);
         vm.prank(user);
         token.mintPublic{value: 0.01 ether}(user, 1);
         string memory uri = token.tokenURI(0);
         assertEq(uri, "https://example.com/metadata/0");
+    }
+
+    function testTokenURIWithEmptyBaseURI() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        token.mintPublic{value: 0.01 ether}(user, 1);
+
+        vm.prank(owner);
+        token.setBaseURI("");
+        assertEq(token.tokenURI(0), "");
+    }
+
+    function testTokenURIWithoutTrailingSlash() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        token.mintPublic{value: 0.01 ether}(user, 1);
+
+        vm.prank(owner);
+        token.setBaseURI("https://example.com/metadata");
+        assertEq(token.tokenURI(0), "https://example.com/metadata");
     }
 
     function testTokenURIForNonexistentTokenReverts() public {
