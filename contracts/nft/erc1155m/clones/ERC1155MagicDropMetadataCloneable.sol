@@ -9,6 +9,9 @@ import {ERC1155} from "solady/src/tokens/ERC1155.sol";
 import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
 import {ERC1155ConduitPreapprovedCloneable} from "./ERC1155ConduitPreapprovedCloneable.sol";
 
+/// @title ERC1155MagicDropMetadataCloneable
+/// @notice A cloneable ERC-1155 implementation that supports adjustable metadata URIs, royalty configuration.
+///         Inherits conduit-based preapprovals, making distribution more gas-efficient.
 contract ERC1155MagicDropMetadataCloneable is
     ERC1155ConduitPreapprovedCloneable,
     IERC1155MagicDropMetadata,
@@ -207,13 +210,20 @@ contract ERC1155MagicDropMetadataCloneable is
         emit BatchMetadataUpdate(0, type(uint256).max);
     }
 
+    /// @notice Internal function setting the contract URI.
+    /// @param newContractURI The new contract metadata URI.
     function _setContractURI(string calldata newContractURI) internal {
         _contractURI = newContractURI;
     }
 
+    /// @notice Internal function setting the royalty information.
+    /// @param newReceiver The address to receive royalties.
+    /// @param newBps The royalty rate in basis points (e.g., 100 = 1%).
     function _setRoyaltyInfo(address newReceiver, uint96 newBps) internal {
         _royaltyReceiver = newReceiver;
         _royaltyBps = newBps;
+        super._setDefaultRoyalty(newReceiver, newBps);
+        emit RoyaltyInfoUpdated(newReceiver, newBps);
     }
 
     /// @notice Internal function setting the maximum token supply.
@@ -226,7 +236,7 @@ contract ERC1155MagicDropMetadataCloneable is
             revert MaxSupplyCannotBeIncreased();
         }
 
-        if (newMaxSupply < oldMaxSupply) {
+        if (newMaxSupply < _tokenSupply[tokenId].totalMinted) {
             revert MaxSupplyCannotBeLessThanCurrentSupply();
         }
 

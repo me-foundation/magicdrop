@@ -36,6 +36,9 @@ interface IMagicDropMetadata {
     /// @notice Throw when trying to increase the max supply.
     error MaxSupplyCannotBeIncreased();
 
+    /// @notice Throw when the max supply is greater than 2^64.
+    error MaxSupplyCannotBeGreaterThan2ToThe64thPower();
+
     /*==============================================================
     =                      PUBLIC VIEW METHODS                     =
     ==============================================================*/

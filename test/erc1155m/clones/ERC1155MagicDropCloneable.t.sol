@@ -12,7 +12,7 @@ import {MerkleTestHelper} from "test/helpers/MerkleTestHelper.sol";
 import {ERC1155MagicDropCloneable} from "contracts/nft/erc1155m/clones/ERC1155MagicDropCloneable.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc1155m/clones/Types.sol";
 import {IERC1155MagicDropMetadata} from "contracts/nft/erc1155m/interfaces/IERC1155MagicDropMetadata.sol";
-import {IMagicDropMetadata} from "contracts/common/IMagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
 contract ERC1155MagicDropCloneableTest is Test {
     ERC1155MagicDropCloneable public token;
@@ -340,25 +340,18 @@ contract ERC1155MagicDropCloneableTest is Test {
 
     function testSetupEmptyConfigHasNoEffect() public {
         vm.prank(owner);
-        token.setup(SetupConfig({
-            tokenId: tokenId,
-            maxSupply: 0,
-            walletLimit: 0,
-            baseURI: "",
-            contractURI: "",
-            allowlistStage: AllowlistStage({
-                startTime: uint64(0),
-                endTime: uint64(0),
-                price: 0,
-                merkleRoot: bytes32(0)
-            }),
-            publicStage: PublicStage({
-                startTime: uint64(0),
-                endTime: uint64(0),
-                price: 0
-            }),
-            payoutRecipient: address(0)
-        }));
+        token.setup(
+            SetupConfig({
+                tokenId: tokenId,
+                maxSupply: 0,
+                walletLimit: 0,
+                baseURI: "",
+                contractURI: "",
+                allowlistStage: AllowlistStage({startTime: uint64(0), endTime: uint64(0), price: 0, merkleRoot: bytes32(0)}),
+                publicStage: PublicStage({startTime: uint64(0), endTime: uint64(0), price: 0}),
+                payoutRecipient: address(0)
+            })
+        );
 
         // check that the config has no effect because it's using the zero values
         assertEq(token.maxSupply(tokenId), config.maxSupply);

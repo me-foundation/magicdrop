@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {IMagicDropMetadata} from "contracts/common/IMagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
 interface IERC1155MagicDropMetadata is IMagicDropMetadata {
     struct TokenSupply {
@@ -31,9 +31,6 @@ interface IERC1155MagicDropMetadata is IMagicDropMetadata {
     /*==============================================================
     =                             ERRORS                           =
     ==============================================================*/
-
-    /// @notice Thrown when the max supply is greater than 2^64.
-    error MaxSupplyCannotBeGreaterThan2ToThe64thPower();
 
     /// @notice Thrown when a mint would exceed the wallet-specific minting limit.
     /// @param _tokenId The token ID.

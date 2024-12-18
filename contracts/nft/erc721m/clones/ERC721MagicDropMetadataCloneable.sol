@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+
 import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 
@@ -107,12 +109,12 @@ contract ERC721MagicDropMetadataCloneable is
         public
         view
         virtual
-        override(ERC721ACloneable, IERC721A, ERC2981)
+        override(ERC2981, ERC721ACloneable, IERC721A)
         returns (bool)
     {
         return interfaceId == 0x2a55205a // ERC-2981 royalties
             || interfaceId == 0x49064906 // ERC-4906 metadata updates
-            || super.supportsInterface(interfaceId);
+            || ERC721ACloneable.supportsInterface(interfaceId);
     }
 
     /*==============================================================
@@ -192,8 +194,12 @@ contract ERC721MagicDropMetadataCloneable is
             revert MaxSupplyCannotBeIncreased();
         }
 
-        if (newMaxSupply < totalSupply()) {
+        if (newMaxSupply < _totalMinted()) {
             revert MaxSupplyCannotBeLessThanCurrentSupply();
+        }
+
+        if (newMaxSupply > 2 ** 64 - 1) {
+            revert MaxSupplyCannotBeGreaterThan2ToThe64thPower();
         }
 
         _maxSupply = newMaxSupply;

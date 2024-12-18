@@ -13,7 +13,7 @@ import {ERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/ERC721Magic
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc721m/clones/Types.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
-import {IMagicDropMetadata} from "contracts/common/IMagicDropMetadata.sol";
+import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
 contract ERC721MagicDropCloneableTest is Test {
     ERC721MagicDropCloneable public token;
@@ -240,7 +240,6 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
         token.mintAllowlist{value: 11 ether}(allowedAddr, 1001, proof);
     }
-
 
     /*==============================================================
     =                            BURNING                           =
