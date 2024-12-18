@@ -8,7 +8,9 @@ import {Ownable} from "solady/src/auth/Ownable.sol";
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
-import {IERC721A, ERC721A, ERC721AQueryable, IERC721AQueryable} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
+import {
+    IERC721A, ERC721A, ERC721AQueryable, IERC721AQueryable
+} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import {ERC721AConduitPreapprovedCloneable} from "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
 import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.sol";
 
@@ -45,10 +47,7 @@ contract ERC721MInitializableV1_0_1 is
     /// @param name The name of the token collection
     /// @param symbol The symbol of the token collection
     /// @param initialOwner The address of the initial owner
-    function initialize(string calldata name, string calldata symbol, address initialOwner)
-        external
-        initializer
-    {
+    function initialize(string calldata name, string calldata symbol, address initialOwner) external initializer {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
         }
@@ -70,12 +69,7 @@ contract ERC721MInitializableV1_0_1 is
     /// @notice Gets the token URI for a specific token ID
     /// @param tokenId The ID of the token
     /// @return The token URI
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721ACloneable, IERC721A)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override(ERC721ACloneable, IERC721A) returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _currentBaseURI;

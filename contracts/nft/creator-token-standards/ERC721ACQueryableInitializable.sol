@@ -25,7 +25,13 @@ abstract contract ERC721ACQueryableInitializable is
     }
 
     /// @notice Overrides behavior of supportsInterface such that the contract implements the ICreatorToken interface.
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721ACloneable, IERC721A) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721ACloneable, IERC721A)
+        returns (bool)
+    {
         return interfaceId == type(ICreatorToken).interfaceId || interfaceId == type(ICreatorTokenLegacy).interfaceId
             || super.supportsInterface(interfaceId);
     }
@@ -39,13 +45,7 @@ abstract contract ERC721ACQueryableInitializable is
 
     /// @notice Overrides behavior of isApprovedFor all such that if an operator is not explicitly approved
     /// @notice for all, the contract owner can optionally auto-approve the 721-C transfer validator for transfers.
-    function isApprovedForAll(address owner, address operator)
-        public
-        view
-        virtual
-        override
-        returns (bool isApproved)
-    {
+    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool isApproved) {
         isApproved = super.isApprovedForAll(owner, operator);
 
         if (!isApproved) {
