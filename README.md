@@ -63,11 +63,13 @@ The composability of the stages is generic enough to enable flexible and complic
 | ERC1155MInitializableV1_0_0 | 0x000000009B3dC659D26BD2f3D38136E2b270C28d | 0x8b72ee316ce281e983b3694fc794164ce2eac8c3b8d7751c42edfc89310c6665
 
 ### Supported Chains
+- Ethereum
 - Polygon
 - Base
 - Sei
 - Arbitrum
 - Apechain
+- BSC
 
 ## Using Foundry
 

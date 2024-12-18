@@ -78,7 +78,7 @@ const config: HardhatUserConfig = {
       },
     },
     apechain: {
-      url: 'https://apechain.calderachain.xyz/http',
+      url: 'https://rpc.apechain.com/http',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
