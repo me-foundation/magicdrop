@@ -272,7 +272,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
 
         // Ensure the public stage starts after the allowlist stage ends
         if (_allowlistStage.startTime != 0 && _allowlistStage.endTime != 0) {
-            if (stage.startTime < _allowlistStage.endTime) {
+            if (stage.startTime <= _allowlistStage.endTime) {
                 revert InvalidPublicStageTime();
             }
         }
@@ -290,7 +290,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
 
         // Ensure the public stage starts after the allowlist stage ends
         if (_publicStage.startTime != 0 && _publicStage.endTime != 0) {
-            if (stage.endTime > _publicStage.startTime) {
+            if (stage.endTime >= _publicStage.startTime) {
                 revert InvalidAllowlistStageTime();
             }
         }
