@@ -7,45 +7,13 @@ import {console2} from "forge-std/console2.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 
+import {MerkleTestHelper} from "test/helpers/MerkleTestHelper.sol";
+
 import {ERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropCloneable.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc721m/clones/Types.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
-
-// Dummy merkle proof generation utilities for testing
-contract MerkleTestHelper {
-    // This is a placeholder helper. In a real test, you'd generate a real merkle tree offline.
-    // Here we hardcode a single allowlisted address and its proof.
-    bytes32[] internal proof;
-    bytes32 internal root;
-    address internal allowedAddr;
-
-    constructor() {
-        allowedAddr = address(0xABCD);
-        // For simplicity, root = keccak256(abi.encodePacked(allowedAddr))
-        // Proof is empty since this is a single-leaf tree.
-        root = keccak256(abi.encodePacked(allowedAddr));
-    }
-
-    function getRoot() external view returns (bytes32) {
-        return root;
-    }
-
-    function getProofFor(address addr) external view returns (bytes32[] memory) {
-        if (addr == allowedAddr) {
-            // Single-leaf tree: no proof necessary except empty array
-            return new bytes32[](0);
-        } else {
-            // No valid proof
-            bytes32[] memory emptyProof;
-            return emptyProof;
-        }
-    }
-
-    function getAllowedAddress() external view returns (address) {
-        return allowedAddr;
-    }
-}
+import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
 contract ERC721MagicDropCloneableTest is Test {
     ERC721MagicDropCloneable public token;
@@ -54,6 +22,7 @@ contract ERC721MagicDropCloneableTest is Test {
     address internal owner = address(0x1234);
     address internal user = address(0x1111);
     address internal user2 = address(0x2222);
+    address internal allowedAddr = address(0x3333);
     address internal payoutRecipient = address(0x9999);
     uint256 internal publicStart;
     uint256 internal publicEnd;
@@ -62,7 +31,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
     function setUp() public {
         token = ERC721MagicDropCloneable(LibClone.deployERC1967(address(new ERC721MagicDropCloneable())));
-        merkleHelper = new MerkleTestHelper();
+        merkleHelper = new MerkleTestHelper(allowedAddr);
 
         // Initialize token
         token.initialize("TestToken", "TT", owner);
@@ -170,6 +139,19 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.stopPrank();
     }
 
+    function testMintPublicMaxSupplyExceededReverts() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 11 ether);
+
+        vm.prank(owner);
+        // unlimited wallet limit for the purpose of this test
+        token.setWalletLimit(0);
+
+        vm.prank(user);
+        vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
+        token.mintPublic{value: 11 ether}(user, 1001);
+    }
+
     /*==============================================================
     =                  TEST ALLOWLIST MINTING STAGE                =
     ==============================================================*/
@@ -242,6 +224,23 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.stopPrank();
     }
 
+    function testMintAllowlistMaxSupplyExceededReverts() public {
+        // Move time to allowlist
+        vm.warp(allowlistStart + 1);
+
+        vm.prank(owner);
+        // unlimited wallet limit for the purpose of this test
+        token.setWalletLimit(0);
+
+        address allowedAddr = merkleHelper.getAllowedAddress();
+        bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
+        vm.deal(allowedAddr, 11 ether);
+
+        vm.prank(allowedAddr);
+        vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
+        token.mintAllowlist{value: 11 ether}(allowedAddr, 1001, proof);
+    }
+
     /*==============================================================
     =                            BURNING                           =
     ==============================================================*/
@@ -254,7 +253,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.prank(user);
         token.mintPublic{value: 0.01 ether}(user, 1);
 
-        uint256 tokenId = 1;
+        uint256 tokenId = 0;
         assertEq(token.ownerOf(tokenId), user);
 
         vm.prank(user);
@@ -427,22 +426,65 @@ contract ERC721MagicDropCloneableTest is Test {
         assertEq(payoutRecipient.balance, initialPayoutBalance);
     }
 
+    function testSplitProceedsPayoutRecipientZeroAddressReverts() public {
+        // Move to public sale time
+        vm.warp(publicStart + 1);
+
+        vm.prank(owner);
+        token.setPayoutRecipient(address(0));
+        assertEq(token.payoutRecipient(), address(0));
+
+        vm.deal(user, 1 ether);
+
+        vm.prank(user);
+        vm.expectRevert(ERC721MagicDropCloneable.PayoutRecipientCannotBeZeroAddress.selector);
+        token.mintPublic{value: 0.01 ether}(user, 1);
+    }
+
     /*==============================================================
     =                          METADATA                            =
     ==============================================================*/
 
     function testTokenURI() public {
-        // Mint token #1
         vm.warp(publicStart + 1);
         vm.deal(user, 1 ether);
         vm.prank(user);
         token.mintPublic{value: 0.01 ether}(user, 1);
-        string memory uri = token.tokenURI(1);
-        assertEq(uri, "https://example.com/metadata/1");
+        string memory uri = token.tokenURI(0);
+        assertEq(uri, "https://example.com/metadata/0");
+    }
+
+    function testTokenURIWithEmptyBaseURI() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        token.mintPublic{value: 0.01 ether}(user, 1);
+
+        vm.prank(owner);
+        token.setBaseURI("");
+        assertEq(token.tokenURI(0), "");
+    }
+
+    function testTokenURIWithoutTrailingSlash() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+        vm.prank(user);
+        token.mintPublic{value: 0.01 ether}(user, 1);
+
+        vm.prank(owner);
+        token.setBaseURI("https://example.com/metadata");
+        assertEq(token.tokenURI(0), "https://example.com/metadata");
     }
 
     function testTokenURIForNonexistentTokenReverts() public {
         vm.expectRevert();
         token.tokenURI(9999);
+    }
+
+    function testContractNameAndVersion() public {
+        (string memory name, string memory version) = token.contractNameAndVersion();
+        // check that a value is returned
+        assert(bytes(name).length > 0);
+        assert(bytes(version).length > 0);
     }
 }

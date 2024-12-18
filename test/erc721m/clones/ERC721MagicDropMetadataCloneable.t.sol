@@ -6,6 +6,7 @@ import {console2} from "forge-std/console2.sol";
 
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
+import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 
 import {ERC721MagicDropMetadataCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropMetadataCloneable.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
@@ -214,6 +215,10 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
         assertTrue(token.supportsInterface(0x2a55205a));
         // ERC4906 interfaceId = 0x49064906
         assertTrue(token.supportsInterface(0x49064906));
+        // ERC721A interfaceId = 0x80ac58cd
+        assertTrue(token.supportsInterface(0x80ac58cd));
+        // ERC721Metadata interfaceId = 0x5b5e139f
+        assertTrue(token.supportsInterface(0x5b5e139f));
         // Some random interface
         assertFalse(token.supportsInterface(0x12345678));
     }
@@ -241,5 +246,11 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
         token.mintForTest(user, 10);
         token.setMaxSupply(10);
         assertEq(token.maxSupply(), 10);
+    }
+
+    function testMaxSupplyCannotBeGreaterThan2ToThe64thPower() public {
+        vm.startPrank(owner);
+        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeGreaterThan2ToThe64thPower.selector);
+        token.setMaxSupply(2 ** 64);
     }
 }
