@@ -7,41 +7,36 @@ import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
-import {Initializable} from "solady/src/utils/Initializable.sol";
 
-import {ERC721AUpgradeable, IERC721AUpgradeable} from "erc721a-upgradeable/contracts/ERC721AUpgradeable.sol";
-import {
-    ERC721AQueryableUpgradeable,
-    IERC721AQueryableUpgradeable
-} from "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol";
-import {IERC721A, ERC721A} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
-import {ERC721MStorage} from "./ERC721MStorage.sol";
-import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
-import {MintStageInfo} from "../../common/Structs.sol";
-import {IERC721MInitializable} from "./interfaces/IERC721MInitializable.sol";
-import {Cosignable} from "../../common/Cosignable.sol";
-import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
+import {IERC721A, ERC721A, ERC721AQueryable, IERC721AQueryable} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
+import {ERC721AConduitPreapprovedCloneable} from "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
+import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.sol";
 
-/**
- * @title ERC721MInitializableV1_0_1
- * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
- * contract is for use with EIP-1167 Minimal Proxies (Clones).
- */
+import {IERC721MInitializable} from "contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
+import {ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorage.sol";
+import {MintStageInfo} from "contracts/common/Structs.sol";
+import {Cosignable} from "contracts/common/Cosignable.sol";
+import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+
+/// @title ERC721MInitializableV1_0_1
+/// @notice An initializable ERC721A contract with multi-stage minting, royalties, and authorized minters
+/// @dev Implements ERC721AQueryable, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
 contract ERC721MInitializableV1_0_1 is
     IERC721MInitializable,
-    ERC721AQueryableUpgradeable,
+    ERC721AConduitPreapprovedCloneable,
     ERC2981,
     Ownable,
     ReentrancyGuard,
     Cosignable,
     AuthorizedMinterControl,
-    ERC721MStorage,
-    Initializable
+    ERC721MStorage
 {
     /*==============================================================
     =                          INITIALIZERS                        =
     ==============================================================*/
 
+    /// @dev Disables initializers for the implementation contract.
     constructor() {
         _disableInitializers();
     }
@@ -53,14 +48,12 @@ contract ERC721MInitializableV1_0_1 is
     function initialize(string calldata name, string calldata symbol, address initialOwner)
         external
         initializer
-        initializerERC721A
     {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
         }
 
-        __ERC721A_init_unchained(name, symbol);
-        __ERC721AQueryable_init_unchained();
+        __ERC721ACloneable__init(name, symbol);
         _initializeOwner(initialOwner);
     }
 
@@ -80,7 +73,7 @@ contract ERC721MInitializableV1_0_1 is
     function tokenURI(uint256 tokenId)
         public
         view
-        override(ERC721AUpgradeable, IERC721AUpgradeable)
+        override(ERC721ACloneable, IERC721A)
         returns (string memory)
     {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
@@ -239,11 +232,10 @@ contract ERC721MInitializableV1_0_1 is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC2981, ERC721AUpgradeable, IERC721AUpgradeable)
+        override(ERC2981, ERC721ACloneable, IERC721A)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
-            || ERC721AUpgradeable.supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId);
     }
 
     /*==============================================================

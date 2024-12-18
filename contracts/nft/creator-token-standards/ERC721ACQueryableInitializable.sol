@@ -2,38 +2,27 @@
 pragma solidity ^0.8.22;
 
 import "@limitbreak/creator-token-standards/src/utils/CreatorTokenBase.sol";
-import "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol";
 import "@limitbreak/creator-token-standards/src/utils/AutomaticValidatorTransferApproval.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-/**
- * @title ERC721ACQueryableInitializable
- * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
- * contract is for use with EIP-1167 Minimal Proxies (Clones).
- */
+import {ERC721A, IERC721A} from "erc721a/contracts/ERC721A.sol";
+
+import "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
+
 abstract contract ERC721ACQueryableInitializable is
-    ERC721AQueryableUpgradeable,
+    ERC721AConduitPreapprovedCloneable,
     CreatorTokenBase,
-    AutomaticValidatorTransferApproval,
-    Initializable
+    AutomaticValidatorTransferApproval
 {
     /// @notice Initializes the contract with the given name and symbol.
     function __ERC721ACQueryableInitializable_init(string memory name_, string memory symbol_) public {
-        __ERC721A_init_unchained(name_, symbol_);
-        __ERC721AQueryable_init_unchained();
+        __ERC721ACloneable__init(name_, symbol_);
 
         _emitDefaultTransferValidator();
         _registerTokenType(getTransferValidator());
     }
 
     /// @notice Overrides behavior of supportsInterface such that the contract implements the ICreatorToken interface.
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC721AUpgradeable, IERC721AUpgradeable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721ACloneable, IERC721A) returns (bool) {
         return interfaceId == type(ICreatorToken).interfaceId || interfaceId == type(ICreatorTokenLegacy).interfaceId
             || super.supportsInterface(interfaceId);
     }
@@ -51,7 +40,7 @@ abstract contract ERC721ACQueryableInitializable is
         public
         view
         virtual
-        override(ERC721AUpgradeable, IERC721AUpgradeable)
+        override
         returns (bool isApproved)
     {
         isApproved = super.isApprovedForAll(owner, operator);

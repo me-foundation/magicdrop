@@ -7,23 +7,21 @@ import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
-import {
-    ERC721ACQueryableInitializable,
-    ERC721AUpgradeable,
-    IERC721AUpgradeable
-} from "../creator-token-standards/ERC721ACQueryableInitializable.sol";
-import {ERC721MStorage} from "./ERC721MStorage.sol";
-import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
-import {MintStageInfo} from "../../common/Structs.sol";
-import {IERC721MInitializable} from "./interfaces/IERC721MInitializable.sol";
-import {Cosignable} from "../../common/Cosignable.sol";
-import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
-/**
- * @title ERC721CMInitializableV1_0_1
- * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
- * contract is for use with EIP-1167 Minimal Proxies (Clones).
- */
+import {ERC721A, IERC721A} from "erc721a/contracts/ERC721A.sol";
+
+import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.sol";
+import {ERC721ACQueryableInitializable} from "contracts/nft/creator-token-standards/ERC721ACQueryableInitializable.sol";
+import {ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorage.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {MintStageInfo} from "contracts/common/Structs.sol";
+import {IERC721MInitializable} from "contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
+import {Cosignable} from "contracts/common/Cosignable.sol";
+import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
+
+/// @title ERC721CMInitializableV1_0_1
+/// @notice An initializable ERC721AC contract with multi-stage minting, royalties, and authorized minters
+/// @dev Implements ERC721ACQueryable, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
 contract ERC721CMInitializableV1_0_1 is
     IERC721MInitializable,
     ERC721ACQueryableInitializable,
@@ -38,6 +36,7 @@ contract ERC721CMInitializableV1_0_1 is
     =                          INITIALIZERS                        =
     ==============================================================*/
 
+    /// @dev Disables initializers for the implementation contract.
     constructor() {
         _disableInitializers();
     }
@@ -49,7 +48,6 @@ contract ERC721CMInitializableV1_0_1 is
     function initialize(string calldata name, string calldata symbol, address initialOwner)
         external
         initializer
-        initializerERC721A
     {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
@@ -72,12 +70,7 @@ contract ERC721CMInitializableV1_0_1 is
     /// @notice Gets the token URI for a specific token ID
     /// @param tokenId The ID of the token
     /// @return The token URI
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721AUpgradeable, IERC721AUpgradeable)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override(ERC721ACloneable, IERC721A) returns (string memory) {
         if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
 
         string memory baseURI = _currentBaseURI;
@@ -234,7 +227,7 @@ contract ERC721CMInitializableV1_0_1 is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC2981, IERC721AUpgradeable, ERC721ACQueryableInitializable)
+        override(ERC2981, IERC721A, ERC721ACQueryableInitializable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
