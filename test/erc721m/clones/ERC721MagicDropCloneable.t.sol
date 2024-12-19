@@ -31,7 +31,6 @@ contract ERC721MagicDropCloneableTest is Test {
     address royaltyRecipient = address(0x8888);
     uint96 royaltyBps = 1000;
 
-
     function setUp() public {
         token = ERC721MagicDropCloneable(LibClone.deployERC1967(address(new ERC721MagicDropCloneable())));
         merkleHelper = new MerkleTestHelper(allowedAddr);
