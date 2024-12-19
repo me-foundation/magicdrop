@@ -27,6 +27,8 @@ contract ERC1155MagicDropCloneableTest is Test {
     uint256 internal publicEnd;
     uint256 internal allowlistStart;
     uint256 internal allowlistEnd;
+    address royaltyRecipient = address(0x8888);
+    uint96 royaltyBps = 1000;
 
     uint256 internal tokenId = 1;
 
@@ -59,7 +61,9 @@ contract ERC1155MagicDropCloneableTest is Test {
                 merkleRoot: merkleHelper.getRoot()
             }),
             publicStage: PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0.01 ether}),
-            payoutRecipient: payoutRecipient
+            payoutRecipient: payoutRecipient,
+            royaltyRecipient: royaltyRecipient,
+            royaltyBps: royaltyBps
         });
 
         vm.prank(owner);
@@ -373,7 +377,9 @@ contract ERC1155MagicDropCloneableTest is Test {
                 contractURI: "",
                 allowlistStage: AllowlistStage({startTime: uint64(0), endTime: uint64(0), price: 0, merkleRoot: bytes32(0)}),
                 publicStage: PublicStage({startTime: uint64(0), endTime: uint64(0), price: 0}),
-                payoutRecipient: address(0)
+                payoutRecipient: address(0),
+                royaltyBps: 0,
+                royaltyRecipient: address(0)
             })
         );
 
@@ -390,6 +396,8 @@ contract ERC1155MagicDropCloneableTest is Test {
         assertEq(token.getPublicStage(tokenId).endTime, config.publicStage.endTime);
         assertEq(token.getPublicStage(tokenId).price, config.publicStage.price);
         assertEq(token.payoutRecipient(), config.payoutRecipient);
+        assertEq(token.royaltyAddress(), config.royaltyRecipient);
+        assertEq(token.royaltyBps(), config.royaltyBps);
     }
 
     function testSetPublicStageInvalidTimesReverts() public {

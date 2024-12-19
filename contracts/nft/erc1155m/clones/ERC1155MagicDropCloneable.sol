@@ -242,6 +242,10 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         if (config.payoutRecipient != address(0)) {
             _setPayoutRecipient(config.payoutRecipient);
         }
+
+        if (config.royaltyRecipient != address(0)) {
+            _setRoyaltyInfo(config.royaltyRecipient, config.royaltyBps);
+        }
     }
 
     /// @notice Sets the configuration of the public mint stage.
