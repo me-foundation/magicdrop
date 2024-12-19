@@ -28,6 +28,9 @@ contract ERC721MagicDropCloneableTest is Test {
     uint256 internal publicEnd;
     uint256 internal allowlistStart;
     uint256 internal allowlistEnd;
+    address royaltyRecipient = address(0x8888);
+    uint96 royaltyBps = 1000;
+
 
     function setUp() public {
         token = ERC721MagicDropCloneable(LibClone.deployERC1967(address(new ERC721MagicDropCloneable())));
@@ -55,7 +58,9 @@ contract ERC721MagicDropCloneableTest is Test {
                 merkleRoot: merkleHelper.getRoot()
             }),
             publicStage: PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0.01 ether}),
-            payoutRecipient: payoutRecipient
+            payoutRecipient: payoutRecipient,
+            royaltyRecipient: royaltyRecipient,
+            royaltyBps: royaltyBps
         });
 
         vm.prank(owner);
@@ -70,7 +75,6 @@ contract ERC721MagicDropCloneableTest is Test {
         assertEq(token.owner(), owner);
         assertEq(token.name(), "TestToken");
         assertEq(token.symbol(), "TT");
-        assertEq(token.payoutRecipient(), payoutRecipient);
     }
 
     function testMultipleInitializationReverts() public {

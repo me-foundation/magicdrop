@@ -235,6 +235,10 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         if (config.payoutRecipient != address(0)) {
             _setPayoutRecipient(config.payoutRecipient);
         }
+
+        if (config.royaltyRecipient != address(0)) {
+            _setRoyaltyInfo(config.royaltyRecipient, config.royaltyBps);
+        }
     }
 
     /// @notice Sets the configuration of the public mint stage.

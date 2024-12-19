@@ -40,4 +40,8 @@ struct SetupConfig {
     AllowlistStage allowlistStage;
     /// @dev The payout recipient of the token.
     address payoutRecipient;
+    /// @dev The royalty recipient of the token.
+    address royaltyRecipient;
+    /// @dev The royalty basis points of the token.
+    uint96 royaltyBps;
 }
