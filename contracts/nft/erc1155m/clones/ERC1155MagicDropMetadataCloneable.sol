@@ -35,7 +35,7 @@ contract ERC1155MagicDropMetadataCloneable is
     address internal _royaltyReceiver;
 
     /// @dev The royalty basis points.
-    uint256 internal _royaltyBps;
+    uint96 internal _royaltyBps;
 
     /// @dev The total supply of each token.
     mapping(uint256 => TokenSupply) internal _tokenSupply;

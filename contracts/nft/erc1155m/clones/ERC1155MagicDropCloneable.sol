@@ -176,6 +176,25 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     =                     PUBLIC VIEW METHODS                      =
     ==============================================================*/
 
+    /// @notice Returns the current configuration of the contract.
+    /// @return The current configuration of the contract.
+    function getConfig(uint256 tokenId) external view returns (SetupConfig memory) {
+        SetupConfig memory newConfig = SetupConfig({
+            tokenId: tokenId,
+            maxSupply: _tokenSupply[tokenId].maxSupply,
+            walletLimit: _walletLimit[tokenId],
+            baseURI: _baseURI,
+            contractURI: _contractURI,
+            allowlistStage: _allowlistStages[tokenId],
+            publicStage: _publicStages[tokenId],
+            payoutRecipient: _payoutRecipient,
+            royaltyRecipient: _royaltyReceiver,
+            royaltyBps: _royaltyBps
+        });
+
+        return newConfig;
+    }
+
     /// @notice Returns the current public stage configuration (startTime, endTime, price).
     /// @return The current public stage settings.
     function getPublicStage(uint256 tokenId) external view returns (PublicStage memory) {
