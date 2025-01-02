@@ -169,6 +169,24 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     =                      PUBLIC VIEW METHODS                     =
     ==============================================================*/
 
+    /// @notice Returns the current configuration of the contract.
+    /// @return The current configuration of the contract.
+    function getConfig() external view returns (SetupConfig memory) {
+        SetupConfig memory newConfig = SetupConfig({
+            maxSupply: _maxSupply,
+            walletLimit: _walletLimit,
+            baseURI: _baseURI(),
+            contractURI: _contractURI,
+            allowlistStage: _allowlistStage,
+            publicStage: _publicStage,
+            payoutRecipient: _payoutRecipient,
+            royaltyRecipient: _royaltyReceiver,
+            royaltyBps: _royaltyBps
+        });
+
+        return newConfig;
+    }
+
     /// @notice Returns the current public stage configuration (startTime, endTime, price).
     /// @return The current public stage settings.
     function getPublicStage() external view returns (PublicStage memory) {
