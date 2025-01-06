@@ -214,6 +214,8 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @param newContractURI The new contract metadata URI.
     function _setContractURI(string calldata newContractURI) internal {
         _contractURI = newContractURI;
+
+        emit ContractURIUpdated(newContractURI);
     }
 
     /// @notice Internal function setting the royalty information.
