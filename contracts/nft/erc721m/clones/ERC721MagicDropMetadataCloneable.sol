@@ -133,6 +133,8 @@ contract ERC721MagicDropMetadataCloneable is
     /// @param newContractURI The new contract metadata URI.
     function setContractURI(string calldata newContractURI) external override onlyOwner {
         _setContractURI(newContractURI);
+
+        emit ContractURIUpdated(newContractURI);
     }
 
     /// @notice Adjusts the maximum token supply.
