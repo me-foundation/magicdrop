@@ -70,7 +70,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @dev The protocol fee expressed in basis points (e.g., 500 = 5%).
     /// @notice This fee is taken from the contract's entire balance upon withdrawal.
-    uint256 public constant PROTOCOL_FEE_BPS = 500; // 5%
+    uint256 public constant PROTOCOL_FEE_BPS = 0; // 0%
 
     /// @dev The denominator used for calculating basis points.
     /// @notice 10,000 BPS = 100%. A fee of 500 BPS is therefore 5%.
@@ -393,19 +393,17 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             revert PayoutRecipientCannotBeZeroAddress();
         }
 
-        uint256 protocolFee = (msg.value * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
-
-        /// @dev Remaining balance is the balance minus the protocol fee.
-        uint256 remainingBalance;
-        unchecked {
-            remainingBalance = msg.value - protocolFee;
+        if (PROTOCOL_FEE_BPS > 0) {
+            uint256 protocolFee = (msg.value * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
+            uint256 remainingBalance;
+            unchecked {
+                remainingBalance = msg.value - protocolFee;
+            }
+            SafeTransferLib.safeTransferETH(PROTOCOL_FEE_RECIPIENT, protocolFee);
+            SafeTransferLib.safeTransferETH(_payoutRecipient, remainingBalance);
+        } else {
+            SafeTransferLib.safeTransferETH(_payoutRecipient, msg.value);
         }
-
-        /// @dev Transfer the protocol fee to the protocol fee recipient.
-        SafeTransferLib.safeTransferETH(PROTOCOL_FEE_RECIPIENT, protocolFee);
-
-        /// @dev Transfer the remaining balance to the payout recipient.
-        SafeTransferLib.safeTransferETH(_payoutRecipient, remainingBalance);
     }
 
     /// @notice Internal function to reduce the total supply when tokens are burned.
