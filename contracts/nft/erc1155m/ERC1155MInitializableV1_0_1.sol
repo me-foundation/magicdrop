@@ -493,7 +493,7 @@ contract ERC1155MInitializableV1_0_1 is
 
     /// @notice Sets the contract URI
     /// @param contractUri The new contract URI
-    function setContractUri(string calldata contractUri) external onlyOwner {
+    function setContractURI(string calldata contractUri) external onlyOwner {
         _contractURI = contractUri;
         emit ContractURIUpdated();
     }

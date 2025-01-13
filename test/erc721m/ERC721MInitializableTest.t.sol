@@ -8,7 +8,7 @@ import {Test} from "forge-std/Test.sol";
 import {ERC721MInitializableV1_0_1 as ERC721MInitializable} from
     "../../contracts/nft/erc721m/ERC721MInitializableV1_0_1.sol";
 import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
-import {MintStageInfo} from "../../contracts/common/Structs.sol";
+import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
 contract MockERC721M is ERC721MInitializable {
@@ -169,5 +169,66 @@ contract ERC721MInitializableTest is Test {
             address(this),
             0
         );
+    }
+
+    function testGetConfig() public {
+        // Setup test data
+        string memory baseURI = "base_uri_";
+        string memory contractURI = "contract_uri";
+        address royaltyReceiver = address(0x123);
+        uint96 royaltyBps = 500; // 5%
+        
+        // Set contract URI and royalty info
+        vm.startPrank(owner);
+        nft.setContractURI(contractURI);
+        nft.setDefaultRoyalty(royaltyReceiver, royaltyBps);
+        vm.stopPrank();
+
+        // Get config
+        SetupConfig memory config = nft.getConfig();
+
+        // Verify all fields match expected values
+        assertEq(config.maxSupply, INITIAL_SUPPLY);
+        assertEq(config.walletLimit, GLOBAL_WALLET_LIMIT);
+        assertEq(config.baseURI, baseURI);
+        assertEq(config.contractURI, contractURI);
+        assertEq(config.payoutRecipient, fundReceiver);
+        assertEq(config.royaltyRecipient, royaltyReceiver);
+        assertEq(config.royaltyBps, royaltyBps);
+        
+        // Verify stages array is empty (as initialized)
+        assertEq(config.stages.length, 0);
+    }
+
+    function testGetConfigWithStages() public {
+        // Create test stage
+        MintStageInfo[] memory stages = new MintStageInfo[](1);
+        stages[0] = MintStageInfo({
+            price: 0.1 ether,
+            mintFee: 0.01 ether,
+            walletLimit: 2,
+            merkleRoot: bytes32(0),
+            maxStageSupply: 100,
+            startTimeUnixSeconds: block.timestamp,
+            endTimeUnixSeconds: block.timestamp + 1 days
+        });
+
+        // Setup contract with stages
+        vm.startPrank(owner);
+        nft.setStages(stages);
+        vm.stopPrank();
+
+        // Get config
+        SetupConfig memory config = nft.getConfig();
+
+        // Verify stages were set correctly
+        assertEq(config.stages.length, 1);
+        assertEq(config.stages[0].price, stages[0].price);
+        assertEq(config.stages[0].mintFee, stages[0].mintFee);
+        assertEq(config.stages[0].walletLimit, stages[0].walletLimit);
+        assertEq(config.stages[0].merkleRoot, stages[0].merkleRoot);
+        assertEq(config.stages[0].maxStageSupply, stages[0].maxStageSupply);
+        assertEq(config.stages[0].startTimeUnixSeconds, stages[0].startTimeUnixSeconds);
+        assertEq(config.stages[0].endTimeUnixSeconds, stages[0].endTimeUnixSeconds);
     }
 }
