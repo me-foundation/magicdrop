@@ -182,6 +182,13 @@ contract ERC721MInitializableV1_0_1 is
         _mintInternal(qty, to, limit, proof, timestamp, signature);
     }
 
+    /// @notice Burns a specific token.
+    /// @dev Only callable by the token owner or an approved operator. The token must exist.
+    /// @param tokenId The ID of the token to burn.
+    function burn(uint256 tokenId) external {
+        _burn(tokenId, true);
+    }
+
     /*==============================================================
     =                      PUBLIC VIEW METHODS                     =
     ==============================================================*/

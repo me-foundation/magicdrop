@@ -30,6 +30,7 @@ contract ERC721MInitializableTest is Test {
     address public clone;
     uint256 public constant INITIAL_SUPPLY = 1000;
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
+    uint256 public startTime;
 
     error Unauthorized();
 
@@ -42,6 +43,18 @@ contract ERC721MInitializableTest is Test {
         vm.deal(owner, 10 ether);
         vm.deal(minter, 2 ether);
 
+        startTime = block.timestamp;
+        MintStageInfo[] memory stages = new MintStageInfo[](1);
+        stages[0] = MintStageInfo({
+            price: 0.1 ether,
+            mintFee: 0,
+            walletLimit: 2,
+            merkleRoot: bytes32(0),
+            maxStageSupply: 100,
+            startTimeUnixSeconds: startTime,
+            endTimeUnixSeconds: startTime + 1 days
+        });
+
         clone = LibClone.deployERC1967(address(new MockERC721M()));
         nft = MockERC721M(clone);
         nft.initialize("Test", "TEST", owner);
@@ -52,7 +65,7 @@ contract ERC721MInitializableTest is Test {
             GLOBAL_WALLET_LIMIT,
             address(0),
             fundReceiver,
-            new MintStageInfo[](0),
+            stages,
             address(this),
             0
         );
@@ -195,9 +208,14 @@ contract ERC721MInitializableTest is Test {
         assertEq(config.payoutRecipient, fundReceiver);
         assertEq(config.royaltyRecipient, royaltyReceiver);
         assertEq(config.royaltyBps, royaltyBps);
-        
-        // Verify stages array is empty (as initialized)
-        assertEq(config.stages.length, 0);
+        assertEq(config.stages.length, 1);
+        assertEq(config.stages[0].price, 0.1 ether);
+        assertEq(config.stages[0].mintFee, 0);
+        assertEq(config.stages[0].walletLimit, 2);
+        assertEq(config.stages[0].merkleRoot, bytes32(0));
+        assertEq(config.stages[0].maxStageSupply, 100);
+        assertEq(config.stages[0].startTimeUnixSeconds, startTime);
+        assertEq(config.stages[0].endTimeUnixSeconds, startTime + 1 days);
     }
 
     function testGetConfigWithStages() public {
@@ -230,5 +248,39 @@ contract ERC721MInitializableTest is Test {
         assertEq(config.stages[0].maxStageSupply, stages[0].maxStageSupply);
         assertEq(config.stages[0].startTimeUnixSeconds, stages[0].startTimeUnixSeconds);
         assertEq(config.stages[0].endTimeUnixSeconds, stages[0].endTimeUnixSeconds);
+    }
+
+
+    function testBurnHappyPath() public {
+        vm.deal(minter, 1 ether);
+        vm.startPrank(minter);
+        nft.mint{value: 0.1 ether}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+
+        uint256 tokenId = 0;
+        assertEq(nft.ownerOf(tokenId), minter);
+
+        nft.burn(tokenId);
+
+        vm.expectRevert();
+        nft.ownerOf(tokenId);
+        vm.stopPrank();
+    }
+
+    function testBurnInvalidTokenReverts() public {
+        vm.prank(minter);
+        vm.expectRevert();
+        nft.burn(9999); // non-existent token
+    }
+
+    function testBurnNotOwnerReverts() public {
+        // mint to user
+        vm.startPrank(minter);
+        nft.mint{value: 0.1 ether}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        vm.stopPrank();
+        assertEq(nft.ownerOf(0), minter);
+
+        vm.prank(readonly);
+        vm.expectRevert();
+        nft.burn(0);
     }
 }
