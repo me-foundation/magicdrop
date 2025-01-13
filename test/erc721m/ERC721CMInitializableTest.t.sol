@@ -28,6 +28,9 @@ contract ERC721CMInitializableTest is Test {
     address public readonly;
     uint256 public constant INITIAL_SUPPLY = 1000;
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
+    address public clone;
+
+    error Unauthorized();
 
     function setUp() public {
         owner = address(this);
@@ -38,7 +41,7 @@ contract ERC721CMInitializableTest is Test {
         vm.deal(owner, 10 ether);
         vm.deal(minter, 2 ether);
 
-        address clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
+        clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
         nft = MockERC721CMInitializable(clone);
         nft.initialize("Test", "TEST", owner);
         nft.setup(
@@ -243,5 +246,28 @@ contract ERC721CMInitializableTest is Test {
         vm.expectRevert(ErrorsAndEvents.NotTransferable.selector);
         vm.prank(minter);
         nft.safeTransferFrom(minter, readonly, 0);
+    }
+
+
+    function testInitializeRevertCalledTwice() public {
+        vm.expectRevert(0xf92ee8a9); // InvalidInitialization()
+        nft.initialize("Test", "TEST", owner);
+    }
+
+    function testCallSetupBeforeInitializeRevert() public {
+        clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
+        MockERC721CMInitializable nft2 = MockERC721CMInitializable(clone);
+        vm.expectRevert(Unauthorized.selector);
+        nft2.setup(
+            "base_uri_",
+            ".json",
+            INITIAL_SUPPLY,
+            GLOBAL_WALLET_LIMIT,
+            address(0),
+            fundReceiver,
+            new MintStageInfo[](0),
+            address(this),
+            0
+        );
     }
 }

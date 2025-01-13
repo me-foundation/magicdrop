@@ -22,6 +22,8 @@ contract ERC1155MInitializableTest is Test {
     uint256[] public globalWalletLimit;
     MintStageInfo1155[] public initialStages;
 
+    error Unauthorized();
+
     function setUp() public {
         owner = address(this);
         fundReceiver = address(0x1);
@@ -52,6 +54,22 @@ contract ERC1155MInitializableTest is Test {
         );
 
         assertEq(nft.isSetupLocked(), true);
+    }
+
+    function testInitializeRevertCalledTwice() public {
+        vm.startPrank(owner);
+        vm.expectRevert("Initializable: contract is already initialized");
+        nft.initialize("Test", "TEST", owner);
+    }
+
+    function testCallSetupBeforeInitializeRevert() public {
+        vm.startPrank(owner);
+        ERC1155MInitializable clone = ERC1155MInitializable(LibClone.deployERC1967(address(new ERC1155MInitializable())));
+        vm.expectRevert(Unauthorized.selector);
+        clone.setup(
+            "base_uri_", maxMintableSupply, globalWalletLimit, address(0), fundReceiver, initialStages, address(this), 0
+        );
+        vm.stopPrank();
     }
 
     function testSetTransferable() public {
