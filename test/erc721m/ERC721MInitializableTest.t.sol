@@ -190,7 +190,7 @@ contract ERC721MInitializableTest is Test {
         string memory contractURI = "contract_uri";
         address royaltyReceiver = address(0x123);
         uint96 royaltyBps = 500; // 5%
-        
+
         // Set contract URI and royalty info
         vm.startPrank(owner);
         nft.setContractURI(contractURI);
@@ -249,7 +249,6 @@ contract ERC721MInitializableTest is Test {
         assertEq(config.stages[0].startTimeUnixSeconds, stages[0].startTimeUnixSeconds);
         assertEq(config.stages[0].endTimeUnixSeconds, stages[0].endTimeUnixSeconds);
     }
-
 
     function testBurnHappyPath() public {
         vm.deal(minter, 1 ether);

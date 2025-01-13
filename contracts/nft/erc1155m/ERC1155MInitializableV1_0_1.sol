@@ -164,7 +164,7 @@ contract ERC1155MInitializableV1_0_1 is
             });
             config.stages[i] = stage;
         }
-        
+
         config.payoutRecipient = _fundReceiver;
         config.royaltyRecipient = _royaltyRecipient;
         config.royaltyBps = _royaltyBps;

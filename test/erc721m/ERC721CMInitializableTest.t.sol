@@ -30,6 +30,7 @@ contract ERC721CMInitializableTest is Test {
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
     address public clone;
     uint256 public startTime;
+
     error Unauthorized();
 
     function setUp() public {
@@ -305,7 +306,7 @@ contract ERC721CMInitializableTest is Test {
         string memory contractURI = "contract_uri";
         address royaltyReceiver = address(0x123);
         uint96 royaltyBps = 500; // 5%
-        
+
         // Set contract URI and royalty info
         vm.startPrank(owner);
         nft.setContractURI(contractURI);

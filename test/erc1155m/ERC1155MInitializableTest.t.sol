@@ -131,7 +131,7 @@ contract ERC1155MInitializableTest is Test {
         address royaltyReceiver = address(0x123);
         uint96 royaltyBps = 500; // 5%
         uint256 tokenId = 0;
-        
+
         // Set contract URI and royalty info
         vm.startPrank(owner);
         nft.setContractURI(contractURI);
@@ -149,14 +149,14 @@ contract ERC1155MInitializableTest is Test {
         assertEq(config.payoutRecipient, fundReceiver);
         assertEq(config.royaltyRecipient, royaltyReceiver);
         assertEq(config.royaltyBps, royaltyBps);
-        
+
         // Verify stages array is empty (as initialized)
         assertEq(config.stages.length, 0);
     }
 
     function testGetConfigWithStages() public {
         uint256 tokenId = 0;
-        
+
         // Create test stage
         uint80[] memory prices = new uint80[](1);
         prices[0] = 0.1 ether;
@@ -204,7 +204,7 @@ contract ERC1155MInitializableTest is Test {
         uint256[] memory newMaxSupply = new uint256[](2);
         newMaxSupply[0] = 1000;
         newMaxSupply[1] = 500;
-        
+
         uint256[] memory newWalletLimits = new uint256[](2);
         newWalletLimits[0] = 5;
         newWalletLimits[1] = 3;
@@ -213,7 +213,7 @@ contract ERC1155MInitializableTest is Test {
         address clone = LibClone.deployERC1967(address(new ERC1155MInitializable()));
         ERC1155MInitializable multiNft = ERC1155MInitializable(clone);
         multiNft.initialize("Test", "TEST", owner);
-        
+
         vm.startPrank(owner);
         multiNft.setup(
             "base_uri_",
