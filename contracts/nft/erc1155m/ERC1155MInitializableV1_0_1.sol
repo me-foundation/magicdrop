@@ -11,7 +11,7 @@ import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
-import {MintStageInfo1155} from "../../common/Structs.sol";
+import {MintStageInfo1155, SetupConfig, MintStageInfo} from "../../common/Structs.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {ERC1155MStorage} from "./ERC1155MStorage.sol";
@@ -63,6 +63,12 @@ contract ERC1155MInitializableV1_0_1 is
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
         return ("ERC1155MInitializable", "1.0.1");
+    }
+
+    /// @notice Gets the contract URI
+    /// @return The contract URI
+    function contractURI() external view returns (string memory) {
+        return _contractURI;
     }
 
     /*==============================================================
@@ -134,6 +140,35 @@ contract ERC1155MInitializableV1_0_1 is
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
         uint256[] memory stageMinted = _totalMintedByStageByAddress(stage, msg.sender);
         return (_mintStages[stage], walletMinted, stageMinted);
+    }
+
+    /// @notice Gets the contract configuration
+    /// @return The contract configuration
+    function getConfig(uint256 tokenId) external view returns (SetupConfig memory) {
+        SetupConfig memory config;
+        config.maxSupply = _maxMintableSupply[tokenId];
+        config.walletLimit = _globalWalletLimit[tokenId];
+        config.baseURI = uri(tokenId);
+        config.contractURI = _contractURI;
+
+        config.stages = new MintStageInfo[](_mintStages.length);
+        for (uint256 i = 0; i < _mintStages.length; i++) {
+            MintStageInfo memory stage = MintStageInfo({
+                price: _mintStages[i].price[tokenId],
+                mintFee: _mintStages[i].mintFee[tokenId],
+                walletLimit: _mintStages[i].walletLimit[tokenId],
+                merkleRoot: _mintStages[i].merkleRoot[tokenId],
+                maxStageSupply: _mintStages[i].maxStageSupply[tokenId],
+                startTimeUnixSeconds: _mintStages[i].startTimeUnixSeconds,
+                endTimeUnixSeconds: _mintStages[i].endTimeUnixSeconds
+            });
+            config.stages[i] = stage;
+        }
+        
+        config.payoutRecipient = _fundReceiver;
+        config.royaltyRecipient = _royaltyRecipient;
+        config.royaltyBps = _royaltyBps;
+        return config;
     }
 
     /// @notice Gets the number of minting stages
@@ -275,9 +310,13 @@ contract ERC1155MInitializableV1_0_1 is
 
         if (royaltyReceiver != address(0)) {
             setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+            _royaltyBps = royaltyFeeNumerator;
+            _royaltyRecipient = royaltyReceiver;
         }
     }
 
+    /// @notice Sets the minting stages
+    /// @param newStages An array of new minting stages
     function setStages(MintStageInfo1155[] calldata newStages) external onlyOwner {
         _setStages(newStages);
     }
@@ -343,6 +382,8 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param feeNumerator The royalty fee numerator
     function setDefaultRoyalty(address receiver, uint96 feeNumerator) public onlyOwner {
         super._setDefaultRoyalty(receiver, feeNumerator);
+        _royaltyBps = feeNumerator;
+        _royaltyRecipient = receiver;
         emit DefaultRoyaltySet(receiver, feeNumerator);
     }
 
@@ -448,6 +489,13 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param timestampExpirySeconds The number of seconds after which a timestamp is considered expired
     function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
         _setTimestampExpirySeconds(timestampExpirySeconds);
+    }
+
+    /// @notice Sets the contract URI
+    /// @param contractUri The new contract URI
+    function setContractUri(string calldata contractUri) external onlyOwner {
+        _contractURI = contractUri;
+        emit ContractURIUpdated();
     }
 
     /*==============================================================

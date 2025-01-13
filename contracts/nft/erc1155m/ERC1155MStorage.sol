@@ -37,6 +37,15 @@ contract ERC1155MStorage {
     // Whether the contract has been setup.
     bool internal _setupLocked;
 
+    // Royalty recipient
+    address internal _royaltyRecipient;
+
+    // Royalty basis points
+    uint96 internal _royaltyBps;
+
+    // Contract uri
+    string internal _contractURI;
+
     // Minted count per stage per token per wallet.
     mapping(uint256 => mapping(uint256 => mapping(address => uint32))) internal _stageMintedCountsPerTokenPerWallet;
 
