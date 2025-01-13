@@ -83,6 +83,10 @@ abstract contract ERC721ACQueryableInitializable is
         }
     }
 
+    function totalMinted() public view returns (uint256) {
+        return _totalMinted();
+    }
+
     function _msgSenderERC721A() internal view virtual override returns (address) {
         return _msgSender();
     }
