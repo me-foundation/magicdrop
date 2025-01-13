@@ -16,7 +16,7 @@ import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.so
 
 import {IERC721MInitializable} from "contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorage.sol";
-import {MintStageInfo} from "contracts/common/Structs.sol";
+import {MintStageInfo, SetupConfig} from "contracts/common/Structs.sol";
 import {Cosignable} from "contracts/common/Cosignable.sol";
 import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
 import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
@@ -198,6 +198,21 @@ contract ERC721MInitializableV1_0_1 is
         return (_mintStages[index], walletMinted, stageMinted);
     }
 
+    /// @notice Gets the contract configuration
+    /// @return The contract configuration
+    function getConfig() external view returns (SetupConfig memory) {
+        SetupConfig memory config;
+        config.maxSupply = _maxMintableSupply;
+        config.walletLimit = _globalWalletLimit;
+        config.baseURI = _currentBaseURI;
+        config.contractURI = _contractURI;
+        config.stages = _mintStages;
+        config.payoutRecipient = _fundReceiver;
+        config.royaltyRecipient = _royaltyRecipient;
+        config.royaltyBps = _royaltyBps;
+        return config;
+    }
+
     /// @notice Gets the mint currency address
     /// @return The address of the mint currency
     function getMintCurrency() external view returns (address) {
@@ -328,6 +343,8 @@ contract ERC721MInitializableV1_0_1 is
 
         if (royaltyReceiver != address(0)) {
             setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+            _royaltyBps = royaltyFeeNumerator;
+            _royaltyRecipient = royaltyReceiver;
         }
     }
 
@@ -373,6 +390,8 @@ contract ERC721MInitializableV1_0_1 is
     /// @param feeNumerator The royalty fee numerator
     function setDefaultRoyalty(address receiver, uint96 feeNumerator) public onlyOwner {
         super._setDefaultRoyalty(receiver, feeNumerator);
+        _royaltyBps = feeNumerator;
+        _royaltyRecipient = receiver;
         emit DefaultRoyaltySet(receiver, feeNumerator);
     }
 

@@ -171,4 +171,3 @@ contract ERC721MInitializableTest is Test {
         );
     }
 }
-

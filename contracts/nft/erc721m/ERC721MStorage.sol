@@ -45,4 +45,10 @@ contract ERC721MStorage {
 
     // Prevents multiple initializations of contract settings
     bool internal _setupLocked;
+
+    // Royalty receiver
+    address internal _royaltyRecipient;
+
+    // Royalty basis points
+    uint96 internal _royaltyBps;
 }
