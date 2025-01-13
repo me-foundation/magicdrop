@@ -248,7 +248,6 @@ contract ERC721CMInitializableTest is Test {
         nft.safeTransferFrom(minter, readonly, 0);
     }
 
-
     function testInitializeRevertCalledTwice() public {
         vm.expectRevert(0xf92ee8a9); // InvalidInitialization()
         nft.initialize("Test", "TEST", owner);
@@ -269,5 +268,22 @@ contract ERC721CMInitializableTest is Test {
             address(this),
             0
         );
+    }
+
+    function testSetupNonOwnerRevert() public {
+        vm.startPrank(address(0x3));
+        vm.expectRevert(Unauthorized.selector);
+        nft.setup(
+            "base_uri_",
+            ".json",
+            INITIAL_SUPPLY,
+            GLOBAL_WALLET_LIMIT,
+            address(0),
+            fundReceiver,
+            new MintStageInfo[](0),
+            address(this),
+            0
+        );
+        vm.stopPrank();
     }
 }
