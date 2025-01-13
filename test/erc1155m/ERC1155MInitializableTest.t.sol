@@ -46,6 +46,18 @@ contract ERC1155MInitializableTest is Test {
         );
     }
 
+    function testSetupNonOwnerRevert() public {
+        ERC1155MInitializable clone = ERC1155MInitializable(LibClone.deployERC1967(address(new ERC1155MInitializable())));
+        clone.initialize("Test", "TEST", owner);
+
+        vm.startPrank(address(0x3));
+        vm.expectRevert(Unauthorized.selector);
+        clone.setup(
+            "base_uri_", maxMintableSupply, globalWalletLimit, address(0), fundReceiver, initialStages, address(this), 0
+        );
+        vm.stopPrank();
+    }
+
     function testSetupLockedRevert() public {
         vm.startPrank(owner);
         vm.expectRevert(ErrorsAndEvents.ContractAlreadySetup.selector);
