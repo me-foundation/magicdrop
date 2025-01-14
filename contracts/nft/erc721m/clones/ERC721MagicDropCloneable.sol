@@ -104,6 +104,9 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     /// @notice Emitted when the payout recipient is set.
     event PayoutRecipientSet(address newPayoutRecipient);
 
+    /// @notice Emitted when a token is minted.
+    event TokenMinted(address indexed to, uint256 tokenId, uint256 qty);
+
     /*==============================================================
     =                             ERRORS                           =
     ==============================================================*/
@@ -179,6 +182,8 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         if (stage.price != 0) {
             _splitProceeds();
         }
+
+        emit TokenMinted(to, _totalMinted(), qty);
     }
 
     /// @notice Mints tokens during the allowlist stage.
