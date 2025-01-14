@@ -172,11 +172,12 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
         _increaseSupplyOnMint(to, tokenId, qty);
 
+        _mint(to, tokenId, qty, data);
+
         if (stage.price != 0) {
             _splitProceeds();
         }
 
-        _mint(to, tokenId, qty, data);
         emit TokenMinted(to, tokenId, qty);
     }
 
