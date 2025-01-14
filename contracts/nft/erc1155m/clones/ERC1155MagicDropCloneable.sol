@@ -60,6 +60,10 @@ import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata
 /// @dev This contract extends metadata configuration, ownership, and royalty support from its parent, while adding
 ///      time-gated, price-defined minting stages. It also incorporates a payout recipient and protocol fee structure.
 contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
+    /*==============================================================
+    =                            STORAGE                           =
+    ==============================================================*/
+
     /// @dev Address that receives the primary sale proceeds of minted tokens.
     ///      Configurable by the owner. If unset, withdrawals may fail.
     address internal _payoutRecipient;
@@ -83,6 +87,23 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @dev Configuration of the allowlist mint stage, including timing, price, and a merkle root for verification.
     /// @notice Only addresses proven by a valid Merkle proof can mint during this stage.
     mapping(uint256 => AllowlistStage) internal _allowlistStages; // tokenId => allowlistStage
+
+    /*==============================================================
+    =                             EVENTS                           =
+    ==============================================================*/
+
+    /// @notice Emitted when the public mint stage is set.
+    event PublicStageSet(PublicStage stage);
+
+    /// @notice Emitted when the allowlist mint stage is set.
+    event AllowlistStageSet(AllowlistStage stage);
+
+    /// @notice Emitted when the payout recipient is set.
+    event PayoutRecipientSet(address newPayoutRecipient);
+
+    /*==============================================================
+    =                             ERRORS                           =
+    ==============================================================*/
 
     /// @notice Thrown when attempting to mint during a public stage that is not currently active.
     error PublicStageNotActive();
@@ -358,6 +379,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         }
 
         _publicStages[tokenId] = stage;
+        emit PublicStageSet(stage);
     }
 
     /// @notice Internal function to set the allowlist mint stage configuration.
@@ -377,6 +399,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         }
 
         _allowlistStages[tokenId] = stage;
+        emit AllowlistStageSet(stage);
     }
 
     /// @notice Internal function to set the payout recipient.
@@ -384,6 +407,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param newPayoutRecipient The address to receive the payout from mint proceeds.
     function _setPayoutRecipient(address newPayoutRecipient) internal {
         _payoutRecipient = newPayoutRecipient;
+        emit PayoutRecipientSet(newPayoutRecipient);
     }
 
     /// @notice Internal function to split the proceeds of a mint.
