@@ -92,6 +92,19 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     AllowlistStage private _allowlistStage;
 
     /*==============================================================
+    =                             EVENTS                           =
+    ==============================================================*/
+
+    /// @notice Emitted when the public mint stage is set.
+    event PublicStageSet(PublicStage stage);
+
+    /// @notice Emitted when the allowlist mint stage is set.
+    event AllowlistStageSet(AllowlistStage stage);
+
+    /// @notice Emitted when the payout recipient is set.
+    event PayoutRecipientSet(address newPayoutRecipient);
+
+    /*==============================================================
     =                             ERRORS                           =
     ==============================================================*/
 
@@ -323,7 +336,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     /// @dev Only callable by the owner.
     /// @param newPayoutRecipient The address to receive future withdrawals.
     function setPayoutRecipient(address newPayoutRecipient) external onlyOwner {
-        _payoutRecipient = newPayoutRecipient;
+        _setPayoutRecipient(newPayoutRecipient);
     }
 
     /*==============================================================
@@ -346,6 +359,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         }
 
         _publicStage = stage;
+        emit PublicStageSet(stage);
     }
 
     /// @notice Internal function to set the allowlist mint stage configuration.
@@ -364,6 +378,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         }
 
         _allowlistStage = stage;
+        emit AllowlistStageSet(stage);
     }
 
     /// @notice Internal function to set the payout recipient.
@@ -371,6 +386,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     /// @param newPayoutRecipient The address to receive the payout from mint proceeds.
     function _setPayoutRecipient(address newPayoutRecipient) internal {
         _payoutRecipient = newPayoutRecipient;
+        emit PayoutRecipientSet(newPayoutRecipient);
     }
 
     /// @notice Internal function to split the proceeds of a mint.
