@@ -101,6 +101,9 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @notice Emitted when the payout recipient is set.
     event PayoutRecipientSet(address newPayoutRecipient);
 
+    /// @notice Emitted when a token is minted.
+    event TokenMinted(address indexed to, uint256 tokenId, uint256 qty);
+
     /*==============================================================
     =                             ERRORS                           =
     ==============================================================*/
@@ -174,6 +177,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         }
 
         _mint(to, tokenId, qty, data);
+        emit TokenMinted(to, tokenId, qty);
     }
 
     /// @notice Mints tokens during the allowlist stage.
@@ -212,6 +216,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         }
 
         _mint(to, tokenId, qty, data);
+        emit TokenMinted(to, tokenId, qty);
     }
 
     /// @notice Burns a specific quantity of tokens on behalf of a given address.
