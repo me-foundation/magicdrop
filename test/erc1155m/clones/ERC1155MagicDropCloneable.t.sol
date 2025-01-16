@@ -521,9 +521,7 @@ contract ERC1155MagicDropCloneableTest is Test {
 
         vm.deal(allowedAddr, 1 ether);
         vm.prank(allowedAddr);
-        token.mintAllowlist{value: 0.005 ether}(
-            allowedAddr, tokenId, 1, merkleHelper.getProofFor(allowedAddr), ""
-        );
+        token.mintAllowlist{value: 0.005 ether}(allowedAddr, tokenId, 1, merkleHelper.getProofFor(allowedAddr), "");
 
         uint256 expectedProtocolFee = (0.005 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.005 ether - expectedProtocolFee;
