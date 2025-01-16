@@ -197,7 +197,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             revert AllowlistStageNotActive();
         }
 
-        if (!MerkleProofLib.verify(proof, stage.merkleRoot, keccak256(abi.encodePacked(to)))) {
+        if (!MerkleProofLib.verify(proof, stage.merkleRoot, keccak256(bytes.concat(keccak256(abi.encode(to)))))) {
             revert InvalidProof();
         }
 

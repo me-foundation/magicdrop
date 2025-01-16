@@ -35,8 +35,13 @@ contract ERC1155MagicDropCloneableTest is Test {
     SetupConfig internal config;
 
     function setUp() public {
+        // Prepare an array of addresses for testing allowlist
+        address[] memory addresses = new address[](1);
+        addresses[0] = allowedAddr;
+        // Deploy the new MerkleTestHelper with multiple addresses
+        merkleHelper = new MerkleTestHelper(addresses);
+
         token = ERC1155MagicDropCloneable(LibClone.deployERC1967(address(new ERC1155MagicDropCloneable())));
-        merkleHelper = new MerkleTestHelper(allowedAddr);
 
         // Initialize token
         token.initialize("TestToken", "TT", owner);
@@ -167,19 +172,20 @@ contract ERC1155MagicDropCloneableTest is Test {
         // Move time to allowlist
         vm.warp(allowlistStart + 1);
 
-        vm.deal(merkleHelper.getAllowedAddress(), 1 ether);
-        vm.prank(merkleHelper.getAllowedAddress());
-        token.mintAllowlist{value: 0.005 ether}(
-            merkleHelper.getAllowedAddress(), tokenId, 1, merkleHelper.getProofFor(merkleHelper.getAllowedAddress()), ""
-        );
+        vm.deal(allowedAddr, 1 ether);
+        vm.prank(allowedAddr);
 
-        assertEq(token.balanceOf(merkleHelper.getAllowedAddress(), tokenId), 1);
+        // Generate a proof for the allowedAddr from our new MerkleTestHelper
+        bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
+
+        token.mintAllowlist{value: 0.005 ether}(allowedAddr, tokenId, 1, proof, "");
+
+        assertEq(token.balanceOf(allowedAddr, tokenId), 1);
     }
 
     function testMintAllowlistInvalidProofReverts() public {
         vm.warp(allowlistStart + 1);
 
-        address allowedAddr = merkleHelper.getAllowedAddress();
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
 
         vm.deal(allowedAddr, 1 ether);
@@ -193,7 +199,6 @@ contract ERC1155MagicDropCloneableTest is Test {
         // Before allowlist start
         vm.warp(allowlistStart - 10);
 
-        address allowedAddr = merkleHelper.getAllowedAddress();
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
         vm.deal(allowedAddr, 1 ether);
         vm.prank(allowedAddr);
@@ -205,7 +210,6 @@ contract ERC1155MagicDropCloneableTest is Test {
     function testMintAllowlistNotEnoughValueReverts() public {
         vm.warp(allowlistStart + 1);
 
-        address allowedAddr = merkleHelper.getAllowedAddress();
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
         vm.deal(allowedAddr, 0.001 ether);
         vm.prank(allowedAddr);
@@ -217,7 +221,6 @@ contract ERC1155MagicDropCloneableTest is Test {
     function testMintAllowlistWalletLimitExceededReverts() public {
         vm.warp(allowlistStart + 1);
 
-        address allowedAddr = merkleHelper.getAllowedAddress();
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
         vm.deal(allowedAddr, 1 ether);
 
@@ -238,7 +241,6 @@ contract ERC1155MagicDropCloneableTest is Test {
         // unlimited wallet limit for the purpose of this test
         token.setWalletLimit(tokenId, 0);
 
-        address allowedAddr = merkleHelper.getAllowedAddress();
         vm.deal(allowedAddr, 11 ether);
         vm.prank(allowedAddr);
 
@@ -517,10 +519,10 @@ contract ERC1155MagicDropCloneableTest is Test {
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
-        vm.deal(merkleHelper.getAllowedAddress(), 1 ether);
-        vm.prank(merkleHelper.getAllowedAddress());
+        vm.deal(allowedAddr, 1 ether);
+        vm.prank(allowedAddr);
         token.mintAllowlist{value: 0.005 ether}(
-            merkleHelper.getAllowedAddress(), tokenId, 1, merkleHelper.getProofFor(merkleHelper.getAllowedAddress()), ""
+            allowedAddr, tokenId, 1, merkleHelper.getProofFor(allowedAddr), ""
         );
 
         uint256 expectedProtocolFee = (0.005 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
