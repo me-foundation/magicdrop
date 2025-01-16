@@ -80,7 +80,7 @@ contract MerkleTestHelper {
         while (n > 1) {
             for (uint256 i = 0; i < n / 2; i++) {
                 // Sort the pair before hashing
-                (bytes32 left, bytes32 right) = leaves[2 * i] < leaves[2 * i + 1] 
+                (bytes32 left, bytes32 right) = leaves[2 * i] < leaves[2 * i + 1]
                     ? (leaves[2 * i], leaves[2 * i + 1])
                     : (leaves[2 * i + 1], leaves[2 * i]);
                 leaves[i] = keccak256(abi.encodePacked(left, right));
@@ -102,11 +102,7 @@ contract MerkleTestHelper {
      * @dev Builds a Merkle proof for the leaf at the given index.
      *      We recompute the pairing tree on the fly, capturing the "sibling" each time.
      */
-    function _buildProof(bytes32[] memory leaves, uint256 targetIndex)
-        internal
-        pure
-        returns (bytes32[] memory)
-    {
+    function _buildProof(bytes32[] memory leaves, uint256 targetIndex) internal pure returns (bytes32[] memory) {
         bytes32[] memory proof = new bytes32[](_proofLength(leaves.length));
         uint256 proofPos = 0;
         uint256 n = leaves.length;
@@ -125,12 +121,12 @@ contract MerkleTestHelper {
             // Move up to the next level
             for (uint256 i = 0; i < n / 2; i++) {
                 // Sort pairs when building the next level
-                (bytes32 left, bytes32 right) = leaves[2 * i] < leaves[2 * i + 1] 
+                (bytes32 left, bytes32 right) = leaves[2 * i] < leaves[2 * i + 1]
                     ? (leaves[2 * i], leaves[2 * i + 1])
                     : (leaves[2 * i + 1], leaves[2 * i]);
                 leaves[i] = keccak256(abi.encodePacked(left, right));
             }
-            
+
             // Handle odd number of leaves
             if (n % 2 == 1) {
                 leaves[n / 2] = leaves[n - 1];

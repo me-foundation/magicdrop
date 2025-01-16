@@ -33,9 +33,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
     function setUp() public {
         // Deploy a new token clone
-        token = ERC721MagicDropCloneable(
-            LibClone.deployERC1967(address(new ERC721MagicDropCloneable()))
-        );
+        token = ERC721MagicDropCloneable(LibClone.deployERC1967(address(new ERC721MagicDropCloneable())));
 
         // Prepare an array of addresses for testing allowlist
         address[] memory addresses = new address[](1);
@@ -64,11 +62,7 @@ contract ERC721MagicDropCloneableTest is Test {
                 price: 0.005 ether,
                 merkleRoot: merkleHelper.getRoot()
             }),
-            publicStage: PublicStage({
-                startTime: uint64(publicStart),
-                endTime: uint64(publicEnd),
-                price: 0.01 ether
-            }),
+            publicStage: PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0.01 ether}),
             payoutRecipient: payoutRecipient,
             royaltyRecipient: royaltyRecipient,
             royaltyBps: royaltyBps
@@ -181,11 +175,7 @@ contract ERC721MagicDropCloneableTest is Test {
         // Generate a proof for the allowedAddr from our new MerkleTestHelper
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
 
-        token.mintAllowlist{value: 0.005 ether}(
-            allowedAddr,
-            1,
-            proof
-        );
+        token.mintAllowlist{value: 0.005 ether}(allowedAddr, 1, proof);
         assertEq(token.balanceOf(allowedAddr), 1);
     }
 
@@ -421,10 +411,7 @@ contract ERC721MagicDropCloneableTest is Test {
         uint256 expectedProtocolFee = (0.01 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.01 ether - expectedProtocolFee;
 
-        assertEq(
-            token.PROTOCOL_FEE_RECIPIENT().balance,
-            initialProtocolBalance + expectedProtocolFee
-        );
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance + expectedProtocolFee);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
@@ -434,9 +421,7 @@ contract ERC721MagicDropCloneableTest is Test {
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         vm.prank(owner);
-        token.setPublicStage(
-            PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0})
-        );
+        token.setPublicStage(PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0}));
 
         // Move to public sale time
         vm.warp(publicStart + 1);
