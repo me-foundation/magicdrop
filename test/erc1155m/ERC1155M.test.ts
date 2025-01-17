@@ -26,43 +26,6 @@ describe('ERC1155M', function () {
     [owner, readonly, fundReceiver] = await ethers.getSigners();
   })
 
-  const getCosignSignature = async (
-    contractInstance: ERC1155M,
-    cosigner: SignerWithAddress,
-    minter: string,
-    timestamp: number,
-    tokenId: number,
-    qty: number,
-    waiveMintFee: boolean,
-  ) => {
-    const nonce = await contractInstance.getCosignNonce(minter, tokenId);
-    const chainId = await ethers.provider.getNetwork().then((n) => n.chainId);
-
-    const digestFromJs = ethers.utils.solidityKeccak256(
-      [
-        'address',
-        'address',
-        'uint32',
-        'bool',
-        'address',
-        'uint256',
-        'uint256',
-        'uint256',
-      ],
-      [
-        contractInstance.address,
-        minter,
-        qty,
-        waiveMintFee,
-        cosigner.address,
-        timestamp,
-        chainId,
-        nonce,
-      ],
-    );
-    return await cosigner.signMessage(ethers.utils.arrayify(digestFromJs));
-  };
-
   beforeEach(async () => {
     [owner, readonly, fundReceiver] = await ethers.getSigners();
 
@@ -73,8 +36,6 @@ describe('ERC1155M', function () {
       'https://example/{id}.json',
       [100],
       [0],
-      ethers.constants.AddressZero,
-      60,
       PAYMENT_ADDRESS,
       fundReceiver.address,
       WALLET_1,
@@ -84,7 +45,6 @@ describe('ERC1155M', function () {
 
     contract = erc1155M.connect(owner);
     readonlyContract = erc1155M.connect(readonly);
-
   });
 
   it('withdraws balance by owner', async () => {
@@ -130,11 +90,6 @@ describe('ERC1155M', function () {
     });
 
     it('cannot set stages with insufficient gap', async () => {
-      console.log(
-        'contract.getTimestampExpirySeconds()',
-        await contract.getTimestampExpirySeconds(),
-      );
-      
       await expect(
         contract.setStages([
           {
@@ -152,7 +107,7 @@ describe('ERC1155M', function () {
             walletLimit: [4],
             merkleRoot: [ethers.utils.hexZeroPad('0x2', 32)],
             maxStageSupply: [10],
-            startTimeUnixSeconds: 60,
+            startTimeUnixSeconds: 1,
             endTimeUnixSeconds: 61,
           },
         ]),
@@ -459,7 +414,7 @@ describe('ERC1155M', function () {
       // Reset stages to empty
       await contract.setStages([]);
 
-      const mint = contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      const mint = contract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.5'),
       });
 
@@ -468,12 +423,12 @@ describe('ERC1155M', function () {
 
     it('revert if incorrect (less) amount sent', async () => {
       let mint;
-      mint = contract.mint(0, 5, 0, [ZERO_PROOF], 0, '0x00', {
+      mint = contract.mint(0, 5, 0, [ZERO_PROOF], {
         value: parseEther('2.499'),
       });
       await expect(mint).to.be.revertedWith('NotEnoughValue');
 
-      mint = contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      mint = contract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.499999'),
       });
       await expect(mint).to.be.revertedWith('NotEnoughValue');
@@ -527,7 +482,7 @@ describe('ERC1155M', function () {
       ]);
 
       // Mint 101 tokens (1 over MaxMintableSupply)
-      const mint = contract.mint(0, 101, 0, [ZERO_PROOF], 0, '0x00', {
+      const mint = contract.mint(0, 101, 0, [ZERO_PROOF], {
         value: parseEther('1'),
       });
       await expect(mint).to.be.revertedWith('NoSupplyLeft');
@@ -547,13 +502,13 @@ describe('ERC1155M', function () {
       ]);
 
       // Mint 10 tokens - wallet limit
-      await contract.mint(0, 10, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 10, 0, [ZERO_PROOF], {
         value: parseEther('0.1'),
       });
 
       // Mint one more should fail
       await expect(
-        contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(0, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.01'),
         }),
       ).to.be.revertedWith('WalletStageLimitExceeded');
@@ -573,12 +528,12 @@ describe('ERC1155M', function () {
       ]);
 
       // Mint 10 tokens - stage limit
-      await contract.mint(0, 10, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 10, 0, [ZERO_PROOF], {
         value: parseEther('0.1'),
       });
 
       // Mint one more should fail
-      const mint = contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      const mint = contract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.01'),
       });
 
@@ -604,7 +559,7 @@ describe('ERC1155M', function () {
       const mintFeeReceiverBalanceInitial =
         await ethers.provider.getBalance(MINT_FEE_RECEIVER);
 
-      await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0'),
       });
       const [stageInfo, walletMintedCount, stagedMintedCount] =
@@ -644,7 +599,7 @@ describe('ERC1155M', function () {
       const mintFeeReceiverBalanceInitial =
         await ethers.provider.getBalance(MINT_FEE_RECEIVER);
 
-      await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.1'),
       });
 
@@ -666,65 +621,6 @@ describe('ERC1155M', function () {
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(parseEther('0.1'));
-    });
-
-    it('mint with mint fee waived', async () => {
-      const [_owner, minter, cosigner] = await ethers.getSigners();
-      const block = await ethers.provider.getBlock(
-        await ethers.provider.getBlockNumber(),
-      );
-      await contract.setCosigner(cosigner.address);
-
-      const timestamp = stageStart + 1;
-
-      let sig = getCosignSignature(
-        contract,
-        cosigner,
-        minter.address,
-        timestamp,
-        0,
-        1,
-        false,
-      );
-
-      await expect(
-        readonlyContract.mint(
-          0,
-          1,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          sig,
-          {
-            value: ethers.utils.parseEther('0.4'), // price = 0.4, mintFee = 0.1
-          },
-        ),
-      ).to.be.rejectedWith('NotEnoughValue');
-
-      sig = getCosignSignature(
-        contract,
-        cosigner,
-        minter.address,
-        timestamp,
-        0,
-        1,
-        true,
-      );
-      await readonlyContract.mint(
-        0,
-        1,
-        0,
-        [ethers.utils.hexZeroPad('0x', 32)],
-        timestamp,
-        sig,
-        {
-          value: ethers.utils.parseEther('0.4'), // price = 0.4, mintFee = 0.1
-        },
-      );
-      const [stageInfo, walletMintedCount, stagedMintedCount] =
-        await readonlyContract.getStageInfo(0);
-      expect(walletMintedCount).to.eql([BigNumber.from(1)]);
-      expect(stagedMintedCount).to.eql([BigNumber.from(1)]);
     });
 
     it('enforces Merkle proof if required', async () => {
@@ -761,7 +657,7 @@ describe('ERC1155M', function () {
       ]);
 
       // Mint 1 token with valid proof
-      await contract.mint(0, 1, 0, proof, 0, '0x00', {
+      await contract.mint(0, 1, 0, proof, {
         value: parseEther('0.1'),
       });
       const totalMinted = await contract.totalMintedByAddress(signerAddress);
@@ -769,7 +665,7 @@ describe('ERC1155M', function () {
 
       // Mint 1 token with someone's else proof should be reverted
       await expect(
-        readonlyContract.mint(0, 1, 0, proof, 0, '0x00', {
+        readonlyContract.mint(0, 1, 0, proof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('InvalidProof');
@@ -792,7 +688,7 @@ describe('ERC1155M', function () {
       ]);
 
       // Mint 1 token with invalid proof
-      const mint = contract.mint(0, 1, 0, proof, 0, '0x00', {
+      const mint = contract.mint(0, 1, 0, proof, {
         value: parseEther('0.5'),
       });
       await expect(mint).to.be.revertedWith('InvalidProof');
@@ -842,7 +738,7 @@ describe('ERC1155M', function () {
       ]);
 
       // Owner mints 1 token with valid proof
-      await contract.mint(0, 1, 2, ownerProof, 0, '0x00', {
+      await contract.mint(0, 1, 2, ownerProof, {
         value: parseEther('0.1'),
       });
 
@@ -852,20 +748,20 @@ describe('ERC1155M', function () {
 
       // Owner mints 1 token with wrong limit and should be reverted.
       await expect(
-        contract.mint(0, 1, 3, ownerProof, 0, '0x00', {
+        contract.mint(0, 1, 3, ownerProof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('InvalidProof');
 
       // Owner mints 2 tokens with valid proof and reverts.
       await expect(
-        contract.mint(0, 2, 2, ownerProof, 0, '0x00', {
+        contract.mint(0, 2, 2, ownerProof, {
           value: parseEther('0.2'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Owner mints 1 token with valid proof. Now owner reaches the limit.
-      await contract.mint(0, 1, 2, ownerProof, 0, '0x00', {
+      await contract.mint(0, 1, 2, ownerProof, {
         value: parseEther('0.1'),
       });
       expect(await contract.totalMintedByAddress(owner.getAddress())).to.eql([
@@ -874,26 +770,26 @@ describe('ERC1155M', function () {
 
       // Owner tries to mint more and reverts.
       await expect(
-        contract.mint(0, 1, 2, ownerProof, 0, '0x00', {
+        contract.mint(0, 1, 2, ownerProof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Reader mints 6 tokens with valid proof and reverts.
       await expect(
-        readonlyContract.mint(0, 6, 5, readerProof, 0, '0x00', {
+        readonlyContract.mint(0, 6, 5, readerProof, {
           value: parseEther('0.6'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Reader mints 5 tokens with valid proof.
-      await readonlyContract.mint(0, 5, 5, readerProof, 0, '0x00', {
+      await readonlyContract.mint(0, 5, 5, readerProof, {
         value: parseEther('0.5'),
       });
 
       // Reader mints 1 token with valid proof and reverts.
       await expect(
-        readonlyContract.mint(0, 1, 5, readerProof, 0, '0x00', {
+        readonlyContract.mint(0, 1, 5, readerProof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
@@ -931,128 +827,6 @@ describe('ERC1155M', function () {
         contract.ownerMint(readonly.address, 0, 101),
       ).to.be.revertedWith('NoSupplyLeft');
     });
-
-    it('mint with cosigner signature', async () => {
-      const [_owner, minter, cosigner] = await ethers.getSigners();
-      const block = await ethers.provider.getBlock(
-        await ethers.provider.getBlockNumber(),
-      );
-      await contract.setCosigner(cosigner.address);
-
-      const timestamp = stageStart + 1;
-      const sig = getCosignSignature(
-        contract,
-        cosigner,
-        minter.address,
-        timestamp,
-        0,
-        1,
-        false,
-      );
-      await readonlyContract.mint(
-        0,
-        1,
-        0,
-        [ethers.utils.hexZeroPad('0x', 32)],
-        timestamp,
-        sig,
-        {
-          value: ethers.utils.parseEther('0.5'),
-        },
-      );
-      const [stageInfo, walletMintedCount, stagedMintedCount] =
-        await readonlyContract.getStageInfo(0);
-      expect(walletMintedCount).to.eql([BigNumber.from(1)]);
-      expect(stagedMintedCount).to.eql([BigNumber.from(1)]);
-    });
-
-    it('mint with cosign - invalid sigs', async () => {
-      const [_owner, minter, cosigner] = await ethers.getSigners();
-      await contract.setCosigner(cosigner.address);
-
-      const timestamp = stageStart + 1;
-      const sig = await getCosignSignature(
-        contract,
-        cosigner,
-        minter.address,
-        timestamp,
-        0,
-        1,
-        false,
-      );
-
-      // invalid because of unexpected timestamp
-      await expect(
-        readonlyContract.mint(
-          0,
-          1,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp + 1,
-          sig,
-          {
-            value: ethers.utils.parseEther('0.5'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidCosignSignature');
-
-      // invalid because of unexptected sig
-      await expect(
-        readonlyContract.mint(
-          0,
-          1,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          sig + '00',
-          {
-            value: ethers.utils.parseEther('0.5'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidCosignSignature');
-
-      await expect(
-        readonlyContract.mint(
-          0,
-          1,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          '0x00',
-          {
-            value: ethers.utils.parseEther('0.5'),
-          },
-        ),
-      ).to.be.revertedWith('InvalidCosignSignature');
-
-      await expect(
-        readonlyContract.mint(
-          0,
-          1,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          '0',
-          {
-            value: ethers.utils.parseEther('0.5'),
-          },
-        ),
-      ).to.be.rejectedWith('invalid arrayify');
-
-      await expect(
-        readonlyContract.mint(
-          0,
-          1,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          '',
-          {
-            value: ethers.utils.parseEther('0.5'),
-          },
-        ),
-      ).to.be.rejectedWith('invalid arrayify');
-    });
   });
 
   describe('Multi token minting', function () {
@@ -1067,8 +841,6 @@ describe('ERC1155M', function () {
         'https://example/{id}.json',
         [100, 200, 300],
         [0, 0, 10],
-        ethers.constants.AddressZero,
-        60,
         PAYMENT_ADDRESS,
         fundReceiver.address,
         WALLET_1,
@@ -1102,35 +874,35 @@ describe('ERC1155M', function () {
 
     it('mint with wallet limit', async () => {
       // Mint 10 token A - wallet limit
-      await contract.mint(0, 10, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 10, 0, [ZERO_PROOF], {
         value: parseEther('2'),
       });
 
       // Mint 5 token B - wallet limit
-      await contract.mint(1, 5, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(1, 5, 0, [ZERO_PROOF], {
         value: parseEther('1.5'),
       });
 
       // Mint 3 token C - wallet limit
-      await contract.mint(2, 3, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(2, 3, 0, [ZERO_PROOF], {
         value: parseEther('0.9'),
       });
 
       // Mint one more should fail
       await expect(
-        contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(0, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.2'),
         }),
       ).to.be.revertedWith('WalletStageLimitExceeded');
 
       await expect(
-        contract.mint(1, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(1, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.3'),
         }),
       ).to.be.revertedWith('WalletStageLimitExceeded');
 
       await expect(
-        contract.mint(2, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(2, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.3'),
         }),
       ).to.be.revertedWith('WalletStageLimitExceeded');
@@ -1150,35 +922,35 @@ describe('ERC1155M', function () {
       ]);
 
       // Mint 30 token A - stage limit
-      await contract.mint(0, 30, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 30, 0, [ZERO_PROOF], {
         value: parseEther('6'),
       });
 
       // Mint 20 token B - stage limit
-      await contract.mint(1, 20, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(1, 20, 0, [ZERO_PROOF], {
         value: parseEther('6'),
       });
 
       // Mint 10 token C - stage limit
-      await contract.mint(2, 10, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(2, 10, 0, [ZERO_PROOF], {
         value: parseEther('3'),
       });
 
       // Mint one more should fail
       await expect(
-        contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(0, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.2'),
         }),
       ).to.be.revertedWith('StageSupplyExceeded');
 
       await expect(
-        contract.mint(1, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(1, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.3'),
         }),
       ).to.be.revertedWith('StageSupplyExceeded');
 
       await expect(
-        contract.mint(2, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(2, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.3'),
         }),
       ).to.be.revertedWith('StageSupplyExceeded');
@@ -1203,11 +975,11 @@ describe('ERC1155M', function () {
       const mintFeeReceiverBalanceInitial =
         await ethers.provider.getBalance(MINT_FEE_RECEIVER);
 
-      await readonlyContract.mint(1, 5, 0, [ZERO_PROOF], 0, '0x00', {
+      await readonlyContract.mint(1, 5, 0, [ZERO_PROOF], {
         value: parseEther('0'),
       });
 
-      await readonlyContract.mint(2, 10, 0, [ZERO_PROOF], 0, '0x00', {
+      await readonlyContract.mint(2, 10, 0, [ZERO_PROOF], {
         value: parseEther('0'),
       });
 
@@ -1256,15 +1028,15 @@ describe('ERC1155M', function () {
       const mintFeeReceiverBalanceInitial =
         await ethers.provider.getBalance(MINT_FEE_RECEIVER);
 
-      await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.1'),
       });
 
-      await readonlyContract.mint(1, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      await readonlyContract.mint(1, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.2'),
       });
 
-      await readonlyContract.mint(2, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      await readonlyContract.mint(2, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.3'),
       });
 
@@ -1293,83 +1065,6 @@ describe('ERC1155M', function () {
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(parseEther('0.6'));
-    });
-
-    it('mint with mint fee waived', async () => {
-      await contract.setStages([
-        {
-          price: [0, 0, 0],
-          mintFee: [parseEther('0.1'), parseEther('0.2'), parseEther('0.3')],
-          walletLimit: [0, 0, 0],
-          merkleRoot: [ZERO_PROOF, ZERO_PROOF, ZERO_PROOF],
-          maxStageSupply: [100, 100, 100],
-          startTimeUnixSeconds: stageStart,
-          endTimeUnixSeconds: stageEnd,
-        },
-      ]);
-
-      const [_owner, minter, cosigner] = await ethers.getSigners();
-
-      await contract.setCosigner(cosigner.address);
-
-      const timestamp = stageStart + 1;
-
-      let sig = getCosignSignature(
-        contract,
-        cosigner,
-        minter.address,
-        timestamp,
-        2,
-        1,
-        false,
-      );
-
-      await expect(
-        readonlyContract.mint(
-          2,
-          1,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          timestamp,
-          sig,
-          {
-            value: ethers.utils.parseEther('0'), // price = 0, mintFee = 0.3
-          },
-        ),
-      ).to.be.rejectedWith('NotEnoughValue');
-
-      sig = getCosignSignature(
-        contract,
-        cosigner,
-        minter.address,
-        timestamp,
-        2,
-        1,
-        true,
-      );
-      await readonlyContract.mint(
-        2,
-        1,
-        0,
-        [ethers.utils.hexZeroPad('0x', 32)],
-        timestamp,
-        sig,
-        {
-          value: ethers.utils.parseEther('0'), // price = 0, mintFee = 0.3
-        },
-      );
-      const [stageInfo, walletMintedCount, stagedMintedCount] =
-        await readonlyContract.getStageInfo(0);
-      expect(walletMintedCount).to.eql([
-        BigNumber.from(0),
-        BigNumber.from(0),
-        BigNumber.from(1),
-      ]);
-      expect(walletMintedCount).to.eql([
-        BigNumber.from(0),
-        BigNumber.from(0),
-        BigNumber.from(1),
-      ]);
     });
 
     it('enforces Merkle proof if required', async () => {
@@ -1406,17 +1101,17 @@ describe('ERC1155M', function () {
       ]);
 
       // Mint 1 token A
-      await contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.1'),
       });
 
       // Mint 1 token B with valid proof
-      await contract.mint(1, 1, 0, proof, 0, '0x00', {
+      await contract.mint(1, 1, 0, proof, {
         value: parseEther('0.1'),
       });
 
       // Mint 1 token C
-      await contract.mint(2, 1, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(2, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.1'),
       });
 
@@ -1429,7 +1124,7 @@ describe('ERC1155M', function () {
 
       // Mint 1 token B with someone's else proof should be reverted
       await expect(
-        readonlyContract.mint(1, 1, 0, proof, 0, '0x00', {
+        readonlyContract.mint(1, 1, 0, proof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('InvalidProof');
@@ -1479,7 +1174,7 @@ describe('ERC1155M', function () {
       ]);
 
       // Owner mints 1 token B with valid proof
-      await contract.mint(1, 1, 2, ownerProof, 0, '0x00', {
+      await contract.mint(1, 1, 2, ownerProof, {
         value: parseEther('0.1'),
       });
 
@@ -1491,20 +1186,20 @@ describe('ERC1155M', function () {
 
       // Owner mints 1 token B with wrong limit and should be reverted.
       await expect(
-        contract.mint(1, 1, 3, ownerProof, 0, '0x00', {
+        contract.mint(1, 1, 3, ownerProof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('InvalidProof');
 
       // Owner mints 2 token B with valid proof and reverts.
       await expect(
-        contract.mint(1, 2, 2, ownerProof, 0, '0x00', {
+        contract.mint(1, 2, 2, ownerProof, {
           value: parseEther('0.2'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Owner mints 1 token B with valid proof. Now owner reaches the limit.
-      await contract.mint(1, 1, 2, ownerProof, 0, '0x00', {
+      await contract.mint(1, 1, 2, ownerProof, {
         value: parseEther('0.1'),
       });
       expect(await contract.totalMintedByAddress(owner.getAddress())).to.eql([
@@ -1515,26 +1210,26 @@ describe('ERC1155M', function () {
 
       // Owner tries to mint more and reverts.
       await expect(
-        contract.mint(1, 1, 2, ownerProof, 0, '0x00', {
+        contract.mint(1, 1, 2, ownerProof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Reader mints 6 token B with valid proof and reverts.
       await expect(
-        readonlyContract.mint(1, 6, 5, readerProof, 0, '0x00', {
+        readonlyContract.mint(1, 6, 5, readerProof, {
           value: parseEther('0.6'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
 
       // Reader mints 5 token B with valid proof.
-      await readonlyContract.mint(1, 5, 5, readerProof, 0, '0x00', {
+      await readonlyContract.mint(1, 5, 5, readerProof, {
         value: parseEther('0.5'),
       });
 
       // Reader mints 1 token B with valid proof and reverts.
       await expect(
-        readonlyContract.mint(1, 1, 5, readerProof, 0, '0x00', {
+        readonlyContract.mint(1, 1, 5, readerProof, {
           value: parseEther('0.1'),
         }),
       ).to.be.rejectedWith('WalletStageLimitExceeded');
@@ -1597,15 +1292,24 @@ describe('ERC1155M', function () {
     });
 
     it('revert if not authorized minter', async () => {
-      const mint = contract.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
-        value: parseEther('1'),
-      });
+      const mint = contract.authorizedMint(
+        '0xef59F379B48f2E92aBD94ADcBf714D170967925D',
+        0,
+        1,
+        1,
+        [ZERO_PROOF],
+        {
+          value: parseEther('1'),
+        },
+      );
       await expect(mint).to.be.revertedWith('NotAuthorized');
     });
 
     it('authorized mint', async () => {
       const recipient = '0xef59F379B48f2E92aBD94ADcBf714D170967925D';
-      const reservoirSigner = await ethers.getImpersonatedSigner('0xf70da97812CB96acDF810712Aa562db8dfA3dbEF');
+      const reservoirSigner = await ethers.getImpersonatedSigner(
+        '0xf70da97812CB96acDF810712Aa562db8dfA3dbEF',
+      );
       const reservoirAddress = await reservoirSigner.getAddress();
 
       // Send some wei to impersonated account
@@ -1616,23 +1320,48 @@ describe('ERC1155M', function () {
 
       const reservoirConn = contract.connect(reservoirSigner);
 
-      await expect(reservoirConn.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
-        value: parseEther('1'),
-      })).to.be.revertedWith('NotAuthorized');
+      await expect(
+        reservoirConn.authorizedMint(
+          '0xef59F379B48f2E92aBD94ADcBf714D170967925D',
+          0,
+          1,
+          1,
+          [ZERO_PROOF],
+          {
+            value: parseEther('1'),
+          },
+        ),
+      ).to.be.revertedWith('NotAuthorized');
 
       await contract.addAuthorizedMinter(reservoirAddress);
 
-      await reservoirConn.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
-        value: parseEther('1'),
-      });
+      await reservoirConn.authorizedMint(
+        '0xef59F379B48f2E92aBD94ADcBf714D170967925D',
+        0,
+        1,
+        1,
+        [ZERO_PROOF],
+        {
+          value: parseEther('1'),
+        },
+      );
 
       const totalMinted = await contract.totalMintedByAddress(recipient);
       expect(totalMinted).to.eql([BigNumber.from(1)]);
 
       await contract.removeAuthorizedMinter(reservoirAddress);
-      await expect(reservoirConn.authorizedMint('0xef59F379B48f2E92aBD94ADcBf714D170967925D', 0, 1, 1, [ZERO_PROOF], {
-        value: parseEther('1'),
-      })).to.be.revertedWith('NotAuthorized');
+      await expect(
+        reservoirConn.authorizedMint(
+          '0xef59F379B48f2E92aBD94ADcBf714D170967925D',
+          0,
+          1,
+          1,
+          [ZERO_PROOF],
+          {
+            value: parseEther('1'),
+          },
+        ),
+      ).to.be.revertedWith('NotAuthorized');
     });
   });
 
@@ -1641,7 +1370,6 @@ describe('ERC1155M', function () {
       expect(await contract.uri(0)).to.eql('https://example/{id}.json');
       expect(await contract.uri(1)).to.eql('https://example/{id}.json');
       expect(await contract.uri(999)).to.eql('https://example/{id}.json');
-
     });
 
     it('updates uri', async () => {
@@ -1661,8 +1389,6 @@ describe('ERC1155M', function () {
           'https://example/{id}.json',
           [100],
           [101],
-          ethers.constants.AddressZero,
-          60,
           PAYMENT_ADDRESS,
           fundReceiver.address,
           WALLET_1,
@@ -1680,8 +1406,6 @@ describe('ERC1155M', function () {
           'https://example/{id}.json',
           [100],
           [0, 0],
-          ethers.constants.AddressZero,
-          60,
           PAYMENT_ADDRESS,
           fundReceiver.address,
           WALLET_1,
@@ -1700,7 +1424,7 @@ describe('ERC1155M', function () {
 
       await expect(contract.setGlobalWalletLimit(1, 100)).to.be.rejectedWith(
         'InvalidTokenId',
-      )
+      );
     });
 
     it('enforces global wallet limit', async () => {
@@ -1726,12 +1450,12 @@ describe('ERC1155M', function () {
         },
       ]);
 
-      await contract.mint(0, 2, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 2, 0, [ZERO_PROOF], {
         value: parseEther('0.22'),
       });
 
       await expect(
-        contract.mint(0, 1, 0, [ZERO_PROOF], 0, '0x00', {
+        contract.mint(0, 1, 0, [ZERO_PROOF], {
           value: parseEther('0.11'),
         }),
       ).to.be.revertedWith('WalletGlobalLimitExceeded');
@@ -1773,15 +1497,27 @@ describe('ERC1155M', function () {
       ]);
 
       // Can mint
-      await contract.mint(0, 3, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 3, 0, [ZERO_PROOF], {
         value: parseEther('0.33'),
       });
 
-      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(3));
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(
+        BigNumber.from(3),
+      );
 
       // Cannot transfer
-      await expect(contract.safeTransferFrom(owner.address, readonly.address, 0, 1, '0x00')).to.be.revertedWith('NotTransferable');
-      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(3));
+      await expect(
+        contract.safeTransferFrom(
+          owner.address,
+          readonly.address,
+          0,
+          1,
+          '0x00',
+        ),
+      ).to.be.revertedWith('NotTransferable');
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(
+        BigNumber.from(3),
+      );
 
       // Open transfer
       await expect(contract.setTransferable(true))
@@ -1789,16 +1525,28 @@ describe('ERC1155M', function () {
         .withArgs(true);
 
       // Can mint
-      await contract.mint(0, 2, 0, [ZERO_PROOF], 0, '0x00', {
+      await contract.mint(0, 2, 0, [ZERO_PROOF], {
         value: parseEther('0.22'),
       });
 
-      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(5));
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(
+        BigNumber.from(5),
+      );
 
       // Can transfer
-      await contract.safeTransferFrom(owner.address, readonly.address, 0, 4, '0x00');
-      expect(await contract.balanceOf(owner.address, 0)).to.eql(BigNumber.from(1));
-      expect(await contract.balanceOf(readonly.address, 0)).to.eql(BigNumber.from(4));
+      await contract.safeTransferFrom(
+        owner.address,
+        readonly.address,
+        0,
+        4,
+        '0x00',
+      );
+      expect(await contract.balanceOf(owner.address, 0)).to.eql(
+        BigNumber.from(1),
+      );
+      expect(await contract.balanceOf(readonly.address, 0)).to.eql(
+        BigNumber.from(4),
+      );
     });
   });
 
@@ -1811,8 +1559,6 @@ describe('ERC1155M', function () {
         'https://example/{id}.json',
         [100, 200],
         [0, 0],
-        ethers.constants.AddressZero,
-        60,
         PAYMENT_ADDRESS,
         fundReceiver.address,
         WALLET_1,
@@ -1896,8 +1642,6 @@ describe('ERC1155M', function () {
         'https://example/{id}.json',
         [10],
         [0],
-        ethers.constants.AddressZero,
-        60,
         erc20.address,
         fundReceiver.address,
         WALLET_1,
@@ -1942,14 +1686,7 @@ describe('ERC1155M', function () {
 
       // mint should revert
       await expect(
-        contract.mint(
-          0,
-          mintQty,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          0,
-          '0x00',
-        ),
+        contract.mint(0, mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)]),
       ).to.be.revertedWith(
         ethers.utils
           .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
@@ -1969,14 +1706,7 @@ describe('ERC1155M', function () {
 
       // mint should revert
       await expect(
-        contract.mint(
-          0,
-          mintQty,
-          0,
-          [ethers.utils.hexZeroPad('0x', 32)],
-          0,
-          '0x00',
-        ),
+        contract.mint(0, mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)]),
       ).to.be.revertedWith(
         ethers.utils
           .keccak256(ethers.utils.toUtf8Bytes('TransferFromFailed()'))
@@ -1993,8 +1723,9 @@ describe('ERC1155M', function () {
       await erc20.connect(readonly).approve(readonlyContract.address, mintCost);
 
       // Mint tokens
-      await readonlyContract
-        .mint(0, mintQty, 0, [ethers.utils.hexZeroPad('0x', 32)], 0, '0x00');
+      await readonlyContract.mint(0, mintQty, 0, [
+        ethers.utils.hexZeroPad('0x', 32),
+      ]);
 
       const postMintBalance = await erc20.balanceOf(
         await readonly.getAddress(),
@@ -2022,7 +1753,9 @@ describe('ERC1155M', function () {
       await contract.withdrawERC20();
 
       // Get the fundReceiver's balance
-      const fundReceiverBalance = await erc20.balanceOf(await fundReceiver.getAddress());
+      const fundReceiverBalance = await erc20.balanceOf(
+        await fundReceiver.getAddress(),
+      );
 
       expect(fundReceiverBalance).to.equal(initialAmount);
     });

@@ -11,11 +11,10 @@ import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
-import {MintStageInfo1155, SetupConfig, MintStageInfo} from "../../common/Structs.sol";
+import {MintStageInfo1155, MintStageInfo} from "../../common/Structs.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {ERC1155MStorage} from "./ERC1155MStorage.sol";
-import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 /// @title ERC1155MInitializableV1_0_1
@@ -28,7 +27,6 @@ contract ERC1155MInitializableV1_0_1 is
     ReentrancyGuard,
     ERC1155MStorage,
     ERC2981,
-    Cosignable,
     AuthorizedMinterControl
 {
     /*==============================================================
@@ -94,17 +92,13 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param qty The quantity to mint
     /// @param limit The minting limit for the caller (used in merkle proofs)
     /// @param proof The merkle proof for allowlist minting
-    /// @param timestamp The timestamp for the minting action (used in cosigning)
-    /// @param signature The cosigner's signature
     function mint(
         uint256 tokenId,
         uint32 qty,
         uint32 limit,
-        bytes32[] calldata proof,
-        uint256 timestamp,
-        bytes calldata signature
+        bytes32[] calldata proof
     ) external payable virtual nonReentrant {
-        _mintInternal(msg.sender, tokenId, qty, limit, proof, timestamp, signature);
+        _mintInternal(msg.sender, tokenId, qty, limit, proof);
     }
 
     /// @notice Allows authorized minters to mint tokens for a specified address
@@ -118,7 +112,7 @@ contract ERC1155MInitializableV1_0_1 is
         payable
         onlyAuthorizedMinter
     {
-        _mintInternal(to, tokenId, qty, limit, proof, 0, bytes("0"));
+        _mintInternal(to, tokenId, qty, limit, proof);
     }
 
     /*==============================================================
@@ -140,35 +134,6 @@ contract ERC1155MInitializableV1_0_1 is
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
         uint256[] memory stageMinted = _totalMintedByStageByAddress(stage, msg.sender);
         return (_mintStages[stage], walletMinted, stageMinted);
-    }
-
-    /// @notice Gets the contract configuration
-    /// @return The contract configuration
-    function getConfig(uint256 tokenId) external view returns (SetupConfig memory) {
-        SetupConfig memory config;
-        config.maxSupply = _maxMintableSupply[tokenId];
-        config.walletLimit = _globalWalletLimit[tokenId];
-        config.baseURI = uri(tokenId);
-        config.contractURI = _contractURI;
-
-        config.stages = new MintStageInfo[](_mintStages.length);
-        for (uint256 i = 0; i < _mintStages.length; i++) {
-            MintStageInfo memory stage = MintStageInfo({
-                price: _mintStages[i].price[tokenId],
-                mintFee: _mintStages[i].mintFee[tokenId],
-                walletLimit: _mintStages[i].walletLimit[tokenId],
-                merkleRoot: _mintStages[i].merkleRoot[tokenId],
-                maxStageSupply: _mintStages[i].maxStageSupply[tokenId],
-                startTimeUnixSeconds: _mintStages[i].startTimeUnixSeconds,
-                endTimeUnixSeconds: _mintStages[i].endTimeUnixSeconds
-            });
-            config.stages[i] = stage;
-        }
-
-        config.payoutRecipient = _fundReceiver;
-        config.royaltyRecipient = _royaltyRecipient;
-        config.royaltyBps = _royaltyBps;
-        return config;
     }
 
     /// @notice Gets the number of minting stages
@@ -193,14 +158,6 @@ contract ERC1155MInitializableV1_0_1 is
     /// @return The address of the mint currency
     function getMintCurrency() external view returns (address) {
         return _mintCurrency;
-    }
-
-    /// @notice Gets the cosign nonce for a specific minter and token ID
-    /// @param minter The address of the minter
-    /// @param tokenId The ID of the token
-    /// @return The cosign nonce
-    function getCosignNonce(address minter, uint256 tokenId) public view returns (uint256) {
-        return totalMintedByAddress(minter)[tokenId];
     }
 
     /// @notice Gets the maximum mintable supply for a specific token ID
@@ -300,7 +257,6 @@ contract ERC1155MInitializableV1_0_1 is
         _transferable = true;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
-        _setTimestampExpirySeconds(300); // 5 minutes
 
         _setURI(uri_);
 
@@ -330,7 +286,7 @@ contract ERC1155MInitializableV1_0_1 is
             if (i >= 1) {
                 if (
                     newStages[i].startTimeUnixSeconds
-                        < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()
+                        < newStages[i - 1].endTimeUnixSeconds + 1
                 ) {
                     revert InsufficientStageTimeGap();
                 }
@@ -479,18 +435,6 @@ contract ERC1155MInitializableV1_0_1 is
         _removeAuthorizedMinter(minter);
     }
 
-    /// @notice Sets the cosigner address
-    /// @param cosigner The new cosigner address
-    function setCosigner(address cosigner) external override onlyOwner {
-        _setCosigner(cosigner);
-    }
-
-    /// @notice Sets the expiry time for timestamps
-    /// @param timestampExpirySeconds The number of seconds after which a timestamp is considered expired
-    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
-        _setTimestampExpirySeconds(timestampExpirySeconds);
-    }
-
     /// @notice Sets the contract URI
     /// @param contractUri The new contract URI
     function setContractURI(string calldata contractUri) external onlyOwner {
@@ -508,33 +452,21 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param qty The quantity to mint
     /// @param limit The minting limit for the recipient (used in merkle proofs)
     /// @param proof The merkle proof for allowlist minting
-    /// @param timestamp The timestamp for the minting action (used in cosigning)
-    /// @param signature The cosigner's signature
     function _mintInternal(
         address to,
         uint256 tokenId,
         uint32 qty,
         uint32 limit,
-        bytes32[] calldata proof,
-        uint256 timestamp,
-        bytes memory signature
+        bytes32[] calldata proof
     ) internal hasSupply(tokenId, qty) {
         uint256 stageTimestamp = block.timestamp;
-        bool waiveMintFee = false;
-
-        if (getCosigner() != address(0)) {
-            waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender, tokenId));
-            _assertValidTimestamp(timestamp);
-            stageTimestamp = timestamp;
-        }
-
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
         MintStageInfo1155 memory stage = _mintStages[activeStage];
-        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee[tokenId];
+        uint80 mintFee = stage.mintFee[tokenId];
 
         // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + adjustedMintFee) * qty) {
+        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + mintFee) * qty) {
             revert NotEnoughValue();
         }
 
@@ -574,11 +506,11 @@ contract ERC1155MInitializableV1_0_1 is
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
             SafeTransferLib.safeTransferFrom(
-                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + adjustedMintFee) * qty
+                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + mintFee) * qty
             );
         }
 
-        _totalMintFee += adjustedMintFee * qty;
+        _totalMintFee += mintFee * qty;
         _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] += qty;
         _stageMintedCountsPerToken[activeStage][tokenId] += qty;
         _mint(to, tokenId, qty, "");
