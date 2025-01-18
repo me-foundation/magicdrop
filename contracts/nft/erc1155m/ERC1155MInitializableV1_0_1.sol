@@ -92,12 +92,12 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param qty The quantity to mint
     /// @param limit The minting limit for the caller (used in merkle proofs)
     /// @param proof The merkle proof for allowlist minting
-    function mint(
-        uint256 tokenId,
-        uint32 qty,
-        uint32 limit,
-        bytes32[] calldata proof
-    ) external payable virtual nonReentrant {
+    function mint(uint256 tokenId, uint32 qty, uint32 limit, bytes32[] calldata proof)
+        external
+        payable
+        virtual
+        nonReentrant
+    {
         _mintInternal(msg.sender, tokenId, qty, limit, proof);
     }
 
@@ -284,10 +284,7 @@ contract ERC1155MInitializableV1_0_1 is
 
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
-                if (
-                    newStages[i].startTimeUnixSeconds
-                        < newStages[i - 1].endTimeUnixSeconds + 1
-                ) {
+                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + 1) {
                     revert InsufficientStageTimeGap();
                 }
             }
@@ -452,13 +449,10 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param qty The quantity to mint
     /// @param limit The minting limit for the recipient (used in merkle proofs)
     /// @param proof The merkle proof for allowlist minting
-    function _mintInternal(
-        address to,
-        uint256 tokenId,
-        uint32 qty,
-        uint32 limit,
-        bytes32[] calldata proof
-    ) internal hasSupply(tokenId, qty) {
+    function _mintInternal(address to, uint256 tokenId, uint32 qty, uint32 limit, bytes32[] calldata proof)
+        internal
+        hasSupply(tokenId, qty)
+    {
         uint256 stageTimestamp = block.timestamp;
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
