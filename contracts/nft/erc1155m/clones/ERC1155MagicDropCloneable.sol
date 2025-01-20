@@ -114,7 +114,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     error AllowlistStageNotActive();
 
     /// @notice Thrown when the provided ETH value for a mint is insufficient.
-    error NotEnoughValue();
+    error RequiredValueNotMet();
 
     /// @notice Thrown when the provided Merkle proof for an allowlist mint is invalid.
     error InvalidProof();
@@ -161,8 +161,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         }
 
         uint256 requiredPayment = stage.price * qty;
-        if (msg.value < requiredPayment) {
-            revert NotEnoughValue();
+        if (msg.value != requiredPayment) {
+            revert RequiredValueNotMet();
         }
 
         if (_walletLimit[tokenId] > 0 && _totalMintedByUserPerToken[to][tokenId] + qty > _walletLimit[tokenId]) {
@@ -201,8 +201,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         }
 
         uint256 requiredPayment = stage.price * qty;
-        if (msg.value < requiredPayment) {
-            revert NotEnoughValue();
+        if (msg.value != requiredPayment) {
+            revert RequiredValueNotMet();
         }
 
         if (_walletLimit[tokenId] > 0 && _totalMintedByUserPerToken[to][tokenId] + qty > _walletLimit[tokenId]) {

@@ -132,7 +132,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.deal(user, 0.005 ether);
 
         vm.prank(user);
-        vm.expectRevert(ERC1155MagicDropCloneable.NotEnoughValue.selector);
+        vm.expectRevert(ERC1155MagicDropCloneable.RequiredValueNotMet.selector);
         token.mintPublic{value: 0.005 ether}(user, tokenId, 1, "");
     }
 
@@ -162,6 +162,16 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.prank(user);
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
         token.mintPublic{value: 10.01 ether}(user, tokenId, 1001, "");
+    }
+
+    function testMintPublicOverpayReverts() public {
+        vm.warp(publicStart + 1);
+
+        vm.deal(user, 1 ether);
+
+        vm.prank(user);
+        vm.expectRevert(ERC1155MagicDropCloneable.RequiredValueNotMet.selector);
+        token.mintPublic{value: 0.02 ether}(user, tokenId, 1, "");
     }
 
     /*==============================================================
@@ -214,7 +224,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.deal(allowedAddr, 0.001 ether);
         vm.prank(allowedAddr);
 
-        vm.expectRevert(ERC1155MagicDropCloneable.NotEnoughValue.selector);
+        vm.expectRevert(ERC1155MagicDropCloneable.RequiredValueNotMet.selector);
         token.mintAllowlist{value: 0.001 ether}(allowedAddr, tokenId, 1, proof, "");
     }
 
@@ -241,13 +251,23 @@ contract ERC1155MagicDropCloneableTest is Test {
         // unlimited wallet limit for the purpose of this test
         token.setWalletLimit(tokenId, 0);
 
-        vm.deal(allowedAddr, 11 ether);
+        vm.deal(allowedAddr, 5.005 ether);
         vm.prank(allowedAddr);
 
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
 
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
-        token.mintAllowlist{value: 11 ether}(allowedAddr, tokenId, 1001, proof, "");
+        token.mintAllowlist{value: 5.005 ether}(allowedAddr, tokenId, 1001, proof, "");
+    }
+
+    function testMintAllowlistOverpayReverts() public {
+        vm.warp(allowlistStart + 1);
+
+        bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
+        vm.deal(allowedAddr, 1 ether);
+
+        vm.expectRevert(ERC1155MagicDropCloneable.RequiredValueNotMet.selector);
+        token.mintAllowlist{value: 0.02 ether}(allowedAddr, tokenId, 1, proof, "");
     }
 
     /*==============================================================
