@@ -165,7 +165,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         }
 
         uint256 requiredPayment = stage.price * qty;
-        if (msg.value < requiredPayment) {
+        if (msg.value != requiredPayment) {
             revert NotEnoughValue();
         }
 
@@ -203,7 +203,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         }
 
         uint256 requiredPayment = stage.price * qty;
-        if (msg.value < requiredPayment) {
+        if (msg.value != requiredPayment) {
             revert NotEnoughValue();
         }
 
