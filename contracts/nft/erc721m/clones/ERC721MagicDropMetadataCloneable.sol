@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
-
 import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 
@@ -10,7 +8,6 @@ import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 
 import {ERC721AConduitPreapprovedCloneable} from "./ERC721AConduitPreapprovedCloneable.sol";
 import {ERC721ACloneable} from "./ERC721ACloneable.sol";
-import {ERC721AQueryableCloneable} from "./ERC721AQueryableCloneable.sol";
 import {IERC721MagicDropMetadata} from "../interfaces/IERC721MagicDropMetadata.sol";
 
 /// @title ERC721MagicDropMetadataCloneable
