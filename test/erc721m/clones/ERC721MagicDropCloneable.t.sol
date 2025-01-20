@@ -150,7 +150,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
     function testMintPublicMaxSupplyExceededReverts() public {
         vm.warp(publicStart + 1);
-        vm.deal(user, 5.005 ether);
+        vm.deal(user, 10.01 ether);
 
         vm.prank(owner);
         // unlimited wallet limit for the purpose of this test
@@ -158,7 +158,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.prank(user);
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
-        token.mintPublic{value: 5.005 ether}(user, 1001);
+        token.mintPublic{value: 10.01 ether}(user, 1001);
     }
 
     function testMintPublicOverpayReverts() public {
