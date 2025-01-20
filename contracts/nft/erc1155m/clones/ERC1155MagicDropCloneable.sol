@@ -222,22 +222,20 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @notice Burns a specific quantity of tokens on behalf of a given address.
     /// @dev Reduces the total supply and calls the internal `_burn` function.
-    /// @param by The address initiating the burn. Must be an approved operator or the owner of the tokens.
     /// @param from The address from which the tokens will be burned.
     /// @param id The ID of the token to burn.
     /// @param qty The quantity of tokens to burn.
-    function burn(address by, address from, uint256 id, uint256 qty) external {
+    function burn(address from, uint256 id, uint256 qty) external {
         _reduceSupplyOnBurn(id, qty);
-        _burn(by, from, id, qty);
+        _burn(msg.sender, from, id, qty);
     }
 
     /// @notice Burns multiple types of tokens in a single batch operation.
     /// @dev Iterates over each token ID and quantity to reduce supply and burn tokens.
-    /// @param by The address initiating the batch burn.
     /// @param from The address from which the tokens will be burned.
     /// @param ids An array of token IDs to burn.
     /// @param qty An array of quantities corresponding to each token ID to burn.
-    function batchBurn(address by, address from, uint256[] calldata ids, uint256[] calldata qty) external {
+    function batchBurn(address from, uint256[] calldata ids, uint256[] calldata qty) external {
         uint256 length = ids.length;
         for (uint256 i = 0; i < length;) {
             _reduceSupplyOnBurn(ids[i], qty[i]);
@@ -246,7 +244,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             }
         }
 
-        _batchBurn(by, from, ids, qty);
+        _batchBurn(msg.sender, from, ids, qty);
     }
 
     /*==============================================================
