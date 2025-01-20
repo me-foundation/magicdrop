@@ -118,7 +118,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     error AllowlistStageNotActive();
 
     /// @notice Thrown when the provided ETH value for a mint is insufficient.
-    error NotEnoughValue();
+    error RequiredValueNotMet();
 
     /// @notice Thrown when the provided Merkle proof for an allowlist mint is invalid.
     error InvalidProof();
@@ -166,7 +166,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
 
         uint256 requiredPayment = stage.price * qty;
         if (msg.value != requiredPayment) {
-            revert NotEnoughValue();
+            revert RequiredValueNotMet();
         }
 
         if (_walletLimit > 0 && _numberMinted(to) + qty > _walletLimit) {
@@ -204,7 +204,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
 
         uint256 requiredPayment = stage.price * qty;
         if (msg.value != requiredPayment) {
-            revert NotEnoughValue();
+            revert RequiredValueNotMet();
         }
 
         if (_walletLimit > 0 && _numberMinted(to) + qty > _walletLimit) {

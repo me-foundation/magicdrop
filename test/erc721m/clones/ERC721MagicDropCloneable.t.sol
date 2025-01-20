@@ -129,7 +129,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(user, 0.005 ether);
 
         vm.prank(user);
-        vm.expectRevert(ERC721MagicDropCloneable.NotEnoughValue.selector);
+        vm.expectRevert(ERC721MagicDropCloneable.RequiredValueNotMet.selector);
         token.mintPublic{value: 0.005 ether}(user, 1);
     }
 
@@ -150,7 +150,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
     function testMintPublicMaxSupplyExceededReverts() public {
         vm.warp(publicStart + 1);
-        vm.deal(user, 11 ether);
+        vm.deal(user, 5.005 ether);
 
         vm.prank(owner);
         // unlimited wallet limit for the purpose of this test
@@ -158,7 +158,18 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.prank(user);
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
-        token.mintPublic{value: 11 ether}(user, 1001);
+        token.mintPublic{value: 5.005 ether}(user, 1001);
+    }
+
+    function testMintPublicOverpayReverts() public {
+        vm.warp(publicStart + 1);
+
+        vm.deal(user, 1 ether);
+
+        // Attempt to mint with excess Ether
+        vm.prank(user);
+        vm.expectRevert(ERC721MagicDropCloneable.RequiredValueNotMet.selector);
+        token.mintPublic{value: 0.02 ether}(user, 1);
     }
 
     /*==============================================================
@@ -214,7 +225,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(allowedAddr, 0.001 ether);
         vm.prank(allowedAddr);
 
-        vm.expectRevert(ERC721MagicDropCloneable.NotEnoughValue.selector);
+        vm.expectRevert(ERC721MagicDropCloneable.RequiredValueNotMet.selector);
         token.mintAllowlist{value: 0.001 ether}(allowedAddr, 1, proof);
     }
 
@@ -243,11 +254,11 @@ contract ERC721MagicDropCloneableTest is Test {
         token.setWalletLimit(0);
 
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
-        vm.deal(allowedAddr, 11 ether);
+        vm.deal(allowedAddr, 5.005 ether);
 
         vm.prank(allowedAddr);
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
-        token.mintAllowlist{value: 11 ether}(allowedAddr, 1001, proof);
+        token.mintAllowlist{value: 5.005 ether}(allowedAddr, 1001, proof);
     }
 
     /*==============================================================
