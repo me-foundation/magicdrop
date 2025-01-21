@@ -11,24 +11,22 @@ import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
-import {MintStageInfo1155} from "../../common/Structs.sol";
+import {MintStageInfo1155, MintStageInfo} from "../../common/Structs.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {ERC1155MStorage} from "./ERC1155MStorage.sol";
-import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
-/// @title ERC1155MInitializableV1_0_0
+/// @title ERC1155MInitializableV1_0_1
 /// @notice An initializable ERC1155 contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC1155, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
-contract ERC1155MInitializableV1_0_0 is
+contract ERC1155MInitializableV1_0_1 is
     IERC1155M,
     ERC1155SupplyUpgradeable,
     Ownable,
     ReentrancyGuard,
     ERC1155MStorage,
     ERC2981,
-    Cosignable,
     AuthorizedMinterControl
 {
     /*==============================================================
@@ -62,7 +60,13 @@ contract ERC1155MInitializableV1_0_0 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC1155MInitializable", "1.0.0");
+        return ("ERC1155MInitializable", "1.0.1");
+    }
+
+    /// @notice Gets the contract URI
+    /// @return The contract URI
+    function contractURI() external view returns (string memory) {
+        return _contractURI;
     }
 
     /*==============================================================
@@ -88,17 +92,13 @@ contract ERC1155MInitializableV1_0_0 is
     /// @param qty The quantity to mint
     /// @param limit The minting limit for the caller (used in merkle proofs)
     /// @param proof The merkle proof for allowlist minting
-    /// @param timestamp The timestamp for the minting action (used in cosigning)
-    /// @param signature The cosigner's signature
-    function mint(
-        uint256 tokenId,
-        uint32 qty,
-        uint32 limit,
-        bytes32[] calldata proof,
-        uint256 timestamp,
-        bytes calldata signature
-    ) external payable virtual nonReentrant {
-        _mintInternal(msg.sender, tokenId, qty, limit, proof, timestamp, signature);
+    function mint(uint256 tokenId, uint32 qty, uint32 limit, bytes32[] calldata proof)
+        external
+        payable
+        virtual
+        nonReentrant
+    {
+        _mintInternal(msg.sender, tokenId, qty, limit, proof);
     }
 
     /// @notice Allows authorized minters to mint tokens for a specified address
@@ -112,7 +112,7 @@ contract ERC1155MInitializableV1_0_0 is
         payable
         onlyAuthorizedMinter
     {
-        _mintInternal(to, tokenId, qty, limit, proof, 0, bytes("0"));
+        _mintInternal(to, tokenId, qty, limit, proof);
     }
 
     /*==============================================================
@@ -160,14 +160,6 @@ contract ERC1155MInitializableV1_0_0 is
         return _mintCurrency;
     }
 
-    /// @notice Gets the cosign nonce for a specific minter and token ID
-    /// @param minter The address of the minter
-    /// @param tokenId The ID of the token
-    /// @return The cosign nonce
-    function getCosignNonce(address minter, uint256 tokenId) public view returns (uint256) {
-        return totalMintedByAddress(minter)[tokenId];
-    }
-
     /// @notice Gets the maximum mintable supply for a specific token ID
     /// @param tokenId The ID of the token
     /// @return The maximum mintable supply
@@ -194,6 +186,18 @@ contract ERC1155MInitializableV1_0_0 is
             }
         }
         return totalMinted;
+    }
+
+    /// @notice Checks if the contract is setup locked
+    /// @return Whether the contract is setup locked
+    function isSetupLocked() external view returns (bool) {
+        return _setupLocked;
+    }
+
+    /// @notice Checks if the contract is transferable
+    /// @return Whether the contract is transferable
+    function isTransferable() public view returns (bool) {
+        return _transferable;
     }
 
     /// @notice Checks if the contract supports a given interface
@@ -232,6 +236,10 @@ contract ERC1155MInitializableV1_0_0 is
         address royaltyReceiver,
         uint96 royaltyFeeNumerator
     ) external onlyOwner {
+        if (_setupLocked) {
+            revert ContractAlreadySetup();
+        }
+
         if (maxMintableSupply.length != globalWalletLimit.length) {
             revert InvalidLimitArgsLength();
         }
@@ -242,13 +250,13 @@ contract ERC1155MInitializableV1_0_0 is
             }
         }
 
+        _setupLocked = true;
         _numTokens = globalWalletLimit.length;
         _maxMintableSupply = maxMintableSupply;
         _globalWalletLimit = globalWalletLimit;
         _transferable = true;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
-        _setTimestampExpirySeconds(300); // 5 minutes
 
         _setURI(uri_);
 
@@ -258,9 +266,13 @@ contract ERC1155MInitializableV1_0_0 is
 
         if (royaltyReceiver != address(0)) {
             setDefaultRoyalty(royaltyReceiver, royaltyFeeNumerator);
+            _royaltyBps = royaltyFeeNumerator;
+            _royaltyRecipient = royaltyReceiver;
         }
     }
 
+    /// @notice Sets the minting stages
+    /// @param newStages An array of new minting stages
     function setStages(MintStageInfo1155[] calldata newStages) external onlyOwner {
         _setStages(newStages);
     }
@@ -272,10 +284,7 @@ contract ERC1155MInitializableV1_0_0 is
 
         for (uint256 i = 0; i < newStages.length; i++) {
             if (i >= 1) {
-                if (
-                    newStages[i].startTimeUnixSeconds
-                        < newStages[i - 1].endTimeUnixSeconds + getTimestampExpirySeconds()
-                ) {
+                if (newStages[i].startTimeUnixSeconds < newStages[i - 1].endTimeUnixSeconds + 1) {
                     revert InsufficientStageTimeGap();
                 }
             }
@@ -315,6 +324,8 @@ contract ERC1155MInitializableV1_0_0 is
     /// @notice Sets whether tokens are transferable
     /// @param transferable True if tokens should be transferable, false otherwise
     function setTransferable(bool transferable) external onlyOwner {
+        if (_transferable == transferable) revert TransferableAlreadySet();
+
         _transferable = transferable;
         emit SetTransferable(transferable);
     }
@@ -324,6 +335,8 @@ contract ERC1155MInitializableV1_0_0 is
     /// @param feeNumerator The royalty fee numerator
     function setDefaultRoyalty(address receiver, uint96 feeNumerator) public onlyOwner {
         super._setDefaultRoyalty(receiver, feeNumerator);
+        _royaltyBps = feeNumerator;
+        _royaltyRecipient = receiver;
         emit DefaultRoyaltySet(receiver, feeNumerator);
     }
 
@@ -419,16 +432,11 @@ contract ERC1155MInitializableV1_0_0 is
         _removeAuthorizedMinter(minter);
     }
 
-    /// @notice Sets the cosigner address
-    /// @param cosigner The new cosigner address
-    function setCosigner(address cosigner) external override onlyOwner {
-        _setCosigner(cosigner);
-    }
-
-    /// @notice Sets the expiry time for timestamps
-    /// @param timestampExpirySeconds The number of seconds after which a timestamp is considered expired
-    function setTimestampExpirySeconds(uint256 timestampExpirySeconds) external override onlyOwner {
-        _setTimestampExpirySeconds(timestampExpirySeconds);
+    /// @notice Sets the contract URI
+    /// @param contractUri The new contract URI
+    function setContractURI(string calldata contractUri) external onlyOwner {
+        _contractURI = contractUri;
+        emit ContractURIUpdated();
     }
 
     /*==============================================================
@@ -441,33 +449,18 @@ contract ERC1155MInitializableV1_0_0 is
     /// @param qty The quantity to mint
     /// @param limit The minting limit for the recipient (used in merkle proofs)
     /// @param proof The merkle proof for allowlist minting
-    /// @param timestamp The timestamp for the minting action (used in cosigning)
-    /// @param signature The cosigner's signature
-    function _mintInternal(
-        address to,
-        uint256 tokenId,
-        uint32 qty,
-        uint32 limit,
-        bytes32[] calldata proof,
-        uint256 timestamp,
-        bytes memory signature
-    ) internal hasSupply(tokenId, qty) {
+    function _mintInternal(address to, uint256 tokenId, uint32 qty, uint32 limit, bytes32[] calldata proof)
+        internal
+        hasSupply(tokenId, qty)
+    {
         uint256 stageTimestamp = block.timestamp;
-        bool waiveMintFee = false;
-
-        if (getCosigner() != address(0)) {
-            waiveMintFee = assertValidCosign(msg.sender, qty, timestamp, signature, getCosignNonce(msg.sender, tokenId));
-            _assertValidTimestamp(timestamp);
-            stageTimestamp = timestamp;
-        }
-
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
         MintStageInfo1155 memory stage = _mintStages[activeStage];
-        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee[tokenId];
+        uint80 mintFee = stage.mintFee[tokenId];
 
         // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + adjustedMintFee) * qty) {
+        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + mintFee) * qty) {
             revert NotEnoughValue();
         }
 
@@ -507,11 +500,11 @@ contract ERC1155MInitializableV1_0_0 is
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
             SafeTransferLib.safeTransferFrom(
-                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + adjustedMintFee) * qty
+                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + mintFee) * qty
             );
         }
 
-        _totalMintFee += adjustedMintFee * qty;
+        _totalMintFee += mintFee * qty;
         _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] += qty;
         _stageMintedCountsPerToken[activeStage][tokenId] += qty;
         _mint(to, tokenId, qty, "");
@@ -581,14 +574,12 @@ contract ERC1155MInitializableV1_0_0 is
         uint256[] memory amounts,
         bytes memory data
     ) internal virtual override {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-
-        bool fromZeroAddress = from == address(0);
-        bool toZeroAddress = to == address(0);
-
-        if (!fromZeroAddress && !toZeroAddress && !_transferable) {
+        // If the transfer is not from a mint or burn, revert if not transferable
+        if (from != address(0) && to != address(0) && !_transferable) {
             revert NotTransferable();
         }
+
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     /// @dev Overriden to prevent double-initialization of the owner.

@@ -18,14 +18,7 @@ interface IERC1155M is ERC1155MErrorsAndEvents {
         view
         returns (MintStageInfo1155 memory, uint256[] memory, uint256[] memory);
 
-    function mint(
-        uint256 tokenId,
-        uint32 qty,
-        uint32 limit,
-        bytes32[] calldata proof,
-        uint256 timestamp,
-        bytes calldata signature
-    ) external payable;
+    function mint(uint256 tokenId, uint32 qty, uint32 limit, bytes32[] calldata proof) external payable;
 
     function authorizedMint(address to, uint256 tokenId, uint32 qty, uint32 limit, bytes32[] calldata proof)
         external

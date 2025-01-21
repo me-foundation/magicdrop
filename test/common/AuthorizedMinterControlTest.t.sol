@@ -38,7 +38,7 @@ contract AuthorizedMinterControlTest is Test {
         assertFalse(authorizedMinterControl.isAuthorizedMinter(address(1)));
     }
 
-    function test_isAuthorizedMinter() public {
+    function test_isAuthorizedMinter() public view {
         assertFalse(authorizedMinterControl.isAuthorizedMinter(address(1)));
     }
 

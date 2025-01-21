@@ -4,39 +4,51 @@ pragma solidity ^0.8.22;
 import "../../common/Structs.sol";
 
 contract ERC721MStorage {
-    // Whether this contract is mintable.
+    // Controls if new tokens can be minted
     bool internal _mintable;
 
-    // The total mintable supply.
+    // Maximum number of tokens that can ever be minted
     uint256 internal _maxMintableSupply;
 
-    // Global wallet limit, across all stages.
+    // Maximum number of tokens a single wallet can mint across all stages
     uint256 internal _globalWalletLimit;
 
-    // Current base URI.
+    // Base URI for token metadata (e.g., "ipfs://QmYx...")
     string internal _currentBaseURI;
 
-    // The suffix for the token URL, e.g. ".json".
+    // File extension for token URIs (e.g., ".json")
     string internal _tokenURISuffix;
 
-    // Mint stage infomation. See MintStageInfo for details.
+    // Array of mint stages with pricing, limits, and timing configurations
     MintStageInfo[] internal _mintStages;
 
-    // Minted count per stage per wallet.
+    // Tracks number of tokens minted per wallet for each stage
     mapping(uint256 => mapping(address => uint32)) internal _stageMintedCountsPerWallet;
 
-    // Minted count per stage.
+    // Tracks total number of tokens minted in each stage
     mapping(uint256 => uint256) internal _stageMintedCounts;
 
-    // Address of ERC-20 token used to pay for minting. If 0 address, use native currency.
+    // ERC20 token address for mint payments (address(0) for native currency)
     address internal _mintCurrency;
 
-    // Total mint fee
+    // Accumulated fees from all mints
     uint256 internal _totalMintFee;
 
-    // Fund receiver
+    // Address that receives mint payments
     address internal _fundReceiver;
 
-    // The uri for the storefront-level metadata for better indexing. e.g. "ipfs://UyNGgv3jx2HHfBjQX9RnKtxj2xv2xQDtbVXoRi5rJ31234"
+    // Collection-level metadata URI for marketplaces
     string internal _contractURI;
+
+    // Controls if tokens can be transferred between addresses
+    bool internal _transferable;
+
+    // Prevents multiple initializations of contract settings
+    bool internal _setupLocked;
+
+    // Royalty receiver
+    address internal _royaltyRecipient;
+
+    // Royalty basis points
+    uint96 internal _royaltyBps;
 }

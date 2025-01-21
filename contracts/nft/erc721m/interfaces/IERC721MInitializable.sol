@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "erc721a-upgradeable/contracts/extensions/IERC721AQueryableUpgradeable.sol";
+import "erc721a/contracts/extensions/IERC721AQueryable.sol";
 import "../../../common/Structs.sol";
 import {ERC721MErrorsAndEvents} from "../ERC721MErrorsAndEvents.sol";
 
@@ -10,7 +10,7 @@ import {ERC721MErrorsAndEvents} from "../ERC721MErrorsAndEvents.sol";
  * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
  * contract is for use with EIP-1167 Minimal Proxies (Clones).
  */
-interface IERC721MInitializable is IERC721AQueryableUpgradeable, ERC721MErrorsAndEvents {
+interface IERC721MInitializable is IERC721AQueryable, ERC721MErrorsAndEvents {
     function getNumberStages() external view returns (uint256);
 
     function getGlobalWalletLimit() external view returns (uint256);

@@ -24,8 +24,11 @@ interface ErrorsAndEvents {
     error NewSupplyLessThanTotalSupply();
     error NotTransferable();
     error InitialOwnerCannotBeZero();
+    error ContractAlreadySetup();
+    error TransferableAlreadySet();
 
     event SetMintable(bool mintable);
+    event SetTransferable(bool transferable);
     event SetActiveStage(uint256 activeStage);
     event SetBaseURI(string baseURI);
     event SetTokenURISuffix(string suffix);
@@ -34,4 +37,5 @@ interface ErrorsAndEvents {
     event WithdrawERC20(address mintCurrency, uint256 value);
     event DefaultRoyaltySet(address indexed receiver, uint96 feeNumerator);
     event TokenRoyaltySet(uint256 indexed tokenId, address indexed receiver, uint96 feeNumerator);
+    event ContractURIUpdated();
 }

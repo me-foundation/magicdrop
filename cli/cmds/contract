@@ -128,19 +128,8 @@ freeze_thaw_contract() {
 
     set_chain
     set_contract_address
-    set_token_standard
     
     print_signer_with_balance $chain_id
-
-    if [ -z "$is_icreatortoken" ]; then
-        supports_icreatortoken
-        is_icreatortoken=$?
-    fi
-
-    if [ -z "$tf_address" ] && [ $is_icreatortoken -eq 0 ]; then
-        tf_address=$(get_transfer_validator_address $chain_id)
-    fi
-
 
     choice=$(gum choose "Freeze" "Thaw")
     if [ "$choice" == "Freeze" ]; then
@@ -153,38 +142,29 @@ freeze_thaw_contract() {
 freeze_contract() {
     echo "Freezing contract... this will take a moment."
 
-    if [ "$token_standard" == "ERC1155" ]; then
-        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
-    elif [ "$token_standard" == "ERC721" ] && [ $is_icreatortoken -eq 0 ]; then
-        freeze_level=8 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
-        output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 8 false false false $password --rpc-url "$RPC_URL" --json)
-    else
-        echo "Contract does not support freezing."
-        exit 1
-    fi
+    output=$(cast send $contract_address "setTransferable(bool)" false $password --rpc-url "$RPC_URL" --json)
 
     print_transaction_hash $output
-    echo "Contract frozen."
+    echo "Token transfers frozen."
     echo ""
 }
 
 thaw_contract() {
     echo "Thawing contract... this will take a moment."
 
-    if [ "$token_standard" == "ERC1155" ]; then
-        output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
-    elif [ "$token_standard" == "ERC721" ] && [ $is_icreatortoken -eq 0 ]; then
-        # level 3 is the default level of Magic Eden, which offers whitelisting and OTC trading
-        thaw_level=3 # https://erc721c.com/docs/integration-guide/creator-token-standards/v3/for-creators/transfer-security
-        output=$(cast send $tf_address "setTransferSecurityLevelOfCollection(address,uint8,bool,bool,bool)" $contract_address 3 false false false $password --rpc-url "$RPC_URL" --json)
-    else
-        echo "Contract does not support thawing."
-        exit 1
-    fi
+    output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
 
     print_transaction_hash $output
-    echo "Contract thawed."
+    echo "Token transfers thawed."
     echo ""
+}
+
+check_setup_locked() {
+    setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password)
+    if [ "$setup_locked" == "$TRUE_HEX" ]; then
+        echo "This contract has already been setup. Please use other commands from the 'Manage Contracts' menu to update the contract."
+        exit 1
+    fi
 }
 
 setup_contract() {
@@ -192,6 +172,8 @@ setup_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
 
     title="Setup an existing collection"
+
+    check_setup_locked
 
     set_chain
     set_contract_address
@@ -201,7 +183,11 @@ setup_contract() {
     if [ "$token_standard" == "ERC1155" ]; then
         set_number_of_1155_tokens
         set_1155_uri
-    else
+        token_uri_suffix=
+        base_uri=
+    elif [ "$token_standard" == "ERC721" ]; then
+        set_base_uri
+        set_token_uri_suffix
         uri=
     fi
 
@@ -226,7 +212,7 @@ setup_contract() {
     if [ "$token_standard" == "ERC1155" ]; then
         setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
     elif [ "$token_standard" == "ERC721" ]; then
-        setup_selector="setup(uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+        setup_selector="setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
     else
         echo "Unknown token standard"
         exit 1
@@ -237,6 +223,8 @@ setup_contract() {
     output=$(cast send $contract_address \
         "$setup_selector" \
         $uri \
+        $base_uri \
+        $token_uri_suffix \
         "$max_mintable_supply" \
         "$global_wallet_limit" \
         "$mint_currency" \

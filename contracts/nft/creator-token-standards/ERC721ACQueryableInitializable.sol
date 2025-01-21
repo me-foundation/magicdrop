@@ -2,25 +2,23 @@
 pragma solidity ^0.8.22;
 
 import "@limitbreak/creator-token-standards/src/utils/CreatorTokenBase.sol";
-import "erc721a-upgradeable/contracts/extensions/ERC721AQueryableUpgradeable.sol";
 import "@limitbreak/creator-token-standards/src/utils/AutomaticValidatorTransferApproval.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-/**
- * @title ERC721ACQueryableInitializable
- * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
- * contract is for use with EIP-1167 Minimal Proxies (Clones).
- */
+import {ERC721A, IERC721A} from "erc721a/contracts/ERC721A.sol";
+
+import "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
+
+/// @title ERC721ACQueryableInitializable
+/// @notice An ERC721AC extension with queryable and initialization features.
+/// @dev The purpose of this contract is for use with EIP-1167 Minimal Proxies (Clones).
 abstract contract ERC721ACQueryableInitializable is
-    ERC721AQueryableUpgradeable,
+    ERC721AConduitPreapprovedCloneable,
     CreatorTokenBase,
-    AutomaticValidatorTransferApproval,
-    Initializable
+    AutomaticValidatorTransferApproval
 {
     /// @notice Initializes the contract with the given name and symbol.
     function __ERC721ACQueryableInitializable_init(string memory name_, string memory symbol_) public {
-        __ERC721A_init_unchained(name_, symbol_);
-        __ERC721AQueryable_init_unchained();
+        __ERC721ACloneable__init(name_, symbol_);
 
         _emitDefaultTransferValidator();
         _registerTokenType(getTransferValidator());
@@ -31,7 +29,7 @@ abstract contract ERC721ACQueryableInitializable is
         public
         view
         virtual
-        override(ERC721AUpgradeable, IERC721AUpgradeable)
+        override(ERC721ACloneable, IERC721A)
         returns (bool)
     {
         return interfaceId == type(ICreatorToken).interfaceId || interfaceId == type(ICreatorTokenLegacy).interfaceId
@@ -47,13 +45,7 @@ abstract contract ERC721ACQueryableInitializable is
 
     /// @notice Overrides behavior of isApprovedFor all such that if an operator is not explicitly approved
     /// @notice for all, the contract owner can optionally auto-approve the 721-C transfer validator for transfers.
-    function isApprovedForAll(address owner, address operator)
-        public
-        view
-        virtual
-        override(ERC721AUpgradeable, IERC721AUpgradeable)
-        returns (bool isApproved)
-    {
+    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool isApproved) {
         isApproved = super.isApprovedForAll(owner, operator);
 
         if (!isApproved) {
@@ -89,6 +81,10 @@ abstract contract ERC721ACQueryableInitializable is
                 ++i;
             }
         }
+    }
+
+    function totalMinted() public view returns (uint256) {
+        return _totalMinted();
     }
 
     function _msgSenderERC721A() internal view virtual override returns (address) {
