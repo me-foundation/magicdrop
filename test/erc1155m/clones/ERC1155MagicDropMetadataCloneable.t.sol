@@ -244,4 +244,31 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
         // Some random interface
         assertFalse(token.supportsInterface(0x12345678));
     }
+
+    /*==============================================================
+    =                    TOTAL MINTED BY USER                      =
+    ==============================================================*/
+
+    function testTotalMintedByUser() public {
+        vm.startPrank(owner);
+        assertEq(token.totalMintedByUser(user, TOKEN_ID), 0);
+        token.mintForTest(user, TOKEN_ID, 10);
+        assertEq(token.totalMintedByUser(user, TOKEN_ID), 10);
+        vm.stopPrank();
+    }
+
+    function testTotalMintedByUserTransferWontChangeTotalMintedByUser() public {
+        vm.startPrank(owner);
+        token.mintForTest(user, TOKEN_ID, 10);
+        vm.stopPrank();
+
+        vm.prank(user);
+        token.setApprovalForAll(address(this), true);
+        token.safeTransferFrom(user, address(0xBEEF), TOKEN_ID, 10, "");
+        // user still has 10 tokens minted
+        assertEq(token.totalMintedByUser(user, TOKEN_ID), 10);
+        // address(0xBEEF) has 0 tokens minted
+        assertEq(token.totalMintedByUser(address(0xBEEF), TOKEN_ID), 0);
+        vm.stopPrank();
+    }
 }

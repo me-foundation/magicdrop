@@ -98,6 +98,13 @@ contract ERC721MagicDropMetadataCloneable is
         return _royaltyBps;
     }
 
+    /// @notice Returns the total number of tokens minted by a specific address.
+    /// @param owner The address to query.
+    /// @return The total number of tokens minted by the specified address.
+    function totalMintedByUser(address owner) public view returns (uint256) {
+        return _numberMinted(owner);
+    }
+
     /// @notice Indicates whether this contract implements a given interface.
     /// @dev Supports ERC-2981 (royalties) and ERC-4906 (batch metadata updates), in addition to inherited interfaces.
     /// @param interfaceId The interface ID to check for compliance.
