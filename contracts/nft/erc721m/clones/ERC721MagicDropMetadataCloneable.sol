@@ -99,10 +99,10 @@ contract ERC721MagicDropMetadataCloneable is
     }
 
     /// @notice Returns the total number of tokens minted by a specific address.
-    /// @param owner The address to query.
+    /// @param user The address to query.
     /// @return The total number of tokens minted by the specified address.
-    function totalMintedByUser(address owner) public view returns (uint256) {
-        return _numberMinted(owner);
+    function totalMintedByUser(address user) public view returns (uint256) {
+        return _numberMinted(user);
     }
 
     /// @notice Indicates whether this contract implements a given interface.
