@@ -253,4 +253,32 @@ contract ERC721MagicDropMetadataCloneableTest is Test {
         vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeGreaterThan2ToThe64thPower.selector);
         token.setMaxSupply(2 ** 64);
     }
+
+    /*==============================================================
+    =                    TOTAL MINTED BY USER                      =
+    ==============================================================*/
+
+    function testTotalMintedByUser() public {
+        vm.startPrank(owner);
+        assertEq(token.totalMintedByUser(user), 0);
+        token.mintForTest(user, 3);
+        assertEq(token.totalMintedByUser(user), 3);
+        vm.stopPrank();
+    }
+
+    function testTotalMintedByUserTransferWontChangeTotalMintedByUser() public {
+        vm.startPrank(owner);
+        token.mintForTest(user, 3);
+        vm.stopPrank();
+
+        vm.prank(user);
+        token.setApprovalForAll(address(this), true);
+        // transfer token id 0
+        token.safeTransferFrom(user, address(0xBEEF), 0);
+        // user still has 3 tokens minted
+        assertEq(token.totalMintedByUser(user), 3);
+        // address(0xBEEF) has 0 tokens minted
+        assertEq(token.totalMintedByUser(address(0xBEEF)), 0);
+        vm.stopPrank();
+    }
 }

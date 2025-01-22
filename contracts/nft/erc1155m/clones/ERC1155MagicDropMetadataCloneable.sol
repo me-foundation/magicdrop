@@ -123,6 +123,14 @@ contract ERC1155MagicDropMetadataCloneable is
         return _tokenSupply[tokenId].totalMinted;
     }
 
+    /// @notice Return the total number of tokens minted by a specific address for a specific token.
+    /// @param user The address to query.
+    /// @param tokenId The ID of the token.
+    /// @return The total number of tokens minted by the specified address for the specified token.
+    function totalMintedByUser(address user, uint256 tokenId) public view returns (uint256) {
+        return _totalMintedByUserPerToken[user][tokenId];
+    }
+
     /// @notice Return the maximum number of tokens any single wallet can mint for a specific token.
     /// @param tokenId The ID of the token.
     /// @return The minting limit per wallet.
