@@ -2,7 +2,7 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC1155} from "solady/src/tokens/ERC1155.sol";
+import {ERC1155} from "solady/src/tokens/ext/zksync/ERC1155.sol";
 
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
@@ -13,19 +13,32 @@ import {IERC1155MagicDropMetadata} from "contracts/nft/erc1155m/interfaces/IERC1
 import {ERC1155MagicDropMetadataCloneable} from "contracts/nft/erc1155m/clones/ERC1155MagicDropMetadataCloneable.sol";
 
 interface IERC2981 {
-    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256);
+    function royaltyInfo(
+        uint256 tokenId,
+        uint256 salePrice
+    ) external view returns (address, uint256);
 }
 
 /// @dev A testable contract that exposes a mint function for testing scenarios that depend on having minted tokens.
-contract TestableERC1155MagicDropMetadataCloneable is ERC1155MagicDropMetadataCloneable {
+contract TestableERC1155MagicDropMetadataCloneable is
+    ERC1155MagicDropMetadataCloneable
+{
     bool private _initialized;
 
-    function initialize(string memory name_, string memory symbol_, address owner_) external initializer {
+    function initialize(
+        string memory name_,
+        string memory symbol_,
+        address owner_
+    ) external initializer {
         __ERC1155MagicDropMetadataCloneable__init(name_, symbol_, owner_);
         _initialized = true;
     }
 
-    function mintForTest(address to, uint256 tokenId, uint256 quantity) external onlyOwner {
+    function mintForTest(
+        address to,
+        uint256 tokenId,
+        uint256 quantity
+    ) external onlyOwner {
         _totalMintedByUserPerToken[to][tokenId] += quantity;
         _tokenSupply[tokenId].totalMinted += uint64(quantity);
         _tokenSupply[tokenId].totalSupply += uint64(quantity);
@@ -46,7 +59,9 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
 
     function setUp() public {
         token = TestableERC1155MagicDropMetadataCloneable(
-            LibClone.deployERC1967(address(new TestableERC1155MagicDropMetadataCloneable()))
+            LibClone.deployERC1967(
+                address(new TestableERC1155MagicDropMetadataCloneable())
+            )
         );
         token.initialize("Test Collection", "TST", owner);
     }
@@ -133,7 +148,9 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
         vm.startPrank(owner);
         token.mintForTest(user, TOKEN_ID, 10);
         // Currently minted = 10
-        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeLessThanCurrentSupply.selector);
+        vm.expectRevert(
+            IMagicDropMetadata.MaxSupplyCannotBeLessThanCurrentSupply.selector
+        );
         token.setMaxSupply(TOKEN_ID, 5);
 
         // Setting exactly to 10 should pass if we first set initial max supply
@@ -195,7 +212,8 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
         assertEq(token.royaltyBps(), 500);
 
         // Check ERC2981 royaltyInfo
-        (address receiver, uint256 amount) = IERC2981(address(token)).royaltyInfo(TOKEN_ID, 10_000);
+        (address receiver, uint256 amount) = IERC2981(address(token))
+            .royaltyInfo(TOKEN_ID, 10_000);
         assertEq(receiver, royaltyReceiver);
         assertEq(amount, 500); // 5% of 10000 = 500
         vm.stopPrank();
@@ -225,7 +243,11 @@ contract ERC1155MagicDropMetadataCloneableTest is Test {
 
     function testMaxSupplyCannotBeGreaterThan2ToThe64thPower() public {
         vm.startPrank(owner);
-        vm.expectRevert(IMagicDropMetadata.MaxSupplyCannotBeGreaterThan2ToThe64thPower.selector);
+        vm.expectRevert(
+            IMagicDropMetadata
+                .MaxSupplyCannotBeGreaterThan2ToThe64thPower
+                .selector
+        );
         token.setMaxSupply(TOKEN_ID, 2 ** 64);
         vm.stopPrank();
     }

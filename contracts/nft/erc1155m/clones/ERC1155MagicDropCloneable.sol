@@ -69,7 +69,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @dev The address that receives protocol fees on withdrawal.
     /// @notice This is fixed and cannot be changed.
-    address public constant PROTOCOL_FEE_RECIPIENT = 0xA3833016a4eC61f5c253D71c77522cC8A1cC1106;
+    address public constant PROTOCOL_FEE_RECIPIENT =
+        0xA3833016a4eC61f5c253D71c77522cC8A1cC1106;
 
     /// @dev The protocol fee expressed in basis points (e.g., 500 = 5%).
     /// @notice This fee is taken from the contract's entire balance upon withdrawal.
@@ -140,7 +141,11 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param _name The ERC-1155 name of the collection.
     /// @param _symbol The ERC-1155 symbol of the collection.
     /// @param _owner The address designated as the initial owner of the contract.
-    function initialize(string memory _name, string memory _symbol, address _owner) public initializer {
+    function initialize(
+        string memory _name,
+        string memory _symbol,
+        address _owner
+    ) public initializer {
         __ERC1155MagicDropMetadataCloneable__init(_name, _symbol, _owner);
     }
 
@@ -154,9 +159,16 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param to The recipient address for the minted tokens.
     /// @param tokenId The ID of the token to mint.
     /// @param qty The number of tokens to mint.
-    function mintPublic(address to, uint256 tokenId, uint256 qty, bytes memory data) external payable {
+    function mintPublic(
+        address to,
+        uint256 tokenId,
+        uint256 qty,
+        bytes memory data
+    ) external payable {
         PublicStage memory stage = _publicStages[tokenId];
-        if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
+        if (
+            block.timestamp < stage.startTime || block.timestamp > stage.endTime
+        ) {
             revert PublicStageNotActive();
         }
 
@@ -165,7 +177,11 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             revert RequiredValueNotMet();
         }
 
-        if (_walletLimit[tokenId] > 0 && _totalMintedByUserPerToken[to][tokenId] + qty > _walletLimit[tokenId]) {
+        if (
+            _walletLimit[tokenId] > 0 &&
+            _totalMintedByUserPerToken[to][tokenId] + qty >
+            _walletLimit[tokenId]
+        ) {
             revert WalletLimitExceeded(tokenId);
         }
 
@@ -187,16 +203,27 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param tokenId The ID of the token to mint.
     /// @param qty The number of tokens to mint.
     /// @param proof The Merkle proof verifying `to` is eligible for the allowlist.
-    function mintAllowlist(address to, uint256 tokenId, uint256 qty, bytes32[] calldata proof, bytes memory data)
-        external
-        payable
-    {
+    function mintAllowlist(
+        address to,
+        uint256 tokenId,
+        uint256 qty,
+        bytes32[] calldata proof,
+        bytes memory data
+    ) external payable {
         AllowlistStage memory stage = _allowlistStages[tokenId];
-        if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
+        if (
+            block.timestamp < stage.startTime || block.timestamp > stage.endTime
+        ) {
             revert AllowlistStageNotActive();
         }
 
-        if (!MerkleProofLib.verify(proof, stage.merkleRoot, keccak256(bytes.concat(keccak256(abi.encode(to)))))) {
+        if (
+            !MerkleProofLib.verify(
+                proof,
+                stage.merkleRoot,
+                keccak256(bytes.concat(keccak256(abi.encode(to))))
+            )
+        ) {
             revert InvalidProof();
         }
 
@@ -205,7 +232,11 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             revert RequiredValueNotMet();
         }
 
-        if (_walletLimit[tokenId] > 0 && _totalMintedByUserPerToken[to][tokenId] + qty > _walletLimit[tokenId]) {
+        if (
+            _walletLimit[tokenId] > 0 &&
+            _totalMintedByUserPerToken[to][tokenId] + qty >
+            _walletLimit[tokenId]
+        ) {
             revert WalletLimitExceeded(tokenId);
         }
 
@@ -234,9 +265,13 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param from The address from which the tokens will be burned.
     /// @param ids An array of token IDs to burn.
     /// @param qty An array of quantities corresponding to each token ID to burn.
-    function batchBurn(address from, uint256[] calldata ids, uint256[] calldata qty) external {
+    function batchBurn(
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata qty
+    ) external {
         uint256 length = ids.length;
-        for (uint256 i = 0; i < length;) {
+        for (uint256 i = 0; i < length; ) {
             _reduceSupplyOnBurn(ids[i], qty[i]);
             unchecked {
                 ++i;
@@ -252,7 +287,9 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @notice Returns the current configuration of the contract.
     /// @return The current configuration of the contract.
-    function getConfig(uint256 tokenId) external view returns (SetupConfig memory) {
+    function getConfig(
+        uint256 tokenId
+    ) external view returns (SetupConfig memory) {
         SetupConfig memory newConfig = SetupConfig({
             tokenId: tokenId,
             maxSupply: _tokenSupply[tokenId].maxSupply,
@@ -271,13 +308,17 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @notice Returns the current public stage configuration (startTime, endTime, price).
     /// @return The current public stage settings.
-    function getPublicStage(uint256 tokenId) external view returns (PublicStage memory) {
+    function getPublicStage(
+        uint256 tokenId
+    ) external view returns (PublicStage memory) {
         return _publicStages[tokenId];
     }
 
     /// @notice Returns the current allowlist stage configuration (startTime, endTime, price, merkleRoot).
     /// @return The current allowlist stage settings.
-    function getAllowlistStage(uint256 tokenId) external view returns (AllowlistStage memory) {
+    function getAllowlistStage(
+        uint256 tokenId
+    ) external view returns (AllowlistStage memory) {
         return _allowlistStages[tokenId];
     }
 
@@ -290,14 +331,18 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @notice Indicates whether the contract implements a given interface.
     /// @param interfaceId The interface ID to check for support.
     /// @return True if the interface is supported, false otherwise.
-    function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(
+        bytes4 interfaceId
+    )
         public
         view
         virtual
         override(ERC1155MagicDropMetadataCloneable)
         returns (bool)
     {
-        return interfaceId == type(IERC1155MagicDropMetadata).interfaceId || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IERC1155MagicDropMetadata).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /*==============================================================
@@ -324,11 +369,16 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             _setContractURI(config.contractURI);
         }
 
-        if (config.allowlistStage.startTime != 0 || config.allowlistStage.endTime != 0) {
+        if (
+            config.allowlistStage.startTime != 0 ||
+            config.allowlistStage.endTime != 0
+        ) {
             _setAllowlistStage(config.tokenId, config.allowlistStage);
         }
 
-        if (config.publicStage.startTime != 0 || config.publicStage.endTime != 0) {
+        if (
+            config.publicStage.startTime != 0 || config.publicStage.endTime != 0
+        ) {
             _setPublicStage(config.tokenId, config.publicStage);
         }
 
@@ -344,14 +394,20 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @notice Sets the configuration of the public mint stage.
     /// @dev Only callable by the owner. Ensures the public stage does not overlap improperly with the allowlist stage.
     /// @param stage A struct defining the public stage timing and price.
-    function setPublicStage(uint256 tokenId, PublicStage calldata stage) external onlyOwner {
+    function setPublicStage(
+        uint256 tokenId,
+        PublicStage calldata stage
+    ) external onlyOwner {
         _setPublicStage(tokenId, stage);
     }
 
     /// @notice Sets the configuration of the allowlist mint stage.
     /// @dev Only callable by the owner. Ensures the allowlist stage does not overlap improperly with the public stage.
     /// @param stage A struct defining the allowlist stage timing, price, and merkle root.
-    function setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) external onlyOwner {
+    function setAllowlistStage(
+        uint256 tokenId,
+        AllowlistStage calldata stage
+    ) external onlyOwner {
         _setAllowlistStage(tokenId, stage);
     }
 
@@ -369,13 +425,19 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @notice Internal function to set the public mint stage configuration.
     /// @dev Reverts if timing is invalid or conflicts with the allowlist stage.
     /// @param stage A struct defining public stage timings and price.
-    function _setPublicStage(uint256 tokenId, PublicStage calldata stage) internal {
+    function _setPublicStage(
+        uint256 tokenId,
+        PublicStage calldata stage
+    ) internal {
         if (stage.startTime >= stage.endTime) {
             revert InvalidStageTime();
         }
 
         // Ensure the public stage starts after the allowlist stage ends
-        if (_allowlistStages[tokenId].startTime != 0 && _allowlistStages[tokenId].endTime != 0) {
+        if (
+            _allowlistStages[tokenId].startTime != 0 &&
+            _allowlistStages[tokenId].endTime != 0
+        ) {
             if (stage.startTime <= _allowlistStages[tokenId].endTime) {
                 revert InvalidPublicStageTime();
             }
@@ -389,13 +451,19 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @dev Reverts if timing is invalid or conflicts with the public stage.
     /// @param tokenId The ID of the token to set the allowlist stage for.
     /// @param stage A struct defining allowlist stage timings, price, and merkle root.
-    function _setAllowlistStage(uint256 tokenId, AllowlistStage calldata stage) internal {
+    function _setAllowlistStage(
+        uint256 tokenId,
+        AllowlistStage calldata stage
+    ) internal {
         if (stage.startTime >= stage.endTime) {
             revert InvalidStageTime();
         }
 
         // Ensure the public stage starts after the allowlist stage ends
-        if (_publicStages[tokenId].startTime != 0 && _publicStages[tokenId].endTime != 0) {
+        if (
+            _publicStages[tokenId].startTime != 0 &&
+            _publicStages[tokenId].endTime != 0
+        ) {
             if (stage.endTime >= _publicStages[tokenId].startTime) {
                 revert InvalidAllowlistStageTime();
             }
@@ -421,12 +489,16 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         }
 
         if (PROTOCOL_FEE_BPS > 0) {
-            uint256 protocolFee = (msg.value * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
+            uint256 protocolFee = (msg.value * PROTOCOL_FEE_BPS) /
+                BPS_DENOMINATOR;
             uint256 remainingBalance;
             unchecked {
                 remainingBalance = msg.value - protocolFee;
             }
-            SafeTransferLib.safeTransferETH(PROTOCOL_FEE_RECIPIENT, protocolFee);
+            SafeTransferLib.safeTransferETH(
+                PROTOCOL_FEE_RECIPIENT,
+                protocolFee
+            );
             SafeTransferLib.safeTransferETH(_payoutRecipient, remainingBalance);
         } else {
             SafeTransferLib.safeTransferETH(_payoutRecipient, msg.value);
@@ -455,7 +527,11 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param tokenId The ID of the token being minted.
     /// @param qty The quantity of tokens to mint.
     /// @custom:reverts {CannotExceedMaxSupply} If the minting would exceed the maximum supply for the `tokenId`.
-    function _increaseSupplyOnMint(address to, uint256 tokenId, uint256 qty) internal {
+    function _increaseSupplyOnMint(
+        address to,
+        uint256 tokenId,
+        uint256 qty
+    ) internal {
         TokenSupply storage supply = _tokenSupply[tokenId];
 
         if (supply.totalMinted + qty > supply.maxSupply) {
@@ -476,7 +552,11 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @notice Returns the contract name and version.
     /// @dev Useful for external tools or metadata standards.
     /// @return The contract name and version strings.
-    function contractNameAndVersion() public pure returns (string memory, string memory) {
+    function contractNameAndVersion()
+        public
+        pure
+        returns (string memory, string memory)
+    {
         return ("ERC1155MagicDropCloneable", "1.0.0");
     }
 
@@ -486,7 +566,13 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @dev Overridden to allow this contract to properly manage owner initialization.
     ///      By always returning true, we ensure that the inherited initializer does not re-run.
-    function _guardInitializeOwner() internal pure virtual override returns (bool) {
+    function _guardInitializeOwner()
+        internal
+        pure
+        virtual
+        override
+        returns (bool)
+    {
         return true;
     }
 }

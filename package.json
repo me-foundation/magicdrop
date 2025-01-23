@@ -40,7 +40,7 @@
     "erc721a": "^4.2.3",
     "erc721a-upgradeable": "^4.3.0",
     "operator-filter-registry": "^1.4.2",
-    "solady": "^0.0.249"
+    "solady": "^0.0.298"
   },
   "peerDependencies": {
     "ethers": "^5.0.0"
