@@ -44,8 +44,7 @@ contract ERC1155MagicDropMetadataCloneable is
     mapping(uint256 => uint256) internal _walletLimit;
 
     /// @dev The total number of tokens minted by each user per token.
-    mapping(address => mapping(uint256 => uint256))
-        internal _totalMintedByUserPerToken;
+    mapping(address => mapping(uint256 => uint256)) internal _totalMintedByUserPerToken;
 
     /*==============================================================
     =                          INITIALIZERS                        =
@@ -56,11 +55,10 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @param name_ The ERC-1155 name of the collection.
     /// @param symbol_ The ERC-1155 symbol of the collection.
     /// @param owner_ The address designated as the initial owner of the contract.
-    function __ERC1155MagicDropMetadataCloneable__init(
-        string memory name_,
-        string memory symbol_,
-        address owner_
-    ) internal onlyInitializing {
+    function __ERC1155MagicDropMetadataCloneable__init(string memory name_, string memory symbol_, address owner_)
+        internal
+        onlyInitializing
+    {
         _name = name_;
         _symbol = symbol_;
         _initializeOwner(owner_);
@@ -129,10 +127,7 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @param user The address to query.
     /// @param tokenId The ID of the token.
     /// @return The total number of tokens minted by the specified address for the specified token.
-    function totalMintedByUser(
-        address user,
-        uint256 tokenId
-    ) public view returns (uint256) {
+    function totalMintedByUser(address user, uint256 tokenId) public view returns (uint256) {
         return _totalMintedByUserPerToken[user][tokenId];
     }
 
@@ -147,22 +142,16 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @dev Supports ERC-2981 (royalties) and ERC-4906 (batch metadata updates), in addition to inherited interfaces.
     /// @param interfaceId The interface ID to check for compliance.
     /// @return True if the contract implements the specified interface, otherwise false.
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(ERC1155, ERC2981) returns (bool) {
-        return
-            interfaceId == 0x2a55205a || // ERC-2981 royalties
-            interfaceId == 0x49064906 || // ERC-4906 metadata updates
-            interfaceId == type(IERC1155MagicDropMetadata).interfaceId ||
-            ERC1155.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, ERC2981) returns (bool) {
+        return interfaceId == 0x2a55205a // ERC-2981 royalties
+            || interfaceId == 0x49064906 // ERC-4906 metadata updates
+            || interfaceId == type(IERC1155MagicDropMetadata).interfaceId || ERC1155.supportsInterface(interfaceId);
     }
 
     /// @notice Returns the URI for a given token ID.
     /// @dev This returns the base URI for all tokens.
     /// @return The URI for the token.
-    function uri(
-        uint256 /* tokenId */
-    ) public view override returns (string memory) {
+    function uri(uint256 /* tokenId */ ) public view override returns (string memory) {
         return _baseURI;
     }
 
@@ -173,18 +162,14 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @notice Sets a new base URI for token metadata, affecting all tokens.
     /// @dev Emits a batch metadata update event if there are already minted tokens.
     /// @param newBaseURI The new base URI.
-    function setBaseURI(
-        string calldata newBaseURI
-    ) external override onlyOwner {
+    function setBaseURI(string calldata newBaseURI) external override onlyOwner {
         _setBaseURI(newBaseURI);
     }
 
     /// @notice Updates the contract-level metadata URI.
     /// @dev Useful for marketplaces to display project details.
     /// @param newContractURI The new contract metadata URI.
-    function setContractURI(
-        string calldata newContractURI
-    ) external override onlyOwner {
+    function setContractURI(string calldata newContractURI) external override onlyOwner {
         _setContractURI(newContractURI);
     }
 
@@ -192,10 +177,7 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @dev Cannot increase beyond the original max supply. Cannot set below the current minted amount.
     /// @param tokenId The ID of the token to update.
     /// @param newMaxSupply The new maximum supply.
-    function setMaxSupply(
-        uint256 tokenId,
-        uint256 newMaxSupply
-    ) external onlyOwner {
+    function setMaxSupply(uint256 tokenId, uint256 newMaxSupply) external onlyOwner {
         _setMaxSupply(tokenId, newMaxSupply);
     }
 
@@ -203,10 +185,7 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @dev This can be changed at any time to adjust distribution constraints.
     /// @param tokenId The ID of the token.
     /// @param newWalletLimit The new per-wallet limit on minted tokens.
-    function setWalletLimit(
-        uint256 tokenId,
-        uint256 newWalletLimit
-    ) external onlyOwner {
+    function setWalletLimit(uint256 tokenId, uint256 newWalletLimit) external onlyOwner {
         _setWalletLimit(tokenId, newWalletLimit);
     }
 
@@ -214,10 +193,7 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @dev Sets a new receiver and basis points for royalties. Basis points define the percentage rate.
     /// @param newReceiver The address to receive royalties.
     /// @param newBps The royalty rate in basis points (e.g., 100 = 1%).
-    function setRoyaltyInfo(
-        address newReceiver,
-        uint96 newBps
-    ) external onlyOwner {
+    function setRoyaltyInfo(address newReceiver, uint96 newBps) external onlyOwner {
         _setRoyaltyInfo(newReceiver, newBps);
     }
 
@@ -225,10 +201,7 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @dev Useful for updating external indexes after significant metadata alterations.
     /// @param fromTokenId The starting token ID in the updated range.
     /// @param toTokenId   The ending token ID in the updated range.
-    function emitBatchMetadataUpdate(
-        uint256 fromTokenId,
-        uint256 toTokenId
-    ) external onlyOwner {
+    function emitBatchMetadataUpdate(uint256 fromTokenId, uint256 toTokenId) external onlyOwner {
         emit BatchMetadataUpdate(fromTokenId, toTokenId);
     }
 

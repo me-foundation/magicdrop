@@ -7,8 +7,7 @@ import {ERC1155} from "solady/src/tokens/ext/zksync/ERC1155.sol";
 /// @notice ERC1155 token with the MagicEden conduit preapproved for seamless transactions.
 abstract contract ERC1155ConduitPreapprovedCloneable is ERC1155 {
     /// @dev The canonical MagicEden conduit address.
-    address internal constant _CONDUIT =
-        0x2052f8A2Ff46283B30084e5d84c89A2fdBE7f74b;
+    address internal constant _CONDUIT = 0x2052f8A2Ff46283B30084e5d84c89A2fdBE7f74b;
 
     /// @notice Safely transfers `amount` tokens of type `id` from `from` to `to`.
     /// @param from The address holding the tokens.
@@ -16,13 +15,11 @@ abstract contract ERC1155ConduitPreapprovedCloneable is ERC1155 {
     /// @param id The token type identifier.
     /// @param amount The number of tokens to transfer.
     /// @param data Additional data with no specified format.
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 id,
-        uint256 amount,
-        bytes calldata data
-    ) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes calldata data)
+        public
+        virtual
+        override
+    {
         _safeTransfer(_by(), from, to, id, amount, data);
     }
 
@@ -46,10 +43,7 @@ abstract contract ERC1155ConduitPreapprovedCloneable is ERC1155 {
     /// @param owner The address owning the tokens.
     /// @param operator The address to query for approval.
     /// @return True if `operator` is approved, otherwise false.
-    function isApprovedForAll(
-        address owner,
-        address operator
-    ) public view virtual override returns (bool) {
+    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
         if (operator == _CONDUIT) return true;
         return ERC1155.isApprovedForAll(owner, operator);
     }
