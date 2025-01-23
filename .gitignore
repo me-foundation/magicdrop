@@ -1,6 +1,8 @@
 node_modules
 .env
 coverage.json
+coverage-hh/
+coverage-forge/
 typechain
 typechain-types
 cache
@@ -10,6 +12,7 @@ artifacts
 dist
 .DS_Store
 out/
+zkout/
 lcov.info
 lcov.info.pruned
 coverage/
