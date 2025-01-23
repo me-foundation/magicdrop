@@ -297,7 +297,8 @@ contract ERC721MInitializableV1_0_1 is
         override(ERC2981, ERC721ACloneable, IERC721A)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
+            || ERC721ACloneable.supportsInterface(interfaceId);
     }
 
     /*==============================================================
