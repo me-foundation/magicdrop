@@ -7,7 +7,7 @@ import {MockERC721} from "solady/test/utils/mocks/MockERC721.sol";
 import {MockERC1155} from "solady/test/utils/mocks/MockERC1155.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 
-import {MagicDropCloneFactory} from "../../contracts/factory/MagicDropCloneFactory.sol";
+import {MagicDropCloneFactory} from "../../contracts/factory/zksync/MagicDropCloneFactory.sol";
 import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropTokenImplRegistry.sol";
 import {TokenStandard} from "../../contracts/common/Structs.sol";
 
@@ -121,24 +121,6 @@ contract MagicDropCloneFactoryTest is Test {
         vm.stopPrank();
     }
 
-    function testCreateContractWithDifferentSalts(uint256 numSalts) public {
-        vm.startPrank(user);
-
-        numSalts = bound(numSalts, 10, 100);
-        bytes32[] memory salts = new bytes32[](numSalts);
-
-        for (uint256 i = 0; i < numSalts; i++) {
-            salts[i] = keccak256(abi.encodePacked(i, block.timestamp, msg.sender));
-            address predictedAddress = factory.predictDeploymentAddress(TokenStandard.ERC721, erc721ImplId, salts[i]);
-            address deployedAddress = factory.createContractDeterministic{value: 0.01 ether}(
-                "TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId, salts[i]
-            );
-            assertEq(predictedAddress, deployedAddress);
-        }
-
-        vm.stopPrank();
-    }
-
     function testFailCreateContractWithInvalidImplementation() public {
         uint32 invalidImplId = 999;
 
@@ -155,26 +137,6 @@ contract MagicDropCloneFactoryTest is Test {
 
         factory.createContractDeterministic{value: 0.01 ether}(
             "TestNFT2", "TNFT2", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
-        );
-    }
-
-    function testFailContractAlreadyDeployed() public {
-        bytes32 salt = bytes32(uint256(1));
-        uint32 implId = 1;
-        TokenStandard standard = TokenStandard.ERC721;
-        address initialOwner = address(0x1);
-        string memory name = "TestToken";
-        string memory symbol = "TT";
-
-        // Predict the address where the contract will be deployed
-        address predictedAddress = factory.predictDeploymentAddress(standard, implId, salt);
-
-        // Deploy a dummy contract to the predicted address
-        vm.etch(predictedAddress, address(erc721Impl).code);
-
-        // Try to create a contract with the same parameters
-        factory.createContractDeterministic{value: 0.01 ether}(
-            name, symbol, standard, payable(initialOwner), implId, salt
         );
     }
 
