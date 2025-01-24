@@ -7,8 +7,7 @@ import {MagicDropTokenImplRegistry} from "../../registry/MagicDropTokenImplRegis
 import {ZKProxy} from "./ZKProxy.sol";
 
 /// @title MagicDropCloneFactory
-/// @notice A factory contract for creating and managing clones of MagicDrop contracts
-/// @dev This contract uses the UUPS proxy pattern
+/// @notice A zksync compatible factory contract for creating and managing clones of MagicDrop contracts
 contract MagicDropCloneFactory is Ownable {
     /*==============================================================
     =                           CONSTANTS                          =
