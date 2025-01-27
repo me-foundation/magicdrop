@@ -4,12 +4,17 @@ trap "echo 'Exiting...'; exit 1" SIGINT
 
 DEFAULT_IMPL_ID="0"
 
+# The latest MagicDrop v1.0.1 implementation ID for each supported chain.
 get_impl_id() {
     if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
         if [ "$chain_id" == "2741" ]; then
             echo "3" # ERC721C implementation ID / abstract
+        elif [ "$chain_id" == "8453" ]; then
+            echo "8" # base
+        elif [ "$chain_id" == "1" ]; then
+            echo "7" # ethereum
         else
-            echo "1" # ERC721C implementation ID / all other chains
+            echo "5" # all other chains
         fi
     else
         echo $DEFAULT_IMPL_ID

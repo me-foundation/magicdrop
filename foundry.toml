@@ -12,4 +12,4 @@ optimizer_runs = 777
 [etherscan]
 apechain = {key = "${VERIFICATION_API_KEY_APECHAIN}", chain = 33139, url = "https://api.apescan.io/api"}
 sei = {key = "${VERIFICATION_API_KEY_SEI}", chain = 1329, url = "https://api.seiscan.io/api"}
-
+arbitrum = {key = "${VERIFICATION_API_KEY_ARBISCAN}", chain = 42161, url = "https://api.arbiscan.io/api"}
