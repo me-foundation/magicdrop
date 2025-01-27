@@ -323,8 +323,8 @@ set_global_wallet_limit_contract() {
     output=$(cast send $contract_address \
         "$global_wallet_limit_selector" \
         $token_id \
-        "$global_wallet_lim
-        $(zksync_flag) \it" \
+        "$global_wallet_limit" \
+        $(zksync_flag) \
         $password \
         --rpc-url "$RPC_URL" \
         --json)
