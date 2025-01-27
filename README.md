@@ -49,18 +49,34 @@ The composability of the stages is generic enough to enable flexible and complic
 | ERC1155M                    | The basic minting contract based on ERC1155.                                       |
 | MagicDropTokenImplRegistry  | The implementation registry for MagicDrop contracts.                               |
 | MagicDropCloneFactory       | The factory contract for cloning MagicDrop contracts.                              |
-| ERC721MInitializableV1_0_0  | The initializable implementation for ERC721M.                                      |
-| ERC721CMInitializableV1_0_0 | The initializable implementation for ERC721CM.                                     |
-| ERC1155MInitializableV1_0_0 | The initializable implementation for ERC1155M.                                     |
+| ERC721MInitializableV1_0_1  | The initializable implementation for ERC721M.                                      |
+| ERC721CMInitializableV1_0_1 | The initializable implementation for ERC721CM.                                     |
+| ERC1155MInitializableV1_0_1 | The initializable implementation for ERC1155M.                                     |
+| ERC721MagicDropCloneable    | A simple cloneable implementation of ERC721 with public and private stages.        |
+| ERC1155MagicDropCloneable   | A simple cloneable implementation of ERC1155 with public and private stages.       |
 
-## Deployment Address & Salts
+## Deployment Address & Salts (Non-ZKSync Chains)
 | Name                        | Address     | Salt |
 |-----------------------------|-------------------------------------------|-----------------------------------------|
 | MagicDropTokenImplRegistry | 0x00000000caF1E3978e291c5Fb53FeedB957eC146 |0x78c643228c532b1aee1930fedd4a4b0e6d3d8723987c0809d76a222b0d59b461 |
 | MagicDropCloneFactory | 0x000000009e44eBa131196847C685F20Cd4b68aC4 | 0xd8c5a3057ccf31c5fd5cee4e4a5ad9005d0a9a7f4983365010b8785805b44eb1
-| ERC721MInitializableV1_0_0 | 0x00000000b55a1126458841Cc756E565C50759484 | 0x4ca859ec4f4daad3d92dcc2959e01718def5eb520350e3e93bd31fc8d2b3beff
-| ERC721CMInitializableV1_0_0 | 0x00000000760644De6b7b40362288e944f4154121 | 0x8ae63539ad30ece1889c0999c70b900ffaf0e10ee23b777924c310ad548b6266
-| ERC1155MInitializableV1_0_0 | 0x000000009B3dC659D26BD2f3D38136E2b270C28d | 0x8b72ee316ce281e983b3694fc794164ce2eac8c3b8d7751c42edfc89310c6665
+| ERC721MInitializableV1_0_1 | 0x000000f463fc9825682F484D3D5cDF5Aa6B16f59 | 0x403062abd5dc450d08ecd8aaaa1ec0ddca9c82f127cb4c45f34202ea27b6a4b1
+| ERC721CMInitializableV1_0_1 | 0x000000c2b388C25a544258E4d8EEDD31e0E59611 | 0x68e3c267b3ddb63ff8e85f7d593c2e041710a2dd142f07b0c8f5020f46284a22
+| ERC1155MInitializableV1_0_1 | 0x000000d076bc17cb89e11825c060d2f329fc9083 | 0x5549e6a920f24bb3665381d9b0174fe9a0337e0eb771ee600da7b0cf1b63fa24
+| ERC721MagicDropCloneable    | 0x000000FB0f19714B7B75A73F8484061aCde05bDC | 0xa63b2c7e4254d68d54ef7eb831dec5fb7ac7fd23aa5beb68ae12235abd33823d
+| ERC1155MagicDropCloneable   | 0x00000089adfC1a3CAa6A5a6C869E2Dfdd22F7E13 | 0xf8c38b152c86dd9aeafb566f64b579ce3332f118fb6ec058c5e1deecc9f5b7d8
+
+### Abstract Deployed Addresses
+| Contract                    | Address     |
+|-----------------------------|-------------------------------------------|
+| MagicDropTokenImplRegistry  | 0x9b60ad31F145ec7EE3c559153bB57928B65C0F87 |
+| MagicDropCloneFactory       | 0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19 |
+| ERC721MInitializableV1_0_1  | 0xb6049C5eaD766E6BBe26F505c01C329B899d8f55 |
+| ERC721CMInitializableV1_0_1 | 0x42C25f4165a4310Bd029323dAFc7254546cC97f9 |
+| ERC1155MInitializableV1_0_1 | 0x13405abe50EFE5b564B40E1f52F5598C845C4aCD |
+| ERC721MagicDropCloneable    | 0xc7E86760d1A533d1251585710F589AFc14A30618 |
+| ERC1155MagicDropCloneable   | 0xEC489BC18E4F08f460aff3b4a5dB65e562DA5c32 |
+
 
 ### Supported Chains
 - Ethereum
@@ -70,6 +86,7 @@ The composability of the stages is generic enough to enable flexible and complic
 - Arbitrum
 - Apechain
 - BSC
+- Abstract
 
 ## Using Foundry
 
@@ -77,6 +94,13 @@ The composability of the stages is generic enough to enable flexible and complic
 
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+#### For Abstract, install Foundry ZKSync
+
+```bash
+curl -L https://raw.githubusercontent.com/matter-labs/foundry-zksync/main/install-foundry-zksync | bash
+foundryup-zksync
 ```
 
 ### Install Dependencies
@@ -86,6 +110,7 @@ forge install
 ```
 
 ### Build Contracts
+Note: For Abstract, use the `--zksync` flag.
 
 ```bash
 forge build

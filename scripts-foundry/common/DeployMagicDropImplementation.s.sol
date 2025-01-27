@@ -2,8 +2,8 @@
 pragma solidity ^0.8.22;
 
 import {Script, console} from "forge-std/Script.sol";
-import {ERC721MInitializableV1_0_0} from "contracts/nft/erc721m/ERC721MInitializableV1_0_0.sol";
-import {ERC1155MInitializableV1_0_0} from "contracts/nft/erc1155m/ERC1155MInitializableV1_0_0.sol";
+import {ERC721MInitializableV1_0_1 as ERC721MInitializable} from "contracts/nft/erc721m/ERC721MInitializableV1_0_1.sol";
+import {ERC1155MInitializableV1_0_1 as ERC1155MInitializable} from "contracts/nft/erc1155m/ERC1155MInitializableV1_0_1.sol";
 import {TokenStandard} from "contracts/common/Structs.sol";
 
 contract DeployMagicDropImplementation is Script {
@@ -21,9 +21,9 @@ contract DeployMagicDropImplementation is Script {
         address deployedAddress;
 
         if (standard == TokenStandard.ERC721) {
-            deployedAddress = address(new ERC721MInitializableV1_0_0{salt: salt}());
+            deployedAddress = address(new ERC721MInitializable{salt: salt}());
         } else if (standard == TokenStandard.ERC1155) {
-            deployedAddress = address(new ERC1155MInitializableV1_0_0{salt: salt}());
+            deployedAddress = address(new ERC1155MInitializable{salt: salt}());
         }
 
         if (address(deployedAddress) != expectedAddress) {
