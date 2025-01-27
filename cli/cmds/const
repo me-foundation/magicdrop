@@ -10,6 +10,7 @@ SUPPORTED_CHAINS=(
     "11155111:Sepolia"
     "56:BSC"
     "43114:Avalanche"
+    "2741:Abstract"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
@@ -22,10 +23,24 @@ LIMITBREAK_TRANSFER_VALIDATOR_V3="0x721C0078c2328597Ca70F5451ffF5A7B38D4E947"
 ICREATOR_TOKEN_INTERFACE_ID="0xad0d7f6c" # type(ICreatorToken).interfaceId
 TRUE_HEX="0x0000000000000000000000000000000000000000000000000000000000000001"
 
+MAGIC_EDEN_DEFAULT_LIST_ID="1"
+# We use list 3 for Polygon because list 1 was already taken.
+MAGIC_EDEN_POLYGON_LIST_ID="3"
+
 get_factory_address() {
-    echo "0x000000009e44eBa131196847C685F20Cd4b68aC4"
+    # abstract factory address
+    if [ "$chain_id" == "2741" ]; then
+        echo "0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19"
+    else # default
+        echo "0x000000009e44eBa131196847C685F20Cd4b68aC4"
+    fi
 }
 
 get_registry_address() {
-    echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
+    # abstract registry address 
+    if [ "$chain_id" == "2741" ]; then
+        echo "0x9b60ad31F145ec7EE3c559153bB57928B65C0F87"
+    else # default
+        echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
+    fi
 }

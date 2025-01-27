@@ -6,7 +6,11 @@ DEFAULT_IMPL_ID="0"
 
 get_impl_id() {
     if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
-        echo "2" # ERC721C implementation ID
+        if [ "$chain_id" == "2741" ]; then
+            echo "3" # ERC721C implementation ID / abstract
+        else
+            echo "1" # ERC721C implementation ID / all other chains
+        fi
     else
         echo $DEFAULT_IMPL_ID
     fi
@@ -53,6 +57,7 @@ deploy_contract() {
         "$standard_id" \
         "$SIGNER" \
         $impl_id \
+        $(zksync_flag) \
         $password \
         $value \
         --json)
@@ -79,7 +84,7 @@ deploy_contract() {
         set_transfer_list
     fi
 
-    if [ $is_icreatortoken -eq 0 ] || [ "$token_standard" == "ERC1155" ]; then
+    if [ $is_icreatortoken -eq 0 ]; then
         if gum confirm "Would you like to freeze the collection?" --default=true; then
             freeze_contract
         fi
@@ -105,7 +110,7 @@ supports_icreatortoken() {
 set_transfer_validator() {
     tf_address=$(get_transfer_validator_address $chain_id)
     echo "Setting transfer validator to $tf_address..."
-    output=$(cast send $contract_address "setTransferValidator(address)" $tf_address $password --rpc-url "$RPC_URL" --json)
+    output=$(cast send $contract_address "setTransferValidator(address)" $tf_address $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
     print_transaction_hash $output
     echo "Transfer validator set."
     echo ""
@@ -114,7 +119,7 @@ set_transfer_validator() {
 set_transfer_list() {
     tf_list_id=$(get_transfer_validator_list_id $chain_id)
     echo "Setting transfer list to list ID $tf_list_id..."
-    output=$(cast send $tf_address "applyListToCollection(address,uint120)" $contract_address $tf_list_id $password --rpc-url "$RPC_URL" --json)
+    output=$(cast send $tf_address "applyListToCollection(address,uint120)" $contract_address $tf_list_id $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
     print_transaction_hash $output
     echo "Transfer list set."
     echo ""
@@ -142,7 +147,7 @@ freeze_thaw_contract() {
 freeze_contract() {
     echo "Freezing contract... this will take a moment."
 
-    output=$(cast send $contract_address "setTransferable(bool)" false $password --rpc-url "$RPC_URL" --json)
+    output=$(cast send $contract_address "setTransferable(bool)" false $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
 
     print_transaction_hash $output
     echo "Token transfers frozen."
@@ -152,7 +157,7 @@ freeze_contract() {
 thaw_contract() {
     echo "Thawing contract... this will take a moment."
 
-    output=$(cast send $contract_address "setTransferable(bool)" true $password --rpc-url "$RPC_URL" --json)
+    output=$(cast send $contract_address "setTransferable(bool)" true $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
 
     print_transaction_hash $output
     echo "Token transfers thawed."
@@ -160,7 +165,7 @@ thaw_contract() {
 }
 
 check_setup_locked() {
-    setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password)
+    setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password $(zksync_flag))
     if [ "$setup_locked" == "$TRUE_HEX" ]; then
         echo "This contract has already been setup. Please use other commands from the 'Manage Contracts' menu to update the contract."
         exit 1
@@ -233,6 +238,7 @@ setup_contract() {
         "$royalty_receiver" \
         "$royalty_fee" \
         $password \
+        $(zksync_flag) \
         --rpc-url "$RPC_URL" \
         --json)
 
@@ -266,6 +272,7 @@ set_base_uri_contract() {
         $base_uri_selector \
         $base_uri \
         $password \
+        $(zksync_flag) \
         --chain-id $chain_id \
         --rpc-url "$RPC_URL" \
         --json)
@@ -316,7 +323,8 @@ set_global_wallet_limit_contract() {
     output=$(cast send $contract_address \
         "$global_wallet_limit_selector" \
         $token_id \
-        "$global_wallet_limit" \
+        "$global_wallet_lim
+        $(zksync_flag) \it" \
         $password \
         --rpc-url "$RPC_URL" \
         --json)
@@ -373,6 +381,7 @@ set_max_mintable_supply_contract() {
             $token_id \
             $max_mintable_supply \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -415,6 +424,7 @@ set_mintable_contract() {
             $set_mintable_selector \
             $mintable \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -468,6 +478,7 @@ set_stages_contract() {
             "$set_stages_selector" \
             "$stages_data" \
             $password \
+            $(zksync_flag) \
             --rpc-url "$RPC_URL" \
             --json)
         
@@ -504,6 +515,7 @@ set_cosigner_contract() {
             $set_cosigner_selector \
             $cosigner \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -541,6 +553,7 @@ set_timestamp_expiry_contract() {
             $timestamp_expiry_selector \
             $timestamp_expiry \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -590,6 +603,7 @@ transfer_ownership_contract() {
             $complete_ownership_handover_selector \
             $new_owner \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -622,6 +636,7 @@ set_token_uri_suffix_contract() {
         $token_uri_suffix_selector \
         $token_uri_suffix \
         $password \
+        $(zksync_flag) \
         --chain-id $chain_id \
         --rpc-url "$RPC_URL" \
         --json)
@@ -660,6 +675,7 @@ set_uri_contract() {
             $set_uri_selector \
             $uri \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -705,6 +721,7 @@ set_royalties_contract() {
             $receiver \
             $fee_numerator \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -758,6 +775,7 @@ owner_mint_contract() {
             "$mint_selector" \
             $mint_args \
             $password \
+            $(zksync_flag) \
             --rpc-url "$RPC_URL" \
             --json)
 
@@ -815,6 +833,7 @@ add_authorized_minter_contract() {
             "$add_authorized_minter_selector" \
             $minter \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)
@@ -847,6 +866,7 @@ remove_authorized_minter_contract() {
             "$remove_authorized_minter_selector" \
             $minter \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
         --json)
@@ -883,6 +903,7 @@ set_cosigner_contract() {
             "$set_cosigner_selector" \
             $cosigner \
             $password \
+            $(zksync_flag) \
             --chain-id $chain_id \
             --rpc-url "$RPC_URL" \
             --json)

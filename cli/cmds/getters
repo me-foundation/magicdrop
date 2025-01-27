@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-MAGIC_EDEN_DEFAULT_LIST_ID="1"
-# We use list 3 for Polygon because list 1 was already taken.
-MAGIC_EDEN_POLYGON_LIST_ID="3"
-
 
 get_numeric_input() {
     local prompt="$1"
