@@ -165,7 +165,7 @@ thaw_contract() {
 }
 
 check_setup_locked() {
-    setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password $(zksync_flag))
+    setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password)
     if [ "$setup_locked" == "$TRUE_HEX" ]; then
         echo "This contract has already been setup. Please use other commands from the 'Manage Contracts' menu to update the contract."
         exit 1

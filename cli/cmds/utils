@@ -30,7 +30,7 @@ set_rpc_url() {
         1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
         33139) RPC_URL="https://rpc.apechain.com/http" ;; # ApeChain
         11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
-        2741) RPC_URL="https://rpc.abscan.org" ;; # Abstract
+        2741) RPC_URL="https://api.mainnet.abs.xyz" ;; # Abstract
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
