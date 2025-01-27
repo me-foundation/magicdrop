@@ -30,6 +30,7 @@ set_rpc_url() {
         1329) RPC_URL="https://evm-rpc.sei-apis.com" ;; # Sei
         33139) RPC_URL="https://rpc.apechain.com/http" ;; # ApeChain
         11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
+        2741) RPC_URL="https://api.mainnet.abs.xyz" ;; # Abstract
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -144,6 +145,7 @@ chain_id_to_symbol() {
         33139) echo "APE" ;;
         56) echo "BNB" ;;
         11155111) echo "SEP" ;;
+        2741) echo "ETH" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -159,6 +161,7 @@ chain_id_to_explorer_url() {
         1329) echo "https://seitrace.com" ;;
         33139) echo "https://apescan.io" ;;
         11155111) echo "https://sepolia.etherscan.io" ;;
+        2741) echo "https://abscan.org" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -188,4 +191,11 @@ get_standard_id() {
 is_unset_or_null() {
     local var="$1"
     [ -z "$var" ] || [ "$var" = "null" ]
+}
+
+zksync_flag() {
+    # Abstract is a zksync chain
+    if [ "$chain_id" == "2741" ]; then
+        echo "--zksync"
+    fi
 }
