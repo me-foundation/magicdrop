@@ -100,7 +100,7 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
         address instance = LibClone.cloneDeterministic(impl, salt);
 
         // Initialize the newly created contract
-        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner, 0));
+        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner, mintFee));
         if (!success) {
             revert InitializationFailed();
         }
