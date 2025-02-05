@@ -213,10 +213,11 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @param impl The address of the implementation contract.
     /// @param isDefault Whether the implementation should be set as the default implementation
     /// @param deploymentFee The deployment fee for the implementation
+    /// @param mintFee The mint fee for the implementation
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if an implementation with the same name is already registered.
     /// @return The ID of the newly registered implementation
-    function registerImplementation(TokenStandard standard, address impl, bool isDefault, uint256 deploymentFee)
+    function registerImplementation(TokenStandard standard, address impl, bool isDefault, uint256 deploymentFee, uint256 mintFee)
         external
         onlyOwner
         returns (uint32)
@@ -235,8 +236,10 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
         $.tokenStandardData[standard].implementations[implId] = impl;
         $.tokenStandardData[standard].nextImplId = implId + 1;
         $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
+        $.tokenStandardData[standard].mintFees[implId] = mintFee;
         emit ImplementationRegistered(standard, impl, implId, deploymentFee);
         emit DeploymentFeeSet(standard, implId, deploymentFee);
+        emit MintFeeSet(standard, implId, mintFee);
 
         if (isDefault) {
             $.tokenStandardData[standard].defaultImplId = implId;

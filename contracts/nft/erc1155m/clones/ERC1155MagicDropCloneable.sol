@@ -148,9 +148,10 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param _name The ERC-1155 name of the collection.
     /// @param _symbol The ERC-1155 symbol of the collection.
     /// @param _owner The address designated as the initial owner of the contract.
-    function initialize(string memory _name, string memory _symbol, address _owner) public initializer {
+    /// @param _mintFee The fee to charge on top of each mint.
+    function initialize(string memory _name, string memory _symbol, address _owner, uint256 _mintFee) public initializer {
         __ERC1155MagicDropMetadataCloneable__init(_name, _symbol, _owner);
-        mintFee = 0;
+        mintFee = _mintFee;
     }
 
     /*==============================================================

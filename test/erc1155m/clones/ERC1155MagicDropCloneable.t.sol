@@ -45,7 +45,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         token = ERC1155MagicDropCloneable(LibClone.deployERC1967(address(new ERC1155MagicDropCloneable())));
 
         // Initialize token
-        token.initialize("TestToken", "TT", owner);
+        token.initialize("TestToken", "TT", owner, mintFee);
 
         // Default stages
         allowlistStart = block.timestamp + 100;
@@ -89,7 +89,7 @@ contract ERC1155MagicDropCloneableTest is Test {
     function testReinitializeReverts() public {
         vm.prank(owner);
         vm.expectRevert(); // The contract should revert if trying to re-initialize
-        token.initialize("ReInit", "RI", owner);
+        token.initialize("ReInit", "RI", owner, mintFee);
     }
 
     /*==============================================================

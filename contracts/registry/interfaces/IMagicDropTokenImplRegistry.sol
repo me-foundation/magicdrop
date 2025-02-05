@@ -4,7 +4,7 @@ pragma solidity ^0.8.22;
 import {TokenStandard} from "../../common/Structs.sol";
 
 interface IMagicDropTokenImplRegistry {
-    function registerImplementation(TokenStandard standard, address impl, bool isDefault, uint256 deploymentFee)
+    function registerImplementation(TokenStandard standard, address impl, bool isDefault, uint256 deploymentFee, uint256 mintFee)
         external
         returns (uint32);
     function unregisterImplementation(TokenStandard standard, uint32 implId) external;
