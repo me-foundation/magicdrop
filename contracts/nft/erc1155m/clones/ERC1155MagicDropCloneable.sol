@@ -279,7 +279,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             payoutRecipient: _payoutRecipient,
             royaltyRecipient: _royaltyReceiver,
             royaltyBps: _royaltyBps,
-            mintFee: mintFee,
+            mintFee: mintFee
         });
 
         return newConfig;
