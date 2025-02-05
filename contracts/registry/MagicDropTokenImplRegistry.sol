@@ -20,6 +20,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
         uint32 defaultImplId;
         mapping(uint256 => address) implementations;
         mapping(uint256 => uint256) deploymentFees; //implementationId => deploymentFee
+        mapping(uint256 => uint256) mintFees; // implementationId => mintFee
     }
 
     struct RegistryStorage {
@@ -42,6 +43,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     event ImplementationUnregistered(TokenStandard standard, uint32 implId);
     event DefaultImplementationSet(TokenStandard standard, uint32 implId);
     event DeploymentFeeSet(TokenStandard standard, uint32 implId, uint256 deploymentFee);
+    event MintFeeSet(TokenStandard standard, uint32 implId, uint256 mintFee);
 
     /*==============================================================
     =                            ERRORS                            =
@@ -173,6 +175,23 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
         }
     }
 
+    /// @dev Gets the mint fee for a given token standard
+    /// @param standard The token standard (ERC721, ERC1155, ERC20)
+    /// @param implId The implementation ID
+    /// @return mintFee The mint fee for the given standard
+    function getMintFee(TokenStandard standard, uint32 implId) external view returns (uint256 mintFee) {
+        assembly {
+            mstore(0x00, standard)
+            mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
+            let slot := keccak256(0x00, 0x40)
+
+            mstore(0x00, implId)
+            mstore(0x20, add(slot, 3))
+            let implSlot := keccak256(0x00, 0x40)
+            mintFee := sload(implSlot)
+        }
+    }
+
     /*==============================================================
     =                       INTERNAL HELPERS                       =
     ==============================================================*/
@@ -277,6 +296,17 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
         RegistryStorage storage $ = _loadRegistryStorage();
         $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
         emit DeploymentFeeSet(standard, implId, deploymentFee);
+    }
+
+    /// @dev Sets the mint fee for an implementation
+    /// @param standard The token standard (ERC721, ERC1155, ERC20)
+    /// @param implId The implementation ID
+    /// @param mintFee The mint fee to set
+    /// @notice Only the contract owner can call this function
+    function setMintFee(TokenStandard standard, uint32 implId, uint256 mintFee) external onlyOwner {
+        RegistryStorage storage $ = _loadRegistryStorage();
+        $.tokenStandardData[standard].mintFees[implId] = mintFee;
+        emit MintFeeSet(standard, implId, mintFee);
     }
 
     /// @dev Internal function to authorize an upgrade.

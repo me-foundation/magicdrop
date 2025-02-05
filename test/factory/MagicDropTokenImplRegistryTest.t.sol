@@ -150,4 +150,22 @@ contract MagicDropTokenImplRegistryTest is Test {
         uint256 deploymentFee = registry.getDeploymentFee(TokenStandard.ERC721, 1);
         assertEq(deploymentFee, 0.02 ether);
     }
+
+    /*==============================================================
+    =                      MINT FEE                         =
+    ==============================================================*/
+
+    // function testGetMintFee() public {
+    //     vm.prank(owner);
+    //     uint32 implId = registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether);
+    //     uint256 deploymentFee = registry.getDeploymentFee(TokenStandard.ERC721, implId);
+    //     assertEq(deploymentFee, 0.01 ether);
+    // }
+
+    // function testUpdateMintFee() public {
+    //     vm.prank(owner);
+    //     registry.setDeploymentFee(TokenStandard.ERC721, 1, 0.02 ether);
+    //     uint256 deploymentFee = registry.getDeploymentFee(TokenStandard.ERC721, 1);
+    //     assertEq(deploymentFee, 0.02 ether);
+    // }
 }

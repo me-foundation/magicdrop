@@ -11,4 +11,6 @@ interface IMagicDropTokenImplRegistry {
     function getImplementation(TokenStandard standard, uint32 implId) external view returns (address);
     function getDeploymentFee(TokenStandard standard, uint32 implId) external view returns (uint256);
     function setDeploymentFee(TokenStandard standard, uint32 implId, uint256 deploymentFee) external;
+    function getMintFee(TokenStandard standard, uint32 implId) external view returns (uint256);
+    function setMintFee(TokenStandard standard, uint32 implId, uint256 mintFee) external;
 }

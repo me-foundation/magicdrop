@@ -29,6 +29,7 @@ contract ERC1155MagicDropCloneableTest is Test {
     uint256 internal allowlistEnd;
     address royaltyRecipient = address(0x8888);
     uint96 royaltyBps = 1000;
+    uint256 mintFee = 0; // 0 ether
 
     uint256 internal tokenId = 1;
 

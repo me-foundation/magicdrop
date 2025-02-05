@@ -24,7 +24,7 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
 
     event MagicDropFactoryInitialized();
     event NewContractInitialized(
-        address contractAddress, address initialOwner, uint32 implId, TokenStandard standard, string name, string symbol
+        address contractAddress, address initialOwner, uint32 implId, TokenStandard standard, string name, string symbol, uint256 mintFee
     );
     event Withdrawal(address to, uint256 amount);
 
@@ -93,11 +93,14 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             revert InsufficientDeploymentFee();
         }
 
+        // Retrieve the mint fee for the implementation
+        uint256 mintFee = _registry.getMintFee(standard, implId);
+
         // Create a deterministic clone of the implementation contract
         address instance = LibClone.cloneDeterministic(impl, salt);
 
         // Initialize the newly created contract
-        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner, 0));
         if (!success) {
             revert InitializationFailed();
         }
@@ -108,7 +111,8 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             implId: implId,
             standard: standard,
             name: name,
-            symbol: symbol
+            symbol: symbol,
+            mintFee: mintFee
         });
 
         return instance;
@@ -146,11 +150,14 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             revert InsufficientDeploymentFee();
         }
 
+        // Retrieve the mint fee for the implementation
+        uint256 mintFee = _registry.getMintFee(standard, implId);
+
         // Create a non-deterministic clone of the implementation contract
         address instance = LibClone.clone(impl);
 
         // Initialize the newly created contract
-        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner, mintFee));
         if (!success) {
             revert InitializationFailed();
         }
@@ -161,7 +168,8 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             implId: implId,
             standard: standard,
             name: name,
-            symbol: symbol
+            symbol: symbol,
+            mintFee: mintFee
         });
 
         return instance;
