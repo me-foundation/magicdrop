@@ -278,7 +278,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             publicStage: _publicStages[tokenId],
             payoutRecipient: _payoutRecipient,
             royaltyRecipient: _royaltyReceiver,
-            royaltyBps: _royaltyBps
+            royaltyBps: _royaltyBps,
+            mintFee: mintFee,
         });
 
         return newConfig;
