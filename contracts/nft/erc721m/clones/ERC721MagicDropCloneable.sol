@@ -194,7 +194,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         _safeMint(to, qty);
 
         if (stagePrice != 0) {
-            _splitProceeds();
+            _splitProceeds(qty);
         }
 
         emit TokenMinted(to, _totalMinted(), qty);
@@ -233,7 +233,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         _safeMint(to, qty);
 
         if (stagePrice != 0) {
-            _splitProceeds();
+            _splitProceeds(qty);
         }
     }
 
@@ -411,7 +411,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
 
     /// @notice Internal function to split the proceeds of a mint.
     /// @dev This function is called by the mint functions to split the proceeds into a mint fee, protocol fee and a payout.
-    function _splitProceeds() internal {
+    function _splitProceeds(uint256 qty) internal {
         if (_payoutRecipient == address(0)) {
             revert PayoutRecipientCannotBeZeroAddress();
         }
@@ -419,7 +419,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         uint256 proceeds = msg.value;
 
         if (mintFee > 0) {
-            proceeds -= mintFee;
+            proceeds -= (mintFee * qty);
             SafeTransferLib.safeTransferETH(MINT_FEE_RECIPIENT, mintFee);
         }
 
