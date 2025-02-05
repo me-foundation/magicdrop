@@ -434,9 +434,13 @@ contract ERC721MagicDropCloneableTest is Test {
         uint256 expectedPayout = 0.01 ether - expectedProtocolFee;
 
         bool sameRecipient = token.MINT_FEE_RECIPIENT() == token.PROTOCOL_FEE_RECIPIENT();
-        uint256 expectedMintBalance = sameRecipient ? initialMintBalance + expectedMintFee + expectedProtocolFee : initialMintBalance + expectedMintFee;
-        uint256 expectedProtocolBalance = sameRecipient ? initialProtocolBalance + expectedProtocolFee + expectedMintFee : initialProtocolBalance + expectedProtocolFee;
-        
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
         assertEq(token.MINT_FEE_RECIPIENT().balance, expectedMintBalance);
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);

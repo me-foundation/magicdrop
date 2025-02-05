@@ -94,7 +94,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @dev The mint fee to charge on top of each mint
     /// @notice Set permanently on initialization
     uint256 public mintFee;
-    
+
     /*==============================================================
     =                             EVENTS                           =
     ==============================================================*/
@@ -149,7 +149,10 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @param _symbol The ERC-1155 symbol of the collection.
     /// @param _owner The address designated as the initial owner of the contract.
     /// @param _mintFee The fee to charge on top of each mint.
-    function initialize(string memory _name, string memory _symbol, address _owner, uint256 _mintFee) public initializer {
+    function initialize(string memory _name, string memory _symbol, address _owner, uint256 _mintFee)
+        public
+        initializer
+    {
         __ERC1155MagicDropMetadataCloneable__init(_name, _symbol, _owner);
         mintFee = _mintFee;
     }
@@ -169,7 +172,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         if (block.timestamp < stage.startTime || block.timestamp > stage.endTime) {
             revert PublicStageNotActive();
         }
-        
+
         uint256 stagePrice = stage.price + mintFee;
         uint256 requiredPayment = stagePrice * qty;
         if (msg.value != requiredPayment) {
@@ -434,11 +437,11 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
         uint256 proceeds = msg.value;
 
-         if (mintFee > 0) {
+        if (mintFee > 0) {
             proceeds -= mintFee;
             SafeTransferLib.safeTransferETH(MINT_FEE_RECIPIENT, mintFee);
         }
-        
+
         // If there are no remaining proceeds after mint fee is taken, exit early
         if (proceeds == 0) {
             return;

@@ -153,7 +153,10 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     /// @param _symbol The ERC-721 symbol of the collection.
     /// @param _owner The address designated as the initial owner of the contract.
     /// @param _mintFee The fee to charge on top of each mint.
-    function initialize(string memory _name, string memory _symbol, address _owner, uint256 _mintFee) public initializer {
+    function initialize(string memory _name, string memory _symbol, address _owner, uint256 _mintFee)
+        public
+        initializer
+    {
         __ERC721ACloneable__init(_name, _symbol);
         __ERC721MagicDropMetadataCloneable__init(_owner);
         mintFee = _mintFee;
@@ -414,12 +417,12 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         }
 
         uint256 proceeds = msg.value;
-        
+
         if (mintFee > 0) {
             proceeds -= mintFee;
             SafeTransferLib.safeTransferETH(MINT_FEE_RECIPIENT, mintFee);
         }
-        
+
         // If there are no remaining proceeds after mint fee is taken, exit early
         if (proceeds == 0) {
             return;

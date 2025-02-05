@@ -217,11 +217,13 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if an implementation with the same name is already registered.
     /// @return The ID of the newly registered implementation
-    function registerImplementation(TokenStandard standard, address impl, bool isDefault, uint256 deploymentFee, uint256 mintFee)
-        external
-        onlyOwner
-        returns (uint32)
-    {
+    function registerImplementation(
+        TokenStandard standard,
+        address impl,
+        bool isDefault,
+        uint256 deploymentFee,
+        uint256 mintFee
+    ) external onlyOwner returns (uint32) {
         RegistryStorage storage $ = _loadRegistryStorage();
         bytes4 interfaceId = $.tokenStandardData[standard].interfaceId;
         if (interfaceId == 0) {

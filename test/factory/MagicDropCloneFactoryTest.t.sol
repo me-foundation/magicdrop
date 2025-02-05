@@ -51,8 +51,11 @@ contract MagicDropCloneFactoryTest is Test {
         erc1155Impl = new MockERC1155Initializable();
 
         // Register implementations
-        erc721ImplId = registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), true, 0.01 ether, 0.00001 ether);
-        erc1155ImplId = registry.registerImplementation(TokenStandard.ERC1155, address(erc1155Impl), true, 0.01 ether, 0.00001 ether);
+        erc721ImplId =
+            registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), true, 0.01 ether, 0.00001 ether);
+        erc1155ImplId = registry.registerImplementation(
+            TokenStandard.ERC1155, address(erc1155Impl), true, 0.01 ether, 0.00001 ether
+        );
 
         // Fund user
         vm.deal(user, 100 ether);
