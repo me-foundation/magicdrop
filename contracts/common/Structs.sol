@@ -47,4 +47,6 @@ struct SetupConfig {
     address royaltyRecipient;
     /// @dev The royalty basis points of the token.
     uint96 royaltyBps;
+    /// @dev The mint fee of the token.
+    uint256 mintFee;
 }
