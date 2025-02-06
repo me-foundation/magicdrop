@@ -122,6 +122,8 @@ const getTokenName = (hre: HardhatRuntimeEnvironment) => {
       return 'APE';
     case 'arbitrum':
       return 'ARB';
+    case 'berachain':
+      return 'BERA';
     default:
       return 'ETH';
   }
