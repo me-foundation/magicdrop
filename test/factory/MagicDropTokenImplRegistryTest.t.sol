@@ -71,8 +71,9 @@ contract MagicDropTokenImplRegistryTest is Test {
         registry.registerImplementation(TokenStandard.ERC1155, address(mockERC721), false, 0.01 ether, 0.00001 ether);
     }
 
-    function testFailRegisterImplementationAsNonOwner() public {
+    function testRegisterImplementationAsNonOwner() public {
         vm.prank(user);
+        vm.expectRevert();
         registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
     }
 
@@ -91,8 +92,9 @@ contract MagicDropTokenImplRegistryTest is Test {
         registry.getImplementation(TokenStandard.ERC721, implId);
     }
 
-    function testFailUnregisterImplementationAsNonOwner() public {
+    function testUnregisterImplementationAsNonOwner() public {
         vm.prank(user);
+        vm.expectRevert();
         registry.unregisterImplementation(TokenStandard.ERC721, 1);
     }
 

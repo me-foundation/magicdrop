@@ -142,26 +142,27 @@ contract MagicDropCloneFactoryTest is Test {
         vm.stopPrank();
     }
 
-    function testFailCreateContractWithInvalidImplementation() public {
+    function testCreateContractWithInvalidImplementation() public {
         uint32 invalidImplId = 999;
 
         vm.prank(user);
+        vm.expectRevert();
         factory.createContract("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), invalidImplId);
     }
 
-    function testFailCreateDeterministicContractWithSameSalt() public {
+    function testCreateDeterministicContractWithSameSalt() public {
         vm.startPrank(user);
 
         factory.createContractDeterministic{value: 0.01 ether}(
             "TestNFT1", "TNFT1", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
         );
-
+        vm.expectRevert();
         factory.createContractDeterministic{value: 0.01 ether}(
             "TestNFT2", "TNFT2", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
         );
     }
 
-    function testFailContractAlreadyDeployed() public {
+    function testContractAlreadyDeployed() public {
         bytes32 salt = bytes32(uint256(1));
         uint32 implId = 1;
         TokenStandard standard = TokenStandard.ERC721;
@@ -174,7 +175,7 @@ contract MagicDropCloneFactoryTest is Test {
 
         // Deploy a dummy contract to the predicted address
         vm.etch(predictedAddress, address(erc721Impl).code);
-
+        vm.expectRevert();
         // Try to create a contract with the same parameters
         factory.createContractDeterministic{value: 0.01 ether}(
             name, symbol, standard, payable(initialOwner), implId, salt
@@ -221,8 +222,9 @@ contract MagicDropCloneFactoryTest is Test {
         vm.stopPrank();
     }
 
-    function testFailWithdrawToNonOwner() public {
+    function testWithdrawToNonOwner() public {
         vm.startPrank(user);
+        vm.expectRevert();
         factory.withdraw(user);
     }
 }
