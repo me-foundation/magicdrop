@@ -39,11 +39,16 @@ contract MagicDropCloneFactoryTest is Test {
         vm.startPrank(owner);
 
         // Deploy and initialize registry
-        MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry(owner);
+        MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry(
+                owner
+            );
         registry = MagicDropTokenImplRegistry(address(registryImpl));
 
         // Deploy factory
-        MagicDropCloneFactory factoryImpl = new MagicDropCloneFactory(owner, address(registry));
+        MagicDropCloneFactory factoryImpl = new MagicDropCloneFactory(
+            owner,
+            address(registry)
+        );
         factory = MagicDropCloneFactory(payable(address(factoryImpl)));
 
         // Deploy implementations
@@ -51,8 +56,18 @@ contract MagicDropCloneFactoryTest is Test {
         erc1155Impl = new MockERC1155Initializable();
 
         // Register implementations
-        erc721ImplId = registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), true, 0.01 ether);
-        erc1155ImplId = registry.registerImplementation(TokenStandard.ERC1155, address(erc1155Impl), true, 0.01 ether);
+        erc721ImplId = registry.registerImplementation(
+            TokenStandard.ERC721,
+            address(erc721Impl),
+            true,
+            0.01 ether
+        );
+        erc1155ImplId = registry.registerImplementation(
+            TokenStandard.ERC1155,
+            address(erc1155Impl),
+            true,
+            0.01 ether
+        );
 
         // Fund user
         vm.deal(user, 100 ether);
@@ -64,7 +79,11 @@ contract MagicDropCloneFactoryTest is Test {
         vm.startPrank(user);
 
         address newContract = factory.createContract{value: 0.01 ether}(
-            "TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId
+            "TestNFT",
+            "TNFT",
+            TokenStandard.ERC721,
+            payable(user),
+            erc721ImplId
         );
 
         MockERC721Initializable nft = MockERC721Initializable(newContract);
@@ -79,8 +98,13 @@ contract MagicDropCloneFactoryTest is Test {
     function testCreateERC721ContractWithDefaultImplementation() public {
         vm.startPrank(user);
 
-        address newContract =
-            factory.createContract{value: 0.01 ether}("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), 0);
+        address newContract = factory.createContract{value: 0.01 ether}(
+            "TestNFT",
+            "TNFT",
+            TokenStandard.ERC721,
+            payable(user),
+            0
+        );
 
         MockERC721Initializable nft = MockERC721Initializable(newContract);
         // Test minting
@@ -94,7 +118,11 @@ contract MagicDropCloneFactoryTest is Test {
         vm.startPrank(user);
 
         address newContract = factory.createContract{value: 0.01 ether}(
-            "TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), erc1155ImplId
+            "TestMultiToken",
+            "TMT",
+            TokenStandard.ERC1155,
+            payable(user),
+            erc1155ImplId
         );
 
         MockERC1155Initializable nft = MockERC1155Initializable(newContract);
@@ -109,8 +137,13 @@ contract MagicDropCloneFactoryTest is Test {
     function testCreateERC1155ContractWithDefaultImplementation() public {
         vm.startPrank(user);
 
-        address newContract =
-            factory.createContract{value: 0.01 ether}("TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0);
+        address newContract = factory.createContract{value: 0.01 ether}(
+            "TestMultiToken",
+            "TMT",
+            TokenStandard.ERC1155,
+            payable(user),
+            0
+        );
 
         MockERC1155Initializable nft = MockERC1155Initializable(newContract);
 
@@ -128,10 +161,23 @@ contract MagicDropCloneFactoryTest is Test {
         bytes32[] memory salts = new bytes32[](numSalts);
 
         for (uint256 i = 0; i < numSalts; i++) {
-            salts[i] = keccak256(abi.encodePacked(i, block.timestamp, msg.sender));
-            address predictedAddress = factory.predictDeploymentAddress(TokenStandard.ERC721, erc721ImplId, salts[i]);
-            address deployedAddress = factory.createContractDeterministic{value: 0.01 ether}(
-                "TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId, salts[i]
+            salts[i] = keccak256(
+                abi.encodePacked(i, block.timestamp, msg.sender)
+            );
+            address predictedAddress = factory.predictDeploymentAddress(
+                TokenStandard.ERC721,
+                erc721ImplId,
+                salts[i]
+            );
+            address deployedAddress = factory.createContractDeterministic{
+                value: 0.01 ether
+            }(
+                "TestNFT",
+                "TNFT",
+                TokenStandard.ERC721,
+                payable(user),
+                erc721ImplId,
+                salts[i]
             );
             assertEq(predictedAddress, deployedAddress);
         }
@@ -139,26 +185,43 @@ contract MagicDropCloneFactoryTest is Test {
         vm.stopPrank();
     }
 
-    function testFailCreateContractWithInvalidImplementation() public {
+    function testCreateContractWithInvalidImplementation() public {
         uint32 invalidImplId = 999;
 
         vm.prank(user);
-        factory.createContract("TestNFT", "TNFT", TokenStandard.ERC721, payable(user), invalidImplId);
+        vm.expectRevert();
+        factory.createContract(
+            "TestNFT",
+            "TNFT",
+            TokenStandard.ERC721,
+            payable(user),
+            invalidImplId
+        );
     }
 
-    function testFailCreateDeterministicContractWithSameSalt() public {
+    function testCreateDeterministicContractWithSameSalt() public {
         vm.startPrank(user);
 
         factory.createContractDeterministic{value: 0.01 ether}(
-            "TestNFT1", "TNFT1", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
+            "TestNFT1",
+            "TNFT1",
+            TokenStandard.ERC721,
+            payable(user),
+            erc721ImplId,
+            bytes32(0)
         );
-
+        vm.expectRevert();
         factory.createContractDeterministic{value: 0.01 ether}(
-            "TestNFT2", "TNFT2", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
+            "TestNFT2",
+            "TNFT2",
+            TokenStandard.ERC721,
+            payable(user),
+            erc721ImplId,
+            bytes32(0)
         );
     }
 
-    function testFailContractAlreadyDeployed() public {
+    function testContractAlreadyDeployed() public {
         bytes32 salt = bytes32(uint256(1));
         uint32 implId = 1;
         TokenStandard standard = TokenStandard.ERC721;
@@ -167,14 +230,23 @@ contract MagicDropCloneFactoryTest is Test {
         string memory symbol = "TT";
 
         // Predict the address where the contract will be deployed
-        address predictedAddress = factory.predictDeploymentAddress(standard, implId, salt);
+        address predictedAddress = factory.predictDeploymentAddress(
+            standard,
+            implId,
+            salt
+        );
 
         // Deploy a dummy contract to the predicted address
         vm.etch(predictedAddress, address(erc721Impl).code);
-
+        vm.expectRevert();
         // Try to create a contract with the same parameters
         factory.createContractDeterministic{value: 0.01 ether}(
-            name, symbol, standard, payable(initialOwner), implId, salt
+            name,
+            symbol,
+            standard,
+            payable(initialOwner),
+            implId,
+            salt
         );
     }
 
@@ -183,20 +255,37 @@ contract MagicDropCloneFactoryTest is Test {
 
         vm.startPrank(owner);
         InvalidImplementation impl = new InvalidImplementation();
-        uint32 implId = registry.registerImplementation(standard, address(impl), false, 0.01 ether);
+        uint32 implId = registry.registerImplementation(
+            standard,
+            address(impl),
+            false,
+            0.01 ether
+        );
         vm.stopPrank();
 
         vm.expectRevert(MagicDropCloneFactory.InitializationFailed.selector);
         factory.createContractDeterministic{value: 0.01 ether}(
-            "TestNFT", "TNFT", standard, payable(user), implId, bytes32(0)
+            "TestNFT",
+            "TNFT",
+            standard,
+            payable(user),
+            implId,
+            bytes32(0)
         );
     }
 
     function testInsufficientDeploymentFee() public {
         vm.startPrank(user);
-        vm.expectRevert(MagicDropCloneFactory.InsufficientDeploymentFee.selector);
+        vm.expectRevert(
+            MagicDropCloneFactory.InsufficientDeploymentFee.selector
+        );
         factory.createContractDeterministic{value: 0.005 ether}(
-            "TestNFT", "TNFT", TokenStandard.ERC721, payable(user), erc721ImplId, bytes32(0)
+            "TestNFT",
+            "TNFT",
+            TokenStandard.ERC721,
+            payable(user),
+            erc721ImplId,
+            bytes32(0)
         );
     }
 
@@ -206,7 +295,13 @@ contract MagicDropCloneFactoryTest is Test {
 
     function testWithdraw() public {
         vm.startPrank(user);
-        factory.createContract{value: 0.01 ether}("TestMultiToken", "TMT", TokenStandard.ERC1155, payable(user), 0);
+        factory.createContract{value: 0.01 ether}(
+            "TestMultiToken",
+            "TMT",
+            TokenStandard.ERC1155,
+            payable(user),
+            0
+        );
         vm.stopPrank();
 
         vm.startPrank(owner);
@@ -218,8 +313,9 @@ contract MagicDropCloneFactoryTest is Test {
         vm.stopPrank();
     }
 
-    function testFailWithdrawToNonOwner() public {
+    function testWithdrawToNonOwner() public {
         vm.startPrank(user);
+        vm.expectRevert();
         factory.withdraw(user);
     }
 }
