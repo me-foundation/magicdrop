@@ -6,7 +6,6 @@ import {console2} from "forge-std/console2.sol";
 
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
-
 import {MerkleTestHelper} from "test/helpers/MerkleTestHelper.sol";
 
 import {ERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropCloneable.sol";
@@ -14,6 +13,9 @@ import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc721m/clones/Types.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
+
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+
 
 contract ERC721MagicDropCloneableTest is Test {
     ERC721MagicDropCloneable public token;
@@ -421,7 +423,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         // Check initial balances
-        uint256 initialMintBalance = token.MINT_FEE_RECIPIENT().balance;
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
@@ -434,7 +436,7 @@ contract ERC721MagicDropCloneableTest is Test {
         uint256 expectedProtocolFee = (0.01 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.01 ether - expectedProtocolFee;
 
-        bool sameRecipient = token.MINT_FEE_RECIPIENT() == token.PROTOCOL_FEE_RECIPIENT();
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
         uint256 expectedMintBalance = sameRecipient
             ? initialMintBalance + expectedMintFee + expectedProtocolFee
             : initialMintBalance + expectedMintFee;
@@ -442,14 +444,14 @@ contract ERC721MagicDropCloneableTest is Test {
             ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
             : initialProtocolBalance + expectedProtocolFee;
 
-        assertEq(token.MINT_FEE_RECIPIENT().balance, expectedMintBalance);
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
     function testSplitProceedsWithZeroPrice() public {
         // Check initial balances
-        uint256 initialMintBalance = token.MINT_FEE_RECIPIENT().balance;
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
@@ -465,11 +467,11 @@ contract ERC721MagicDropCloneableTest is Test {
         token.mintPublic{value: 0 ether + mintFee}(user, 1);
 
         // Check balances after minting
-        bool sameRecipient = token.MINT_FEE_RECIPIENT() == token.PROTOCOL_FEE_RECIPIENT();
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
         uint256 expectedMintBalance = initialMintBalance + mintFee;
         uint256 expectedProtocolBalance = sameRecipient ? initialProtocolBalance + mintFee : initialProtocolBalance;
 
-        assertEq(token.MINT_FEE_RECIPIENT().balance, expectedMintBalance);
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance);
     }
