@@ -39,7 +39,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     =                            EVENTS                            =
     ==============================================================*/
 
-    event ImplementationRegistered(TokenStandard standard, address impl, uint32 implId, uint256 deploymentFee);
+    event ImplementationRegistered(TokenStandard standard, address impl, uint32 implId, uint256 deploymentFee, uint256 mintFee);
     event ImplementationUnregistered(TokenStandard standard, uint32 implId);
     event DefaultImplementationSet(TokenStandard standard, uint32 implId);
     event DeploymentFeeSet(TokenStandard standard, uint32 implId, uint256 deploymentFee);
@@ -239,7 +239,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
         $.tokenStandardData[standard].nextImplId = implId + 1;
         $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
         $.tokenStandardData[standard].mintFees[implId] = mintFee;
-        emit ImplementationRegistered(standard, impl, implId, deploymentFee);
+        emit ImplementationRegistered(standard, impl, implId, deploymentFee, mintFee);
         emit DeploymentFeeSet(standard, implId, deploymentFee);
         emit MintFeeSet(standard, implId, mintFee);
 
