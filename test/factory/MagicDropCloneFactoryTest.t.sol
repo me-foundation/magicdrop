@@ -12,11 +12,11 @@ import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropToke
 import {TokenStandard} from "../../contracts/common/Structs.sol";
 
 contract MockERC721Initializable is MockERC721 {
-    function initialize(string memory, string memory, address) public {}
+    function initialize(string memory, string memory, address, uint256) public {}
 }
 
 contract MockERC1155Initializable is MockERC1155 {
-    function initialize(string memory, string memory, address) public {}
+    function initialize(string memory, string memory, address, uint256) public {}
 }
 
 contract InvalidImplementation is MockERC721 {
