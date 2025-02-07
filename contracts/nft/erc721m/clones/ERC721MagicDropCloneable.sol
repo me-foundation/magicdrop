@@ -12,6 +12,9 @@ import {ERC721ACloneable} from "./ERC721ACloneable.sol";
 import {IERC721MagicDropMetadata} from "../interfaces/IERC721MagicDropMetadata.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 
+import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
+
+
 ///                                                     ........
 ///                             .....                   ..    ...
 ///                            ..    .....             ..     ..
@@ -90,10 +93,6 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     /// @dev Configuration of the allowlist mint stage, including timing, price, and a merkle root for verification.
     /// @notice Only addresses proven by a valid Merkle proof can mint during this stage.
     AllowlistStage private _allowlistStage;
-
-    /// @dev The address that receives mint fees.
-    /// @notice This is fixed and cannot be changed.
-    address public constant MINT_FEE_RECIPIENT = 0xA3833016a4eC61f5c253D71c77522cC8A1cC1106;
 
     /// @dev The mint fee to charge on top of each mint
     /// @notice Set permanently on initialization
@@ -421,7 +420,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
 
         if (mintFee > 0) {
             proceeds -= (mintFee * qty);
-            SafeTransferLib.safeTransferETH(MINT_FEE_RECIPIENT, mintFee);
+            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, mintFee);
         }
 
         // If there are no remaining proceeds after mint fee is taken, exit early
