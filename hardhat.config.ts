@@ -128,6 +128,11 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    berachain: {
+      url: process.env.BERACHAIN_URL || 'https://rpc.berachain.com/',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -142,6 +147,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.apescan.io/api",
           browserURL: "https://apescan.io/"
+        }
+      },
+      {
+        network: "berachain",
+        chainId: 80094,
+        urls: {
+          apiURL: "https://api.berascan.com/api",
+          browserURL: "https://berascan.com/"
         }
       }
     ]

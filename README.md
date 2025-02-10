@@ -87,6 +87,7 @@ The composability of the stages is generic enough to enable flexible and complic
 - Apechain
 - BSC
 - Abstract
+- Berachain
 
 ## Using Foundry
 

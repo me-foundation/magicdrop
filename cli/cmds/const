@@ -11,6 +11,7 @@ SUPPORTED_CHAINS=(
     "56:BSC"
     "43114:Avalanche"
     "2741:Abstract"
+    "80094:Berachain"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"

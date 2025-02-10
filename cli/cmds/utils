@@ -31,6 +31,7 @@ set_rpc_url() {
         33139) RPC_URL="https://rpc.apechain.com/http" ;; # ApeChain
         11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
         2741) RPC_URL="https://api.mainnet.abs.xyz" ;; # Abstract
+        80094) RPC_URL="https://rpc.berachain.com" ;; # Berachain
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -146,6 +147,7 @@ chain_id_to_symbol() {
         56) echo "BNB" ;;
         11155111) echo "SEP" ;;
         2741) echo "ETH" ;;
+        80094) echo "BERA" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -162,6 +164,7 @@ chain_id_to_explorer_url() {
         33139) echo "https://apescan.io" ;;
         11155111) echo "https://sepolia.etherscan.io" ;;
         2741) echo "https://abscan.org" ;;
+        8094) echo "https://berascan.com" ;;
         *) echo "Unknown" ;;
     esac
 }
