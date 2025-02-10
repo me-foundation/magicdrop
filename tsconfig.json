@@ -14,6 +14,6 @@
     "resolveJsonModule": true,
     "typeRoots": ["types", "../../types", "../../node_modules/@types"]
   },
-  "include": ["./scripts", "./test", "./typechain-types", "./src"],
+  "include": ["./scripts", "./test", "./typechain-types", "./src", "deploy/zksync/deploy-erc1155-ss.ts"],
   "files": ["./hardhat.config.ts"]
 }

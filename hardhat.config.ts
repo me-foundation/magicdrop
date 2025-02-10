@@ -1,11 +1,11 @@
 import 'dotenv/config';
 
-import "@nomicfoundation/hardhat-verify";
-import '@nomiclabs/hardhat-waffle';
+import '@nomicfoundation/hardhat-verify';
 import '@typechain/hardhat';
 import 'hardhat-contract-sizer';
 import 'hardhat-gas-reporter';
 import 'hardhat-watcher';
+import '@matterlabs/hardhat-zksync';
 import { HardhatUserConfig, task, types } from 'hardhat/config';
 import 'solidity-coverage';
 import {
@@ -82,6 +82,14 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    abstract: {
+      url: 'https://api.mainnet.abs.xyz',
+      ethNetwork: 'mainnet',
+      zksync: true,
+      chainId: 2741,
+      verifyURL:
+        'https://api-explorer-verify.mainnet.abs.xyz/contract_verification',
+    },
     base: {
       url: process.env.BASE_URL || 'https://mainnet.base.org',
       accounts:
@@ -135,16 +143,6 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
-    customChains: [
-      {
-        network: "apechain",
-        chainId: 33139,
-        urls: {
-          apiURL: "https://api.apescan.io/api",
-          browserURL: "https://apescan.io/"
-        }
-      }
-    ]
   },
   sourcify: {
     enabled: true,

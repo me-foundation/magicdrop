@@ -1,11 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { confirm } from '@inquirer/prompts';
-import { Deferrable, getAddress, isAddress } from 'ethers/lib/utils';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { TransactionRequest } from '@ethersproject/abstract-provider';
 import * as child from 'child_process';
-import { BigNumber, Overrides } from 'ethers';
+import {
+  formatEther,
+  getAddress,
+  isAddress,
+  Overrides,
+  TransactionRequest,
+} from 'ethers';
 
 const gasPricePctDiffAlert = 20; // Set threshold to alert when attempting to under/overpay against the current gas price median by X% (e.g. 20 = 20%)
 
@@ -36,27 +40,24 @@ export const checkCodeVersion = async () => {
 
 export const estimateGas = async (
   hre: HardhatRuntimeEnvironment,
-  tx: Deferrable<TransactionRequest>,
+  tx: TransactionRequest,
   overrides?: Overrides,
 ) => {
-  const overrideGasLimit = overrides?.gasLimit as BigNumber;
-  const overrideGasPrice = overrides?.gasPrice as BigNumber;
+  const overrideGasLimit = overrides?.gasLimit as bigint;
+  const overrideGasPrice = overrides?.gasPrice as bigint;
   const estimatedGasUnit = await hre.ethers.provider.estimateGas(tx);
   const estimatedGasPrice = await hre.ethers.provider.getGasPrice();
-  const estimatedGasCost = estimatedGasUnit.mul(
-    overrideGasPrice ?? estimatedGasPrice,
-  );
+  const estimatedGasCost =
+    estimatedGasUnit * (overrideGasPrice ?? estimatedGasPrice);
   if (overrideGasLimit && overrideGasLimit < estimatedGasUnit) {
     const diffPct =
-      (estimatedGasUnit.toNumber() / overrideGasLimit.toNumber() - 1) * 100;
+      (Number(estimatedGasUnit) / Number(overrideGasLimit) - 1) * 100;
     console.log(
       '\x1b[31m[WARNING]\x1b[0m Estimated gas units required exceeds the limit set:',
-      `\x1b[33m${estimatedGasUnit.toNumber().toLocaleString()}\x1b[0m`,
+      `\x1b[33m${estimatedGasUnit.toLocaleString()}\x1b[0m`,
       `(${
-        diffPct > 0 ? '+' + diffPct.toFixed(2) : diffPct.toFixed(2)
-      }% to the --gaslimit \x1b[33m${overrideGasLimit
-        .toNumber()
-        .toLocaleString()}\x1b[0m)`,
+        diffPct > 0 ? '+' : ''
+      }${diffPct.toFixed(2)}% to the --gaslimit \x1b[33m${overrideGasLimit.toLocaleString()}\x1b[0m)`,
     );
     if (
       !(await confirm({
@@ -67,12 +68,12 @@ export const estimateGas = async (
   } else
     console.log(
       'Estimated gas unit:',
-      `\x1b[33m${estimatedGasUnit.toNumber().toLocaleString()}\x1b[0m`,
+      `\x1b[33m${estimatedGasUnit.toLocaleString()}\x1b[0m`,
     );
 
-  const estimatedGasPriceFormat = estimatedGasPrice.div(1e9).toNumber();
+  const estimatedGasPriceFormat = Number(estimatedGasPrice) / 1e9;
   const overrideGasPriceFormat = overrideGasPrice
-    ? overrideGasPrice.div(1e9).toNumber()
+    ? Number(overrideGasPrice) / 1e9
     : null;
   if (
     overrideGasPriceFormat &&
@@ -102,7 +103,7 @@ export const estimateGas = async (
 
   console.log(
     `Estimated gas cost (${getTokenName(hre)}):`,
-    `\x1b[33m${hre.ethers.utils.formatEther(estimatedGasCost)}\x1b[0m`,
+    `\x1b[33m${formatEther(estimatedGasCost)}\x1b[0m`,
   );
 
   return estimatedGasCost;

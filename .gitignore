@@ -19,3 +19,5 @@ broadcast/
 *whitelist*
 *invalid*
 *.tmp
+/artifacts-zk
+/cache-zk
