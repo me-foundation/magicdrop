@@ -1,0 +1,36 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.22;
+
+import "erc721a/contracts/extensions/IERC721AQueryable.sol";
+import {MintStageInfo} from "../Types.sol";
+import {ERC721MErrorsAndEventsV1_0_2 as ERC721MErrorsAndEvents} from "../ERC721MErrorsAndEventsV1_0_2.sol";
+
+/**
+ * @title IERC721MInitializable
+ * @dev This contract is not meant for use in Upgradeable Proxy contracts though it may base on Upgradeable contract. The purpose of this
+ * contract is for use with EIP-1167 Minimal Proxies (Clones).
+ */
+interface IERC721MInitializableV1_0_2 is IERC721AQueryable, ERC721MErrorsAndEvents {
+    function getNumberStages() external view returns (uint256);
+
+    function getGlobalWalletLimit() external view returns (uint256);
+
+    function getMaxMintableSupply() external view returns (uint256);
+
+    function totalMintedByAddress(address a) external view returns (uint256);
+
+    function getStageInfo(uint256 index) external view returns (MintStageInfo memory, uint32, uint256);
+
+    function mint(uint32 qty, uint32 limit, bytes32[] calldata proof, uint256 timestamp, bytes calldata signature)
+        external
+        payable;
+
+    function authorizedMint(
+        uint32 qty,
+        address to,
+        uint32 limit,
+        bytes32[] calldata proof,
+        uint256 timestamp,
+        bytes calldata signature
+    ) external payable;
+}
