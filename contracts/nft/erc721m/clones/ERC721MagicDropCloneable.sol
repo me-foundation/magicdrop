@@ -14,7 +14,6 @@ import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 
 import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
 
-
 ///                                                     ........
 ///                             .....                   ..    ...
 ///                            ..    .....             ..     ..

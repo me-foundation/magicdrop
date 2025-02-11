@@ -16,7 +16,6 @@ import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata
 
 import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
-
 contract ERC721MagicDropCloneableTest is Test {
     ERC721MagicDropCloneable public token;
     MerkleTestHelper public merkleHelper;
