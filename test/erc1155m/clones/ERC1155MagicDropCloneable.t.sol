@@ -14,6 +14,8 @@ import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc1155m/c
 import {IERC1155MagicDropMetadata} from "contracts/nft/erc1155m/interfaces/IERC1155MagicDropMetadata.sol";
 import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+
 contract ERC1155MagicDropCloneableTest is Test {
     ERC1155MagicDropCloneable public token;
     MerkleTestHelper public merkleHelper;
@@ -29,7 +31,7 @@ contract ERC1155MagicDropCloneableTest is Test {
     uint256 internal allowlistEnd;
     address royaltyRecipient = address(0x8888);
     uint96 royaltyBps = 1000;
-    uint256 mintFee = 0; // 0 ether
+    uint256 mintFee = 20000000000000; // 0.00002 ether
 
     uint256 internal tokenId = 1;
 
@@ -506,27 +508,40 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         // Check initial balances
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         // User mints a token
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, tokenId, 1, "");
+        token.mintPublic{value: 0.01 ether + mintFee}(user, tokenId, 1, "");
 
         // Check balances after minting
+        uint256 expectedMintFee = mintFee;
         uint256 expectedProtocolFee = (0.01 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.01 ether - expectedProtocolFee;
 
-        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance + expectedProtocolFee);
+       bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
     function testSplitProceedsWithZeroPrice() public {
         // Check initial balances
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         vm.prank(owner);
+
         token.setPublicStage(
             tokenId, PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0})
         );
@@ -534,13 +549,27 @@ contract ERC1155MagicDropCloneableTest is Test {
         // Move to public sale time
         vm.warp(publicStart + 1);
 
-        // User mints a token with price 0
+        // User mints a token with price 0 (just mintFee)
         vm.prank(user);
-        token.mintPublic{value: 0 ether}(user, tokenId, 1, "");
+        vm.deal(user, 1 ether);
+        token.mintPublic{value: 0 ether + mintFee}(user, tokenId, 1, "");
 
         // Check balances after minting
-        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance);
-        assertEq(payoutRecipient.balance, initialPayoutBalance);
+        uint256 expectedMintFee = mintFee;
+        uint256 expectedProtocolFee = (0 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
+        uint256 expectedPayout = 0 ether - expectedProtocolFee;
+
+       bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
+        assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
     function testSplitProceedsAllowlist() public {
@@ -548,18 +577,29 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.warp(allowlistStart + 1);
 
         // Check initial balances
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         vm.deal(allowedAddr, 1 ether);
         vm.prank(allowedAddr);
-        token.mintAllowlist{value: 0.005 ether}(allowedAddr, tokenId, 1, merkleHelper.getProofFor(allowedAddr), "");
-
-        uint256 expectedProtocolFee = (0.005 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
-        uint256 expectedPayout = 0.005 ether - expectedProtocolFee;
+        token.mintAllowlist{value: 0.005 ether + mintFee}(allowedAddr, tokenId, 1, merkleHelper.getProofFor(allowedAddr), "");
 
         // Check balances after minting
-        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance + expectedProtocolFee);
+        uint256 expectedMintFee = mintFee;
+        uint256 expectedProtocolFee = (0.005 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
+        uint256 expectedPayout = 0.005 ether - expectedProtocolFee;
+        
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
@@ -575,7 +615,7 @@ contract ERC1155MagicDropCloneableTest is Test {
 
         vm.prank(user);
         vm.expectRevert(ERC1155MagicDropCloneable.PayoutRecipientCannotBeZeroAddress.selector);
-        token.mintPublic{value: 0.01 ether}(user, tokenId, 1, "");
+        token.mintPublic{value: 0.01 ether + mintFee}(user, tokenId, 1, "");
     }
 
     /*==============================================================
