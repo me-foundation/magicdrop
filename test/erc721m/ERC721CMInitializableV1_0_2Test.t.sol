@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {console} from "forge-std/console.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
-import {ERC721MInitializableV1_0_2 as ERC721MInitializable} from
-    "../../contracts/nft/erc721m/ERC721MInitializableV1_0_2.sol";
+import {ERC721CMInitializableV1_0_2 as ERC721CMInitializable} from
+    "../../contracts/nft/erc721m/ERC721CMInitializableV1_0_2.sol";
 import {IERC721MInitializableV1_0_2 as IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializableV1_0_2.sol";
 import {MintStageInfo, SetupConfig} from "../../contracts/nft/erc721m/Types.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
-contract MockERC721M is ERC721MInitializable {
+contract MockERC721CMInitializable is ERC721CMInitializable {
     function baseURI() public view returns (string memory) {
         return _currentBaseURI;
     }
@@ -21,15 +20,15 @@ contract MockERC721M is ERC721MInitializable {
     }
 }
 
-contract ERC721MInitializableV1_0_2Test is Test {
-    MockERC721M public nft;
+contract ERC721CMInitializableV1_0_2Test is Test {
+    MockERC721CMInitializable public nft;
     address public owner;
     address public minter;
     address public fundReceiver;
     address public readonly;
-    address public clone;
     uint256 public constant INITIAL_SUPPLY = 1000;
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
+    address public clone;
     uint256 public startTime;
     uint256 public mintFee = 10000000000000; // 0.00001 ether;
 
@@ -55,8 +54,8 @@ contract ERC721MInitializableV1_0_2Test is Test {
             endTimeUnixSeconds: startTime + 1 days
         });
 
-        clone = LibClone.deployERC1967(address(new MockERC721M()));
-        nft = MockERC721M(clone);
+        clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
+        nft = MockERC721CMInitializable(clone);
         nft.initialize("Test", "TEST", owner, mintFee);
         nft.setup(
             "base_uri_",
@@ -71,67 +70,135 @@ contract ERC721MInitializableV1_0_2Test is Test {
         );
     }
 
-    function testSetupNonOwnerRevert() public {
-        vm.startPrank(address(0x3));
-        vm.expectRevert(Unauthorized.selector);
-        nft.setup(
-            "base_uri_",
-            ".json",
-            INITIAL_SUPPLY,
-            GLOBAL_WALLET_LIMIT,
-            address(0),
-            fundReceiver,
-            new MintStageInfo[](0),
-            address(this),
-            0
-        );
-        vm.stopPrank();
+    function testInitialState() public view {
+        assertEq(nft.name(), "Test");
+        assertEq(nft.symbol(), "TEST");
+        assertEq(nft.owner(), owner);
+        assertEq(nft.getMaxMintableSupply(), INITIAL_SUPPLY);
+        assertEq(nft.getGlobalWalletLimit(), GLOBAL_WALLET_LIMIT);
+        assertTrue(nft.getMintable());
     }
 
-    function testTransferWhenTransferable() public {
-        vm.startPrank(owner);
-        nft.ownerMint(1, minter);
-        vm.stopPrank();
+    function testSetMintable() public {
+        nft.setMintable(false);
+        assertFalse(nft.getMintable());
+
+        vm.prank(readonly);
+        vm.expectRevert();
+        nft.setMintable(true);
+    }
+
+    function testSetMaxMintableSupply() public {
+        nft.setMaxMintableSupply(INITIAL_SUPPLY - 1);
+        assertEq(nft.getMaxMintableSupply(), INITIAL_SUPPLY - 1);
+    }
+
+    function testSetGlobalWalletLimit() public {
+        nft.setGlobalWalletLimit(5);
+        assertEq(nft.getGlobalWalletLimit(), 5);
+    }
+
+    function testWithdraw() public {
+        // Send 100 wei to contract address for testing
+        vm.deal(address(nft), 100);
+        assertEq(address(nft).balance, 100);
+
+        uint256 initialFundReceiverBalance = fundReceiver.balance;
+        nft.withdraw();
+        assertEq(address(nft).balance, 0);
+        assertEq(fundReceiver.balance, initialFundReceiverBalance + 100);
+
+        vm.prank(readonly);
+        vm.expectRevert();
+        nft.withdraw();
+    }
+
+    function testSetStages() public {
+        MintStageInfo[] memory stages = new MintStageInfo[](2);
+        stages[0] = MintStageInfo({
+            price: 0.5 ether,
+            walletLimit: 3,
+            merkleRoot: bytes32(uint256(1)),
+            maxStageSupply: 5,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1
+        });
+        stages[1] = MintStageInfo({
+            price: 0.6 ether,
+            walletLimit: 4,
+            merkleRoot: bytes32(uint256(2)),
+            maxStageSupply: 10,
+            startTimeUnixSeconds: 301,
+            endTimeUnixSeconds: 602
+        });
+
+        nft.setStages(stages);
+        assertEq(nft.getNumberStages(), 2);
+
+        vm.prank(readonly);
+        vm.expectRevert();
+        nft.setStages(stages);
+    }
+
+    function testMint() public {
+        MintStageInfo[] memory stages = new MintStageInfo[](1);
+        stages[0] = MintStageInfo({
+            price: 0.5 ether,
+            walletLimit: 10,
+            merkleRoot: bytes32(0),
+            maxStageSupply: 5,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1
+        });
+        nft.setStages(stages);
+
+        vm.warp(0);
+        vm.prank(minter);
+        nft.mint{value: 0.6 ether}(1, 0, new bytes32[](0), 0, "");
+        assertEq(nft.balanceOf(minter), 1);
+
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
+        vm.prank(minter);
+        nft.mint{value: 0.5 ether}(1, 0, new bytes32[](0), 0, "");
+    }
+
+    function testTokenURI() public {
+        nft.setBaseURI("base_uri_");
+        nft.setTokenURISuffix(".json");
+
+        MintStageInfo[] memory stages = new MintStageInfo[](1);
+        stages[0] = MintStageInfo({
+            price: 0.1 ether,
+            walletLimit: 0,
+            merkleRoot: bytes32(0),
+            maxStageSupply: 0,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1000000
+        });
+        nft.setStages(stages);
+
+        vm.warp(500000);
 
         vm.prank(minter);
-        nft.transferFrom(minter, readonly, 0);
+        nft.mint{value: 0.1 ether + mintFee}(1, 0, new bytes32[](0), 0, "");
+        assertEq(nft.tokenURI(0), "base_uri_0.json");
 
-        assertEq(nft.balanceOf(minter), 0);
-        assertEq(nft.balanceOf(readonly), 1);
+        vm.expectRevert(abi.encodeWithSelector(IERC721A.URIQueryForNonexistentToken.selector));
+        nft.tokenURI(1);
     }
 
-    function testTransferWhenNotTransferable() public {
-        vm.startPrank(owner);
-        nft.setTransferable(false);
-        nft.ownerMint(1, minter);
-        vm.stopPrank();
+    function testGlobalWalletLimit() public {
+        nft.setGlobalWalletLimit(2);
+        assertEq(nft.getGlobalWalletLimit(), 2);
 
-        vm.expectRevert(ErrorsAndEvents.NotTransferable.selector);
-        vm.prank(minter);
-        nft.safeTransferFrom(minter, readonly, 0);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.GlobalWalletLimitOverflow.selector));
+        nft.setGlobalWalletLimit(INITIAL_SUPPLY + 1);
     }
 
-    function testBaseURISetup() public view {
-        assertEq(nft.baseURI(), "base_uri_");
-    }
-
-    function testBaseURISuffixSetup() public view {
-        assertEq(nft.tokenURISuffix(), ".json");
-    }
-
-    function testSetTransferable() public {
-        vm.startPrank(owner);
-        nft.setTransferable(false);
-        assertEq(nft.isTransferable(), false);
-
-        nft.setTransferable(true);
-        assertEq(nft.isTransferable(), true);
-    }
-
-    function testSetTransferableRevertAlreadySet() public {
-        vm.startPrank(owner);
-        vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
-        nft.setTransferable(true);
+    function testContractURI() public {
+        string memory uri = "ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4";
+        nft.setContractURI(uri);
+        assertEq(nft.contractURI(), uri);
     }
 
     function testSetBaseURI() public {
@@ -160,6 +227,34 @@ contract ERC721MInitializableV1_0_2Test is Test {
             address(this),
             0
         );
+
+        assertEq(nft.isSetupLocked(), true);
+    }
+
+    function testSetTransferable() public {
+        vm.startPrank(owner);
+        nft.setTransferable(false);
+        assertEq(nft.isTransferable(), false);
+
+        nft.setTransferable(true);
+        assertEq(nft.isTransferable(), true);
+    }
+
+    function testSetTransferableRevertAlreadySet() public {
+        vm.startPrank(owner);
+        vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
+        nft.setTransferable(true);
+    }
+
+    function testTransferWhenNotTransferable() public {
+        vm.startPrank(owner);
+        nft.setTransferable(false);
+        nft.ownerMint(1, minter);
+        vm.stopPrank();
+
+        vm.expectRevert(ErrorsAndEvents.NotTransferable.selector);
+        vm.prank(minter);
+        nft.safeTransferFrom(minter, readonly, 0);
     }
 
     function testInitializeRevertCalledTwice() public {
@@ -168,8 +263,8 @@ contract ERC721MInitializableV1_0_2Test is Test {
     }
 
     function testCallSetupBeforeInitializeRevert() public {
-        clone = LibClone.deployERC1967(address(new MockERC721M()));
-        MockERC721M nft2 = MockERC721M(clone);
+        clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
+        MockERC721CMInitializable nft2 = MockERC721CMInitializable(clone);
         vm.expectRevert(Unauthorized.selector);
         nft2.setup(
             "base_uri_",
@@ -182,6 +277,23 @@ contract ERC721MInitializableV1_0_2Test is Test {
             address(this),
             0
         );
+    }
+
+    function testSetupNonOwnerRevert() public {
+        vm.startPrank(address(0x3));
+        vm.expectRevert(Unauthorized.selector);
+        nft.setup(
+            "base_uri_",
+            ".json",
+            INITIAL_SUPPLY,
+            GLOBAL_WALLET_LIMIT,
+            address(0),
+            fundReceiver,
+            new MintStageInfo[](0),
+            address(this),
+            0
+        );
+        vm.stopPrank();
     }
 
     function testGetConfig() public {
