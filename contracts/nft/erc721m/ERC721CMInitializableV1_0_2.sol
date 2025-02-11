@@ -15,7 +15,8 @@ import {ERC721ACQueryableInitializable} from "contracts/nft/creator-token-standa
 import {ERC721MStorageV1_0_2 as ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorageV1_0_2.sol";
 import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 import {MintStageInfo, SetupConfig} from "contracts/nft/erc721m/Types.sol";
-import {IERC721MInitializableV1_0_2 as IERC721MInitializable} from "contracts/nft/erc721m/interfaces/IERC721MInitializableV1_0_2.sol";
+import {IERC721MInitializableV1_0_2 as IERC721MInitializable} from
+    "contracts/nft/erc721m/interfaces/IERC721MInitializableV1_0_2.sol";
 import {Cosignable} from "contracts/common/Cosignable.sol";
 import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
 
@@ -45,7 +46,10 @@ contract ERC721CMInitializableV1_0_2 is
     /// @param name The name of the token collection
     /// @param symbol The symbol of the token collection
     /// @param initialOwner The address of the initial owner
-    function initialize(string calldata name, string calldata symbol, address initialOwner, uint256 mintFee) external initializer {
+    function initialize(string calldata name, string calldata symbol, address initialOwner, uint256 mintFee)
+        external
+        initializer
+    {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
         }
