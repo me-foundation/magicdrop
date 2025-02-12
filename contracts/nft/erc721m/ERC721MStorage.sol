@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {MintStageInfo} from "contracts/common/Structs.sol";
+import "../../common/Structs.sol";
 
 contract ERC721MStorage {
     // Controls if new tokens can be minted

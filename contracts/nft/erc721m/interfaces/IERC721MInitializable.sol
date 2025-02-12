@@ -2,7 +2,7 @@
 pragma solidity ^0.8.22;
 
 import "erc721a/contracts/extensions/IERC721AQueryable.sol";
-import "contracts/common/Structs.sol";
+import "../../../common/Structs.sol";
 import {ERC721MErrorsAndEvents} from "../ERC721MErrorsAndEvents.sol";
 
 /**

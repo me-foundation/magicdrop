@@ -466,9 +466,8 @@ contract ERC1155M is
     /// @param stageInfo The stage information to validate
     function _assertValidStageArgsLength(MintStageInfo1155 calldata stageInfo) internal view {
         if (
-            stageInfo.price.length != _numTokens
-                || stageInfo.walletLimit.length != _numTokens || stageInfo.merkleRoot.length != _numTokens
-                || stageInfo.maxStageSupply.length != _numTokens
+            stageInfo.price.length != _numTokens || stageInfo.walletLimit.length != _numTokens
+                || stageInfo.merkleRoot.length != _numTokens || stageInfo.maxStageSupply.length != _numTokens
         ) {
             revert InvalidStageArgsLength();
         }

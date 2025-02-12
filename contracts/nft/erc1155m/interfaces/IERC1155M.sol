@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "contracts/common/Structs.sol";
+import {MintStageInfo1155} from "../../../common/Structs.sol";
 import {ERC1155MErrorsAndEvents} from "../ERC1155MErrorsAndEvents.sol";
 
 interface IERC1155M is ERC1155MErrorsAndEvents {
