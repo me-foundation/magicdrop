@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+import {Initializable} from "solady/src/utils/Initializable.sol";
 import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
@@ -10,12 +11,23 @@ import {MagicDropTokenImplRegistry} from "../registry/MagicDropTokenImplRegistry
 /// @title MagicDropCloneFactory
 /// @notice A factory contract for creating and managing clones of MagicDrop contracts
 /// @dev This contract uses the UUPS proxy pattern
-contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
+contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
+    /*==============================================================
+    =                            STORAGE                           =
+    ==============================================================*/
+
+    /// @notice The registry contract
+    MagicDropTokenImplRegistry private _registry;
+
+    /// @notice Gap for future upgrades
+    /// @dev Must be the last storage variable
+    /// @dev Reduce the gap when adding new storage variables
+    uint256[48] private __gap;
+
     /*==============================================================
     =                           CONSTANTS                          =
     ==============================================================*/
 
-    MagicDropTokenImplRegistry private _registry;
     bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address,uint256)"));
 
     /*==============================================================
@@ -45,12 +57,12 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     error InitialOwnerCannotBeZero();
 
     /*==============================================================
-    =                          CONSTRUCTOR                         =
+    =                          INITIALIZER                         =
     ==============================================================*/
 
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
-    constructor(address initialOwner, address registry) public {
+    function initialize(address initialOwner, address registry) initializer public {
         if (registry == address(0)) {
             revert RegistryAddressCannotBeZero();
         }

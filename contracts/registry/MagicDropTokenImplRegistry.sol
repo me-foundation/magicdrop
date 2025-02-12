@@ -3,13 +3,14 @@ pragma solidity ^0.8.22;
 
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
+import {Initializable} from "solady/src/utils/Initializable.sol";
 import {IMagicDropTokenImplRegistry, TokenStandard} from "./interfaces/IMagicDropTokenImplRegistry.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /// @title MagicDropTokenImplRegistry
 /// @dev A registry for managing token implementation addresses for different token standards.
 /// This contract is upgradeable and uses the UUPS pattern.
-contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropTokenImplRegistry {
+contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropTokenImplRegistry, Initializable {
     /*==============================================================
     =                            STRUCTS                           =
     ==============================================================*/
@@ -34,6 +35,11 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     // keccak256(abi.encode(uint256(keccak256("magicdrop.registry.MagicDropTokenImplRegistry")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant MAGICDROP_REGISTRY_STORAGE =
         0xfd008fcd1deb21680f735a35fafc51691c5fb3daec313cfea4dc62938bee9000;
+
+    /// @notice Gap for future upgrades
+    /// @dev Must be the last storage variable
+    /// @dev Reduce the gap when adding new storage variables
+    uint256[48] private __gap;
 
     /*==============================================================
     =                            EVENTS                            =
@@ -61,7 +67,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     ==============================================================*/
 
     /// @param initialOwner The address of the initial owner
-    constructor(address initialOwner) public {
+    function initialize(address initialOwner) initializer public {
         _initializeOwner(initialOwner);
 
         // Initialize nextImplId and interface IDs for each token standard

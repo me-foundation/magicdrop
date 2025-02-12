@@ -39,12 +39,15 @@ contract MagicDropCloneFactoryTest is Test {
         vm.startPrank(owner);
 
         // Deploy and initialize registry
-        MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry(owner);
-        registry = MagicDropTokenImplRegistry(address(registryImpl));
+        address registryImpl = LibClone.clone(address(new MagicDropTokenImplRegistry()));
+        registry = MagicDropTokenImplRegistry(payable(registryImpl));
+        registry.initialize(owner);
+
 
         // Deploy factory
-        MagicDropCloneFactory factoryImpl = new MagicDropCloneFactory(owner, address(registry));
-        factory = MagicDropCloneFactory(payable(address(factoryImpl)));
+        address factoryImpl = LibClone.clone(address(new MagicDropCloneFactory()));
+        factory = MagicDropCloneFactory(payable(factoryImpl));
+        factory.initialize(owner, address(registry));
 
         // Deploy implementations
         erc721Impl = new MockERC721Initializable();
