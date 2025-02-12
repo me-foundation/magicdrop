@@ -12,11 +12,10 @@ import {ERC721A, IERC721A} from "erc721a/contracts/ERC721A.sol";
 
 import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.sol";
 import {ERC721ACQueryableInitializable} from "contracts/nft/creator-token-standards/ERC721ACQueryableInitializable.sol";
-import {ERC721MStorageV1_0_2 as ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorageV1_0_2.sol";
+import {ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorage.sol";
 import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
-import {MintStageInfo, SetupConfig} from "contracts/nft/erc721m/Types.sol";
-import {IERC721MInitializableV1_0_2 as IERC721MInitializable} from
-    "contracts/nft/erc721m/interfaces/IERC721MInitializableV1_0_2.sol";
+import {MintStageInfo, SetupConfig} from "contracts/common/Structs.sol";
+import {IERC721MInitializable} from "contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {Cosignable} from "contracts/common/Cosignable.sol";
 import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
 

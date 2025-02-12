@@ -11,10 +11,10 @@ import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
-import {MintStageInfo1155} from "contracts/nft/erc1155m/Types.sol";
+import {MintStageInfo1155} from "../../common/Structs.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
-import {IERC1155MV1_0_2 as IERC1155M} from "./interfaces/IERC1155MV1_0_2.sol";
-import {ERC1155MStorageV1_0_2 as ERC1155MStorage} from "./ERC1155MStorageV1_0_2.sol";
+import {IERC1155M} from "./interfaces/IERC1155M.sol";
+import {ERC1155MStorage} from "./ERC1155MStorage.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
 /// @title ERC1155MInitializableV1_0_2

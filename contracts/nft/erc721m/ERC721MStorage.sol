@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "../../common/Structs.sol";
+import {MintStageInfo} from "contracts/common/Structs.sol";
 
 contract ERC721MStorage {
     // Controls if new tokens can be minted
@@ -51,4 +51,7 @@ contract ERC721MStorage {
 
     // Royalty basis points
     uint96 internal _royaltyBps;
+
+    // Mint fee for each item minted
+    uint256 internal _mintFee;
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {MintStageInfo1155} from "../../common/Structs.sol";
+import {MintStageInfo1155} from "contracts/common/Structs.sol";
 
 contract ERC1155MStorage {
     // Mint stage information. See MintStageInfo1155 for details.
@@ -51,4 +51,7 @@ contract ERC1155MStorage {
 
     // Minted count per stage per token.
     mapping(uint256 => mapping(uint256 => uint256)) internal _stageMintedCountsPerToken;
+
+    // Mint fee for each item minted
+    uint256 internal _mintFee;
 }

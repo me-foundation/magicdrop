@@ -16,7 +16,8 @@ contract ERC721MOperatorFilterer is ERC721M, UpdatableOperatorFilterer {
         address cosigner,
         uint256 timestampExpirySeconds,
         address mintCurrency,
-        address fundReceiver
+        address fundReceiver,
+        uint256 mintFee
     )
         UpdatableOperatorFilterer(CANONICAL_OPERATOR_FILTER_REGISTRY_ADDRESS, ME_SUBSCRIPTION, true)
         ERC721M(
@@ -28,7 +29,8 @@ contract ERC721MOperatorFilterer is ERC721M, UpdatableOperatorFilterer {
             cosigner,
             timestampExpirySeconds,
             mintCurrency,
-            fundReceiver
+            fundReceiver,
+            mintFee
         )
     {}
 

@@ -40,7 +40,8 @@ contract ERC1155M is
         address mintCurrency,
         address fundReceiver,
         address royaltyReceiver,
-        uint96 royaltyFeeNumerator
+        uint96 royaltyFeeNumerator,
+        uint256 mintFee
     ) ERC1155(uri) {
         if (maxMintableSupply.length != globalWalletLimit.length) {
             revert InvalidLimitArgsLength();
@@ -60,6 +61,7 @@ contract ERC1155M is
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
         _transferable = true;
+        _mintFee = mintFee;
 
         _initializeOwner(msg.sender);
 
@@ -222,7 +224,6 @@ contract ERC1155M is
             _mintStages.push(
                 MintStageInfo1155({
                     price: newStages[i].price,
-                    mintFee: newStages[i].mintFee,
                     walletLimit: newStages[i].walletLimit,
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
@@ -233,7 +234,6 @@ contract ERC1155M is
             emit UpdateStage(
                 i,
                 newStages[i].price,
-                newStages[i].mintFee,
                 newStages[i].walletLimit,
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,
@@ -373,10 +373,9 @@ contract ERC1155M is
         uint256 stageTimestamp = block.timestamp;
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
         MintStageInfo1155 memory stage = _mintStages[activeStage];
-        uint80 mintFee = stage.mintFee[tokenId];
 
         // Check value if minting with Ei gueTH
-        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + mintFee) * qty) {
+        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + _mintFee) * qty) {
             revert NotEnoughValue();
         }
 
@@ -416,11 +415,11 @@ contract ERC1155M is
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
             SafeTransferLib.safeTransferFrom(
-                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + mintFee) * qty
+                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + _mintFee) * qty
             );
         }
 
-        _totalMintFee += mintFee * qty;
+        _totalMintFee += _mintFee * qty;
         _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] += qty;
         _stageMintedCountsPerToken[activeStage][tokenId] += qty;
         _mint(to, tokenId, qty, "");
@@ -467,7 +466,7 @@ contract ERC1155M is
     /// @param stageInfo The stage information to validate
     function _assertValidStageArgsLength(MintStageInfo1155 calldata stageInfo) internal view {
         if (
-            stageInfo.price.length != _numTokens || stageInfo.mintFee.length != _numTokens
+            stageInfo.price.length != _numTokens
                 || stageInfo.walletLimit.length != _numTokens || stageInfo.merkleRoot.length != _numTokens
                 || stageInfo.maxStageSupply.length != _numTokens
         ) {

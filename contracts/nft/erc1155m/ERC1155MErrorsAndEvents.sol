@@ -10,7 +10,6 @@ interface ERC1155MErrorsAndEvents is ErrorsAndEvents {
     event UpdateStage(
         uint256 indexed stage,
         uint80[] price,
-        uint80[] mintFee,
         uint32[] walletLimit,
         bytes32[] merkleRoot,
         uint24[] maxStageSupply,

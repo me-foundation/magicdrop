@@ -4,9 +4,9 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std/Test.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 
-import {ERC1155MInitializableV1_0_1 as ERC1155MInitializable} from
-    "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_1.sol";
-import {MintStageInfo1155, SetupConfig} from "../../contracts/common/Structs.sol";
+import {ERC1155MInitializableV1_0_2 as ERC1155MInitializable} from
+    "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_2.sol";
+import {MintStageInfo1155} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
 contract ERC1155MInitializableTest is Test {
@@ -21,6 +21,7 @@ contract ERC1155MInitializableTest is Test {
     uint256[] public maxMintableSupply;
     uint256[] public globalWalletLimit;
     MintStageInfo1155[] public initialStages;
+    uint256 public mintFee = 10000000000000; // 0.00001 ether;
 
     error Unauthorized();
 
@@ -32,7 +33,7 @@ contract ERC1155MInitializableTest is Test {
 
         address clone = LibClone.deployERC1967(address(new ERC1155MInitializable()));
         nft = ERC1155MInitializable(clone);
-        nft.initialize("Test", "TEST", owner);
+        nft.initialize("Test", "TEST", owner, mintFee);
 
         maxMintableSupply = new uint256[](1);
         maxMintableSupply[0] = INITIAL_SUPPLY;
@@ -49,7 +50,7 @@ contract ERC1155MInitializableTest is Test {
     function testSetupNonOwnerRevert() public {
         ERC1155MInitializable clone =
             ERC1155MInitializable(LibClone.deployERC1967(address(new ERC1155MInitializable())));
-        clone.initialize("Test", "TEST", owner);
+        clone.initialize("Test", "TEST", owner, mintFee);
 
         vm.startPrank(address(0x3));
         vm.expectRevert(Unauthorized.selector);
@@ -72,7 +73,7 @@ contract ERC1155MInitializableTest is Test {
     function testInitializeRevertCalledTwice() public {
         vm.startPrank(owner);
         vm.expectRevert("Initializable: contract is already initialized");
-        nft.initialize("Test", "TEST", owner);
+        nft.initialize("Test", "TEST", owner, mintFee);
     }
 
     function testCallSetupBeforeInitializeRevert() public {
