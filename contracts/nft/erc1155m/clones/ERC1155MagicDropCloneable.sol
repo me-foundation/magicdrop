@@ -69,18 +69,6 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     ///      Configurable by the owner. If unset, withdrawals may fail.
     address internal _payoutRecipient;
 
-    /// @dev The address that receives protocol fees on withdrawal.
-    /// @notice This is fixed and cannot be changed.
-    address public constant PROTOCOL_FEE_RECIPIENT = 0xA3833016a4eC61f5c253D71c77522cC8A1cC1106;
-
-    /// @dev The protocol fee expressed in basis points (e.g., 500 = 5%).
-    /// @notice This fee is taken from the contract's entire balance upon withdrawal.
-    uint256 public constant PROTOCOL_FEE_BPS = 0; // 0%
-
-    /// @dev The denominator used for calculating basis points.
-    /// @notice 10,000 BPS = 100%. A fee of 500 BPS is therefore 5%.
-    uint256 public constant BPS_DENOMINATOR = 10_000;
-
     /// @dev Configuration of the public mint stage, including timing and price.
     /// @notice Public mints occur only if the current timestamp is within [startTime, endTime].
     mapping(uint256 => PublicStage) internal _publicStages; // tokenId => publicStage
@@ -434,28 +422,16 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             revert PayoutRecipientCannotBeZeroAddress();
         }
 
-        uint256 proceeds = msg.value;
-
         if (mintFee > 0) {
-            proceeds -= (mintFee * qty);
-            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, mintFee);
-        }
-
-        // If there are no remaining proceeds after mint fee is taken, exit early
-        if (proceeds == 0) {
-            return;
-        }
-
-        if (PROTOCOL_FEE_BPS > 0) {
-            uint256 protocolFee = (proceeds * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
+            uint256 totalMintFee = mintFee * qty;
             uint256 remainingBalance;
             unchecked {
-                remainingBalance = proceeds - protocolFee;
+                remainingBalance = msg.value - totalMintFee;
             }
-            SafeTransferLib.safeTransferETH(PROTOCOL_FEE_RECIPIENT, protocolFee);
+            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, totalMintFee);
             SafeTransferLib.safeTransferETH(_payoutRecipient, remainingBalance);
         } else {
-            SafeTransferLib.safeTransferETH(_payoutRecipient, proceeds);
+            SafeTransferLib.safeTransferETH(_payoutRecipient, msg.value);
         }
     }
 
