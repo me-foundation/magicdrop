@@ -588,4 +588,20 @@ contract ERC1155MagicDropCloneableTest is Test {
         assert(bytes(name).length > 0);
         assert(bytes(version).length > 0);
     }
+
+    /*==============================================================
+    =                          MINT FEE                            =
+    ==============================================================*/
+
+    function testMintFee() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+
+        vm.prank(user);
+        vm.expectRevert(ERC1155MagicDropCloneable.RequiredValueNotMet.selector);
+        token.mintPublic{value: 0.01 ether}(user, tokenId, 1, "");
+
+        token.mintPublic{value: 0.01 ether + mintFee}(user, tokenId, 1, "");
+        assertEq(token.balanceOf(user, tokenId), 1);
+    }
 }
