@@ -28,6 +28,8 @@ MAGIC_EDEN_DEFAULT_LIST_ID="1"
 # We use list 3 for Polygon because list 1 was already taken.
 MAGIC_EDEN_POLYGON_LIST_ID="3"
 
+DEFAULT_IMPL_ID="0"
+
 get_factory_address() {
     # abstract factory address
     if [ "$chain_id" == "2741" ]; then
@@ -43,5 +45,24 @@ get_registry_address() {
         echo "0x9b60ad31F145ec7EE3c559153bB57928B65C0F87"
     else # default
         echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
+    fi
+}
+
+# The latest MagicDrop v1.0.1 implementation ID for each supported chain.
+get_impl_id() {
+    if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
+        if [ "$chain_id" == "2741" ]; then
+            echo "3" # ERC721C implementation ID / abstract
+        elif [ "$chain_id" == "8453" ]; then
+            echo "8" # base
+        elif [ "$chain_id" == "1" ]; then
+            echo "7" # ethereum
+        elif [ "$chain_id" == "80094" ]; then
+            echo "2" # berachain
+        else
+            echo "5" # all other chains
+        fi
+    else
+        echo $DEFAULT_IMPL_ID
     fi
 }
