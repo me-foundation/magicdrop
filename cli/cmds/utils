@@ -4,22 +4,6 @@ trap "echo 'Exiting...'; exit 1" SIGINT
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-check_input() {
-    local input_value="$1"
-    local input_name="$2"
-    if [[ -z "$input_value" ]]; then
-        echo "No input received for $input_name. Exiting..."
-        exit 1
-    fi
-}
-
-format_address() {
-    local address=$1
-    local prefix=${address:0:6}
-    local suffix=${address: -4}
-    echo "${prefix}...${suffix}"
-}
-
 set_rpc_url() {
     case $1 in
         1) RPC_URL="https://eth.llamarpc.com" ;; # Ethereum
@@ -37,6 +21,57 @@ set_rpc_url() {
 
     export RPC_URL
 }
+
+chain_id_to_symbol() {
+    local chain_id="$1"
+    case $chain_id in
+        1) echo "ETH" ;;
+        137) echo "MATIC" ;;
+        8453) echo "BASE" ;;
+        42161) echo "ARB" ;;
+        1329) echo "SEI" ;;
+        33139) echo "APE" ;;
+        56) echo "BNB" ;;
+        11155111) echo "SEP" ;;
+        2741) echo "ETH" ;;
+        80094) echo "BERA" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
+chain_id_to_explorer_url() {
+    local chain_id="$1"
+    case $chain_id in
+        1) echo "https://etherscan.io" ;;
+        56) echo "https://bscscan.com" ;;
+        137) echo "https://polygonscan.com" ;;
+        8453) echo "https://basescan.org" ;;
+        42161) echo "https://arbiscan.io" ;;
+        1329) echo "https://seitrace.com" ;;
+        33139) echo "https://apescan.io" ;;
+        11155111) echo "https://sepolia.etherscan.io" ;;
+        2741) echo "https://abscan.org" ;;
+        8094) echo "https://berascan.com" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
+check_input() {
+    local input_value="$1"
+    local input_name="$2"
+    if [[ -z "$input_value" ]]; then
+        echo "No input received for $input_name. Exiting..."
+        exit 1
+    fi
+}
+
+format_address() {
+    local address=$1
+    local prefix=${address:0:6}
+    local suffix=${address: -4}
+    echo "${prefix}...${suffix}"
+}
+
 
 process_stages() {
     output_file_dir="$(dirname "$collection_file")"
@@ -133,40 +168,6 @@ check_signer_native_balance() {
     local balance=$(cast balance $SIGNER --rpc-url "$RPC_URL")
     local from_wei=$(cast from-wei $balance)
     printf "%.3f\n" $from_wei
-}
-
-chain_id_to_symbol() {
-    local chain_id="$1"
-    case $chain_id in
-        1) echo "ETH" ;;
-        137) echo "MATIC" ;;
-        8453) echo "BASE" ;;
-        42161) echo "ARB" ;;
-        1329) echo "SEI" ;;
-        33139) echo "APE" ;;
-        56) echo "BNB" ;;
-        11155111) echo "SEP" ;;
-        2741) echo "ETH" ;;
-        80094) echo "BERA" ;;
-        *) echo "Unknown" ;;
-    esac
-}
-
-chain_id_to_explorer_url() {
-    local chain_id="$1"
-    case $chain_id in
-        1) echo "https://etherscan.io" ;;
-        56) echo "https://bscscan.com" ;;
-        137) echo "https://polygonscan.com" ;;
-        8453) echo "https://basescan.org" ;;
-        42161) echo "https://arbiscan.io" ;;
-        1329) echo "https://seitrace.com" ;;
-        33139) echo "https://apescan.io" ;;
-        11155111) echo "https://sepolia.etherscan.io" ;;
-        2741) echo "https://abscan.org" ;;
-        8094) echo "https://berascan.com" ;;
-        *) echo "Unknown" ;;
-    esac
 }
 
 format_explorer_contract_url() {

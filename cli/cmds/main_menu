@@ -69,6 +69,7 @@ contract_management_menu() {
         "Set Cosigner" \
         "Set Token URI Suffix (ERC721 Only)" \
         "Set Timestamp Expiry" \
+        "Withdraw Contract Balance" \
         "Freeze/Thaw Contract" \
         "Transfer Ownership" \
         "Manage Authorized Minters"\
@@ -113,6 +114,9 @@ contract_management_menu() {
             ;;
         "Set Cosigner")
             set_cosigner_contract
+            ;;
+        "Withdraw Contract Balance")
+            withdraw_contract
             ;;
         "Manage Authorized Minters")
             manage_authorized_minters_contract

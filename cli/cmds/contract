@@ -2,25 +2,6 @@
 
 trap "echo 'Exiting...'; exit 1" SIGINT
 
-DEFAULT_IMPL_ID="0"
-
-# The latest MagicDrop v1.0.1 implementation ID for each supported chain.
-get_impl_id() {
-    if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
-        if [ "$chain_id" == "2741" ]; then
-            echo "3" # ERC721C implementation ID / abstract
-        elif [ "$chain_id" == "8453" ]; then
-            echo "8" # base
-        elif [ "$chain_id" == "1" ]; then
-            echo "7" # ethereum
-        else
-            echo "5" # all other chains
-        fi
-    else
-        echo $DEFAULT_IMPL_ID
-    fi
-}
-
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
     clear 
@@ -577,9 +558,10 @@ transfer_ownership_contract() {
     title="Complete Ownership Handover"
 
     echo ""
-    echo "Notice: In order to transfer ownership, the next owner must call 'requestOwnershipTransfer(address)' on the contract."
-    echo "This request will expire in 48 hours. Once expired, the request can be made again by the new owner."
-    echo "After the request is made, the current owner can proceed with this action."
+    echo "################################################################################"
+    echo "WARNING: This action will transfer ownership of the contract to the new owner."
+    echo "Please triple check the new owner's address before proceeding!"
+    echo "################################################################################"
     echo ""
 
     if ! gum confirm "Do you want to proceed?"; then
@@ -599,13 +581,13 @@ transfer_ownership_contract() {
     print_signer_with_balance $chain_id
 
     if gum confirm "Do you want to proceed?"; then
-        complete_ownership_handover_selector="completeOwnershipHandover(address)"
+        transfer_ownership_selector="transferOwnership(address)"
         password=$(get_password_if_set)
 
-        echo "Completing ownership handover... this will take a moment."
+        echo "Transferring ownership... this will take a moment."
 
         output=$(cast send $contract_address \
-            $complete_ownership_handover_selector \
+            $transfer_ownership_selector \
             $new_owner \
             $password \
             $(zksync_flag) \
@@ -920,3 +902,47 @@ set_cosigner_contract() {
     fi
 }
 
+
+withdraw_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Withdraw Contract Balance"
+
+    set_chain
+    set_contract_address
+
+    # Get contract balance
+    balance=$(cast balance $contract_address --rpc-url "$RPC_URL")
+    formatted_balance=$(cast --from-wei $balance)
+
+    echo ""
+    echo "Contract balance: $formatted_balance ETH"
+    echo ""
+
+    if [ "$balance" == "0" ]; then
+        echo "Contract has no balance to withdraw."
+        exit 1
+    fi
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to withdraw the entire balance?"; then
+        withdraw_selector="withdraw()"
+        password=$(get_password_if_set)
+
+        echo "Withdrawing funds... this will take a moment."
+
+        output=$(cast send $contract_address \
+            "$withdraw_selector" \
+            $password \
+            $(zksync_flag) \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Withdrawal cancelled."
+        echo ""
+    fi
+}
