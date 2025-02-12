@@ -31,6 +31,8 @@ contract ERC1155MInitializableTest is Test {
         readonly = address(0x2);
         minter = address(0x4);
 
+        vm.deal(minter, 2 ether);
+
         address clone = LibClone.deployERC1967(address(new ERC1155MInitializable()));
         nft = ERC1155MInitializable(clone);
         nft.initialize("Test", "TEST", owner, mintFee);
@@ -123,5 +125,39 @@ contract ERC1155MInitializableTest is Test {
         vm.startPrank(owner);
         vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
         nft.setTransferable(true);
+    }
+
+    function testMintFee() public {
+        MintStageInfo1155[] memory stages = new MintStageInfo1155[](1);
+
+        uint80[] memory price = new uint80[](1);
+        price[0] = 0.5 ether;
+        uint32[] memory walletLimit = new uint32[](1);
+        walletLimit[0] = 1;
+        bytes32[] memory merkleRoot = new bytes32[](1);
+        merkleRoot[0] = bytes32(0);
+        uint24[] memory maxStageSupply = new uint24[](1);
+        maxStageSupply[0] = 5;
+
+        stages[0] = MintStageInfo1155({
+            price: price,
+            walletLimit: walletLimit,
+            merkleRoot: merkleRoot,
+            maxStageSupply: maxStageSupply,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1
+        });
+
+        nft.setStages(stages);
+
+        vm.warp(0);
+        vm.prank(minter);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
+        nft.mint{value: 0.5 ether}(0, 1, 0, new bytes32[](0));
+        assertEq(nft.balanceOf(minter, 0), 0);
+
+        vm.prank(minter);
+        nft.mint{value: 0.5 ether + mintFee}(0, 1, 1, new bytes32[](0));
+        assertEq(nft.balanceOf(minter, 0), 1);
     }
 }

@@ -392,4 +392,27 @@ contract ERC721CMInitializableTest is Test {
         vm.expectRevert();
         nft.burn(0);
     }
+
+    function testMintFee() public {
+        MintStageInfo[] memory stages = new MintStageInfo[](1);
+        stages[0] = MintStageInfo({
+            price: 0.5 ether,
+            walletLimit: 10,
+            merkleRoot: bytes32(0),
+            maxStageSupply: 5,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1
+        });
+        nft.setStages(stages);
+
+        vm.warp(0);
+        vm.prank(minter);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
+        nft.mint{value: 0.5 ether}(1, 0, new bytes32[](0), 0, "");
+        assertEq(nft.balanceOf(minter), 0);
+
+        vm.prank(minter);
+        nft.mint{value: 0.5 ether + mintFee}(1, 0, new bytes32[](0), 0, "");
+        assertEq(nft.balanceOf(minter), 1);
+    }
 }
