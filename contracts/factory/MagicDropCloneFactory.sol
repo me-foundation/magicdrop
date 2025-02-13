@@ -120,8 +120,10 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
         // Retrieve the mint fee for the implementation
         uint256 mintFee = _registry.getMintFee(standard, implId);
 
+        // Create a unique salt by combining original salt with chain ID and sender
+        bytes32 _salt = keccak256(abi.encode(salt, block.chainid, msg.sender));
         // Create a deterministic clone of the implementation contract
-        address instance = LibClone.cloneDeterministic(impl, salt);
+        address instance = LibClone.cloneDeterministic(impl, _salt);
 
         // Initialize the newly created contract
         (bool success,) =
@@ -221,7 +223,8 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
         } else {
             impl = _registry.getImplementation(standard, implId);
         }
-        return LibClone.predictDeterministicAddress(impl, salt, address(this));
+        bytes32 _salt = keccak256(abi.encode(salt, block.chainid, msg.sender));
+        return LibClone.predictDeterministicAddress(impl, _salt, address(this));
     }
 
     /// @notice Retrieves the address of the registry contract
