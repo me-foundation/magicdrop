@@ -93,6 +93,7 @@ contract ERC721MInitializableV1_0_2 is
     /// @param name The name of the token collection
     /// @param symbol The symbol of the token collection
     /// @param initialOwner The address of the initial owner
+    /// @param mintFee The mint fee for the contract
     function initialize(string calldata name, string calldata symbol, address initialOwner, uint256 mintFee)
         external
         initializer
