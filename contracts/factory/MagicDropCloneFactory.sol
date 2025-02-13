@@ -56,7 +56,7 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
     error WithdrawalFailed();
     error InitialOwnerCannotBeZero();
     error NewImplementationCannotBeZero();
-    
+
     /*==============================================================
     =                          INITIALIZER                         =
     ==============================================================*/

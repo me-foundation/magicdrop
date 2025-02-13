@@ -14,7 +14,7 @@ import {TokenStandard} from "../../contracts/common/Structs.sol";
 contract MagicDropCloneFactoryV2 is MagicDropCloneFactory {
     // New storage variable (example)
     uint256 private _maxDeploymentFee;
-    
+
     // Reduce gap by 1
     uint256[47] private __gap;
 
@@ -53,17 +53,13 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
 
     function setUp() public {
         owner = address(this);
-        
+
         factory = new MagicDropCloneFactory();
         registry = address(new MagicDropTokenImplRegistry());
 
         // Deploy proxies
-        registryProxy = LibClone.deployERC1967(
-            address(registry)
-        );
-        factoryProxy = LibClone.deployERC1967(
-            address(factory)
-        );
+        registryProxy = LibClone.deployERC1967(address(registry));
+        factoryProxy = LibClone.deployERC1967(address(factory));
         erc721 = address(new ERC721MagicDropCloneable());
 
         // Initialize the proxies
@@ -72,74 +68,50 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
 
         // register erc721
         MagicDropTokenImplRegistry(payable(registryProxy)).registerImplementation(
-            TokenStandard.ERC721,
-            erc721,
-            true,
-            0.01 ether,
-            0.01 ether
+            TokenStandard.ERC721, erc721, true, 0.01 ether, 0.01 ether
         );
-        
+
         // Deploy V2 implementation (but don't upgrade yet)
         factoryV2 = new MagicDropCloneFactoryV2();
     }
 
     function test_UpgradeToV2() public {
         MagicDropCloneFactory factoryPrxy = MagicDropCloneFactory(payable(factoryProxy));
-        
+
         // Verify initial state and deploy a collection before upgrade
         assertEq(factoryPrxy.getRegistry(), registryProxy);
         bytes memory initData = "";
-        address collection = factoryPrxy.createContract(
-            "Test",
-            "TEST",
-            TokenStandard.ERC721,
-            payable(owner),
-            0
-        );
+        address collection = factoryPrxy.createContract("Test", "TEST", TokenStandard.ERC721, payable(owner), 0);
         assertTrue(collection != address(0));
 
         // Upgrade to V2
-        UUPSUpgradeable(factoryProxy).upgradeToAndCall(
-            address(factoryV2),
-            ""
-        );
+        UUPSUpgradeable(factoryProxy).upgradeToAndCall(address(factoryV2), "");
 
         MagicDropCloneFactoryV2 factoryV2Proxy = MagicDropCloneFactoryV2(payable(factoryProxy));
-        
+
         // Test new V2 functionality
         factoryV2Proxy.setMaxDeploymentFee(1 ether);
         assertEq(factoryV2Proxy.getMaxDeploymentFee(), 1 ether);
 
         // Verify old state is preserved and can still deploy collections
         assertEq(factoryV2Proxy.getRegistry(), registryProxy);
-        address collectionAfterUpgrade = factoryV2Proxy.createContract(
-            "Test",
-            "TEST",
-            TokenStandard.ERC721,
-            payable(owner),
-            0
-        );
+        address collectionAfterUpgrade =
+            factoryV2Proxy.createContract("Test", "TEST", TokenStandard.ERC721, payable(owner), 0);
         assertTrue(collectionAfterUpgrade != address(0));
     }
 
     function test_CannotUpgradeUnauthorized() public {
         vm.prank(address(0xdead));
         vm.expectRevert(Ownable.Unauthorized.selector);
-        UUPSUpgradeable(factoryProxy).upgradeToAndCall(
-            address(factoryV2),
-            ""
-        );
+        UUPSUpgradeable(factoryProxy).upgradeToAndCall(address(factoryV2), "");
     }
 
     function test_CannotUpgradeToInvalidImplementation() public {
         // Deploy an implementation without UUPS interface
         MockInvalidImplementation invalidImpl = new MockInvalidImplementation();
-        
+
         vm.expectRevert(UUPSUpgradeable.UpgradeFailed.selector);
-        UUPSUpgradeable(factoryProxy).upgradeToAndCall(
-            address(invalidImpl),
-            ""
-        );
+        UUPSUpgradeable(factoryProxy).upgradeToAndCall(address(invalidImpl), "");
     }
 
     function test_CannotInitializeImplementation() public {
@@ -149,16 +121,10 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
     }
 
     function test_UpgradeWithInitializer() public {
-        bytes memory initData = abi.encodeCall(
-            MagicDropCloneFactoryV2.setMaxDeploymentFee,
-            (1 ether)
-        );
+        bytes memory initData = abi.encodeCall(MagicDropCloneFactoryV2.setMaxDeploymentFee, (1 ether));
 
-        UUPSUpgradeable(factoryProxy).upgradeToAndCall(
-            address(factoryV2),
-            initData
-        );
-        
+        UUPSUpgradeable(factoryProxy).upgradeToAndCall(address(factoryV2), initData);
+
         MagicDropCloneFactoryV2 factoryV2Proxy = MagicDropCloneFactoryV2(payable(factoryProxy));
         assertEq(factoryV2Proxy.getMaxDeploymentFee(), 1 ether);
     }
@@ -166,20 +132,14 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
     function test_CannotUpgradeToZeroAddress() public {
         // We expect a revert when trying to upgrade to a zero address.
         vm.expectRevert();
-        UUPSUpgradeable(factoryProxy).upgradeToAndCall(
-            address(0),
-            ""
-        );
+        UUPSUpgradeable(factoryProxy).upgradeToAndCall(address(0), "");
     }
 
     function test_NonOwnerCannotCallNewFunction() public {
         // Upgrade the contract first.
-        UUPSUpgradeable(factoryProxy).upgradeToAndCall(
-            address(factoryV2),
-            ""
-        );
+        UUPSUpgradeable(factoryProxy).upgradeToAndCall(address(factoryV2), "");
         MagicDropCloneFactoryV2 factoryV2Proxy = MagicDropCloneFactoryV2(payable(factoryProxy));
-        
+
         // Simulate a call from a non-owner address.
         vm.prank(address(0xdeadbeef));
         vm.expectRevert(Ownable.Unauthorized.selector);
@@ -192,28 +152,18 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
         // Deploy a collection before any upgrades
         bytes memory initData = "";
         address collectionV1 = MagicDropCloneFactory(payable(factoryProxy)).createContract(
-            "Test",
-            "TEST",
-            TokenStandard.ERC721,
-            payable(owner),
-            0
+            "Test", "TEST", TokenStandard.ERC721, payable(owner), 0
         );
         assertTrue(collectionV1 != address(0));
 
         // Upgrade to V2 implementation
         UUPSUpgradeable(factoryProxy).upgradeToAndCall(address(factoryV2), "");
         MagicDropCloneFactoryV2 factoryV2Proxy = MagicDropCloneFactoryV2(payable(factoryProxy));
-        
+
         // Verify V2 can deploy collections
-        address collectionV2 = factoryV2Proxy.createContract(
-            "Test",
-            "TEST",
-            TokenStandard.ERC721,
-            payable(owner),
-            0
-        );
+        address collectionV2 = factoryV2Proxy.createContract("Test", "TEST", TokenStandard.ERC721, payable(owner), 0);
         assertTrue(collectionV2 != address(0));
-        
+
         // Confirm that the state initialized in V1 is preserved
         assertEq(factoryV2Proxy.getRegistry(), registryProxy);
         factoryV2Proxy.setMaxDeploymentFee(1 ether);
@@ -228,13 +178,7 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
         MagicDropCloneFactoryV3 factoryV3Proxy = MagicDropCloneFactoryV3(payable(factoryProxy));
 
         // Verify V3 can still deploy collections
-        address collectionV3 = factoryV3Proxy.createContract(
-            "Test",
-            "TEST",
-            TokenStandard.ERC721,
-            payable(owner),
-            0
-        );
+        address collectionV3 = factoryV3Proxy.createContract("Test", "TEST", TokenStandard.ERC721, payable(owner), 0);
         assertTrue(collectionV3 != address(0));
 
         // Verify all state is preserved
