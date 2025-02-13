@@ -423,6 +423,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
         // Check initial balances
         uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         // User mints a token
@@ -430,13 +431,61 @@ contract ERC721MagicDropCloneableTest is Test {
         token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
 
         // Check balances after minting
-        assertEq(MINT_FEE_RECEIVER.balance, initialMintBalance + mintFee);
-        assertEq(payoutRecipient.balance, initialPayoutBalance + 0.01 ether);
+        uint256 expectedMintFee = mintFee;
+        uint256 expectedProtocolFee = (0.01 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
+        uint256 expectedPayout = 0.01 ether - expectedProtocolFee;
+
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
+        assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
+    }
+
+    function testSplitProceedsMultipleTokens() public {
+        // Move to public sale time
+        vm.warp(publicStart + 1);
+
+        // Fund the user with enough ETH
+        vm.deal(user, 1 ether);
+
+        // Check initial balances
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
+        uint256 initialPayoutBalance = payoutRecipient.balance;
+
+        // User mints a token
+        vm.prank(user);
+        token.mintPublic{value: (0.01 ether + mintFee) * 5}(user, 5);
+
+        // Check balances after minting
+        uint256 expectedMintFee = mintFee * 5;
+        uint256 expectedProtocolFee = (0.05 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
+        uint256 expectedPayout = 0.05 ether - expectedProtocolFee;
+
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
+        assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
     function testSplitProceedsWithZeroPrice() public {
         // Check initial balances
         uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         vm.prank(owner);
@@ -450,7 +499,13 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.prank(user);
         token.mintPublic{value: 0 ether + mintFee}(user, 1);
 
-        assertEq(MINT_FEE_RECEIVER.balance, initialMintBalance + mintFee);
+        // Check balances after minting
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = initialMintBalance + mintFee;
+        uint256 expectedProtocolBalance = sameRecipient ? initialProtocolBalance + mintFee : initialProtocolBalance;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance);
     }
 

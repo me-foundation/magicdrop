@@ -43,7 +43,6 @@ contract MagicDropCloneFactoryTest is Test {
         registry = MagicDropTokenImplRegistry(payable(registryImpl));
         registry.initialize(owner);
 
-
         // Deploy factory
         address factoryImpl = LibClone.clone(address(new MagicDropCloneFactory()));
         factory = MagicDropCloneFactory(payable(factoryImpl));

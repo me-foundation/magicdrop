@@ -68,7 +68,7 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
 
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
-    function initialize(address initialOwner, address registry) initializer public {
+    function initialize(address initialOwner, address registry) public initializer {
         if (registry == address(0)) {
             revert RegistryAddressCannotBeZero();
         }

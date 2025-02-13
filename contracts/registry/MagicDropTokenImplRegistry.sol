@@ -73,7 +73,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     }
 
     /// @param initialOwner The address of the initial owner
-    function initialize(address initialOwner) initializer public {
+    function initialize(address initialOwner) public initializer {
         _initializeOwner(initialOwner);
 
         // Initialize nextImplId and interface IDs for each token standard
