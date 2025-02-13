@@ -437,8 +437,9 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         uint256 proceeds = msg.value;
 
         if (mintFee > 0) {
-            proceeds -= (mintFee * qty);
-            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, mintFee);
+            uint256 totalMintFee = mintFee * qty;
+            proceeds -= totalMintFee;
+            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, totalMintFee);
         }
 
         // If there are no remaining proceeds after mint fee is taken, exit early
