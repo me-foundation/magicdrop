@@ -6,7 +6,6 @@ import {console2} from "forge-std/console2.sol";
 
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
-
 import {MerkleTestHelper} from "test/helpers/MerkleTestHelper.sol";
 
 import {ERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropCloneable.sol";
@@ -14,6 +13,8 @@ import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721
 import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc721m/clones/Types.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
+
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
 contract ERC721MagicDropCloneableTest is Test {
     ERC721MagicDropCloneable public token;
@@ -30,6 +31,7 @@ contract ERC721MagicDropCloneableTest is Test {
     uint256 internal allowlistEnd;
     address royaltyRecipient = address(0x8888);
     uint96 royaltyBps = 1000;
+    uint256 mintFee = 10000000000000; // 0.00001 ether
 
     function setUp() public {
         // Deploy a new token clone
@@ -42,7 +44,7 @@ contract ERC721MagicDropCloneableTest is Test {
         merkleHelper = new MerkleTestHelper(addresses);
 
         // Initialize token
-        token.initialize("TestToken", "TT", owner);
+        token.initialize("TestToken", "TT", owner, mintFee);
 
         // Default stages
         allowlistStart = block.timestamp + 100;
@@ -65,7 +67,8 @@ contract ERC721MagicDropCloneableTest is Test {
             publicStage: PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0.01 ether}),
             payoutRecipient: payoutRecipient,
             royaltyRecipient: royaltyRecipient,
-            royaltyBps: royaltyBps
+            royaltyBps: royaltyBps,
+            mintFee: mintFee
         });
 
         vm.prank(owner);
@@ -76,7 +79,7 @@ contract ERC721MagicDropCloneableTest is Test {
     =                     TEST INITIALIZATION                      =
     ==============================================================*/
 
-    function testInitialization() public {
+    function testInitialization() public view {
         assertEq(token.owner(), owner);
         assertEq(token.name(), "TestToken");
         assertEq(token.symbol(), "TT");
@@ -85,7 +88,7 @@ contract ERC721MagicDropCloneableTest is Test {
     function testMultipleInitializationReverts() public {
         vm.prank(owner);
         vm.expectRevert(); // The contract should revert if trying to re-initialize
-        token.initialize("ReInit", "RI", owner);
+        token.initialize("ReInit", "RI", owner, mintFee);
     }
 
     /*==============================================================
@@ -99,7 +102,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
 
         assertEq(token.balanceOf(user), 1);
     }
@@ -111,7 +114,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.prank(user);
         vm.expectRevert(ERC721MagicDropCloneable.PublicStageNotActive.selector);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
     }
 
     function testMintPublicAfterEndReverts() public {
@@ -121,16 +124,16 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.prank(user);
         vm.expectRevert(ERC721MagicDropCloneable.PublicStageNotActive.selector);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
     }
 
     function testMintPublicNotEnoughValueReverts() public {
         vm.warp(publicStart + 1);
-        vm.deal(user, 0.005 ether);
+        vm.deal(user, 0.005 ether + mintFee);
 
         vm.prank(user);
         vm.expectRevert(ERC721MagicDropCloneable.RequiredValueNotMet.selector);
-        token.mintPublic{value: 0.005 ether}(user, 1);
+        token.mintPublic{value: 0.005 ether + mintFee}(user, 1);
     }
 
     function testMintPublicWalletLimitExceededReverts() public {
@@ -139,18 +142,20 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.startPrank(user);
         // Mint up to the limit (5)
-        token.mintPublic{value: 0.05 ether}(user, 5);
+        uint256 mintValue = (0.01 ether + mintFee) * 5;
+        token.mintPublic{value: mintValue}(user, 5);
         assertEq(token.balanceOf(user), 5);
 
         // Attempt to mint one more
         vm.expectRevert(IERC721MagicDropMetadata.WalletLimitExceeded.selector);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
         vm.stopPrank();
     }
 
     function testMintPublicMaxSupplyExceededReverts() public {
         vm.warp(publicStart + 1);
-        vm.deal(user, 10.01 ether);
+        uint256 mintValue = (0.01 ether + mintFee) * 1001;
+        vm.deal(user, mintValue);
 
         vm.prank(owner);
         // unlimited wallet limit for the purpose of this test
@@ -158,7 +163,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.prank(user);
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
-        token.mintPublic{value: 10.01 ether}(user, 1001);
+        token.mintPublic{value: mintValue}(user, 1001);
     }
 
     function testMintPublicOverpayReverts() public {
@@ -169,7 +174,7 @@ contract ERC721MagicDropCloneableTest is Test {
         // Attempt to mint with excess Ether
         vm.prank(user);
         vm.expectRevert(ERC721MagicDropCloneable.RequiredValueNotMet.selector);
-        token.mintPublic{value: 0.02 ether}(user, 1);
+        token.mintPublic{value: 0.02 ether + mintFee}(user, 1);
     }
 
     /*==============================================================
@@ -186,7 +191,7 @@ contract ERC721MagicDropCloneableTest is Test {
         // Generate a proof for the allowedAddr from our new MerkleTestHelper
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
 
-        token.mintAllowlist{value: 0.005 ether}(allowedAddr, 1, proof);
+        token.mintAllowlist{value: 0.005 ether + mintFee}(allowedAddr, 1, proof);
         assertEq(token.balanceOf(allowedAddr), 1);
     }
 
@@ -201,7 +206,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.prank(allowedAddr);
 
         vm.expectRevert(ERC721MagicDropCloneable.InvalidProof.selector);
-        token.mintAllowlist{value: 0.005 ether}(user, 1, proof);
+        token.mintAllowlist{value: 0.005 ether + mintFee}(user, 1, proof);
     }
 
     function testMintAllowlistNotActiveReverts() public {
@@ -214,7 +219,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.prank(allowedAddr);
 
         vm.expectRevert(ERC721MagicDropCloneable.AllowlistStageNotActive.selector);
-        token.mintAllowlist{value: 0.005 ether}(allowedAddr, 1, proof);
+        token.mintAllowlist{value: 0.005 ether + mintFee}(allowedAddr, 1, proof);
     }
 
     function testMintAllowlistNotEnoughValueReverts() public {
@@ -222,11 +227,11 @@ contract ERC721MagicDropCloneableTest is Test {
 
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
 
-        vm.deal(allowedAddr, 0.001 ether);
+        vm.deal(allowedAddr, 1 ether);
         vm.prank(allowedAddr);
 
         vm.expectRevert(ERC721MagicDropCloneable.RequiredValueNotMet.selector);
-        token.mintAllowlist{value: 0.001 ether}(allowedAddr, 1, proof);
+        token.mintAllowlist{value: 0.001 ether + mintFee}(allowedAddr, 1, proof);
     }
 
     function testMintAllowlistWalletLimitExceededReverts() public {
@@ -237,11 +242,12 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.startPrank(allowedAddr);
         // Mint up to the limit
-        token.mintAllowlist{value: 0.025 ether}(allowedAddr, 5, proof);
+        uint256 mintValue = (0.005 ether + mintFee) * 5;
+        token.mintAllowlist{value: mintValue}(allowedAddr, 5, proof);
         assertEq(token.balanceOf(allowedAddr), 5);
 
         vm.expectRevert(IERC721MagicDropMetadata.WalletLimitExceeded.selector);
-        token.mintAllowlist{value: 0.005 ether}(allowedAddr, 1, proof);
+        token.mintAllowlist{value: 0.005 ether + mintFee}(allowedAddr, 1, proof);
         vm.stopPrank();
     }
 
@@ -254,11 +260,12 @@ contract ERC721MagicDropCloneableTest is Test {
         token.setWalletLimit(0);
 
         bytes32[] memory proof = merkleHelper.getProofFor(allowedAddr);
-        vm.deal(allowedAddr, 5.005 ether);
+        uint256 mintValue = (0.005 ether + mintFee) * 1001;
+        vm.deal(allowedAddr, mintValue);
 
         vm.prank(allowedAddr);
         vm.expectRevert(IMagicDropMetadata.CannotExceedMaxSupply.selector);
-        token.mintAllowlist{value: 5.005 ether}(allowedAddr, 1001, proof);
+        token.mintAllowlist{value: mintValue}(allowedAddr, 1001, proof);
     }
 
     /*==============================================================
@@ -271,7 +278,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
 
         uint256 tokenId = 0;
         assertEq(token.ownerOf(tokenId), user);
@@ -295,7 +302,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
         uint256 tokenId = 1;
 
         vm.prank(user2);
@@ -307,7 +314,7 @@ contract ERC721MagicDropCloneableTest is Test {
     =                            GETTERS                           =
     ==============================================================*/
 
-    function testGetPublicStage() public {
+    function testGetPublicStage() public view {
         PublicStage memory ps = token.getPublicStage();
         assertEq(ps.startTime, publicStart);
         assertEq(ps.endTime, publicEnd);
@@ -322,8 +329,12 @@ contract ERC721MagicDropCloneableTest is Test {
         assertEq(als.merkleRoot, merkleHelper.getRoot());
     }
 
-    function testPayoutRecipient() public {
+    function testPayoutRecipient() public view {
         assertEq(token.payoutRecipient(), payoutRecipient);
+    }
+
+    function testGetMintFee() public view {
+        assertEq(token.mintFee(), mintFee);
     }
 
     /*==============================================================
@@ -411,38 +422,90 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         // Check initial balances
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         // User mints a token
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
 
         // Check balances after minting
+        uint256 expectedMintFee = mintFee;
         uint256 expectedProtocolFee = (0.01 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.01 ether - expectedProtocolFee;
 
-        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance + expectedProtocolFee);
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
+        assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
+    }
+
+    function testSplitProceedsMultipleTokens() public {
+        // Move to public sale time
+        vm.warp(publicStart + 1);
+
+        // Fund the user with enough ETH
+        vm.deal(user, 1 ether);
+
+        // Check initial balances
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
+        uint256 initialPayoutBalance = payoutRecipient.balance;
+
+        // User mints a token
+        vm.prank(user);
+        token.mintPublic{value: (0.01 ether + mintFee) * 5}(user, 5);
+
+        // Check balances after minting
+        uint256 expectedMintFee = mintFee * 5;
+        uint256 expectedProtocolFee = (0.05 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
+        uint256 expectedPayout = 0.05 ether - expectedProtocolFee;
+
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = sameRecipient
+            ? initialMintBalance + expectedMintFee + expectedProtocolFee
+            : initialMintBalance + expectedMintFee;
+        uint256 expectedProtocolBalance = sameRecipient
+            ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
+            : initialProtocolBalance + expectedProtocolFee;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
     function testSplitProceedsWithZeroPrice() public {
         // Check initial balances
+        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
         vm.prank(owner);
+        vm.deal(user, 1 ether);
         token.setPublicStage(PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0}));
 
         // Move to public sale time
         vm.warp(publicStart + 1);
 
-        // User mints a token with price 0
+        // User mints a token with price 0 (just mintFee)
         vm.prank(user);
-        token.mintPublic{value: 0 ether}(user, 1);
+        token.mintPublic{value: 0 ether + mintFee}(user, 1);
 
         // Check balances after minting
-        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, initialProtocolBalance);
+        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        uint256 expectedMintBalance = initialMintBalance + mintFee;
+        uint256 expectedProtocolBalance = sameRecipient ? initialProtocolBalance + mintFee : initialProtocolBalance;
+
+        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance);
     }
 
@@ -458,7 +521,7 @@ contract ERC721MagicDropCloneableTest is Test {
 
         vm.prank(user);
         vm.expectRevert(ERC721MagicDropCloneable.PayoutRecipientCannotBeZeroAddress.selector);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
     }
 
     /*==============================================================
@@ -469,7 +532,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.warp(publicStart + 1);
         vm.deal(user, 1 ether);
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
         string memory uri = token.tokenURI(0);
         assertEq(uri, "https://example.com/metadata/0");
     }
@@ -478,7 +541,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.warp(publicStart + 1);
         vm.deal(user, 1 ether);
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
 
         vm.prank(owner);
         token.setBaseURI("");
@@ -489,7 +552,7 @@ contract ERC721MagicDropCloneableTest is Test {
         vm.warp(publicStart + 1);
         vm.deal(user, 1 ether);
         vm.prank(user);
-        token.mintPublic{value: 0.01 ether}(user, 1);
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
 
         vm.prank(owner);
         token.setBaseURI("https://example.com/metadata");
@@ -501,10 +564,26 @@ contract ERC721MagicDropCloneableTest is Test {
         token.tokenURI(9999);
     }
 
-    function testContractNameAndVersion() public {
+    function testContractNameAndVersion() public view {
         (string memory name, string memory version) = token.contractNameAndVersion();
         // check that a value is returned
         assert(bytes(name).length > 0);
         assert(bytes(version).length > 0);
+    }
+
+    /*==============================================================
+    =                          MINT FEE                            =
+    ==============================================================*/
+
+    function testMintFee() public {
+        vm.warp(publicStart + 1);
+        vm.deal(user, 1 ether);
+
+        vm.prank(user);
+        vm.expectRevert(ERC721MagicDropCloneable.RequiredValueNotMet.selector);
+        token.mintPublic{value: 0.01 ether}(user, 1);
+
+        token.mintPublic{value: 0.01 ether + mintFee}(user, 1);
+        assertEq(token.balanceOf(user), 1);
     }
 }

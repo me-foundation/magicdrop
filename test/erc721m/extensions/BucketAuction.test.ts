@@ -7,6 +7,7 @@ import { BucketAuction } from '../../../typechain-types';
 chai.use(chaiAsPromised);
 
 const ONE_ETH = '0xDE0B6B3A7640000';
+const MINT_FEE = ethers.utils.parseEther('0.00002');
 
 describe('BucketAuction', function () {
   let ba: BucketAuction;
@@ -33,6 +34,7 @@ describe('BucketAuction', function () {
       0, // Placeholder; startTimeUnixSeconds will be overwritten later
       1, // Placeholder; endTimeUnixSeconds will be overwritten later
       owner.address,
+      MINT_FEE,
     );
     await ba.deployed();
 
@@ -40,7 +42,6 @@ describe('BucketAuction', function () {
     await ownerConn.setStages([
       {
         price: ethers.utils.parseEther('0.1'),
-        mintFee: 0,
         walletLimit: 0,
         merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
         maxStageSupply: 100,
@@ -49,7 +50,6 @@ describe('BucketAuction', function () {
       },
       {
         price: ethers.utils.parseEther('0.2'),
-        mintFee: 0,
         walletLimit: 0,
         merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
         maxStageSupply: 100,

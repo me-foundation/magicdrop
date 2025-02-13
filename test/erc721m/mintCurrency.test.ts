@@ -36,6 +36,7 @@ describe('ERC721M: Mint Currency', () => {
         60,
         erc20.address,
         fundReceiver.getAddress(),
+        mintFee,
       );
       await erc721M.deployed();
 
@@ -50,7 +51,6 @@ describe('ERC721M: Mint Currency', () => {
       await contract.setStages([
         {
           price: mintPrice,
-          mintFee: mintFee,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -181,6 +181,7 @@ describe('ERC721M: Mint Currency', () => {
         60,
         ethers.constants.AddressZero,
         fundReceiver.getAddress(),
+        mintFee,
       );
       await erc721M.deployed();
 
@@ -244,6 +245,7 @@ describe('ERC721CM: Mint Currency', () => {
         60,
         erc20.address,
         fundReceiver.getAddress(),
+        mintFee,
       );
       await erc721CM.deployed();
 
@@ -258,7 +260,6 @@ describe('ERC721CM: Mint Currency', () => {
       await contract.setStages([
         {
           price: mintPrice,
-          mintFee: mintFee,
           walletLimit: 0,
           merkleRoot: ethers.utils.hexZeroPad('0x0', 32),
           maxStageSupply: 5,
@@ -393,6 +394,7 @@ describe('ERC721CM: Mint Currency', () => {
         60,
         ethers.constants.AddressZero,
         fundReceiver.getAddress(),
+        mintFee,
       );
       await erc721CM.deployed();
 

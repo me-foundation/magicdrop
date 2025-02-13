@@ -12,11 +12,11 @@ import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropToke
 import {TokenStandard} from "../../contracts/common/Structs.sol";
 
 contract MockERC721Initializable is MockERC721 {
-    function initialize(string memory, string memory, address) public {}
+    function initialize(string memory, string memory, address, uint256) public {}
 }
 
 contract MockERC1155Initializable is MockERC1155 {
-    function initialize(string memory, string memory, address) public {}
+    function initialize(string memory, string memory, address, uint256) public {}
 }
 
 contract InvalidImplementation is MockERC721 {
@@ -39,20 +39,25 @@ contract MagicDropCloneFactoryTest is Test {
         vm.startPrank(owner);
 
         // Deploy and initialize registry
-        MagicDropTokenImplRegistry registryImpl = new MagicDropTokenImplRegistry(owner);
-        registry = MagicDropTokenImplRegistry(address(registryImpl));
+        address registryImpl = LibClone.clone(address(new MagicDropTokenImplRegistry()));
+        registry = MagicDropTokenImplRegistry(payable(registryImpl));
+        registry.initialize(owner);
 
         // Deploy factory
-        MagicDropCloneFactory factoryImpl = new MagicDropCloneFactory(owner, address(registry));
-        factory = MagicDropCloneFactory(payable(address(factoryImpl)));
+        address factoryImpl = LibClone.clone(address(new MagicDropCloneFactory()));
+        factory = MagicDropCloneFactory(payable(factoryImpl));
+        factory.initialize(owner, address(registry));
 
         // Deploy implementations
         erc721Impl = new MockERC721Initializable();
         erc1155Impl = new MockERC1155Initializable();
 
         // Register implementations
-        erc721ImplId = registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), true, 0.01 ether);
-        erc1155ImplId = registry.registerImplementation(TokenStandard.ERC1155, address(erc1155Impl), true, 0.01 ether);
+        erc721ImplId =
+            registry.registerImplementation(TokenStandard.ERC721, address(erc721Impl), true, 0.01 ether, 0.00001 ether);
+        erc1155ImplId = registry.registerImplementation(
+            TokenStandard.ERC1155, address(erc1155Impl), true, 0.01 ether, 0.00001 ether
+        );
 
         // Fund user
         vm.deal(user, 100 ether);
@@ -184,7 +189,7 @@ contract MagicDropCloneFactoryTest is Test {
 
         vm.startPrank(owner);
         InvalidImplementation impl = new InvalidImplementation();
-        uint32 implId = registry.registerImplementation(standard, address(impl), false, 0.01 ether);
+        uint32 implId = registry.registerImplementation(standard, address(impl), false, 0.01 ether, 0.00001 ether);
         vm.stopPrank();
 
         vm.expectRevert(MagicDropCloneFactory.InitializationFailed.selector);
