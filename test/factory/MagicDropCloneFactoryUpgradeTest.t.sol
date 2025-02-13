@@ -80,7 +80,6 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
 
         // Verify initial state and deploy a collection before upgrade
         assertEq(factoryPrxy.getRegistry(), registryProxy);
-        bytes memory initData = "";
         address collection = factoryPrxy.createContract("Test", "TEST", TokenStandard.ERC721, payable(owner), 0);
         assertTrue(collection != address(0));
 
@@ -150,7 +149,6 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
     function test_MultipleUpgrades() public {
         // --- Upgrade from V1 to V2 ---
         // Deploy a collection before any upgrades
-        bytes memory initData = "";
         address collectionV1 = MagicDropCloneFactory(payable(factoryProxy)).createContract(
             "Test", "TEST", TokenStandard.ERC721, payable(owner), 0
         );

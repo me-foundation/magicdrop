@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {Ownable} from "solady/src/auth/Ownable.sol";
+import {OwnableRoles} from "solady/src/auth/OwnableRoles.sol";
 import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
 import {Initializable} from "solady/src/utils/Initializable.sol";
 import {IMagicDropTokenImplRegistry, TokenStandard} from "./interfaces/IMagicDropTokenImplRegistry.sol";
@@ -10,7 +10,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 /// @title MagicDropTokenImplRegistry
 /// @dev A registry for managing token implementation addresses for different token standards.
 /// This contract is upgradeable and uses the UUPS pattern.
-contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropTokenImplRegistry, Initializable {
+contract MagicDropTokenImplRegistry is UUPSUpgradeable, OwnableRoles, IMagicDropTokenImplRegistry, Initializable {
     /*==============================================================
     =                            STRUCTS                           =
     ==============================================================*/
@@ -33,8 +33,11 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     ==============================================================*/
 
     // keccak256(abi.encode(uint256(keccak256("magicdrop.registry.MagicDropTokenImplRegistry")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant MAGICDROP_REGISTRY_STORAGE =
+    bytes32 internal constant MAGICDROP_REGISTRY_STORAGE =
         0xfd008fcd1deb21680f735a35fafc51691c5fb3daec313cfea4dc62938bee9000;
+
+    /// @notice The role for managing the registry
+    uint256 public constant MANAGER_ROLE = 1 << 0;
 
     /// @notice Gap for future upgrades
     /// @dev Must be the last storage variable
@@ -95,6 +98,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @notice Reverts if the implementation is not registered.
     /// @return implAddress The address of the implementation contract.
     function getImplementation(TokenStandard standard, uint32 implId) external view returns (address implAddress) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // Compute s1 = keccak256(abi.encode(standard, MAGICDROP_REGISTRY_STORAGE))
             mstore(0x00, standard)
@@ -120,6 +124,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @notice Reverts if the default implementation is not registered.
     /// @return defaultImplId The default implementation ID for the given standard
     function getDefaultImplementationID(TokenStandard standard) external view returns (uint32 defaultImplId) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // Compute storage slot for tokenStandardData[standard]
             mstore(0x00, standard)
@@ -146,6 +151,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @notice Reverts if the default implementation is not registered.
     /// @return implAddress The default implementation address for the given standard
     function getDefaultImplementation(TokenStandard standard) external view returns (address implAddress) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             mstore(0x00, standard)
             mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
@@ -177,6 +183,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @param implId The implementation ID
     /// @return deploymentFee The deployment fee for the given standard
     function getDeploymentFee(TokenStandard standard, uint32 implId) external view returns (uint256 deploymentFee) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             mstore(0x00, standard)
             mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
@@ -194,6 +201,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @param implId The implementation ID
     /// @return mintFee The mint fee for the given standard
     function getMintFee(TokenStandard standard, uint32 implId) external view returns (uint256 mintFee) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             mstore(0x00, standard)
             mstore(0x20, MAGICDROP_REGISTRY_STORAGE)
@@ -213,6 +221,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @dev Loads the registry storage.
     /// @return $ The registry storage.
     function _loadRegistryStorage() internal pure returns (RegistryStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := MAGICDROP_REGISTRY_STORAGE
         }
@@ -237,7 +246,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
         bool isDefault,
         uint256 deploymentFee,
         uint256 mintFee
-    ) external onlyOwner returns (uint32) {
+    ) external onlyOwnerOrRoles(MANAGER_ROLE) returns (uint32) {
         RegistryStorage storage $ = _loadRegistryStorage();
         bytes4 interfaceId = $.tokenStandardData[standard].interfaceId;
         if (interfaceId == 0) {
@@ -270,7 +279,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @param implId The ID of the implementation to unregister.
     /// @notice Only the contract owner can call this function.
     /// @notice Reverts if the implementation is not registered.
-    function unregisterImplementation(TokenStandard standard, uint32 implId) external onlyOwner {
+    function unregisterImplementation(TokenStandard standard, uint32 implId) external onlyOwnerOrRoles(MANAGER_ROLE) {
         RegistryStorage storage $ = _loadRegistryStorage();
         address implData = $.tokenStandardData[standard].implementations[implId];
 
@@ -293,7 +302,7 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @param implId The ID of the implementation to set as default
     /// @notice Reverts if the implementation is not registered.
     /// @notice Only the contract owner can call this function
-    function setDefaultImplementation(TokenStandard standard, uint32 implId) external onlyOwner {
+    function setDefaultImplementation(TokenStandard standard, uint32 implId) external onlyOwnerOrRoles(MANAGER_ROLE) {
         RegistryStorage storage $ = _loadRegistryStorage();
         address implData = $.tokenStandardData[standard].implementations[implId];
 
@@ -311,7 +320,10 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @param implId The implementation ID
     /// @param deploymentFee The deployment fee to set
     /// @notice Only the contract owner can call this function
-    function setDeploymentFee(TokenStandard standard, uint32 implId, uint256 deploymentFee) external onlyOwner {
+    function setDeploymentFee(TokenStandard standard, uint32 implId, uint256 deploymentFee)
+        external
+        onlyOwnerOrRoles(MANAGER_ROLE)
+    {
         RegistryStorage storage $ = _loadRegistryStorage();
         $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
         emit DeploymentFeeSet(standard, implId, deploymentFee);
@@ -322,7 +334,10 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @param implId The implementation ID
     /// @param mintFee The mint fee to set
     /// @notice Only the contract owner can call this function
-    function setMintFee(TokenStandard standard, uint32 implId, uint256 mintFee) external onlyOwner {
+    function setMintFee(TokenStandard standard, uint32 implId, uint256 mintFee)
+        external
+        onlyOwnerOrRoles(MANAGER_ROLE)
+    {
         RegistryStorage storage $ = _loadRegistryStorage();
         $.tokenStandardData[standard].mintFees[implId] = mintFee;
         emit MintFeeSet(standard, implId, mintFee);
