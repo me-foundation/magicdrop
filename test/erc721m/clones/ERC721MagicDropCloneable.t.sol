@@ -79,7 +79,7 @@ contract ERC721MagicDropCloneableTest is Test {
     =                     TEST INITIALIZATION                      =
     ==============================================================*/
 
-    function testInitialization() public {
+    function testInitialization() public view {
         assertEq(token.owner(), owner);
         assertEq(token.name(), "TestToken");
         assertEq(token.symbol(), "TT");
@@ -314,7 +314,7 @@ contract ERC721MagicDropCloneableTest is Test {
     =                            GETTERS                           =
     ==============================================================*/
 
-    function testGetPublicStage() public {
+    function testGetPublicStage() public view {
         PublicStage memory ps = token.getPublicStage();
         assertEq(ps.startTime, publicStart);
         assertEq(ps.endTime, publicEnd);
@@ -329,11 +329,11 @@ contract ERC721MagicDropCloneableTest is Test {
         assertEq(als.merkleRoot, merkleHelper.getRoot());
     }
 
-    function testPayoutRecipient() public {
+    function testPayoutRecipient() public view {
         assertEq(token.payoutRecipient(), payoutRecipient);
     }
 
-    function testGetMintFee() public {
+    function testGetMintFee() public view {
         assertEq(token.mintFee(), mintFee);
     }
 
@@ -564,7 +564,7 @@ contract ERC721MagicDropCloneableTest is Test {
         token.tokenURI(9999);
     }
 
-    function testContractNameAndVersion() public {
+    function testContractNameAndVersion() public view {
         (string memory name, string memory version) = token.contractNameAndVersion();
         // check that a value is returned
         assert(bytes(name).length > 0);
