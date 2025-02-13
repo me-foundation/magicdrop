@@ -61,10 +61,16 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     error ImplementationDoesNotSupportStandard();
     error UnsupportedTokenStandard();
     error DefaultImplementationNotRegistered();
+    error NewImplementationCannotBeZero();
 
     /*==============================================================
     =                          CONSTRUCTOR                         =
     ==============================================================*/
+
+    /// @dev Disables initializers for the implementation contract.
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @param initialOwner The address of the initial owner
     function initialize(address initialOwner) initializer public {
@@ -325,7 +331,11 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, Ownable, IMagicDropToken
     /// @dev Internal function to authorize an upgrade.
     /// @param newImplementation Address of the new implementation.
     /// @notice Only the contract owner can upgrade the contract.
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
+        if (newImplementation == address(0)) {
+            revert NewImplementationCannotBeZero();
+        }
+    }
 
     /// @dev Overriden to prevent double-initialization of the owner.
     function _guardInitializeOwner() internal pure virtual override returns (bool) {

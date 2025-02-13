@@ -55,10 +55,16 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
     error InsufficientDeploymentFee();
     error WithdrawalFailed();
     error InitialOwnerCannotBeZero();
-
+    error NewImplementationCannotBeZero();
+    
     /*==============================================================
     =                          INITIALIZER                         =
     ==============================================================*/
+
+    /// @dev Disables initializers for the implementation contract.
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
@@ -231,7 +237,11 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
     ///@dev Internal function to authorize an upgrade.
     ///@param newImplementation Address of the new implementation.
     ///@notice Only the contract owner can upgrade the contract.
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
+        if (newImplementation == address(0)) {
+            revert NewImplementationCannotBeZero();
+        }
+    }
 
     /// @notice Withdraws the contract's balance
     function withdraw(address to) external onlyOwner {
