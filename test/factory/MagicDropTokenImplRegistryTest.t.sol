@@ -5,7 +5,6 @@ import {Test} from "forge-std/Test.sol";
 import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropTokenImplRegistry.sol";
 import {TokenStandard} from "../../contracts/common/Structs.sol";
 import {MockERC721} from "solady/test/utils/mocks/MockERC721.sol";
-import {LibClone} from "solady/src/utils/LibClone.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/interfaces/IERC165.sol";
 
 contract MagicDropTokenImplRegistryTest is Test {
