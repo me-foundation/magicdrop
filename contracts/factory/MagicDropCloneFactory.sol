@@ -20,8 +20,6 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
     MagicDropTokenImplRegistry private _registry;
 
     /// @notice Gap for future upgrades
-    /// @dev Must be the last storage variable
-    /// @dev Reduce the gap when adding new storage variables
     uint256[48] private __gap;
 
     /*==============================================================

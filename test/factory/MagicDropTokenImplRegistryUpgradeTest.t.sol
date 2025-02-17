@@ -15,9 +15,6 @@ contract MagicDropTokenImplRegistryV2 is MagicDropTokenImplRegistry {
     // New storage variable
     uint256 private _maxFee;
 
-    // Reduce gap by 1
-    uint256[47] private __gap;
-
     // New function to test upgrade
     function setMaxFee(uint256 newFee) external onlyOwner {
         _maxFee = newFee;

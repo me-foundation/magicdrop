@@ -40,8 +40,6 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, OwnableRoles, IMagicDrop
     uint256 public constant MANAGER_ROLE = 1 << 0;
 
     /// @notice Gap for future upgrades
-    /// @dev Must be the last storage variable
-    /// @dev Reduce the gap when adding new storage variables
     uint256[48] private __gap;
 
     /*==============================================================
