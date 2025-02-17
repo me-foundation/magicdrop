@@ -15,9 +15,6 @@ contract MagicDropCloneFactoryV2 is MagicDropCloneFactory {
     // New storage variable (example)
     uint256 private _maxDeploymentFee;
 
-    // Reduce gap by 1
-    uint256[47] private __gap;
-
     // New function to test upgrade
     function setMaxDeploymentFee(uint256 newFee) external onlyOwner {
         _maxDeploymentFee = newFee;
