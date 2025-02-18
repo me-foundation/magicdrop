@@ -137,7 +137,7 @@ contract ERC1155MInitializableV1_0_2 is
             revert InvalidStage();
         }
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
-        uint256[] memory stageMinted = _totalMintedByStageByAddress(stage, msg.sender);
+        uint256[] memory stageMinted = _totalMintedByStage(stage);
         return (_mintStages[stage], walletMinted, stageMinted);
     }
 
@@ -525,11 +525,10 @@ contract ERC1155MInitializableV1_0_2 is
         return totalMinted;
     }
 
-    /// @dev Calculates the total minted tokens for a specific address in a given stage
+    /// @dev Calculates the total minted tokens for a given stage
     /// @param stage The stage number
-    /// @param account The address to check
     /// @return An array of total minted tokens for each token ID in the given stage
-    function _totalMintedByStageByAddress(uint256 stage, address account)
+    function _totalMintedByStage(uint256 stage)
         internal
         view
         virtual
@@ -537,7 +536,7 @@ contract ERC1155MInitializableV1_0_2 is
     {
         uint256[] memory totalMinted = new uint256[](_numTokens);
         for (uint256 token = 0; token < _numTokens; token++) {
-            totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][token][account];
+            totalMinted[token] += _stageMintedCountsPerToken[stage][token];
         }
         return totalMinted;
     }
