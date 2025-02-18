@@ -16,7 +16,7 @@ set_rpc_url() {
         11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
         2741) RPC_URL="https://api.mainnet.abs.xyz" ;; # Abstract
         80094) RPC_URL="https://rpc.berachain.com" ;; # Berachain
-        10143) RPC_URL="https://testnet-rpc2.monad.xyz/f8146cc42d8671ba15204cff0e3608faf370d983" ;; # Monad Testnet
+        10143) RPC_URL="https://testnet-rpc.monad.xyz" ;; # Monad Testnet
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
