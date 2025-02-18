@@ -12,6 +12,7 @@ set_rpc_url() {
         43114) RPC_URL="https://api.avax.network/ext/bc/C/rpc" ;; # Avalanche
         11155111) RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" ;; # Sepolia
         80094) RPC_URL="https://rpc.berachain.com" ;; # Berachain
+        10143) RPC_URL="https://testnet-rpc2.monad.xyz/f8146cc42d8671ba15204cff0e3608faf370d983" ;; # Monad Testnet
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -30,6 +31,7 @@ set_etherscan_api_key() {
       43114) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_AVALANCHE ;;
       11155111) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_SEPOLIA ;;
       80094) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_BERACHAIN ;;
+      10143) ETHERSCAN_API_KEY=$VERIFICATION_API_KEY_MONAD_TESTNET ;;
       *) echo "Unsupported chain id"; exit 1 ;;
   esac
 
