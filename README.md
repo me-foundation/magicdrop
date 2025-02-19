@@ -88,6 +88,7 @@ The composability of the stages is generic enough to enable flexible and complic
 - BSC
 - Abstract
 - Berachain
+- Monad Testnet
 
 ## Using Foundry
 

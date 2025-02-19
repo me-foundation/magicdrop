@@ -124,6 +124,8 @@ const getTokenName = (hre: HardhatRuntimeEnvironment) => {
       return 'ARB';
     case 'berachain':
       return 'BERA';
+    case 'monad-testnet':
+      return 'MON';
     default:
       return 'ETH';
   }
