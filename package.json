@@ -25,7 +25,6 @@
     "build:contracts:abs": "hardhat clean && hardhat compile --network abstract",
     "build:typescript": "npx rollup -c --bundleConfigAsCjs && tsc -d -p tsconfig.build.json",
     "clean": "rm -rf dist node_modules typechain-types dist artifacts cache coverage coverage.json",
-    "deploy1155:abs": "hardhat deploy-zksync --script zksync/deploy-erc1155-ss.ts --network abstract",
     "test": "hardhat test",
     "test:gas": "REPORT_GAS=true hardhat test",
     "coverage": "REPORT_COVERAGE=true hardhat coverage",
