@@ -21,7 +21,7 @@ contract ERC1155MInitializableTest is Test {
     uint256[] public maxMintableSupply;
     uint256[] public globalWalletLimit;
     MintStageInfo1155[] public initialStages;
-    uint256 public mintFee = 10000000000000; // 0.00001 ether;
+    uint256 public mintFee = 0.00001 ether;
 
     error Unauthorized();
 

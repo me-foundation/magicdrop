@@ -30,7 +30,7 @@ contract ERC721CMInitializableTest is Test {
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
     address public clone;
     uint256 public startTime;
-    uint256 public mintFee = 10000000000000; // 0.00001 ether;
+    uint256 public mintFee = 0.00001 ether;
 
     error Unauthorized();
 
