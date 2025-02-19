@@ -7,7 +7,7 @@ import {ERC1155} from "solady/src/tokens/ext/zksync/ERC1155.sol";
 /// @notice ERC1155 token with the MagicEden conduit preapproved for seamless transactions.
 abstract contract ERC1155ConduitPreapprovedCloneable is ERC1155 {
     /// @dev The canonical MagicEden conduit address.
-    address internal constant _CONDUIT = 0x2052f8A2Ff46283B30084e5d84c89A2fdBE7f74b;
+    address internal constant _CONDUIT = 0xda20e10c1E8098DBDe281Bd251B9B280ef9A0Ff5;
 
     /// @notice Safely transfers `amount` tokens of type `id` from `from` to `to`.
     /// @param from The address holding the tokens.
