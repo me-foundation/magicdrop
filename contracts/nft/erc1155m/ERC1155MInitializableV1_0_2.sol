@@ -528,12 +528,7 @@ contract ERC1155MInitializableV1_0_2 is
     /// @dev Calculates the total minted tokens for a given stage
     /// @param stage The stage number
     /// @return An array of total minted tokens for each token ID in the given stage
-    function _totalMintedByStage(uint256 stage)
-        internal
-        view
-        virtual
-        returns (uint256[] memory)
-    {
+    function _totalMintedByStage(uint256 stage) internal view virtual returns (uint256[] memory) {
         uint256[] memory totalMinted = new uint256[](_numTokens);
         for (uint256 token = 0; token < _numTokens; token++) {
             totalMinted[token] += _stageMintedCountsPerToken[stage][token];
