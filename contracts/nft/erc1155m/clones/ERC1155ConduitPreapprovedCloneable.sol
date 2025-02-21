@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {ERC1155} from "solady/src/tokens/ERC1155.sol";
+import {ERC1155} from "solady/src/tokens/ext/zksync/ERC1155.sol";
 
 /// @title ERC1155ConduitPreapprovedCloneable
 /// @notice ERC1155 token with the MagicEden conduit preapproved for seamless transactions.
