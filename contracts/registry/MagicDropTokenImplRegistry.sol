@@ -261,8 +261,6 @@ contract MagicDropTokenImplRegistry is UUPSUpgradeable, OwnableRoles, IMagicDrop
         $.tokenStandardData[standard].deploymentFees[implId] = deploymentFee;
         $.tokenStandardData[standard].mintFees[implId] = mintFee;
         emit ImplementationRegistered(standard, impl, implId, deploymentFee, mintFee);
-        emit DeploymentFeeSet(standard, implId, deploymentFee);
-        emit MintFeeSet(standard, implId, mintFee);
 
         if (isDefault) {
             $.tokenStandardData[standard].defaultImplId = implId;
