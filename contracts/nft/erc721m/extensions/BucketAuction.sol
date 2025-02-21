@@ -32,7 +32,8 @@ contract BucketAuction is IBucketAuction, ERC721M {
         uint256 minimumContributionInWei,
         uint256 startTimeUnixSeconds,
         uint256 endTimeUnixSeconds,
-        address fundReceiver
+        address fundReceiver,
+        uint256 mintFee
     )
         ERC721M(
             collectionName,
@@ -44,7 +45,8 @@ contract BucketAuction is IBucketAuction, ERC721M {
             timestampExpirySeconds,
             /* mintCurrency= */
             address(0),
-            fundReceiver
+            fundReceiver,
+            mintFee
         )
     {
         _claimable = false;

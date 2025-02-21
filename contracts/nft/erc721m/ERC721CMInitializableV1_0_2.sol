@@ -8,71 +8,23 @@ import {Ownable} from "solady/src/auth/Ownable.sol";
 import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
-import {
-    IERC721A, ERC721A, ERC721AQueryable, IERC721AQueryable
-} from "erc721a/contracts/extensions/ERC721AQueryable.sol";
-import {ERC721AConduitPreapprovedCloneable} from "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
-import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.sol";
+import {ERC721A, IERC721A} from "erc721a/contracts/ERC721A.sol";
 
-import {IERC721MInitializable} from "contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
+import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.sol";
+import {ERC721ACQueryableInitializable} from "contracts/nft/creator-token-standards/ERC721ACQueryableInitializable.sol";
 import {ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorage.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 import {MintStageInfo, SetupConfig} from "contracts/common/Structs.sol";
+import {IERC721MInitializable} from "contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {Cosignable} from "contracts/common/Cosignable.sol";
 import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
-import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
-///                                                     ........
-///                             .....                   ..    ...
-///                            ..    .....             ..     ..
-///                            ..  ... .....           ..     ..
-///                            ..  ......  ..          ...... ..
-///                             ..   .........     .........  ....
-///                             ....        ..   ..        ...
-///                                ........  .........     ..
-///                                    ..       ...  ...  ..       .........
-///                                  ..    ..........  ....    .... ....... ........
-///                                  .......     .. ..  ...    .... .....          ..
-///                                                ........  .    ...  ..             ..
-///                    .                       .....       ........     ....          ..
-///                  .. ..                  ...              ...........   ...     ...
-///               .......                 ..  ......                  ...          ..
-///              ............           ...  ........                   ..          ..
-///              ...  ..... ..        ..   ..    ..                     ..  ......
-///          .. ........    ...     ..    ..   ..                ....   ....
-///          .......         ..   ..     ......                .......    ..
-///              ..           .....                            .. ....     ..
-///              ..           ....    .........                .    ..     ..
-///                ...       ....    ..       .........        .    ..     ..
-///                  ....   ....     ..              .....     ......      ...
-///                       .....      ..   ........         ...             ...
-///                        ...       .. ..       .. ......   .....         ..
-///                        ..         ....        ...    ...     ..        ..
-///                       ..           ....                ..    ..        ..
-///                       .              ......             ..  ..         ..
-///                      ..                ......................         ..............
-///                      ..                   ................           ....          ...
-///                      .                                              ...           ........
-///                       ..                                             ...          ......  ..
-///                        ..                                            ....        ...EMMY....
-///                         ..                                           .. ...     ....  .... ..
-///                           ..                                         ..    ..... ..........
-///                            ...                                      ..          ... ......
-///                          ... ....                                  ..                 ..
-///                         ..      .....                            ...
-///                       .....          ....     ........         ...
-///                       ........        .. .....       ..........
-///                       .. ........    ..    ..MAGIC.....  .
-///                        ....       ....    ....  ..EDEN....
-///                             .....         . ...     ......
-///                                           ..   .......  ..
-///                                            .....    .....
-///                                                  ....
-/// @title ERC721MInitializableV1_0_1
-/// @notice An initializable ERC721A contract with multi-stage minting, royalties, and authorized minters
-/// @dev Implements ERC721AQueryable, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
-contract ERC721MInitializableV1_0_1 is
+/// @title ERC721CMInitializableV1_0_2
+/// @notice An initializable ERC721AC contract with multi-stage minting, royalties, and authorized minters
+/// @dev Implements ERC721ACQueryable, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
+contract ERC721CMInitializableV1_0_2 is
     IERC721MInitializable,
-    ERC721AConduitPreapprovedCloneable,
+    ERC721ACQueryableInitializable,
     ERC2981,
     Ownable,
     ReentrancyGuard,
@@ -93,13 +45,18 @@ contract ERC721MInitializableV1_0_1 is
     /// @param name The name of the token collection
     /// @param symbol The symbol of the token collection
     /// @param initialOwner The address of the initial owner
-    function initialize(string calldata name, string calldata symbol, address initialOwner) external initializer {
+    /// @param mintFee The mint fee for the contract
+    function initialize(string calldata name, string calldata symbol, address initialOwner, uint256 mintFee)
+        external
+        initializer
+    {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
         }
 
-        __ERC721ACloneable__init(name, symbol);
+        __ERC721ACQueryableInitializable_init(name, symbol);
         _initializeOwner(initialOwner);
+        _mintFee = mintFee;
     }
 
     /*==============================================================
@@ -109,7 +66,7 @@ contract ERC721MInitializableV1_0_1 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721MInitializable", "1.0.1");
+        return ("ERC721CMInitializable", "1.0.2");
     }
 
     /// @notice Gets the token URI for a specific token ID
@@ -217,6 +174,7 @@ contract ERC721MInitializableV1_0_1 is
         config.payoutRecipient = _fundReceiver;
         config.royaltyRecipient = _royaltyRecipient;
         config.royaltyBps = _royaltyBps;
+        config.mintFee = _mintFee;
         return config;
     }
 
@@ -294,11 +252,11 @@ contract ERC721MInitializableV1_0_1 is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC2981, ERC721ACloneable, IERC721A)
+        override(ERC2981, IERC721A, ERC721ACQueryableInitializable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId) || ERC2981.supportsInterface(interfaceId)
-            || ERC721ACloneable.supportsInterface(interfaceId);
+            || ERC721ACQueryableInitializable.supportsInterface(interfaceId);
     }
 
     /*==============================================================
@@ -483,8 +441,8 @@ contract ERC721MInitializableV1_0_1 is
         emit SetContractURI(uri);
     }
 
-    /// @notice Sets the transferable status
-    /// @param transferable The transferable status to set
+    /// @notice Sets whether tokens are transferable
+    /// @param transferable True if tokens should be transferable, false otherwise
     function setTransferable(bool transferable) external onlyOwner {
         if (_transferable == transferable) revert TransferableAlreadySet();
 
@@ -523,7 +481,7 @@ contract ERC721MInitializableV1_0_1 is
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
         MintStageInfo memory stage = _mintStages[activeStage];
 
-        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee;
+        uint256 adjustedMintFee = waiveMintFee ? 0 : _mintFee;
 
         // Check value if minting with ETH
         if (_mintCurrency == address(0) && msg.value < (stage.price + adjustedMintFee) * qty) revert NotEnoughValue();
@@ -593,7 +551,6 @@ contract ERC721MInitializableV1_0_1 is
             _mintStages.push(
                 MintStageInfo({
                     price: newStages[i].price,
-                    mintFee: newStages[i].mintFee,
                     walletLimit: newStages[i].walletLimit,
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
@@ -604,7 +561,6 @@ contract ERC721MInitializableV1_0_1 is
             emit UpdateStage(
                 i,
                 newStages[i].price,
-                newStages[i].mintFee,
                 newStages[i].walletLimit,
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,
@@ -618,17 +574,6 @@ contract ERC721MInitializableV1_0_1 is
         }
     }
 
-    /// @notice Blocks token transfers when the contract is frozen
-    /// @dev Overrides the _beforeTokenTransfers function from ERC721A
-    function _beforeTokenTransfers(address from, address to, uint256 startTokenId, uint256 quantity)
-        internal
-        virtual
-        override
-    {
-        if (!_transferable && from != address(0)) revert NotTransferable();
-        super._beforeTokenTransfers(from, to, startTokenId, quantity);
-    }
-
     /// @notice Validates the start and end timestamps for a stage
     /// @param start The start timestamp
     /// @param end The end timestamp
@@ -636,8 +581,26 @@ contract ERC721MInitializableV1_0_1 is
         if (start >= end) revert InvalidStartAndEndTimestamp();
     }
 
+    /// @notice Requires the caller to be the contract owner
+    function _requireCallerIsContractOwner() internal view override {
+        return _checkOwner();
+    }
+
     /// @dev Overriden to prevent double-initialization of the owner.
     function _guardInitializeOwner() internal pure virtual override returns (bool) {
         return true;
+    }
+
+    function _beforeTokenTransfers(address from, address to, uint256 startTokenId, uint256 quantity)
+        internal
+        virtual
+        override
+    {
+        // If the transfer is not from a mint or burn, revert if not transferable
+        if (from != address(0) && to != address(0) && !_transferable) {
+            revert NotTransferable();
+        }
+
+        super._beforeTokenTransfers(from, to, startTokenId, quantity);
     }
 }

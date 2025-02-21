@@ -7,7 +7,6 @@ interface ERC721MErrorsAndEvents is ErrorsAndEvents {
     event UpdateStage(
         uint256 stage,
         uint80 price,
-        uint80 mintFee,
         uint32 walletLimit,
         bytes32 merkleRoot,
         uint24 maxStageSupply,

@@ -51,4 +51,7 @@ contract ERC721MStorage {
 
     // Royalty basis points
     uint96 internal _royaltyBps;
+
+    // Mint fee for each item minted
+    uint256 internal _mintFee;
 }
