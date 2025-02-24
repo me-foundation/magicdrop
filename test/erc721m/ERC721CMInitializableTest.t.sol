@@ -422,7 +422,7 @@ contract ERC721CMInitializableTest is Test {
         vm.prank(minter);
         vm.expectRevert(Ownable.Unauthorized.selector);
         nft.setMintFee(0.00002 ether);
-        
+
         vm.startPrank(owner);
         nft.setMintFee(0.00002 ether);
         assertEq(nft.getMintFee(), 0.00002 ether);
