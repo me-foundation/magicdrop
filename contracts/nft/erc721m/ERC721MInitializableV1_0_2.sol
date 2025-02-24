@@ -226,6 +226,12 @@ contract ERC721MInitializableV1_0_2 is
         return config;
     }
 
+    /// @notice Gets the mint fee
+    /// @return The mint fee
+    function getMintFee() external view returns (uint256) {
+        return _mintFee;
+    }
+
     /// @notice Gets the mint currency address
     /// @return The address of the mint currency
     function getMintCurrency() external view returns (address) {
@@ -360,6 +366,13 @@ contract ERC721MInitializableV1_0_2 is
             _royaltyBps = royaltyFeeNumerator;
             _royaltyRecipient = royaltyReceiver;
         }
+    }
+
+    /// @notice Sets the mint fee
+    /// @param mintFee The new mint fee to set
+    function setMintFee(uint256 mintFee) external onlyOwner {
+        _mintFee = mintFee;
+        emit SetMintFee(mintFee);
     }
 
     /// @notice Adds an authorized minter

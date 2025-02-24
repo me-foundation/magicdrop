@@ -9,6 +9,7 @@ import {ERC721CMInitializableV1_0_2 as ERC721CMInitializable} from
 import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
 
 contract MockERC721CMInitializable is ERC721CMInitializable {
     function baseURI() public view returns (string memory) {
@@ -414,5 +415,16 @@ contract ERC721CMInitializableTest is Test {
         vm.prank(minter);
         nft.mint{value: 0.5 ether + mintFee}(1, 0, new bytes32[](0), 0, "");
         assertEq(nft.balanceOf(minter), 1);
+    }
+
+    function testMintFeeSetter() public {
+        assertEq(nft.getMintFee(), mintFee);
+        vm.prank(minter);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        nft.setMintFee(0.00002 ether);
+        
+        vm.startPrank(owner);
+        nft.setMintFee(0.00002 ether);
+        assertEq(nft.getMintFee(), 0.00002 ether);
     }
 }

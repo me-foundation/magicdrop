@@ -16,6 +16,8 @@ interface ERC1155MErrorsAndEvents is ErrorsAndEvents {
         uint256 startTimeUnixSeconds,
         uint256 endTimeUnixSeconds
     );
+
+    event SetMintFee(uint256 mintFee);
     event SetMaxMintableSupply(uint256 indexed tokenId, uint256 maxMintableSupply);
     event SetGlobalWalletLimit(uint256 indexed tokenId, uint256 globalWalletLimit);
 }
