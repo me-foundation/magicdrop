@@ -4,10 +4,12 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std/Test.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 
-import {ERC1155MInitializableV1_0_1 as ERC1155MInitializable} from
-    "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_1.sol";
-import {MintStageInfo1155, SetupConfig} from "../../contracts/common/Structs.sol";
+import {ERC1155MInitializableV1_0_2 as ERC1155MInitializable} from
+    "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_2.sol";
+import {MintStageInfo1155} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
 
 contract ERC1155MInitializableTest is Test {
     ERC1155MInitializable public nft;
@@ -21,6 +23,7 @@ contract ERC1155MInitializableTest is Test {
     uint256[] public maxMintableSupply;
     uint256[] public globalWalletLimit;
     MintStageInfo1155[] public initialStages;
+    uint256 public mintFee = 0.00001 ether;
 
     error Unauthorized();
 
@@ -30,9 +33,11 @@ contract ERC1155MInitializableTest is Test {
         readonly = address(0x2);
         minter = address(0x4);
 
+        vm.deal(minter, 2 ether);
+
         address clone = LibClone.deployERC1967(address(new ERC1155MInitializable()));
         nft = ERC1155MInitializable(clone);
-        nft.initialize("Test", "TEST", owner);
+        nft.initialize("Test", "TEST", owner, mintFee);
 
         maxMintableSupply = new uint256[](1);
         maxMintableSupply[0] = INITIAL_SUPPLY;
@@ -49,7 +54,7 @@ contract ERC1155MInitializableTest is Test {
     function testSetupNonOwnerRevert() public {
         ERC1155MInitializable clone =
             ERC1155MInitializable(LibClone.deployERC1967(address(new ERC1155MInitializable())));
-        clone.initialize("Test", "TEST", owner);
+        clone.initialize("Test", "TEST", owner, mintFee);
 
         vm.startPrank(address(0x3));
         vm.expectRevert(Unauthorized.selector);
@@ -72,7 +77,7 @@ contract ERC1155MInitializableTest is Test {
     function testInitializeRevertCalledTwice() public {
         vm.startPrank(owner);
         vm.expectRevert("Initializable: contract is already initialized");
-        nft.initialize("Test", "TEST", owner);
+        nft.initialize("Test", "TEST", owner, mintFee);
     }
 
     function testCallSetupBeforeInitializeRevert() public {
@@ -122,5 +127,55 @@ contract ERC1155MInitializableTest is Test {
         vm.startPrank(owner);
         vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
         nft.setTransferable(true);
+    }
+
+    function testMintFee() public {
+        MintStageInfo1155[] memory stages = new MintStageInfo1155[](1);
+
+        uint80[] memory price = new uint80[](1);
+        price[0] = 0.5 ether;
+        uint32[] memory walletLimit = new uint32[](1);
+        walletLimit[0] = 1;
+        bytes32[] memory merkleRoot = new bytes32[](1);
+        merkleRoot[0] = bytes32(0);
+        uint24[] memory maxStageSupply = new uint24[](1);
+        maxStageSupply[0] = 5;
+
+        stages[0] = MintStageInfo1155({
+            price: price,
+            walletLimit: walletLimit,
+            merkleRoot: merkleRoot,
+            maxStageSupply: maxStageSupply,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1
+        });
+
+        nft.setStages(stages);
+
+        vm.warp(0);
+        vm.prank(minter);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
+        nft.mint{value: 0.5 ether}(0, 1, 0, new bytes32[](0));
+        assertEq(nft.balanceOf(minter, 0), 0);
+
+        vm.prank(minter);
+        nft.mint{value: 0.5 ether + mintFee}(0, 1, 1, new bytes32[](0));
+        assertEq(nft.balanceOf(minter, 0), 1);
+
+        vm.prank(owner);
+        nft.withdraw();
+        assertEq(fundReceiver.balance, 0.5 ether);
+        assertEq(MINT_FEE_RECEIVER.balance, mintFee);
+    }
+
+    function testMintFeeSetter() public {
+        assertEq(nft.getMintFee(), mintFee);
+        vm.prank(minter);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        nft.setMintFee(0.00002 ether);
+
+        vm.startPrank(owner);
+        nft.setMintFee(0.00002 ether);
+        assertEq(nft.getMintFee(), 0.00002 ether);
     }
 }

@@ -8,6 +8,8 @@ import {ERC1155MagicDropMetadataCloneable} from "./ERC1155MagicDropMetadataClone
 import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
 
+import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
+
 ///                                                     ........
 ///                             .....                   ..    ...
 ///                            ..    .....             ..     ..
@@ -87,6 +89,10 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /// @notice Only addresses proven by a valid Merkle proof can mint during this stage.
     mapping(uint256 => AllowlistStage) internal _allowlistStages; // tokenId => allowlistStage
 
+    /// @dev The mint fee to charge on top of each mint
+    /// @notice Set permanently on initialization
+    uint256 public mintFee;
+
     /*==============================================================
     =                             EVENTS                           =
     ==============================================================*/
@@ -135,13 +141,18 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     =                          INITIALIZERS                        =
     ==============================================================*/
 
-    /// @notice Initializes the contract with a name, symbol, and owner.
+    /// @notice Initializes the contract with a name, symbol, owner and mintFee.
     /// @dev Can only be called once. It sets the owner, emits a deploy event, and prepares the token for minting stages.
     /// @param _name The ERC-1155 name of the collection.
     /// @param _symbol The ERC-1155 symbol of the collection.
     /// @param _owner The address designated as the initial owner of the contract.
-    function initialize(string memory _name, string memory _symbol, address _owner) public initializer {
+    /// @param _mintFee The fee to charge on top of each mint.
+    function initialize(string memory _name, string memory _symbol, address _owner, uint256 _mintFee)
+        public
+        initializer
+    {
         __ERC1155MagicDropMetadataCloneable__init(_name, _symbol, _owner);
+        mintFee = _mintFee;
     }
 
     /*==============================================================
@@ -160,7 +171,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             revert PublicStageNotActive();
         }
 
-        uint256 requiredPayment = stage.price * qty;
+        uint256 stagePrice = stage.price + mintFee;
+        uint256 requiredPayment = stagePrice * qty;
         if (msg.value != requiredPayment) {
             revert RequiredValueNotMet();
         }
@@ -173,8 +185,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
         _mint(to, tokenId, qty, data);
 
-        if (stage.price != 0) {
-            _splitProceeds();
+        if (stagePrice != 0) {
+            _splitProceeds(qty);
         }
 
         emit TokenMinted(to, tokenId, qty);
@@ -200,7 +212,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             revert InvalidProof();
         }
 
-        uint256 requiredPayment = stage.price * qty;
+        uint256 stagePrice = stage.price + mintFee;
+        uint256 requiredPayment = stagePrice * qty;
         if (msg.value != requiredPayment) {
             revert RequiredValueNotMet();
         }
@@ -211,8 +224,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
         _increaseSupplyOnMint(to, tokenId, qty);
 
-        if (stage.price != 0) {
-            _splitProceeds();
+        if (stagePrice != 0) {
+            _splitProceeds(qty);
         }
 
         _mint(to, tokenId, qty, data);
@@ -263,7 +276,8 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
             publicStage: _publicStages[tokenId],
             payoutRecipient: _payoutRecipient,
             royaltyRecipient: _royaltyReceiver,
-            royaltyBps: _royaltyBps
+            royaltyBps: _royaltyBps,
+            mintFee: mintFee
         });
 
         return newConfig;
@@ -415,21 +429,34 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
 
     /// @notice Internal function to split the proceeds of a mint.
     /// @dev This function is called by the mint functions to split the proceeds into a protocol fee and a payout.
-    function _splitProceeds() internal {
+    function _splitProceeds(uint256 qty) internal {
         if (_payoutRecipient == address(0)) {
             revert PayoutRecipientCannotBeZeroAddress();
         }
 
+        uint256 proceeds = msg.value;
+
+        if (mintFee > 0) {
+            uint256 totalMintFee = mintFee * qty;
+            proceeds -= totalMintFee;
+            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, totalMintFee);
+        }
+
+        // If there are no remaining proceeds after mint fee is taken, exit early
+        if (proceeds == 0) {
+            return;
+        }
+
         if (PROTOCOL_FEE_BPS > 0) {
-            uint256 protocolFee = (msg.value * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
+            uint256 protocolFee = (proceeds * PROTOCOL_FEE_BPS) / BPS_DENOMINATOR;
             uint256 remainingBalance;
             unchecked {
-                remainingBalance = msg.value - protocolFee;
+                remainingBalance = proceeds - protocolFee;
             }
             SafeTransferLib.safeTransferETH(PROTOCOL_FEE_RECIPIENT, protocolFee);
             SafeTransferLib.safeTransferETH(_payoutRecipient, remainingBalance);
         } else {
-            SafeTransferLib.safeTransferETH(_payoutRecipient, msg.value);
+            SafeTransferLib.safeTransferETH(_payoutRecipient, proceeds);
         }
     }
 

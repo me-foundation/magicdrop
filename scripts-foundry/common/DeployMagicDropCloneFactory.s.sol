@@ -3,6 +3,7 @@ pragma solidity ^0.8.22;
 
 import {Script} from "forge-std/Script.sol";
 import {MagicDropCloneFactory} from "contracts/factory/MagicDropCloneFactory.sol";
+import {LibClone} from "solady/src/utils/LibClone.sol";
 
 contract DeployMagicDropCloneFactory is Script {
     error AddressMismatch();
@@ -15,11 +16,18 @@ contract DeployMagicDropCloneFactory is Script {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(privateKey);
-        // Deploy the contract using CREATE2 directly
-        MagicDropCloneFactory factoryImpl = new MagicDropCloneFactory{salt: salt}(initialOwner, registry);
+        
+        // Deploy the implementation contract
+        MagicDropCloneFactory implementation = new MagicDropCloneFactory();
+        
+        // Deploy the ERC1967 proxy
+        address proxy = LibClone.deployDeterministicERC1967(address(implementation), salt);
 
-        // Verify the deployed address matches the predicted address
-        if (address(factoryImpl) != expectedAddress) {
+        // Initialize the proxy with the constructor arguments
+        MagicDropCloneFactory(proxy).initialize(initialOwner, registry);
+
+        // Verify the deployed proxy address matches the predicted address
+        if (proxy != expectedAddress) {
             revert AddressMismatch();
         }
 

@@ -11,16 +11,16 @@ import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
-import {MintStageInfo1155, MintStageInfo} from "../../common/Structs.sol";
+import {MintStageInfo1155} from "../../common/Structs.sol";
 import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {ERC1155MStorage} from "./ERC1155MStorage.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 
-/// @title ERC1155MInitializableV1_0_1
+/// @title ERC1155MInitializableV1_0_2
 /// @notice An initializable ERC1155 contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC1155, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
-contract ERC1155MInitializableV1_0_1 is
+contract ERC1155MInitializableV1_0_2 is
     IERC1155M,
     ERC1155SupplyUpgradeable,
     Ownable,
@@ -42,7 +42,11 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param name_ The name of the token collection
     /// @param symbol_ The symbol of the token collection
     /// @param initialOwner The address of the initial owner
-    function initialize(string calldata name_, string calldata symbol_, address initialOwner) external initializer {
+    /// @param mintFee The mint fee for the contract
+    function initialize(string calldata name_, string calldata symbol_, address initialOwner, uint256 mintFee)
+        external
+        initializer
+    {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
         }
@@ -51,6 +55,7 @@ contract ERC1155MInitializableV1_0_1 is
         symbol = symbol_;
         __ERC1155_init("");
         _initializeOwner(initialOwner);
+        _mintFee = mintFee;
     }
 
     /*==============================================================
@@ -60,7 +65,7 @@ contract ERC1155MInitializableV1_0_1 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC1155MInitializable", "1.0.1");
+        return ("ERC1155MInitializable", "1.0.2");
     }
 
     /// @notice Gets the contract URI
@@ -132,7 +137,7 @@ contract ERC1155MInitializableV1_0_1 is
             revert InvalidStage();
         }
         uint256[] memory walletMinted = totalMintedByAddress(msg.sender);
-        uint256[] memory stageMinted = _totalMintedByStageByAddress(stage, msg.sender);
+        uint256[] memory stageMinted = _totalMintedByStage(stage);
         return (_mintStages[stage], walletMinted, stageMinted);
     }
 
@@ -152,6 +157,12 @@ contract ERC1155MInitializableV1_0_1 is
             }
         }
         revert InvalidStage();
+    }
+
+    /// @notice Gets the mint fee
+    /// @return The mint fee
+    function getMintFee() external view returns (uint256) {
+        return _mintFee;
     }
 
     /// @notice Gets the mint currency address
@@ -271,6 +282,13 @@ contract ERC1155MInitializableV1_0_1 is
         }
     }
 
+    /// @notice Sets the mint fee
+    /// @param mintFee The new mint fee to set
+    function setMintFee(uint256 mintFee) external onlyOwner {
+        _mintFee = mintFee;
+        emit SetMintFee(mintFee);
+    }
+
     /// @notice Sets the minting stages
     /// @param newStages An array of new minting stages
     function setStages(MintStageInfo1155[] calldata newStages) external onlyOwner {
@@ -294,7 +312,6 @@ contract ERC1155MInitializableV1_0_1 is
             _mintStages.push(
                 MintStageInfo1155({
                     price: newStages[i].price,
-                    mintFee: newStages[i].mintFee,
                     walletLimit: newStages[i].walletLimit,
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
@@ -305,7 +322,6 @@ contract ERC1155MInitializableV1_0_1 is
             emit UpdateStage(
                 i,
                 newStages[i].price,
-                newStages[i].mintFee,
                 newStages[i].walletLimit,
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,
@@ -457,10 +473,9 @@ contract ERC1155MInitializableV1_0_1 is
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
 
         MintStageInfo1155 memory stage = _mintStages[activeStage];
-        uint80 mintFee = stage.mintFee[tokenId];
 
         // Check value if minting with ETH
-        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + mintFee) * qty) {
+        if (_mintCurrency == address(0) && msg.value < (stage.price[tokenId] + _mintFee) * qty) {
             revert NotEnoughValue();
         }
 
@@ -500,11 +515,11 @@ contract ERC1155MInitializableV1_0_1 is
         if (_mintCurrency != address(0)) {
             // ERC20 mint payment
             SafeTransferLib.safeTransferFrom(
-                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + mintFee) * qty
+                _mintCurrency, msg.sender, address(this), (stage.price[tokenId] + _mintFee) * qty
             );
         }
 
-        _totalMintFee += mintFee * qty;
+        _totalMintFee += _mintFee * qty;
         _stageMintedCountsPerTokenPerWallet[activeStage][tokenId][to] += qty;
         _stageMintedCountsPerToken[activeStage][tokenId] += qty;
         _mint(to, tokenId, qty, "");
@@ -523,19 +538,13 @@ contract ERC1155MInitializableV1_0_1 is
         return totalMinted;
     }
 
-    /// @dev Calculates the total minted tokens for a specific address in a given stage
+    /// @dev Calculates the total minted tokens for a given stage
     /// @param stage The stage number
-    /// @param account The address to check
     /// @return An array of total minted tokens for each token ID in the given stage
-    function _totalMintedByStageByAddress(uint256 stage, address account)
-        internal
-        view
-        virtual
-        returns (uint256[] memory)
-    {
+    function _totalMintedByStage(uint256 stage) internal view virtual returns (uint256[] memory) {
         uint256[] memory totalMinted = new uint256[](_numTokens);
         for (uint256 token = 0; token < _numTokens; token++) {
-            totalMinted[token] += _stageMintedCountsPerTokenPerWallet[stage][token][account];
+            totalMinted[token] += _stageMintedCountsPerToken[stage][token];
         }
         return totalMinted;
     }
@@ -551,9 +560,8 @@ contract ERC1155MInitializableV1_0_1 is
     /// @param stageInfo The stage information to validate
     function _assertValidStageArgsLength(MintStageInfo1155 calldata stageInfo) internal view {
         if (
-            stageInfo.price.length != _numTokens || stageInfo.mintFee.length != _numTokens
-                || stageInfo.walletLimit.length != _numTokens || stageInfo.merkleRoot.length != _numTokens
-                || stageInfo.maxStageSupply.length != _numTokens
+            stageInfo.price.length != _numTokens || stageInfo.walletLimit.length != _numTokens
+                || stageInfo.merkleRoot.length != _numTokens || stageInfo.maxStageSupply.length != _numTokens
         ) {
             revert InvalidStageArgsLength();
         }

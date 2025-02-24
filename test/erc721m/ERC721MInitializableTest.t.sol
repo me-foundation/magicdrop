@@ -5,11 +5,13 @@ import {console} from "forge-std/console.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
-import {ERC721MInitializableV1_0_1 as ERC721MInitializable} from
-    "../../contracts/nft/erc721m/ERC721MInitializableV1_0_1.sol";
+import {ERC721MInitializableV1_0_2 as ERC721MInitializable} from
+    "../../contracts/nft/erc721m/ERC721MInitializableV1_0_2.sol";
 import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
 
 contract MockERC721M is ERC721MInitializable {
     function baseURI() public view returns (string memory) {
@@ -31,6 +33,7 @@ contract ERC721MInitializableTest is Test {
     uint256 public constant INITIAL_SUPPLY = 1000;
     uint256 public constant GLOBAL_WALLET_LIMIT = 0;
     uint256 public startTime;
+    uint256 public mintFee = 0.00001 ether;
 
     error Unauthorized();
 
@@ -47,7 +50,6 @@ contract ERC721MInitializableTest is Test {
         MintStageInfo[] memory stages = new MintStageInfo[](1);
         stages[0] = MintStageInfo({
             price: 0.1 ether,
-            mintFee: 0,
             walletLimit: 2,
             merkleRoot: bytes32(0),
             maxStageSupply: 100,
@@ -57,7 +59,7 @@ contract ERC721MInitializableTest is Test {
 
         clone = LibClone.deployERC1967(address(new MockERC721M()));
         nft = MockERC721M(clone);
-        nft.initialize("Test", "TEST", owner);
+        nft.initialize("Test", "TEST", owner, mintFee);
         nft.setup(
             "base_uri_",
             ".json",
@@ -164,7 +166,7 @@ contract ERC721MInitializableTest is Test {
 
     function testInitializeRevertCalledTwice() public {
         vm.expectRevert(0xf92ee8a9); // InvalidInitialization()
-        nft.initialize("Test", "TEST", owner);
+        nft.initialize("Test", "TEST", owner, mintFee);
     }
 
     function testCallSetupBeforeInitializeRevert() public {
@@ -208,9 +210,9 @@ contract ERC721MInitializableTest is Test {
         assertEq(config.payoutRecipient, fundReceiver);
         assertEq(config.royaltyRecipient, royaltyReceiver);
         assertEq(config.royaltyBps, royaltyBps);
+        assertEq(config.mintFee, mintFee);
         assertEq(config.stages.length, 1);
         assertEq(config.stages[0].price, 0.1 ether);
-        assertEq(config.stages[0].mintFee, 0);
         assertEq(config.stages[0].walletLimit, 2);
         assertEq(config.stages[0].merkleRoot, bytes32(0));
         assertEq(config.stages[0].maxStageSupply, 100);
@@ -223,7 +225,6 @@ contract ERC721MInitializableTest is Test {
         MintStageInfo[] memory stages = new MintStageInfo[](1);
         stages[0] = MintStageInfo({
             price: 0.1 ether,
-            mintFee: 0.01 ether,
             walletLimit: 2,
             merkleRoot: bytes32(0),
             maxStageSupply: 100,
@@ -242,7 +243,6 @@ contract ERC721MInitializableTest is Test {
         // Verify stages were set correctly
         assertEq(config.stages.length, 1);
         assertEq(config.stages[0].price, stages[0].price);
-        assertEq(config.stages[0].mintFee, stages[0].mintFee);
         assertEq(config.stages[0].walletLimit, stages[0].walletLimit);
         assertEq(config.stages[0].merkleRoot, stages[0].merkleRoot);
         assertEq(config.stages[0].maxStageSupply, stages[0].maxStageSupply);
@@ -253,7 +253,7 @@ contract ERC721MInitializableTest is Test {
     function testBurnHappyPath() public {
         vm.deal(minter, 1 ether);
         vm.startPrank(minter);
-        nft.mint{value: 0.1 ether}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         uint256 tokenId = 0;
         assertEq(nft.ownerOf(tokenId), minter);
@@ -274,12 +274,51 @@ contract ERC721MInitializableTest is Test {
     function testBurnNotOwnerReverts() public {
         // mint to user
         vm.startPrank(minter);
-        nft.mint{value: 0.1 ether}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
         vm.stopPrank();
         assertEq(nft.ownerOf(0), minter);
 
         vm.prank(readonly);
         vm.expectRevert();
         nft.burn(0);
+    }
+
+    function testMintFee() public {
+        MintStageInfo[] memory stages = new MintStageInfo[](1);
+        stages[0] = MintStageInfo({
+            price: 0.5 ether,
+            walletLimit: 10,
+            merkleRoot: bytes32(0),
+            maxStageSupply: 5,
+            startTimeUnixSeconds: 0,
+            endTimeUnixSeconds: 1
+        });
+        nft.setStages(stages);
+
+        vm.warp(0);
+        vm.prank(minter);
+        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
+        nft.mint{value: 0.5 ether}(1, 0, new bytes32[](0), 0, "");
+        assertEq(nft.balanceOf(minter), 0);
+
+        vm.prank(minter);
+        nft.mint{value: 0.5 ether + mintFee}(1, 0, new bytes32[](0), 0, "");
+        assertEq(nft.balanceOf(minter), 1);
+
+        vm.prank(owner);
+        nft.withdraw();
+        assertEq(fundReceiver.balance, 0.5 ether);
+        assertEq(MINT_FEE_RECEIVER.balance, mintFee);
+    }
+
+    function testMintFeeSetter() public {
+        assertEq(nft.getMintFee(), mintFee);
+        vm.prank(minter);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        nft.setMintFee(0.00002 ether);
+
+        vm.startPrank(owner);
+        nft.setMintFee(0.00002 ether);
+        assertEq(nft.getMintFee(), 0.00002 ether);
     }
 }

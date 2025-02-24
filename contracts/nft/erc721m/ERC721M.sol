@@ -50,7 +50,8 @@ contract ERC721M is
         address cosigner,
         uint256 timestampExpirySeconds,
         address mintCurrency,
-        address fundReceiver
+        address fundReceiver,
+        uint256 mintFee
     ) ERC721A(collectionName, collectionSymbol) {
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
@@ -61,6 +62,7 @@ contract ERC721M is
         _tokenURISuffix = tokenURISuffix;
         _mintCurrency = mintCurrency;
         _fundReceiver = fundReceiver;
+        _mintFee = mintFee;
 
         _initializeOwner(msg.sender);
         _setCosigner(cosigner);
@@ -265,7 +267,6 @@ contract ERC721M is
             _mintStages.push(
                 MintStageInfo({
                     price: newStages[i].price,
-                    mintFee: newStages[i].mintFee,
                     walletLimit: newStages[i].walletLimit,
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
@@ -276,7 +277,6 @@ contract ERC721M is
             emit UpdateStage(
                 i,
                 newStages[i].price,
-                newStages[i].mintFee,
                 newStages[i].walletLimit,
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,
@@ -404,7 +404,7 @@ contract ERC721M is
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
         MintStageInfo memory stage = _mintStages[activeStage];
 
-        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee;
+        uint256 adjustedMintFee = waiveMintFee ? 0 : _mintFee;
 
         // Check value if minting with ETH
         if (_mintCurrency == address(0) && msg.value < (stage.price + adjustedMintFee) * qty) revert NotEnoughValue();

@@ -67,10 +67,10 @@ import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 ///                                           ..   .......  ..
 ///                                            .....    .....
 ///                                                  ....
-/// @title ERC721MInitializableV1_0_1
+/// @title ERC721MInitializableV1_0_2
 /// @notice An initializable ERC721A contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC721AQueryable, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
-contract ERC721MInitializableV1_0_1 is
+contract ERC721MInitializableV1_0_2 is
     IERC721MInitializable,
     ERC721AConduitPreapprovedCloneable,
     ERC2981,
@@ -93,13 +93,18 @@ contract ERC721MInitializableV1_0_1 is
     /// @param name The name of the token collection
     /// @param symbol The symbol of the token collection
     /// @param initialOwner The address of the initial owner
-    function initialize(string calldata name, string calldata symbol, address initialOwner) external initializer {
+    /// @param mintFee The mint fee for the contract
+    function initialize(string calldata name, string calldata symbol, address initialOwner, uint256 mintFee)
+        external
+        initializer
+    {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
         }
 
         __ERC721ACloneable__init(name, symbol);
         _initializeOwner(initialOwner);
+        _mintFee = mintFee;
     }
 
     /*==============================================================
@@ -109,7 +114,7 @@ contract ERC721MInitializableV1_0_1 is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721MInitializable", "1.0.1");
+        return ("ERC721MInitializable", "1.0.2");
     }
 
     /// @notice Gets the token URI for a specific token ID
@@ -217,7 +222,14 @@ contract ERC721MInitializableV1_0_1 is
         config.payoutRecipient = _fundReceiver;
         config.royaltyRecipient = _royaltyRecipient;
         config.royaltyBps = _royaltyBps;
+        config.mintFee = _mintFee;
         return config;
+    }
+
+    /// @notice Gets the mint fee
+    /// @return The mint fee
+    function getMintFee() external view returns (uint256) {
+        return _mintFee;
     }
 
     /// @notice Gets the mint currency address
@@ -354,6 +366,13 @@ contract ERC721MInitializableV1_0_1 is
             _royaltyBps = royaltyFeeNumerator;
             _royaltyRecipient = royaltyReceiver;
         }
+    }
+
+    /// @notice Sets the mint fee
+    /// @param mintFee The new mint fee to set
+    function setMintFee(uint256 mintFee) external onlyOwner {
+        _mintFee = mintFee;
+        emit SetMintFee(mintFee);
     }
 
     /// @notice Adds an authorized minter
@@ -523,7 +542,7 @@ contract ERC721MInitializableV1_0_1 is
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
         MintStageInfo memory stage = _mintStages[activeStage];
 
-        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee;
+        uint256 adjustedMintFee = waiveMintFee ? 0 : _mintFee;
 
         // Check value if minting with ETH
         if (_mintCurrency == address(0) && msg.value < (stage.price + adjustedMintFee) * qty) revert NotEnoughValue();
@@ -593,7 +612,6 @@ contract ERC721MInitializableV1_0_1 is
             _mintStages.push(
                 MintStageInfo({
                     price: newStages[i].price,
-                    mintFee: newStages[i].mintFee,
                     walletLimit: newStages[i].walletLimit,
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
@@ -604,7 +622,6 @@ contract ERC721MInitializableV1_0_1 is
             emit UpdateStage(
                 i,
                 newStages[i].price,
-                newStages[i].mintFee,
                 newStages[i].walletLimit,
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,

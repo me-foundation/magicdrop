@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
+import {Initializable} from "solady/src/utils/Initializable.sol";
 import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
@@ -10,13 +11,22 @@ import {MagicDropTokenImplRegistry} from "../registry/MagicDropTokenImplRegistry
 /// @title MagicDropCloneFactory
 /// @notice A factory contract for creating and managing clones of MagicDrop contracts
 /// @dev This contract uses the UUPS proxy pattern
-contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
+contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
+    /*==============================================================
+    =                            STORAGE                           =
+    ==============================================================*/
+
+    /// @notice The registry contract
+    MagicDropTokenImplRegistry private _registry;
+
+    /// @notice Gap for future upgrades
+    uint256[48] private __gap;
+
     /*==============================================================
     =                           CONSTANTS                          =
     ==============================================================*/
 
-    MagicDropTokenImplRegistry private _registry;
-    bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address)"));
+    bytes4 private constant INITIALIZE_SELECTOR = bytes4(keccak256("initialize(string,string,address,uint256)"));
 
     /*==============================================================
     =                             EVENTS                           =
@@ -24,7 +34,13 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
 
     event MagicDropFactoryInitialized();
     event NewContractInitialized(
-        address contractAddress, address initialOwner, uint32 implId, TokenStandard standard, string name, string symbol
+        address contractAddress,
+        address initialOwner,
+        uint32 implId,
+        TokenStandard standard,
+        string name,
+        string symbol,
+        uint256 mintFee
     );
     event Withdrawal(address to, uint256 amount);
 
@@ -37,14 +53,20 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     error InsufficientDeploymentFee();
     error WithdrawalFailed();
     error InitialOwnerCannotBeZero();
+    error NewImplementationCannotBeZero();
 
     /*==============================================================
-    =                          CONSTRUCTOR                         =
+    =                          INITIALIZER                         =
     ==============================================================*/
+
+    /// @dev Disables initializers for the implementation contract.
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
-    constructor(address initialOwner, address registry) public {
+    function initialize(address initialOwner, address registry) public initializer {
         if (registry == address(0)) {
             revert RegistryAddressCannotBeZero();
         }
@@ -93,11 +115,17 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             revert InsufficientDeploymentFee();
         }
 
+        // Retrieve the mint fee for the implementation
+        uint256 mintFee = _registry.getMintFee(standard, implId);
+
+        // Create a unique salt by combining original salt with chain ID and sender
+        bytes32 _salt = keccak256(abi.encode(salt, block.chainid, msg.sender));
         // Create a deterministic clone of the implementation contract
-        address instance = LibClone.cloneDeterministic(impl, salt);
+        address instance = LibClone.cloneDeterministic(impl, _salt);
 
         // Initialize the newly created contract
-        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        (bool success,) =
+            instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner, mintFee));
         if (!success) {
             revert InitializationFailed();
         }
@@ -108,7 +136,8 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             implId: implId,
             standard: standard,
             name: name,
-            symbol: symbol
+            symbol: symbol,
+            mintFee: mintFee
         });
 
         return instance;
@@ -146,11 +175,15 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             revert InsufficientDeploymentFee();
         }
 
+        // Retrieve the mint fee for the implementation
+        uint256 mintFee = _registry.getMintFee(standard, implId);
+
         // Create a non-deterministic clone of the implementation contract
         address instance = LibClone.clone(impl);
 
         // Initialize the newly created contract
-        (bool success,) = instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner));
+        (bool success,) =
+            instance.call(abi.encodeWithSelector(INITIALIZE_SELECTOR, name, symbol, initialOwner, mintFee));
         if (!success) {
             revert InitializationFailed();
         }
@@ -161,7 +194,8 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
             implId: implId,
             standard: standard,
             name: name,
-            symbol: symbol
+            symbol: symbol,
+            mintFee: mintFee
         });
 
         return instance;
@@ -187,7 +221,8 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
         } else {
             impl = _registry.getImplementation(standard, implId);
         }
-        return LibClone.predictDeterministicAddress(impl, salt, address(this));
+        bytes32 _salt = keccak256(abi.encode(salt, block.chainid, msg.sender));
+        return LibClone.predictDeterministicAddress(impl, _salt, address(this));
     }
 
     /// @notice Retrieves the address of the registry contract
@@ -203,7 +238,11 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable {
     ///@dev Internal function to authorize an upgrade.
     ///@param newImplementation Address of the new implementation.
     ///@notice Only the contract owner can upgrade the contract.
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
+        if (newImplementation == address(0)) {
+            revert NewImplementationCannotBeZero();
+        }
+    }
 
     /// @notice Withdraws the contract's balance
     function withdraw(address to) external onlyOwner {
