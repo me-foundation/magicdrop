@@ -8,6 +8,7 @@ import {ERC1155MInitializableV1_0_2 as ERC1155MInitializable} from
     "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_2.sol";
 import {MintStageInfo1155} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
 contract ERC1155MInitializableTest is Test {
     ERC1155MInitializable public nft;
@@ -159,5 +160,10 @@ contract ERC1155MInitializableTest is Test {
         vm.prank(minter);
         nft.mint{value: 0.5 ether + mintFee}(0, 1, 1, new bytes32[](0));
         assertEq(nft.balanceOf(minter, 0), 1);
+
+        vm.prank(owner);
+        nft.withdraw();
+        assertEq(fundReceiver.balance, 0.5 ether);
+        assertEq(MINT_FEE_RECEIVER.balance, mintFee);
     }
 }

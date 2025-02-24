@@ -10,6 +10,7 @@ import {ERC721MInitializableV1_0_2 as ERC721MInitializable} from
 import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
 contract MockERC721M is ERC721MInitializable {
     function baseURI() public view returns (string memory) {
@@ -302,5 +303,10 @@ contract ERC721MInitializableTest is Test {
         vm.prank(minter);
         nft.mint{value: 0.5 ether + mintFee}(1, 0, new bytes32[](0), 0, "");
         assertEq(nft.balanceOf(minter), 1);
+
+        vm.prank(owner);
+        nft.withdraw();
+        assertEq(fundReceiver.balance, 0.5 ether);
+        assertEq(MINT_FEE_RECEIVER.balance, mintFee);
     }
 }
