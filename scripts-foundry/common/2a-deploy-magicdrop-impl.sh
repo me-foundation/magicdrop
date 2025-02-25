@@ -21,6 +21,8 @@ RPC_URL=""
 STANDARD=""
 IMPL_EXPECTED_ADDRESS=""
 IMPL_SALT=""
+USE_CASE=""
+ROYALTY_ENFORCED=false
 
 # Function to display usage
 usage() {
@@ -34,6 +36,8 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --chain-id) CHAIN_ID=$2; shift ;;
         --token-standard) STANDARD=$2; shift ;;
+        --use-case) USE_CASE=$2; shift ;;
+        --royalty-enforced) ROYALTY_ENFORCED=true ;;
         --expected-address) IMPL_EXPECTED_ADDRESS=$2; shift ;;
         --salt) IMPL_SALT=$2; shift ;;
         *) usage ;;
@@ -42,7 +46,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Check if all parameters are set
-if [ -z "$CHAIN_ID" ] || [ -z "$STANDARD" ] || [ -z "$IMPL_EXPECTED_ADDRESS" ] || [ -z "$IMPL_SALT" ]; then
+if [ -z "$CHAIN_ID" ] || [ -z "$STANDARD" ] || [-z "$USE_CASE"] || [-z "$ROYALTY_ENFORCED"] || [ -z "$IMPL_EXPECTED_ADDRESS" ] || [ -z "$IMPL_SALT" ]; then
     usage
 fi
 
@@ -60,6 +64,8 @@ echo "==================== DEPLOYMENT DETAILS ===================="
 echo "Chain ID:                     $CHAIN_ID"
 echo "RPC URL:                      $RPC_URL"
 echo "Token Standard:               $STANDARD"
+echo "Use Case:                     $USE_CASE"
+echo "Royalty Enforced:             $ROYALTY_ENFORCED"
 echo "Expected Address:             $IMPL_EXPECTED_ADDRESS"
 echo "Salt:                         $IMPL_SALT"
 echo "============================================================"
@@ -79,7 +85,7 @@ echo "============= DEPLOYING MAGICDROP IMPLEMENTATION ============="
 echo ""
 
 # remove --verify when deploying on Sei Chain. You will need to verify manually.
-CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IMPL_EXPECTED_ADDRESS=$IMPL_EXPECTED_ADDRESS IMPL_SALT=$IMPL_SALT forge script ./DeployMagicDropImplementation.s.sol:DeployMagicDropImplementation \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD USE_CASE=$USE_CASE ROYALTY_ENFORCED=$ROYALTY_ENFORCED IMPL_EXPECTED_ADDRESS=$IMPL_EXPECTED_ADDRESS IMPL_SALT=$IMPL_SALT forge script ./DeployMagicDropImplementation.s.sol:DeployMagicDropImplementation \
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \
