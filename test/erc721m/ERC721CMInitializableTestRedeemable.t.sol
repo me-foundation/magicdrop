@@ -4,15 +4,14 @@ pragma solidity ^0.8.22;
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
-import {ERC721CMInitializableRedeemable as ERC721CMInitializable} from
-    "../../contracts/nft/erc721m/ERC721CMInitializableRedeemable.sol";
+import {ERC721CMInitializableRedeemable} from "../../contracts/nft/erc721m/ERC721CMInitializableRedeemable.sol";
 import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
-import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
-import {Ownable} from "solady/src/auth/Ownable.sol";
 
-contract MockERC721CMInitializable is ERC721CMInitializable {
+contract MockERC721CMInitializableRedeemable is
+    ERC721CMInitializableRedeemable
+{
     function baseURI() public view returns (string memory) {
         return _currentBaseURI;
     }
@@ -22,10 +21,11 @@ contract MockERC721CMInitializable is ERC721CMInitializable {
     }
 }
 
-contract ERC721CMInitializableTest is Test {
-    MockERC721CMInitializable public nft;
+contract ERC721CMInitializableRedeemableTest is Test {
+    MockERC721CMInitializableRedeemable public nft;
     address public owner;
     address public minter;
+    address public redeemer;
     address public fundReceiver;
     address public readonly;
     uint256 public constant INITIAL_SUPPLY = 1000;
@@ -36,6 +36,8 @@ contract ERC721CMInitializableTest is Test {
 
     error Unauthorized();
     error NotAuthorizedRedeemer();
+    error NotOwner();
+    error MismatchedArrays();
 
     function setUp() public {
         owner = address(this);
@@ -57,8 +59,8 @@ contract ERC721CMInitializableTest is Test {
             endTimeUnixSeconds: startTime + 1 days
         });
 
-        clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
-        nft = MockERC721CMInitializable(clone);
+        clone = LibClone.deployERC1967(address(new MockERC721CMInitializableRedeemable()));
+        nft = MockERC721CMInitializableRedeemable(clone);
         nft.initialize("Test", "TEST", owner, mintFee);
         nft.setup(
             "base_uri_",
@@ -73,370 +75,210 @@ contract ERC721CMInitializableTest is Test {
         );
     }
 
-    function testInitialState() public view {
-        assertEq(nft.name(), "Test");
-        assertEq(nft.symbol(), "TEST");
-        assertEq(nft.owner(), owner);
-        assertEq(nft.getMaxMintableSupply(), INITIAL_SUPPLY);
-        assertEq(nft.getGlobalWalletLimit(), GLOBAL_WALLET_LIMIT);
-        assertTrue(nft.getMintable());
+    // Test contract initialization and name version
+    function testContractNameAndVersion() public {
+        (string memory name, string memory version) = nft.contractNameAndVersion();
+        assertEq(name, "ERC721CMInitializableRedeemable");
+        assertEq(version, "1.0.0");
     }
 
-    function testSetMintable() public {
-        nft.setMintable(false);
-        assertFalse(nft.getMintable());
+    // Test adding and removing redeemer roles
+    function testAddRemoveRedeemer() public {
+        // Initially redeemer should not be authorized
+        vm.prank(redeemer);
+        vm.expectRevert(NotAuthorizedRedeemer.selector);
 
-        vm.prank(readonly);
-        vm.expectRevert();
-        nft.setMintable(true);
-    }
+        address[] memory owners = new address[](1);
+        owners[0] = address(0);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = 0;
+        nft.redeem(owners, tokenIds);
 
-    function testSetMaxMintableSupply() public {
-        nft.setMaxMintableSupply(INITIAL_SUPPLY - 1);
-        assertEq(nft.getMaxMintableSupply(), INITIAL_SUPPLY - 1);
-    }
+        // Add redeemer
+        nft.addAuthorizedRedeemer(redeemer);
 
-    function testSetGlobalWalletLimit() public {
-        nft.setGlobalWalletLimit(5);
-        assertEq(nft.getGlobalWalletLimit(), 5);
-    }
-
-    function testWithdraw() public {
-        // Send 100 wei to contract address for testing
-        vm.deal(address(nft), 100);
-        assertEq(address(nft).balance, 100);
-
-        uint256 initialFundReceiverBalance = fundReceiver.balance;
-        nft.withdraw();
-        assertEq(address(nft).balance, 0);
-        assertEq(fundReceiver.balance, initialFundReceiverBalance + 100);
-
-        vm.prank(readonly);
-        vm.expectRevert();
-        nft.withdraw();
-    }
-
-    function testSetStages() public {
-        MintStageInfo[] memory stages = new MintStageInfo[](2);
-        stages[0] = MintStageInfo({
-            price: 0.5 ether,
-            walletLimit: 3,
-            merkleRoot: bytes32(uint256(1)),
-            maxStageSupply: 5,
-            startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 1
-        });
-        stages[1] = MintStageInfo({
-            price: 0.6 ether,
-            walletLimit: 4,
-            merkleRoot: bytes32(uint256(2)),
-            maxStageSupply: 10,
-            startTimeUnixSeconds: 301,
-            endTimeUnixSeconds: 602
-        });
-
-        nft.setStages(stages);
-        assertEq(nft.getNumberStages(), 2);
-
-        vm.prank(readonly);
-        vm.expectRevert();
-        nft.setStages(stages);
-    }
-
-    function testMint() public {
-        MintStageInfo[] memory stages = new MintStageInfo[](1);
-        stages[0] = MintStageInfo({
-            price: 0.5 ether,
-            walletLimit: 10,
-            merkleRoot: bytes32(0),
-            maxStageSupply: 5,
-            startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 1
-        });
-        nft.setStages(stages);
-
-        vm.warp(0);
+        // Mint a token to test with
         vm.prank(minter);
-        nft.mint{value: 0.6 ether}(1, 0, new bytes32[](0), 0, "");
-        assertEq(nft.balanceOf(minter), 1);
-
-        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
-        vm.prank(minter);
-        nft.mint{value: 0.5 ether}(1, 0, new bytes32[](0), 0, "");
-    }
-
-    function testTokenURI() public {
-        nft.setBaseURI("base_uri_");
-        nft.setTokenURISuffix(".json");
-
-        MintStageInfo[] memory stages = new MintStageInfo[](1);
-        stages[0] = MintStageInfo({
-            price: 0.1 ether,
-            walletLimit: 0,
-            merkleRoot: bytes32(0),
-            maxStageSupply: 0,
-            startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 1000000
-        });
-        nft.setStages(stages);
-
-        vm.warp(500000);
-
-        vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(1, 0, new bytes32[](0), 0, "");
-        assertEq(nft.tokenURI(0), "base_uri_0.json");
-
-        vm.expectRevert(abi.encodeWithSelector(IERC721A.URIQueryForNonexistentToken.selector));
-        nft.tokenURI(1);
-    }
-
-    function testGlobalWalletLimit() public {
-        nft.setGlobalWalletLimit(2);
-        assertEq(nft.getGlobalWalletLimit(), 2);
-
-        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.GlobalWalletLimitOverflow.selector));
-        nft.setGlobalWalletLimit(INITIAL_SUPPLY + 1);
-    }
-
-    function testContractURI() public {
-        string memory uri = "ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4";
-        nft.setContractURI(uri);
-        assertEq(nft.contractURI(), uri);
-    }
-
-    function testSetBaseURI() public {
-        vm.startPrank(owner);
-        nft.setBaseURI("new_base_uri_");
-        assertEq(nft.baseURI(), "new_base_uri_");
-    }
-
-    function testSetTokenURISuffix() public {
-        vm.startPrank(owner);
-        nft.setTokenURISuffix(".txt");
-        assertEq(nft.tokenURISuffix(), ".txt");
-    }
-
-    function testSetupLockedRevert() public {
-        vm.startPrank(owner);
-        vm.expectRevert(ErrorsAndEvents.ContractAlreadySetup.selector);
-        nft.setup(
-            "base_uri_",
-            ".json",
-            INITIAL_SUPPLY,
-            GLOBAL_WALLET_LIMIT,
-            address(0),
-            fundReceiver,
-            new MintStageInfo[](0),
-            address(this),
-            0
+        nft.mint{value: 0.1 ether + mintFee}(
+            1,
+            1,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
         );
 
-        assertEq(nft.isSetupLocked(), true);
-    }
+        // Now redeemer should be able to redeem
+        vm.prank(redeemer);
+        address[] memory validOwners = new address[](1);
+        validOwners[0] = minter;
+        uint256[] memory validTokenIds = new uint256[](1);
+        validTokenIds[0] = 0;
+        nft.redeem(validOwners, validTokenIds);
 
-    function testSetTransferable() public {
-        vm.startPrank(owner);
-        nft.setTransferable(false);
-        assertEq(nft.isTransferable(), false);
+        // Token should be burned
+        vm.expectRevert();
+        nft.ownerOf(0);
 
-        nft.setTransferable(true);
-        assertEq(nft.isTransferable(), true);
-    }
-
-    function testSetTransferableRevertAlreadySet() public {
-        vm.startPrank(owner);
-        vm.expectRevert(ErrorsAndEvents.TransferableAlreadySet.selector);
-        nft.setTransferable(true);
-    }
-
-    function testTransferWhenNotTransferable() public {
-        vm.startPrank(owner);
-        nft.setTransferable(false);
-        nft.ownerMint(1, minter);
-        vm.stopPrank();
-
-        vm.expectRevert(ErrorsAndEvents.NotTransferable.selector);
+        // Mint another token
         vm.prank(minter);
-        nft.safeTransferFrom(minter, readonly, 0);
-    }
-
-    function testInitializeRevertCalledTwice() public {
-        vm.expectRevert(0xf92ee8a9); // InvalidInitialization()
-        nft.initialize("Test", "TEST", owner, mintFee);
-    }
-
-    function testCallSetupBeforeInitializeRevert() public {
-        clone = LibClone.deployERC1967(address(new MockERC721CMInitializable()));
-        MockERC721CMInitializable nft2 = MockERC721CMInitializable(clone);
-        vm.expectRevert(Unauthorized.selector);
-        nft2.setup(
-            "base_uri_",
-            ".json",
-            INITIAL_SUPPLY,
-            GLOBAL_WALLET_LIMIT,
-            address(0),
-            fundReceiver,
-            new MintStageInfo[](0),
-            address(this),
-            0
+        nft.mint{value: 0.1 ether + mintFee}(
+            1,
+            1,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
         );
+
+        // Remove redeemer
+        nft.removeAuthorizedRedeemer(redeemer);
+
+        // Redeemer should not be authorized anymore
+        vm.prank(redeemer);
+        vm.expectRevert(NotAuthorizedRedeemer.selector);
+
+        address[] memory owners2 = new address[](1);
+        owners2[0] = minter;
+        uint256[] memory tokenIds2 = new uint256[](1);
+        tokenIds2[0] = 1;
+        nft.redeem(owners2, tokenIds2);
     }
 
-    function testSetupNonOwnerRevert() public {
-        vm.startPrank(address(0x3));
-        vm.expectRevert(Unauthorized.selector);
-        nft.setup(
-            "base_uri_",
-            ".json",
-            INITIAL_SUPPLY,
-            GLOBAL_WALLET_LIMIT,
-            address(0),
-            fundReceiver,
-            new MintStageInfo[](0),
-            address(this),
-            0
-        );
-        vm.stopPrank();
-    }
+    // Test redeeming batch of tokens
+    function testRedeemBatch() public {
+        // Add redeemer
+        nft.addAuthorizedRedeemer(address(this));
 
-    function testGetConfig() public {
-        // Setup test data
-        string memory baseURI = "base_uri_";
-        string memory contractURI = "contract_uri";
-        address royaltyReceiver = address(0x123);
-        uint96 royaltyBps = 500; // 5%
-
-        // Set contract URI and royalty info
-        vm.startPrank(owner);
-        nft.setContractURI(contractURI);
-        nft.setDefaultRoyalty(royaltyReceiver, royaltyBps);
-        vm.stopPrank();
-
-        // Get config
-        SetupConfig memory config = nft.getConfig();
-
-        // Verify all fields match expected values
-        assertEq(config.maxSupply, INITIAL_SUPPLY);
-        assertEq(config.walletLimit, GLOBAL_WALLET_LIMIT);
-        assertEq(config.baseURI, baseURI);
-        assertEq(config.contractURI, contractURI);
-        assertEq(config.payoutRecipient, fundReceiver);
-        assertEq(config.royaltyRecipient, royaltyReceiver);
-        assertEq(config.royaltyBps, royaltyBps);
-        assertEq(config.mintFee, mintFee);
-        assertEq(config.stages.length, 1);
-        assertEq(config.stages[0].price, 0.1 ether);
-        assertEq(config.stages[0].walletLimit, 2);
-        assertEq(config.stages[0].merkleRoot, bytes32(0));
-        assertEq(config.stages[0].maxStageSupply, 100);
-        assertEq(config.stages[0].startTimeUnixSeconds, startTime);
-        assertEq(config.stages[0].endTimeUnixSeconds, startTime + 1 days);
-    }
-
-    function testGetConfigWithStages() public {
-        // Create test stage
-        MintStageInfo[] memory stages = new MintStageInfo[](1);
-        stages[0] = MintStageInfo({
-            price: 0.1 ether,
-            walletLimit: 2,
-            merkleRoot: bytes32(0),
-            maxStageSupply: 100,
-            startTimeUnixSeconds: block.timestamp,
-            endTimeUnixSeconds: block.timestamp + 1 days
-        });
-
-        // Setup contract with stages
-        vm.startPrank(owner);
-        nft.setStages(stages);
-        vm.stopPrank();
-
-        // Get config
-        SetupConfig memory config = nft.getConfig();
-
-        // Verify stages were set correctly
-        assertEq(config.stages.length, 1);
-        assertEq(config.stages[0].price, stages[0].price);
-        assertEq(config.stages[0].walletLimit, stages[0].walletLimit);
-        assertEq(config.stages[0].merkleRoot, stages[0].merkleRoot);
-        assertEq(config.stages[0].maxStageSupply, stages[0].maxStageSupply);
-        assertEq(config.stages[0].startTimeUnixSeconds, stages[0].startTimeUnixSeconds);
-        assertEq(config.stages[0].endTimeUnixSeconds, stages[0].endTimeUnixSeconds);
-    }
-
-    function testBurnHappyPath() public {
+        // Mint multiple tokens to minter
+        vm.startPrank(minter);
         vm.deal(minter, 1 ether);
-        vm.startPrank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
-
-        uint256 tokenId = 0;
-        assertEq(nft.ownerOf(tokenId), minter);
-
-        nft.burn(tokenId);
-
-        vm.expectRevert();
-        nft.ownerOf(tokenId);
+        nft.mint{value: 0.3 ether + mintFee}(
+            2,
+            2,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
+        );
         vm.stopPrank();
-    }
 
-    function testBurnInvalidTokenReverts() public {
-        vm.prank(minter);
-        vm.expectRevert();
-        nft.burn(9999); // non-existent token
-    }
-
-    function testBurnNotOwnerReverts() public {
-        // mint to user
-        vm.startPrank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        // Mint tokens to readonly
+        vm.startPrank(readonly);
+        vm.deal(readonly, 1 ether);
+        nft.mint{value: 0.3 ether + mintFee}(
+            2,
+            2,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
+        );
         vm.stopPrank();
+
+        // Verify ownership
         assertEq(nft.ownerOf(0), minter);
+        assertEq(nft.ownerOf(1), minter);
+        assertEq(nft.ownerOf(2), readonly);
+        assertEq(nft.ownerOf(3), readonly);
 
-        vm.prank(readonly);
+        // Redeem batch (mixed owners)
+        address[] memory batchOwners = new address[](4);
+        batchOwners[0] = minter;
+        batchOwners[1] = minter;
+        batchOwners[2] = readonly;
+        batchOwners[3] = readonly;
+
+        uint256[] memory batchTokenIds = new uint256[](4);
+        batchTokenIds[0] = 0;
+        batchTokenIds[1] = 1;
+        batchTokenIds[2] = 2;
+        batchTokenIds[3] = 3;
+
+        nft.redeem(batchOwners, batchTokenIds);
+
+        // Verify all tokens are burned
+        for (uint256 i = 0; i < 4; i++) {
+            vm.expectRevert();
+            nft.ownerOf(i);
+        }
+    }
+
+    // Test array length mismatch
+    function testRedeemArrayLengthMismatch() public {
+        // Add redeemer
+        nft.addAuthorizedRedeemer(address(this));
+
+        // Mint a token
+        vm.prank(minter);
+        vm.deal(minter, 1 ether);
+        nft.mint{value: 0.1 ether + mintFee}(
+            1,
+            1,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
+        );
+
+        // Create mismatched arrays - more owners than tokenIds
+        address[] memory owners = new address[](2);
+        owners[0] = minter;
+        owners[1] = readonly;
+
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = 0;
+
+        // Should revert due to mismatched array lengths
+        vm.expectRevert(MismatchedArrays.selector);
+        nft.redeem(owners, tokenIds);
+
+        // Create mismatched arrays - more tokenIds than owners
+        address[] memory owners2 = new address[](1);
+        owners2[0] = minter;
+
+        uint256[] memory tokenIds2 = new uint256[](2);
+        tokenIds2[0] = 1;
+        tokenIds2[1] = 2;
+
+        // Should revert due to mismatched array lengths
+        vm.expectRevert(MismatchedArrays.selector);
+        nft.redeem(owners2, tokenIds2);
+    }
+
+    // Test that only owner can add/remove redeemers
+    function testOnlyOwnerCanManageRedeemers() public {
+        // Try to add redeemer as non-owner
+        vm.prank(minter);
         vm.expectRevert();
-        nft.burn(0);
+        nft.addAuthorizedRedeemer(redeemer);
+
+        // Add redeemer as owner
+        nft.addAuthorizedRedeemer(redeemer);
+
+        // Try to remove redeemer as non-owner
+        vm.prank(minter);
+        vm.expectRevert();
+        nft.removeAuthorizedRedeemer(redeemer);
+
+        // Remove redeemer as owner
+        nft.removeAuthorizedRedeemer(redeemer);
     }
 
-    function testMintFee() public {
-        MintStageInfo[] memory stages = new MintStageInfo[](1);
-        stages[0] = MintStageInfo({
-            price: 0.5 ether,
-            walletLimit: 10,
-            merkleRoot: bytes32(0),
-            maxStageSupply: 5,
-            startTimeUnixSeconds: 0,
-            endTimeUnixSeconds: 1
-        });
-        nft.setStages(stages);
+    // Test redeeming non-existent token
+    function testRedeemNonExistentToken() public {
+        // Add redeemer
+        nft.addAuthorizedRedeemer(address(this));
 
-        vm.warp(0);
-        vm.prank(minter);
-        vm.expectRevert(abi.encodeWithSelector(ErrorsAndEvents.NotEnoughValue.selector));
-        nft.mint{value: 0.5 ether}(1, 0, new bytes32[](0), 0, "");
-        assertEq(nft.balanceOf(minter), 0);
+        // Try to redeem non-existent token
+        address[] memory owners = new address[](1);
+        owners[0] = minter;
 
-        vm.prank(minter);
-        nft.mint{value: 0.5 ether + mintFee}(1, 0, new bytes32[](0), 0, "");
-        assertEq(nft.balanceOf(minter), 1);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = 999; // This token doesn't exist
 
-        vm.prank(owner);
-        nft.withdraw();
-        assertEq(fundReceiver.balance, 0.5 ether);
-        assertEq(MINT_FEE_RECEIVER.balance, mintFee);
+        vm.expectRevert();
+        nft.redeem(owners, tokenIds);
     }
 
-    function testMintFeeSetter() public {
-        assertEq(nft.getMintFee(), mintFee);
-        vm.prank(minter);
-        vm.expectRevert(Ownable.Unauthorized.selector);
-        nft.setMintFee(0.00002 ether);
-
-        vm.startPrank(owner);
-        nft.setMintFee(0.00002 ether);
-        assertEq(nft.getMintFee(), 0.00002 ether);
-    }
-
+    // Test existing functionality from the original test file
     function testRedeemHappyPath() public {
-        // Setup authorized minter
+        // Setup authorized redeemer
         nft.addAuthorizedRedeemer(address(this));
 
         // Mint tokens to multiple addresses
@@ -448,10 +290,22 @@ contract ERC721CMInitializableTest is Test {
         vm.deal(readonly, 1 ether);
 
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        nft.mint{value: 0.1 ether + mintFee}(
+            1,
+            1,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
+        );
 
         vm.prank(readonly);
-        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        nft.mint{value: 0.1 ether + mintFee}(
+            1,
+            1,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
+        );
 
         uint256[] memory tokenIds = new uint256[](2);
         tokenIds[0] = 0;
@@ -472,13 +326,19 @@ contract ERC721CMInitializableTest is Test {
     }
 
     function testRedeemNotOwnerReverts() public {
-        // Setup authorized minter
+        // Setup authorized redeemer
         nft.addAuthorizedRedeemer(address(this));
 
         // Mint token
         vm.deal(minter, 1 ether);
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        nft.mint{value: 0.1 ether + mintFee}(
+            1,
+            1,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
+        );
 
         // Try to redeem with wrong owner
         address[] memory owners = new address[](1);
@@ -487,15 +347,21 @@ contract ERC721CMInitializableTest is Test {
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 0;
 
-        vm.expectRevert(abi.encodeWithSelector(ERC721CMInitializable.NotOwner.selector));
+        vm.expectRevert(NotOwner.selector);
         nft.redeem(owners, tokenIds);
     }
 
-    function testRedeemNotAuthorizedMinterReverts() public {
+    function testRedeemNotAuthorizedRedeemerReverts() public {
         // Mint token
         vm.deal(minter, 1 ether);
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
+        nft.mint{value: 0.1 ether + mintFee}(
+            1,
+            1,
+            new bytes32[](0),
+            block.timestamp,
+            new bytes(0)
+        );
 
         address[] memory owners = new address[](1);
         owners[0] = minter;
@@ -503,7 +369,7 @@ contract ERC721CMInitializableTest is Test {
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 0;
 
-        // Try to redeem without being authorized minter
+        // Try to redeem without being authorized redeemer
         vm.prank(readonly);
         vm.expectRevert(NotAuthorizedRedeemer.selector);
         nft.redeem(owners, tokenIds);
