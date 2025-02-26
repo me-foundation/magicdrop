@@ -20,7 +20,7 @@ import {Cosignable} from "contracts/common/Cosignable.sol";
 import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
 import {AuthorizedRedeemerControl} from "contracts/common/AuthorizedRedeemerControl.sol";
 
-/// @title ERC721CMInitializableRedeemable
+/// @title ERC721CMInitializableV1_0_2
 /// @notice An initializable ERC721AC contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC721ACQueryable, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
 contract ERC721CMInitializableRedeemable is
@@ -53,13 +53,18 @@ contract ERC721CMInitializableRedeemable is
     /// @param name The name of the token collection
     /// @param symbol The symbol of the token collection
     /// @param initialOwner The address of the initial owner
-    function initialize(string calldata name, string calldata symbol, address initialOwner) external initializer {
+    /// @param mintFee The mint fee for the contract
+    function initialize(string calldata name, string calldata symbol, address initialOwner, uint256 mintFee)
+        external
+        initializer
+    {
         if (initialOwner == address(0)) {
             revert InitialOwnerCannotBeZero();
         }
 
         __ERC721ACQueryableInitializable_init(name, symbol);
         _initializeOwner(initialOwner);
+        _mintFee = mintFee;
     }
 
     /*==============================================================
@@ -69,7 +74,7 @@ contract ERC721CMInitializableRedeemable is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721CMInitializable", "1.0.1");
+        return ("ERC721CMInitializable", "1.0.2");
     }
 
     /// @notice Gets the token URI for a specific token ID
@@ -191,7 +196,14 @@ contract ERC721CMInitializableRedeemable is
         config.payoutRecipient = _fundReceiver;
         config.royaltyRecipient = _royaltyRecipient;
         config.royaltyBps = _royaltyBps;
+        config.mintFee = _mintFee;
         return config;
+    }
+
+    /// @notice Gets the mint fee
+    /// @return The mint fee
+    function getMintFee() external view returns (uint256) {
+        return _mintFee;
     }
 
     /// @notice Gets the mint currency address
@@ -330,16 +342,23 @@ contract ERC721CMInitializableRedeemable is
         }
     }
 
+    /// @notice Sets the mint fee
+    /// @param mintFee The new mint fee to set
+    function setMintFee(uint256 mintFee) external onlyOwner {
+        _mintFee = mintFee;
+        emit SetMintFee(mintFee);
+    }
+
     /// @notice Adds an authorized minter
     /// @param minter The address to add as an authorized minter
     function addAuthorizedMinter(address minter) external override onlyOwner {
         _addAuthorizedMinter(minter);
     }
 
-    /// @notice Removes an authorized redeemer
-    /// @param redeemer The address to remove as an authorized redeemer
-    function removeAuthorizedRedeemer(address redeemer) external override onlyOwner {
-        _removeAuthorizedRedeemer(redeemer);
+    /// @notice Removes an authorized minter
+    /// @param minter The address to remove as an authorized minter
+    function removeAuthorizedMinter(address minter) external override onlyOwner {
+        _removeAuthorizedMinter(minter);
     }
 
     /// @notice Adds an authorized redeemer
@@ -348,10 +367,10 @@ contract ERC721CMInitializableRedeemable is
         _addAuthorizedRedeemer(redeemer);
     }
 
-    /// @notice Removes an authorized minter
-    /// @param minter The address to remove as an authorized minter
-    function removeAuthorizedMinter(address minter) external override onlyOwner {
-        _removeAuthorizedMinter(minter);
+    /// @notice Removes an authorized redeemer
+    /// @param redeemer The address to remove as an authorized redeemer
+    function removeAuthorizedRedeemer(address redeemer) external override onlyOwner {
+        _removeAuthorizedRedeemer(redeemer);
     }
 
     /// @notice Sets the cosigner address
@@ -509,7 +528,7 @@ contract ERC721CMInitializableRedeemable is
         uint256 activeStage = getActiveStageFromTimestamp(stageTimestamp);
         MintStageInfo memory stage = _mintStages[activeStage];
 
-        uint80 adjustedMintFee = waiveMintFee ? 0 : stage.mintFee;
+        uint256 adjustedMintFee = waiveMintFee ? 0 : _mintFee;
 
         // Check value if minting with ETH
         if (_mintCurrency == address(0) && msg.value < (stage.price + adjustedMintFee) * qty) revert NotEnoughValue();
@@ -579,7 +598,6 @@ contract ERC721CMInitializableRedeemable is
             _mintStages.push(
                 MintStageInfo({
                     price: newStages[i].price,
-                    mintFee: newStages[i].mintFee,
                     walletLimit: newStages[i].walletLimit,
                     merkleRoot: newStages[i].merkleRoot,
                     maxStageSupply: newStages[i].maxStageSupply,
@@ -590,7 +608,6 @@ contract ERC721CMInitializableRedeemable is
             emit UpdateStage(
                 i,
                 newStages[i].price,
-                newStages[i].mintFee,
                 newStages[i].walletLimit,
                 newStages[i].merkleRoot,
                 newStages[i].maxStageSupply,
