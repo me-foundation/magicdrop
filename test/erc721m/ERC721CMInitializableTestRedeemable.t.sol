@@ -9,9 +9,7 @@ import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC
 import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 
-contract MockERC721CMInitializableRedeemable is
-    ERC721CMInitializableRedeemable
-{
+contract MockERC721CMInitializableRedeemable is ERC721CMInitializableRedeemable {
     function baseURI() public view returns (string memory) {
         return _currentBaseURI;
     }
@@ -76,7 +74,7 @@ contract ERC721CMInitializableRedeemableTest is Test {
     }
 
     // Test contract initialization and name version
-    function testContractNameAndVersion() public {
+    function testContractNameAndVersion() public view {
         (string memory name, string memory version) = nft.contractNameAndVersion();
         assertEq(name, "ERC721CMInitializableRedeemable");
         assertEq(version, "1.0.0");
@@ -99,13 +97,7 @@ contract ERC721CMInitializableRedeemableTest is Test {
 
         // Mint a token to test with
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(
-            1,
-            1,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         // Now redeemer should be able to redeem
         vm.prank(redeemer);
@@ -121,13 +113,7 @@ contract ERC721CMInitializableRedeemableTest is Test {
 
         // Mint another token
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(
-            1,
-            1,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         // Remove redeemer
         nft.removeAuthorizedRedeemer(redeemer);
@@ -151,25 +137,13 @@ contract ERC721CMInitializableRedeemableTest is Test {
         // Mint multiple tokens to minter
         vm.startPrank(minter);
         vm.deal(minter, 1 ether);
-        nft.mint{value: 0.3 ether + mintFee}(
-            2,
-            2,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.3 ether + mintFee}(2, 2, new bytes32[](0), block.timestamp, new bytes(0));
         vm.stopPrank();
 
         // Mint tokens to readonly
         vm.startPrank(readonly);
         vm.deal(readonly, 1 ether);
-        nft.mint{value: 0.3 ether + mintFee}(
-            2,
-            2,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.3 ether + mintFee}(2, 2, new bytes32[](0), block.timestamp, new bytes(0));
         vm.stopPrank();
 
         // Verify ownership
@@ -208,13 +182,7 @@ contract ERC721CMInitializableRedeemableTest is Test {
         // Mint a token
         vm.prank(minter);
         vm.deal(minter, 1 ether);
-        nft.mint{value: 0.1 ether + mintFee}(
-            1,
-            1,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         // Create mismatched arrays - more owners than tokenIds
         address[] memory owners = new address[](2);
@@ -290,22 +258,10 @@ contract ERC721CMInitializableRedeemableTest is Test {
         vm.deal(readonly, 1 ether);
 
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(
-            1,
-            1,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         vm.prank(readonly);
-        nft.mint{value: 0.1 ether + mintFee}(
-            1,
-            1,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         uint256[] memory tokenIds = new uint256[](2);
         tokenIds[0] = 0;
@@ -332,13 +288,7 @@ contract ERC721CMInitializableRedeemableTest is Test {
         // Mint token
         vm.deal(minter, 1 ether);
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(
-            1,
-            1,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         // Try to redeem with wrong owner
         address[] memory owners = new address[](1);
@@ -355,13 +305,7 @@ contract ERC721CMInitializableRedeemableTest is Test {
         // Mint token
         vm.deal(minter, 1 ether);
         vm.prank(minter);
-        nft.mint{value: 0.1 ether + mintFee}(
-            1,
-            1,
-            new bytes32[](0),
-            block.timestamp,
-            new bytes(0)
-        );
+        nft.mint{value: 0.1 ether + mintFee}(1, 1, new bytes32[](0), block.timestamp, new bytes(0));
 
         address[] memory owners = new address[](1);
         owners[0] = minter;

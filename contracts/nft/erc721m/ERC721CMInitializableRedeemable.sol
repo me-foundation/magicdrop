@@ -8,17 +8,14 @@ import {AuthorizedRedeemerControl} from "contracts/common/AuthorizedRedeemerCont
 /// @title ERC721CMInitializableV1_0_2
 /// @notice An initializable ERC721AC contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC721ACQueryable, ERC2981, Ownable, ReentrancyGuard, and custom mintingØ logic
-contract ERC721CMInitializableRedeemable is
-    ERC721CMInitializableV1_0_2,
-    AuthorizedRedeemerControl
-{
+contract ERC721CMInitializableRedeemable is ERC721CMInitializableV1_0_2, AuthorizedRedeemerControl {
     /// @notice Revert when not the owner of the tokens
     error NotOwner();
     /// @notice Revert when the input arrays don't match in length
     error MismatchedArrays();
+
     /// @notice Emitted when a token is redeemed
     event TokenRedeemed(address from, uint256 tokenId);
-
 
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
@@ -31,8 +28,9 @@ contract ERC721CMInitializableRedeemable is
     /// @param from The owners of the tokens to burn.
     /// @param tokenIds The IDs of the tokens to burn.
     function redeem(address[] memory from, uint256[] memory tokenIds) external onlyAuthorizedRedeemer {
-        if (from.length != tokenIds.length || from.length == 0)
+        if (from.length != tokenIds.length || from.length == 0) {
             revert MismatchedArrays();
+        }
 
         for (uint256 i = 0; i < tokenIds.length; i++) {
             if (ownerOf(tokenIds[i]) != from[i]) {
