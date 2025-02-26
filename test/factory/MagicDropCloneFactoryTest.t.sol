@@ -5,8 +5,6 @@ import {console} from "forge-std/console.sol";
 import {Test} from "forge-std/Test.sol";
 import {MockERC721} from "solady/test/utils/mocks/MockERC721.sol";
 import {MockERC1155} from "solady/test/utils/mocks/MockERC1155.sol";
-import {LibClone} from "solady/src/utils/LibClone.sol";
-
 import {MagicDropCloneFactory} from "../../contracts/factory/MagicDropCloneFactory.sol";
 import {MagicDropTokenImplRegistry} from "../../contracts/registry/MagicDropTokenImplRegistry.sol";
 import {TokenStandard} from "../../contracts/common/Structs.sol";
