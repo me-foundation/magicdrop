@@ -83,6 +83,12 @@ get_transfer_validator_address() {
         "42161"|"8453"|"1"|"11155111")
             echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
             ;;
+        "2741")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT"
+            ;;
+        "80094")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN"
+            ;;
         *)
             echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
             ;;
@@ -92,6 +98,9 @@ get_transfer_validator_address() {
 get_transfer_validator_list_id() {
     local network="$1"
     case $network in
+        "80094")
+            echo $DEFAULT_LIST_ID
+            ;;
         "137")
             echo $MAGIC_EDEN_POLYGON_LIST_ID
             ;;
