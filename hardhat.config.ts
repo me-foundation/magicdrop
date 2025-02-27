@@ -137,6 +137,11 @@ const config: HardhatUserConfig = {
       url: process.env.MONAD_TESTNET_URL || 'https://testnet-rpc.monad.xyz',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    avax: {
+      url: process.env.AVAX_URL || 'https://api.avax.network/ext/bc/C/rpc',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     }
   },
   gasReporter: {
@@ -161,6 +166,14 @@ const config: HardhatUserConfig = {
           apiURL: "https://api.berascan.com/api",
           browserURL: "https://berascan.com/"
         }
+      },
+      {
+        network: 'avax',
+        chainId: 43114,
+        urls: {
+          apiURL: 'https://api.avax.network/ext/bc/C/rpc',
+          browserURL: 'https://avascan.info/'
+        },
       }
     ]
   },
