@@ -13,6 +13,7 @@ SUPPORTED_CHAINS=(
     "2741:Abstract"
     "80094:Berachain"
     "10143:MonadTestnet"
+    "43114:Avalanche"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
