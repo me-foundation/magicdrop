@@ -8,6 +8,9 @@ solc_version = "0.8.22"
 evm_version = "cancun"
 via_ir = true
 optimizer_runs = 777
+cbor_metadata = false
+bytecode_hash = "none"
+
 
 [etherscan]
 apechain = {key = "${VERIFICATION_API_KEY_APECHAIN}", chain = 33139, url = "https://api.apescan.io/api"}
