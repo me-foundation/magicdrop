@@ -17,3 +17,4 @@ sei = {key = "${VERIFICATION_API_KEY_SEI}", chain = 1329, url = "https://api.sei
 arbitrum = {key = "${VERIFICATION_API_KEY_ARBISCAN}", chain = 42161, url = "https://api.arbiscan.io/api"}
 berachain = {key = "${VERIFICATION_API_KEY_BERACHAIN}", chain = 80094, url = "https://api.berascan.com/api"}
 abstract = {key = "${VERIFICATION_API_KEY_ABSTRACT}", chain = 2741, url = "https://api.abscan.org/api"}
+avalanche = {key = "${VERIFICATION_API_KEY_AVALANCHE}", chain = 43114, url = "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan"}
