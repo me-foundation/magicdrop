@@ -58,7 +58,6 @@ chain_id_to_explorer_url() {
         80094) echo "https://berascan.com" ;;
         10143) echo "https://testnet.monadexplorer.com" ;;
         43114) echo "https://snowtrace.io" ;;
-        
         *) echo "Unknown" ;;
     esac
 }
