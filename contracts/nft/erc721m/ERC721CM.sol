@@ -54,8 +54,11 @@ contract ERC721CM is
         uint256 timestampExpirySeconds,
         address mintCurrency,
         address fundReceiver,
-        uint256 mintFee
-    ) ERC721ACQueryable(collectionName, collectionSymbol) Ownable() {
+        uint256 mintFee,
+        address initialOwner
+    ) ERC721ACQueryable(collectionName, collectionSymbol) {
+        _transferOwnership(initialOwner);
+
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
         }
