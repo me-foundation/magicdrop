@@ -100,6 +100,7 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IS_ERC721C=$IS_ERC7
   --optimizer-runs 777 \
   --via-ir \
   --verify \
+  --verifier custom \
   -v
 
 echo ""
