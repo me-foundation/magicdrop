@@ -13,8 +13,8 @@ contract DeployMagicDropTokenImplRegistry is Script {
         bytes32 salt = vm.envBytes32("REGISTRY_SALT");
         address expectedAddress = address(uint160(vm.envUint("REGISTRY_EXPECTED_ADDRESS")));
         address initialOwner = address(uint160(vm.envUint("INITIAL_OWNER")));
-        uint256 privateKey = vm.envUint("PRIVATE_KEY");
         address implementationAddress = address(uint160(vm.envUint("IMPLEMENTATION")));
+        uint256 privateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(privateKey);
 
