@@ -14,10 +14,12 @@ source ./utils
 CHAIN_ID=${CHAIN_ID:-""}
 RPC_URL=""
 RESUME=""
+INITIAL_OWNER=""
+IMPLEMENTATION=""
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 --chain-id <chain id> --salt <salt> --expected-address <expected address> --initial-owner <initial owner>"
+    echo "Usage: $0 --chain-id <chain id> --salt <salt> --expected-address <expected address> --implementation <implementation address (optional)> --initial-owner <initial owner (optional)>"
     exit 1
 }
 
@@ -27,15 +29,15 @@ while [[ "$#" -gt 0 ]]; do
         --chain-id) CHAIN_ID=$2; shift ;;
         --salt) REGISTRY_SALT=$2; shift ;;
         --expected-address) REGISTRY_EXPECTED_ADDRESS=$2; shift ;;
-        --initial-owner) INITIAL_OWNER=$2; shift ;;
         --resume) RESUME="--resume" ;;
-        *) usage ;;
+        --implementation) IMPLEMENTATION=$2; shift ;;
+        --initial-owner) INITIAL_OWNER=$2; shift ;;
     esac
     shift
 done
 
 # Check if all parameters are set
-if [ -z "$CHAIN_ID" ] || [ -z "$REGISTRY_SALT" ] || [ -z "$REGISTRY_EXPECTED_ADDRESS" ] || [ -z "$INITIAL_OWNER" ]; then
+if [ -z "$CHAIN_ID" ] || [ -z "$REGISTRY_SALT" ] || [ -z "$REGISTRY_EXPECTED_ADDRESS" ]; then
     usage
 fi
 
@@ -52,6 +54,9 @@ echo "Chain ID: $CHAIN_ID"
 echo "RPC URL: $RPC_URL"
 echo "SALT: $REGISTRY_SALT"
 echo "EXPECTED ADDRESS: $REGISTRY_EXPECTED_ADDRESS"
+echo "IMPLEMENTATION: $IMPLEMENTATION"
+echo "INITIAL OWNER: $INITIAL_OWNER"
+
 read -p "Do you want to proceed? (yes/no) " yn
 
 case $yn in 
@@ -63,7 +68,7 @@ case $yn in
 esac
 
 # NOTE: Remove --broadcast for dry-run
-CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECTED_ADDRESS=$REGISTRY_EXPECTED_ADDRESS INITIAL_OWNER=$INITIAL_OWNER forge script ./DeployMagicDropTokenImplRegistry.s.sol:DeployMagicDropTokenImplRegistry \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECTED_ADDRESS=$REGISTRY_EXPECTED_ADDRESS IMPLEMENTATION=$IMPLEMENTATION INITIAL_OWNER=$INITIAL_OWNER forge script ./DeployMagicDropTokenImplRegistry.s.sol:DeployMagicDropTokenImplRegistry \
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \

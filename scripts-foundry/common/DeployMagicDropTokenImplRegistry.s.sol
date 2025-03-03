@@ -14,21 +14,29 @@ contract DeployMagicDropTokenImplRegistry is Script {
         address expectedAddress = address(uint160(vm.envUint("REGISTRY_EXPECTED_ADDRESS")));
         address initialOwner = address(uint160(vm.envUint("INITIAL_OWNER")));
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
+        address implementationAddress = address(uint160(vm.envUint("IMPLEMENTATION")));
 
         vm.startBroadcast(privateKey);
-        
-        // Deploy the implementation contract
-        MagicDropTokenImplRegistry implementation = new MagicDropTokenImplRegistry(address(this));
-        
-        // Deploy the ERC1967 proxy
-        address proxy = LibClone.deployDeterministicERC1967(address(implementation), salt);
 
-        // Initialize the proxy with the constructor arguments
-        MagicDropTokenImplRegistry(proxy).initialize(initialOwner);
+        if (implementationAddress != address(0)) {
+            // Deploy the ERC1967 proxy
+            address proxy = LibClone.deployDeterministicERC1967(implementationAddress, salt);
+            
+            // Initialize the proxy with the constructor arguments
+            MagicDropTokenImplRegistry(proxy).initialize(initialOwner);
 
-        // Verify the deployed proxy address matches the predicted address
-        if (proxy != expectedAddress) {
-            revert AddressMismatch();
+            // Verify the deployed proxy address matches the predicted address
+            if (proxy != expectedAddress) {
+                revert AddressMismatch();
+            }
+        } else {
+            // Deploy the implementation contract
+            MagicDropTokenImplRegistry implementation = new MagicDropTokenImplRegistry{salt: salt}();
+
+            // Verify the deployed proxy address matches the predicted address
+            if (address(implementation) != expectedAddress) {
+                revert AddressMismatch();
+            }
         }
 
         vm.stopBroadcast();
