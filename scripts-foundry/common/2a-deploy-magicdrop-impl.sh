@@ -37,6 +37,7 @@ while [[ "$#" -gt 0 ]]; do
         --chain-id) CHAIN_ID=$2; shift ;;
         --token-standard) STANDARD=$2; shift ;;
         --use-case) USE_CASE=$2; shift ;;
+        --is-erc721c) IS_ERC721C=$2; shift ;;
         --expected-address) IMPL_EXPECTED_ADDRESS=$2; shift ;;
         --salt) IMPL_SALT=$2; shift ;;
     esac
