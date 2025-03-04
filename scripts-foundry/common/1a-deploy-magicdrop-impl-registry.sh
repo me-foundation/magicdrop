@@ -79,3 +79,7 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECT
   --via-ir \
   --verify \
   -v
+
+# Add for Monad testnet deployment
+# --verifier sourcify \
+# --verifier-url 'https://sourcify-api-monad.blockvision.org' \

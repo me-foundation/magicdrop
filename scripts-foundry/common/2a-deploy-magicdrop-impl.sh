@@ -92,6 +92,10 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IMPL_EXPECTED_ADDRE
   --verify \
   -v
 
+# Add for Monad testnet deployment
+# --verifier sourcify \
+# --verifier-url 'https://sourcify-api-monad.blockvision.org' \
+
 echo ""
 echo "============= DEPLOYED MAGICDROP IMPLEMENTATION ============="
 echo ""

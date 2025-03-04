@@ -82,3 +82,7 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL FACTORY_SALT=$FACTORY_SALT FACTORY_EXPECTED_
   --broadcast \
   --via-ir \
   --verify
+
+# Add for Monad testnet deployment
+# --verifier sourcify \
+# --verifier-url 'https://sourcify-api-monad.blockvision.org' \
