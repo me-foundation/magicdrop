@@ -258,8 +258,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
             publicStage: _publicStage,
             payoutRecipient: _payoutRecipient,
             royaltyRecipient: _royaltyReceiver,
-            royaltyBps: _royaltyBps,
-            mintFee: mintFee
+            royaltyBps: _royaltyBps
         });
 
         return newConfig;
