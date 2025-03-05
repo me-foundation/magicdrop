@@ -10,6 +10,7 @@ artifacts
 dist
 .DS_Store
 out/
+zkout/
 lcov.info
 lcov.info.pruned
 coverage/
