@@ -22,6 +22,7 @@ STANDARD=""
 IS_ERC721C=false #optional
 IMPL_EXPECTED_ADDRESS=""
 IMPL_SALT=""
+
 NAME=""
 SYMBOL=""
 TOKEN_URI_SUFFIX=""
@@ -31,12 +32,14 @@ COSIGNER="0x0000000000000000000000000000000000000000"
 TIMESTAMP_EXPIRY_SECONDS="60"
 MINT_CURRENCY="0x0000000000000000000000000000000000000000"
 FUND_RECEIVER=""
+ROYALTY_RECIPIENT="0x0000000000000000000000000000000000000000"
+ROYALTY_BPS=0
 INITIAL_OWNER=""
 
 # Function to display usage
 usage() {
     # Example Usage: ./2a-deploy-magicdrop-impl.sh --chain-id 137 --token-standard ERC721 --is-erc721c true --expected-address 0x0000000000000000000000000000000000000000 --salt 0x0000000000000000000000000000000000000000000000000000000000000000
-    echo "Usage: $0 --chain-id <chain id> --token-standard <token standard> --is-erc721c <bool> --expected-address <expected address> --salt <salt> --name <name> --symbol <symbol> --fund-receiver <fund receiver address> --uri <token uri suffix> --maxMintableSupply <max mintable supply> --globalWalletLimit <global wallet limit> --cosigner <cosigner address> --timestamp-expiry <timestamp expiry seconds> --mint-currency <mint currency address> --initial-owner <initial owner address>"
+    echo "Usage: $0 --chain-id <chain id> --token-standard <token standard> --is-erc721c <bool> --expected-address <expected address> --salt <salt> --name <name> --symbol <symbol> --fund-receiver <fund receiver address> --uri <token uri suffix> --maxMintableSupply <max mintable supply> --globalWalletLimit <global wallet limit> --cosigner <cosigner address> --timestamp-expiry <timestamp expiry seconds> --mint-currency <mint currency address> --initial-owner <initial owner address> --royalty-recipient <royalty recipient address> --royalty-bps <250>"
     exit 1
 }
 
@@ -57,6 +60,8 @@ while [[ "$#" -gt 0 ]]; do
         --timestamp-expiry) TIMESTAMP_EXPIRY_SECONDS=$2; shift ;;
         --mint-currency) MINT_CURRENCY=$2; shift ;;
         --fund-receiver) FUND_RECEIVER=$2; shift ;;
+        --royalty-recipient) ROYALTY_RECIPIENT=$2; shift;;
+        --royalty-bps) ROYALTY_BPS=$2; shift;;
         --initial-owner) INITIAL_OWNER=$2; shift ;;
         *) usage ;;
     esac
@@ -64,7 +69,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Check if all parameters are set
-if [ -z "$CHAIN_ID" ] || [ -z "$STANDARD" ] || [ -z "$IMPL_EXPECTED_ADDRESS" ] || [ -z "$IMPL_SALT" ] || [ -z "$NAME" ] || [ -z "$SYMBOL" ] || [ -z "$TOKEN_URI_SUFFIX" ] || [ -z "$MAX_MINTABLE_SUPPLY" ] || [ -z "$GLOBAL_WALLET_LIMIT" ] || [ -z "$COSIGNER" ] || [ -z "$TIMESTAMP_EXPIRY_SECONDS" ] || [ -z "$MINT_CURRENCY" ] || [ -z "$FUND_RECEIVER" ] || [ -z "$INITIAL_OWNER" ]; then
+if [ -z "$CHAIN_ID" ] || [ -z "$STANDARD" ] || [ -z "$IMPL_EXPECTED_ADDRESS" ] || [ -z "$IMPL_SALT" ] || [ -z "$NAME" ] || [ -z "$SYMBOL" ] || [ -z "$TOKEN_URI_SUFFIX" ] || [ -z "$MAX_MINTABLE_SUPPLY" ] || [ -z "$GLOBAL_WALLET_LIMIT" ] || [ -z "$COSIGNER" ] || [ -z "$TIMESTAMP_EXPIRY_SECONDS" ] || [ -z "$MINT_CURRENCY" ] || [ -z "$FUND_RECEIVER" ] || [ -z "$ROYALTY_RECIPIENT" ] || [ -z "$ROYALTY_BPS" ] || [ -z "$INITIAL_OWNER" ]; then
     usage
 fi
 
@@ -94,6 +99,8 @@ echo "Cosigner:                     $COSIGNER"
 echo "Timestamp Expiry:             $TIMESTAMP_EXPIRY_SECONDS"
 echo "Mint Currency:                $MINT_CURRENCY"
 echo "Fund Reciever:                $FUND_RECEIVER"
+echo "Royalty Recipient:            $ROYALTY_RECIPIENT"
+echo "Royalty BPS:                  $ROYALTY_BPS"
 echo "Initial Owner:                $INITIAL_OWNER"
 echo "============================================================"
 echo ""
@@ -107,12 +114,15 @@ case $yn in
     exit 1;;
 esac
 
+constructorArgs=$(cast abi-encode "constructor(string,string,string,uint256,uint256,address,uint256,address,address,address)" "$NAME" "$SYMBOL" "$TOKEN_URI_SUFFIX" "$MAX_MINTABLE_SUPPLY" "$GLOBAL_WALLET_LIMIT" "$COSIGNER" "$TIMESTAMP_EXPIRY_SECONDS" "$MINT_CURRENCY" "$FUND_RECEIVER" "$INITIAL_OWNER")
+echo "constructorArgs: $constructorArgs"
+
 echo ""
 echo "============= DEPLOYING MAGICDROP IMPLEMENTATION ============="
 echo ""
 
 # remove --verify when deploying on Sei Chain. You will need to verify manually.
-CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IS_ERC721C=$IS_ERC721C IMPL_EXPECTED_ADDRESS=$IMPL_EXPECTED_ADDRESS IMPL_SALT=$IMPL_SALT NAME=$NAME SYMBOL=$SYMBOL TOKEN_URI_SUFFIX=$TOKEN_URI_SUFFIX MAX_MINTABLE_SUPPLY=$MAX_MINTABLE_SUPPLY GLOBAL_WALLET_LIMIT=$GLOBAL_WALLET_LIMIT COSIGNER=$COSIGNER TIMESTAMP_EXPIRY_SECONDS=$TIMESTAMP_EXPIRY_SECONDS MINT_CURRENCY=$MINT_CURRENCY FUND_RECEIVER=$FUND_RECEIVER INITIAL_OWNER=$INITIAL_OWNER forge script ./DeployMagicDropImplementationDirect.s.sol:DeployMagicDropImplementationDirect \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IS_ERC721C=$IS_ERC721C IMPL_EXPECTED_ADDRESS=$IMPL_EXPECTED_ADDRESS IMPL_SALT=$IMPL_SALT NAME=$NAME SYMBOL=$SYMBOL TOKEN_URI_SUFFIX=$TOKEN_URI_SUFFIX MAX_MINTABLE_SUPPLY=$MAX_MINTABLE_SUPPLY GLOBAL_WALLET_LIMIT=$GLOBAL_WALLET_LIMIT COSIGNER=$COSIGNER TIMESTAMP_EXPIRY_SECONDS=$TIMESTAMP_EXPIRY_SECONDS MINT_CURRENCY=$MINT_CURRENCY FUND_RECEIVER=$FUND_RECEIVER ROYALTY_RECIPIENT=$ROYALTY_RECIPIENT ROYALTY_BPS=$ROYALTY_BPS INITIAL_OWNER=$INITIAL_OWNER forge script ./DeployMagicDropImplementationDirect.s.sol:DeployMagicDropImplementationDirect \
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \

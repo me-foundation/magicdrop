@@ -317,6 +317,16 @@ contract ERC721CM is
         emit SetMintable(mintable);
     }
 
+    /// @notice Sets the default royalty for the contract
+    /// @param receiver The address to receive royalties
+    /// @param feeNumerator The royalty fee numerator
+    function setDefaultRoyalty(address receiver, uint96 feeNumerator) public onlyOwner {
+        super._setDefaultRoyalty(receiver, feeNumerator);
+        _royaltyBps = feeNumerator;
+        _royaltyRecipient = receiver;
+        emit DefaultRoyaltySet(receiver, feeNumerator);
+    }
+
     /// @notice Sets the maximum mintable supply
     /// @param maxMintableSupply The maximum mintable supply to set
     function setMaxMintableSupply(uint256 maxMintableSupply) external virtual onlyOwner {

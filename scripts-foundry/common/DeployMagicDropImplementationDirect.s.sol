@@ -2,9 +2,7 @@
 pragma solidity ^0.8.22;
 
 import {Script, console} from "forge-std/Script.sol";
-import {ERC721M} from "contracts/nft/erc721m/ERC721M.sol";
 import {ERC721CM} from "contracts/nft/erc721m/ERC721CM.sol";
-import {ERC1155M} from "contracts/nft/erc1155m/ERC1155M.sol";
 import {TokenStandard} from "contracts/common/Structs.sol";
 
 contract DeployMagicDropImplementationDirect is Script {
@@ -27,6 +25,8 @@ contract DeployMagicDropImplementationDirect is Script {
         uint256 timestampExpirySeconds = vm.envUint("TIMESTAMP_EXPIRY_SECONDS");
         address mintCurrency = address(uint160(vm.envUint("MINT_CURRENCY")));
         address fundReceiver = address(uint160(vm.envUint("FUND_RECEIVER")));
+        address royaltyRecipient = address(uint160(vm.envUint("ROYALTY_RECIPIENT")));
+        uint96 royaltyBps = uint96(vm.envUint("ROYALTY_BPS"));
         address initialOwner = address(uint160(vm.envUint("INITIAL_OWNER")));
 
         vm.startBroadcast(privateKey);
@@ -47,6 +47,8 @@ contract DeployMagicDropImplementationDirect is Script {
                     fundReceiver,
                     initialOwner
                 ));
+
+                ERC721CM(deployedAddress).setDefaultRoyalty(royaltyRecipient, royaltyBps);
             } else {
                 revert NotImplementedYet();
             }
