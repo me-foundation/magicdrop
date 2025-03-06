@@ -53,8 +53,10 @@ contract ERC721CM is
         address cosigner,
         uint256 timestampExpirySeconds,
         address mintCurrency,
-        address fundReceiver
-    ) ERC721ACQueryable(collectionName, collectionSymbol) Ownable() {
+        address fundReceiver,
+        address initialOwner
+    ) ERC721ACQueryable(collectionName, collectionSymbol) {
+        _transferOwnership(initialOwner);
         if (globalWalletLimit > maxMintableSupply) {
             revert GlobalWalletLimitOverflow();
         }

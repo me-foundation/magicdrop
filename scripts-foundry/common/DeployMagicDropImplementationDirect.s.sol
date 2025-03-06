@@ -27,6 +27,7 @@ contract DeployMagicDropImplementationDirect is Script {
         uint256 timestampExpirySeconds = vm.envUint("TIMESTAMP_EXPIRY_SECONDS");
         address mintCurrency = address(uint160(vm.envUint("MINT_CURRENCY")));
         address fundReceiver = address(uint160(vm.envUint("FUND_RECEIVER")));
+        address initialOwner = address(uint160(vm.envUint("INITIAL_OWNER")));
 
         vm.startBroadcast(privateKey);
 
@@ -43,7 +44,8 @@ contract DeployMagicDropImplementationDirect is Script {
                     cosigner,
                     timestampExpirySeconds,
                     mintCurrency,
-                    fundReceiver
+                    fundReceiver,
+                    initialOwner
                 ));
             } else {
                 revert NotImplementedYet();
