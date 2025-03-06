@@ -78,7 +78,7 @@ contract ERC721CM is
     /// @notice Returns the contract name and version
     /// @return The contract name and version as strings
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721CM", "1.0.0");
+        return ("ERC721CM", "1.0.1");
     }
 
     /// @notice Gets the token URI for a specific token ID
