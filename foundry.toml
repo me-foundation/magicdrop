@@ -11,9 +11,9 @@ optimizer_runs = 777
 cbor_metadata = false
 bytecode_hash = "none"
 
-
 [etherscan]
 apechain = {key = "${VERIFICATION_API_KEY_APECHAIN}", chain = 33139, url = "https://api.apescan.io/api"}
 sei = {key = "${VERIFICATION_API_KEY_SEI}", chain = 1329, url = "https://api.seiscan.io/api"}
 arbitrum = {key = "${VERIFICATION_API_KEY_ARBISCAN}", chain = 42161, url = "https://api.arbiscan.io/api"}
 berachain = {key = "${VERIFICATION_API_KEY_BERACHAIN}", chain = 80094, url = "https://api.berascan.com/api"}
+abstract = {key = "${VERIFICATION_API_KEY_ABSTRACT}", chain = 2741, url = "https://api.abscan.org/api"}
