@@ -19,15 +19,16 @@ set -e
 CHAIN_ID=${CHAIN_ID:-""}
 RPC_URL=""
 STANDARD=""
-IMPL_EXPECTED_ADDRESS=""
+IMPL_EXPECTED_ADDRESS="0x0000000000000000000000000000000000000000"
 IMPL_SALT=""
 USE_CASE=""
 IS_ERC721C=false
+ZK_SYNC=false
 
 # Function to display usage
 usage() {
     # Example Usage: ./2a-deploy-magicdrop-impl.sh --chain-id 137 --token-standard ERC721 --use-case launchpad --is-erc721c true --expected-address 0x0000000000000000000000000000000000000000 --salt 0x0000000000000000000000000000000000000000000000000000000000000000
-    echo "Usage: $0 --chain-id <chain id> --token-standard <token standard> --use-case <launchpad | self-serve> --is-erc721c <bool (optional)> --expected-address <expected address> --salt <salt>"
+    echo "Usage: $0 --chain-id <chain id> --token-standard <token standard> --use-case <launchpad | self-serve> --is-erc721c <bool (optional)> --expected-address <expected address (optional)> --salt <salt> --zk-sync (optional)"
     exit 1
 }
 
@@ -40,13 +41,20 @@ while [[ "$#" -gt 0 ]]; do
         --is-erc721c) IS_ERC721C=$2; shift ;;
         --expected-address) IMPL_EXPECTED_ADDRESS=$2; shift ;;
         --salt) IMPL_SALT=$2; shift ;;
+        --zk-sync) ZK_SYNC=true ;;
     esac
     shift
 done
 
 # Check if all parameters are set
-if [ -z "$CHAIN_ID" ] || [ -z "$STANDARD" ] || [ -z "$USE_CASE" ] || [ -z "$IMPL_EXPECTED_ADDRESS" ] || [ -z "$IMPL_SALT" ]; then
-    usage
+if [ $ZK_SYNC ]; then
+  if [ -z "$CHAIN_ID" ] || [ -z "$STANDARD" ] || [ -z "$USE_CASE" ] || [ -z "$IMPL_SALT" ]; then
+      usage
+  fi
+else
+    if [ -z "$CHAIN_ID" ] || [ -z "$STANDARD" ] || [ -z "$USE_CASE" ] || [ -z "$IMPL_EXPECTED_ADDRESS" ] || [ -z "$IMPL_SALT" ]; then
+      usage
+  fi
 fi
 
 # Set the RPC URL based on chain ID
@@ -65,6 +73,7 @@ echo "RPC URL:                      $RPC_URL"
 echo "Token Standard:               $STANDARD"
 echo "isERC721C:                    $IS_ERC721C"
 echo "Use Case:                     $USE_CASE"
+echo "ZKsync:                       $ZK_SYNC"
 echo "Expected Address:             $IMPL_EXPECTED_ADDRESS"
 echo "Salt:                         $IMPL_SALT"
 echo "============================================================"
