@@ -96,6 +96,15 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IMPL_EXPECTED_ADDRE
 # --verifier sourcify \
 # --verifier-url 'https://sourcify-api-monad.blockvision.org' \
 
+# Add for Abstract
+# --zksync \
+# --zk-compile 1.5.7 \
+# --evm-version cancun \
+# --compiler-version 0.8.24 \
+# --verifier etherscan \
+# --verifier-url 'https://api.abscan.org/api' \
+# --skip-simulation
+
 echo ""
 echo "============= DEPLOYED MAGICDROP IMPLEMENTATION ============="
 echo ""

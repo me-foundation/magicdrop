@@ -2,7 +2,6 @@
 pragma solidity ^0.8.22;
 
 import {Script} from "forge-std/Script.sol";
-import {console} from "forge-std/console.sol";
 import {MagicDropTokenImplRegistry} from "contracts/registry/MagicDropTokenImplRegistry.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {ERC1967Factory} from "solady/src/utils/ext/zksync/ERC1967Factory.sol";
@@ -36,9 +35,11 @@ contract DeployMagicDropTokenImplRegistry is Script {
             // Initialize the proxy with the constructor arguments
             MagicDropTokenImplRegistry(proxy).initialize(initialOwner);
 
-            // Verify the deployed proxy address matches the predicted address
-            if (proxy != expectedAddress) {
-                revert AddressMismatch();
+            if(!zkSync) {
+                // Verify the deployed proxy address matches the predicted address
+                if (proxy != expectedAddress) {
+                    revert AddressMismatch();
+                }
             }
         } else {
             // Deploy the implementation contract

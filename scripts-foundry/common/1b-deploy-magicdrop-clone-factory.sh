@@ -17,10 +17,11 @@ RESUME=""
 INITIAL_OWNER="0x0000000000000000000000000000000000000000"
 REGISTRY="0x0000000000000000000000000000000000000000"
 IMPLEMENTATION="0x0000000000000000000000000000000000000000"
+ZK_SYNC=false
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 --chain-id <chain id> --salt <salt> --expected-address <expected address> --initial-owner <initial owner (optional)> --registry-address <registry address (optional)> --implementation <implementation address (optional)>"
+    echo "Usage: $0 --chain-id <chain id> --salt <salt> --expected-address <expected address> --initial-owner <initial owner (optional)> --registry-address <registry address (optional)> --implementation <implementation address (optional)> --zk-sync <bool (optional)>"
     exit 1
 }
 
@@ -34,13 +35,20 @@ while [[ "$#" -gt 0 ]]; do
         --registry) REGISTRY=$2; shift ;;
         --implementation) IMPLEMENTATION=$2; shift ;;
         --resume) RESUME="--resume" ;;
+        --zk-sync) ZK_SYNC=true ;;
     esac
     shift
 done
 
 # Check if all parameters are set
-if [ -z "$CHAIN_ID" ] || [ -z "$FACTORY_SALT" ] || [ -z "$FACTORY_EXPECTED_ADDRESS" ]; then
-    usage
+if [ $ZK_SYNC ]; then
+  if [ -z "$CHAIN_ID" ] || [ -z "$FACTORY_SALT" ]; then
+      usage
+  fi
+else
+  if [ -z "$CHAIN_ID" ] || [ -z "$FACTORY_SALT" ] || [ -z "$FACTORY_EXPECTED_ADDRESS" ]; then
+      usage
+  fi
 fi
 
 # Set the RPC URL based on chain ID
@@ -55,7 +63,11 @@ echo "============= DEPLOYING MAGICDROP CLONE FACTORY ============="
 echo "Chain ID: $CHAIN_ID"
 echo "RPC URL: $RPC_URL"
 echo "SALT: $FACTORY_SALT"
-echo "EXPECTED ADDRESS: $FACTORY_EXPECTED_ADDRESS"
+if [ $ZK_SYNC ]; then
+  echo "ZK SYNC: $ZK_SYNC"
+else
+  echo "EXPECTED ADDRESS: $REGISTRY_EXPECTED_ADDRESS"
+fi
 if [ $INITIAL_OWNER != "0x0000000000000000000000000000000000000000" ]; then
   echo "INITIAL OWNER: $INITIAL_OWNER"
 fi
@@ -77,7 +89,7 @@ case $yn in
 esac
 
 # NOTE: Remove --broadcast for dry-run
-CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL FACTORY_SALT=$FACTORY_SALT FACTORY_EXPECTED_ADDRESS=$FACTORY_EXPECTED_ADDRESS INITIAL_OWNER=$INITIAL_OWNER REGISTRY=$REGISTRY IMPLEMENTATION=$IMPLEMENTATION forge script ./DeployMagicDropCloneFactory.s.sol:DeployMagicDropCloneFactory \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL FACTORY_SALT=$FACTORY_SALT FACTORY_EXPECTED_ADDRESS=$FACTORY_EXPECTED_ADDRESS INITIAL_OWNER=$INITIAL_OWNER REGISTRY=$REGISTRY IMPLEMENTATION=$IMPLEMENTATION ZK_SYNC=$ZK_SYNC forge script ./DeployMagicDropCloneFactory.s.sol:DeployMagicDropCloneFactory \
   --rpc-url $RPC_URL \
   --broadcast \
   --via-ir \
@@ -86,3 +98,12 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL FACTORY_SALT=$FACTORY_SALT FACTORY_EXPECTED_
 # Add for Monad testnet deployment
 # --verifier sourcify \
 # --verifier-url 'https://sourcify-api-monad.blockvision.org' \
+
+# Add for Abstract
+# --zksync \
+# --zk-compile 1.5.7 \
+# --evm-version cancun \
+# --compiler-version 0.8.24 \
+# --verifier etherscan \
+# --verifier-url 'https://api.abscan.org/api' \
+# --skip-simulation

@@ -102,7 +102,7 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECT
 # --zksync \
 # --zk-compile 1.5.7 \
 # --evm-version cancun \
-# --compiler-version 0.8.22 \
+# --compiler-version 0.8.24 \
 # --verifier etherscan \
 # --verifier-url 'https://api.abscan.org/api' \
-# --suppress-warnings assemblycreate
+# --skip-simulation
