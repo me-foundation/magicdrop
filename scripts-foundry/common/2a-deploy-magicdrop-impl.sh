@@ -93,7 +93,7 @@ echo "============= DEPLOYING MAGICDROP IMPLEMENTATION ============="
 echo ""
 
 # remove --verify when deploying on Sei Chain. You will need to verify manually.
-CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IMPL_EXPECTED_ADDRESS=$IMPL_EXPECTED_ADDRESS IMPL_SALT=$IMPL_SALT IS_ERC721C=$IS_ERC721C USE_CASE=$USE_CASE forge script ./DeployMagicDropImplementation.s.sol:DeployMagicDropImplementation \
+CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL TOKEN_STANDARD=$STANDARD IMPL_EXPECTED_ADDRESS=$IMPL_EXPECTED_ADDRESS IMPL_SALT=$IMPL_SALT IS_ERC721C=$IS_ERC721C USE_CASE=$USE_CASE ZK_SYNC=$ZK_SYNC forge script ./DeployMagicDropImplementation.s.sol:DeployMagicDropImplementation \
   --rpc-url $RPC_URL \
   --broadcast \
   --optimizer-runs 777 \
