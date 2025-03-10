@@ -91,8 +91,7 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECT
   --optimizer-runs 777 \
   --via-ir \
   --verify \
-  -v \
-  --zksync
+  -v
 
 # Add for Monad testnet deployment
 # --verifier sourcify \
