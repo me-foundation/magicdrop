@@ -58,10 +58,7 @@ contract MagicDropCloneFactory is Ownable {
     /// @dev MagicDropCloneFactory constructor.
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
-    constructor(
-        address initialOwner,
-        address registry
-    ) {
+    constructor(address initialOwner, address registry) {
         if (registry == address(0)) {
             revert RegistryAddressCannotBeZero();
         }

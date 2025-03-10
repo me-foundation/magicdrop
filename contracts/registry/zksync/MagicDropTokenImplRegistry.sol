@@ -65,9 +65,7 @@ contract MagicDropTokenImplRegistry is OwnableRoles, IMagicDropTokenImplRegistry
 
     /// @dev MagicDropTokenImplRegistry constructor.
     /// @param initialOwner The address of the initial owner.
-    constructor(
-        address initialOwner
-    ) {
+    constructor(address initialOwner) {
         _initializeOwner(initialOwner);
 
         // Initialize nextImplId and interface IDs for each token standard
