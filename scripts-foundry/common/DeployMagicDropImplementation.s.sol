@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {Script, console} from "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
 import {ERC721MInitializableV1_0_2} from "contracts/nft/erc721m/ERC721MInitializableV1_0_2.sol";
 import {ERC721CMInitializableV1_0_2} from "contracts/nft/erc721m/ERC721CMInitializableV1_0_2.sol";
 import {ERC1155MInitializableV1_0_2} from "contracts/nft/erc1155m/ERC1155MInitializableV1_0_2.sol";
 import {ERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/ERC721MagicDropCloneable.sol";
 import {ERC1155MagicDropCloneable} from "contracts/nft/erc1155m/clones/ERC1155MagicDropCloneable.sol";
+import {ERC721MInitializableV1_0_2 as ZKERC721MInitializableV1_0_2} from "contracts/nft/erc721m/zksync/ERC721MInitializableV1_0_2.sol";
+import {ERC721CMInitializableV1_0_2 as ZKERC721CMInitializableV1_0_2} from "contracts/nft/erc721m/zksync/ERC721CMInitializableV1_0_2.sol";
+import {ERC1155MInitializableV1_0_2 as ZKERC1155MInitializableV1_0_2} from "contracts/nft/erc1155m/zksync/ERC1155MInitializableV1_0_2.sol";
+import {ERC721MagicDropCloneable as ZKERC721MagicDropCloneable} from "contracts/nft/erc721m/clones/zksync/ERC721MagicDropCloneable.sol";
+import {ERC1155MagicDropCloneable as ZKERC1155MagicDropCloneable} from "contracts/nft/erc1155m/clones/zksync/ERC1155MagicDropCloneable.sol";
+
 import {TokenStandard} from "contracts/common/Structs.sol";
 
 contract DeployMagicDropImplementation is Script {
@@ -24,6 +30,7 @@ contract DeployMagicDropImplementation is Script {
         TokenStandard standard = parseTokenStandard(vm.envString("TOKEN_STANDARD"));
         bool isERC721C = vm.envBool("IS_ERC721C");
         UseCase useCase = parseUseCase(vm.envString("USE_CASE"));
+        bool zkSync = vm.envBool("ZK_SYNC");
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(privateKey);
@@ -33,23 +40,45 @@ contract DeployMagicDropImplementation is Script {
         if (standard == TokenStandard.ERC721) {
             if (useCase == UseCase.Launchpad) {
                 if(isERC721C) {
-                    deployedAddress = address(new ERC721CMInitializableV1_0_2{salt: salt}());
+                    if(zkSync) {
+                        deployedAddress = address(new ZKERC721CMInitializableV1_0_2{salt: salt}());
+                    } else {
+                        deployedAddress = address(new ERC721CMInitializableV1_0_2{salt: salt}());
+                    }
                 } else {
+                    if(zkSync) {
+                        deployedAddress = address(new ZKERC721MInitializableV1_0_2{salt: salt}());
+                    } else {
                      deployedAddress = address(new ERC721MInitializableV1_0_2{salt: salt}());
+                    }
                 }
             } else if(useCase == UseCase.SelfServe) {
-                deployedAddress = address(new ERC721MagicDropCloneable{salt: salt}());
+                if(zkSync) {
+                    deployedAddress = address(new ZKERC721MagicDropCloneable{salt: salt}());
+                } else {
+                    deployedAddress = address(new ERC721MagicDropCloneable{salt: salt}());
+                }
             }
         } else if (standard == TokenStandard.ERC1155) {
             if(useCase == UseCase.Launchpad) {
-                deployedAddress = address(new ERC1155MInitializableV1_0_2{salt: salt}());
+                if(zkSync) {
+                    deployedAddress = address(new ZKERC1155MInitializableV1_0_2{salt: salt}());
+                } else {
+                    deployedAddress = address(new ERC1155MInitializableV1_0_2{salt: salt}());
+                }
             } else if(useCase == UseCase.SelfServe) {
-                deployedAddress = address(new ERC1155MagicDropCloneable{salt: salt}());
+                if(zkSync) {
+                    deployedAddress = address(new ZKERC1155MagicDropCloneable{salt: salt}());
+                } else {
+                    deployedAddress = address(new ERC1155MagicDropCloneable{salt: salt}());
+                }
             }
         }
 
-        if (address(deployedAddress) != expectedAddress) {
-            revert AddressMismatch(expectedAddress, deployedAddress);
+        if(!zkSync) {
+            if (address(deployedAddress) != expectedAddress) {
+                revert AddressMismatch(expectedAddress, deployedAddress);
+            }
         }
 
         vm.stopBroadcast();
