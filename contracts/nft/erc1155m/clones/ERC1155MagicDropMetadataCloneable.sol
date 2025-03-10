@@ -5,7 +5,7 @@ import {ERC2981} from "solady/src/tokens/ERC2981.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {Initializable} from "solady/src/utils/Initializable.sol";
 
-import {ERC1155} from "solady/src/tokens/ERC1155.sol";
+import {ERC1155} from "solady/src/tokens/ext/zksync/ERC1155.sol";
 import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
 import {ERC1155ConduitPreapprovedCloneable} from "./ERC1155ConduitPreapprovedCloneable.sol";
 

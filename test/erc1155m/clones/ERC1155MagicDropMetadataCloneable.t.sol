@@ -2,7 +2,7 @@
 pragma solidity ^0.8.22;
 
 import {Test} from "forge-std/Test.sol";
-import {ERC1155} from "solady/src/tokens/ERC1155.sol";
+import {ERC1155} from "solady/src/tokens/ext/zksync/ERC1155.sol";
 
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
