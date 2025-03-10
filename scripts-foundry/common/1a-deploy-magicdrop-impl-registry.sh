@@ -41,7 +41,7 @@ done
 
 # Check if all parameters are set
 if [ $ZK_SYNC ]; then
-  if [ -z "$CHAIN_ID" ] || [ -z "$REGISTRY_SALT" ]; then
+  if [ -z "$CHAIN_ID" ] || [ -z "$REGISTRY_SALT" ] || [ -z "$INITIAL_OWNER" ]; then
       usage
   fi
 else
@@ -91,14 +91,7 @@ CHAIN_ID=$CHAIN_ID RPC_URL=$RPC_URL REGISTRY_SALT=$REGISTRY_SALT REGISTRY_EXPECT
   --optimizer-runs 777 \
   --via-ir \
   --verify \
-  -v \
-  --zksync \
-  --zk-compile 1.5.7 \
-  --evm-version cancun \
-  --compiler-version 0.8.24 \
-  --verifier etherscan \
-  --verifier-url 'https://api.abscan.org/api' \
-  --skip-simulation
+  -v
 
 # Add for Monad testnet deployment
 # --verifier sourcify \

@@ -3,8 +3,8 @@ pragma solidity ^0.8.22;
 
 import {Script} from "forge-std/Script.sol";
 import {MagicDropTokenImplRegistry} from "contracts/registry/MagicDropTokenImplRegistry.sol";
+import {MagicDropTokenImplRegistry as ZKMagicDropTokenImplRegistry} from "contracts/registry/zksync/MagicDropTokenImplRegistry.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
-import {ERC1967Factory} from "solady/src/utils/ext/zksync/ERC1967Factory.sol";
 
 contract DeployMagicDropTokenImplRegistry is Script {
     error AddressMismatch();
@@ -19,14 +19,12 @@ contract DeployMagicDropTokenImplRegistry is Script {
 
         vm.startBroadcast(privateKey);
 
-        address ZK_PROXY_FACTORY_ADDRESS = 0xc4151FeCa42Df507F158D1FBC4Eb5C145D9CE16B;
-
         address proxy;
 
         if (implementationAddress != address(0)) {
             if(zkSync) {
-                // Deploy the ERC1967 proxy
-                proxy = ERC1967Factory(ZK_PROXY_FACTORY_ADDRESS).deployProxyDeterministic(implementationAddress, initialOwner, salt);
+                // No proxy for ZKsync
+                return;
             } else {
                 // Deploy the ERC1967 proxy
                 proxy = LibClone.deployDeterministicERC1967(implementationAddress, salt);
@@ -42,10 +40,13 @@ contract DeployMagicDropTokenImplRegistry is Script {
                 }
             }
         } else {
-            // Deploy the implementation contract
-            MagicDropTokenImplRegistry implementation = new MagicDropTokenImplRegistry{salt: salt}();
+            if(zkSync) {
+                // Deploy the zk implementation contract
+                ZKMagicDropTokenImplRegistry implementation = new ZKMagicDropTokenImplRegistry{salt: salt}(initialOwner);
+            } else {
+                // Deploy the implementation contract
+                MagicDropTokenImplRegistry implementation = new MagicDropTokenImplRegistry{salt: salt}();
 
-            if(!zkSync) {
                 // Verify the deployed proxy address matches the predicted address
                 if (address(implementation) != expectedAddress) {
                     revert AddressMismatch();

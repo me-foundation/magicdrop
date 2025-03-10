@@ -5,7 +5,6 @@ import {Script} from "forge-std/Script.sol";
 import {MagicDropCloneFactory} from "contracts/factory/MagicDropCloneFactory.sol";
 import {MagicDropCloneFactory as ZKMagicDropCloneFactory} from "contracts/factory/zksync/MagicDropCloneFactory.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
-import {ERC1967Factory} from "solady/src/utils/ext/zksync/ERC1967Factory.sol";
 
 contract DeployMagicDropCloneFactory is Script {
     error AddressMismatch();
@@ -21,17 +20,12 @@ contract DeployMagicDropCloneFactory is Script {
 
         vm.startBroadcast(privateKey);
 
-        address ZK_PROXY_FACTORY_ADDRESS = 0xc4151FeCa42Df507F158D1FBC4Eb5C145D9CE16B;
-
         address proxy;
 
         if (implementationAddress != address(0)) {
             if(zkSync) {
-                // Deploy the ERC1967 proxy
-                proxy = ERC1967Factory(ZK_PROXY_FACTORY_ADDRESS).deployProxyDeterministic(implementationAddress, initialOwner, salt);
-
-                // Initialize the ZK proxy with the constructor arguments
-                ZKMagicDropCloneFactory(payable(proxy)).initialize(initialOwner, registry);
+                // No proxy for ZKsync
+                return;
             } else {
                 // Deploy the ERC1967 proxy
                 proxy = LibClone.deployDeterministicERC1967(implementationAddress, salt);
@@ -47,7 +41,7 @@ contract DeployMagicDropCloneFactory is Script {
         } else {
             if(zkSync) {
                 // Deploy the ZK implementation contract
-                ZKMagicDropCloneFactory implementation = new ZKMagicDropCloneFactory{salt: salt}();
+                ZKMagicDropCloneFactory implementation = new ZKMagicDropCloneFactory{salt: salt}(initialOwner, registry);
             } else {
                 // Deploy the implementation contract
                 MagicDropCloneFactory implementation = new MagicDropCloneFactory{salt: salt}();

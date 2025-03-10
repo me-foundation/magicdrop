@@ -43,7 +43,7 @@ done
 
 # Check if all parameters are set
 if [ $ZK_SYNC ]; then
-  if [ -z "$CHAIN_ID" ] || [ -z "$FACTORY_SALT" ]; then
+  if [ -z "$CHAIN_ID" ] || [ -z "$FACTORY_SALT" ] || [ -z "$INITIAL_OWNER" ] || [ -z "$REGISTRY" ]; then
       usage
   fi
 else

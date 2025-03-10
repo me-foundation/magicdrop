@@ -19,7 +19,6 @@ import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.
 /// @notice An ERC1155 contract with multi-stage minting, royalties, and authorized minters
 /// @dev Implements ERC1155, ERC2981, Ownable, ReentrancyGuard, and custom minting logic
 /// @dev ZKsync compatible version
-
 contract ERC1155M is
     IERC1155M,
     ERC1155Supply,

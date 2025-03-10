@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {Initializable} from "solady/src/utils/Initializable.sol";
-import {UUPSUpgradeable} from "solady/src/utils/UUPSUpgradeable.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 import {TokenStandard} from "contracts/common/Structs.sol";
 import {MagicDropTokenImplRegistry} from "contracts/registry/MagicDropTokenImplRegistry.sol";
@@ -12,16 +10,13 @@ import {Proxy} from "contracts/factory/zksync/Proxy.sol";
 /// @notice A factory contract for creating and managing clones of MagicDrop contracts
 /// @dev This contract uses the UUPS proxy pattern
 /// @dev ZKsync compatible version
-contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
+contract MagicDropCloneFactory is Ownable {
     /*==============================================================
     =                            STORAGE                           =
     ==============================================================*/
 
     /// @notice The registry contract
     MagicDropTokenImplRegistry private _registry;
-
-    /// @notice Gap for future upgrades
-    uint256[48] private __gap;
 
     /*==============================================================
     =                           CONSTANTS                          =
@@ -60,14 +55,13 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
     =                          INITIALIZER                         =
     ==============================================================*/
 
-    /// @dev Disables initializers for the implementation contract.
-    constructor() {
-        _disableInitializers();
-    }
-
+    /// @dev MagicDropCloneFactory constructor.
     /// @param initialOwner The address of the initial owner
     /// @param registry The address of the registry contract
-    function initialize(address initialOwner, address registry) public initializer {
+    constructor(
+        address initialOwner,
+        address registry
+    ) {
         if (registry == address(0)) {
             revert RegistryAddressCannotBeZero();
         }
@@ -215,15 +209,6 @@ contract MagicDropCloneFactory is Ownable, UUPSUpgradeable, Initializable {
     /*==============================================================
     =                      ADMIN OPERATIONS                        =
     ==============================================================*/
-
-    ///@dev Internal function to authorize an upgrade.
-    ///@param newImplementation Address of the new implementation.
-    ///@notice Only the contract owner can upgrade the contract.
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {
-        if (newImplementation == address(0)) {
-            revert NewImplementationCannotBeZero();
-        }
-    }
 
     /// @notice Withdraws the contract's balance
     function withdraw(address to) external onlyOwner {
