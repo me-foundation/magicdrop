@@ -259,8 +259,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
             publicStage: _publicStage,
             payoutRecipient: _payoutRecipient,
             royaltyRecipient: _royaltyReceiver,
-            royaltyBps: _royaltyBps,
-            mintFee: mintFee
+            royaltyBps: _royaltyBps
         });
 
         return newConfig;
@@ -450,7 +449,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
     /// @dev Useful for external tools or metadata standards.
     /// @return The contract name and version strings.
     function contractNameAndVersion() public pure returns (string memory, string memory) {
-        return ("ERC721MagicDropCloneable", "1.0.0");
+        return ("ERC721MagicDropCloneable", "1.0.2");
     }
 
     /// @notice Retrieves the token metadata URI for a given token ID.
