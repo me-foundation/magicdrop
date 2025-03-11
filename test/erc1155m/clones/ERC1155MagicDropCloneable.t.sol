@@ -414,8 +414,7 @@ contract ERC1155MagicDropCloneableTest is Test {
                 publicStage: PublicStage({startTime: uint64(0), endTime: uint64(0), price: 0}),
                 payoutRecipient: address(0),
                 royaltyBps: 0,
-                royaltyRecipient: address(0),
-                mintFee: mintFee
+                royaltyRecipient: address(0)
             })
         );
 
