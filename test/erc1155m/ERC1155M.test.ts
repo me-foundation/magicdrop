@@ -30,7 +30,7 @@ describe('ERC1155M', function () {
   beforeEach(async () => {
     [owner, readonly, fundReceiver] = await ethers.getSigners();
 
-    const factory = await ethers.getContractFactory('ERC1155M');
+    const factory = await ethers.getContractFactory('contracts/nft/erc1155m/ERC1155M.sol:ERC1155M');
     const erc1155M = await factory.deploy(
       'test-collection',
       'TEST',
@@ -808,7 +808,7 @@ describe('ERC1155M', function () {
     let stageEnd = 0;
 
     beforeEach(async () => {
-      const factory = await ethers.getContractFactory('ERC1155M');
+      const factory = await ethers.getContractFactory('contracts/nft/erc1155m/ERC1155M.sol:ERC1155M');
       const erc1155M = await factory.deploy(
         'collection',
         'symbol',
@@ -1351,7 +1351,7 @@ describe('ERC1155M', function () {
 
   describe('Global wallet limit', function () {
     it('validates global wallet limit in constructor', async () => {
-      const factory = await ethers.getContractFactory('ERC1155M');
+      const factory = await ethers.getContractFactory('contracts/nft/erc1155m/ERC1155M.sol:ERC1155M');
       await expect(
         factory.deploy(
           'collection',
@@ -1369,7 +1369,7 @@ describe('ERC1155M', function () {
     });
 
     it('validates the size of global wallet limit of max mintable supply in constructor', async () => {
-      const factory = await ethers.getContractFactory('ERC1155M');
+      const factory = await ethers.getContractFactory('contracts/nft/erc1155m/ERC1155M.sol:ERC1155M');
       await expect(
         factory.deploy(
           'collection',
@@ -1522,7 +1522,7 @@ describe('ERC1155M', function () {
 
   describe('Royalty info', function () {
     beforeEach(async () => {
-      const factory = await ethers.getContractFactory('ERC1155M');
+      const factory = await ethers.getContractFactory('contracts/nft/erc1155m/ERC1155M.sol:ERC1155M');
       const erc1155M = await factory.deploy(
         'collection',
         'symbol',
@@ -1606,7 +1606,7 @@ describe('ERC1155M', function () {
       erc20 = await Token.deploy(10000);
       await erc20.deployed();
 
-      const factory = await ethers.getContractFactory('ERC1155M');
+      const factory = await ethers.getContractFactory('contracts/nft/erc1155m/ERC1155M.sol:ERC1155M');
       const erc1155M = await factory.deploy(
         'collection',
         'symbol',
