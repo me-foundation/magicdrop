@@ -8,7 +8,7 @@ import {ERC1155MInitializableV1_0_2 as ERC1155MInitializable} from
     "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_2.sol";
 import {MintStageInfo1155} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
-import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {LAUNCHPAD_MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 
 contract ERC1155MInitializableTest is Test {
@@ -165,7 +165,7 @@ contract ERC1155MInitializableTest is Test {
         vm.prank(owner);
         nft.withdraw();
         assertEq(fundReceiver.balance, 0.5 ether);
-        assertEq(MINT_FEE_RECEIVER.balance, mintFee);
+        assertEq(LAUNCHPAD_MINT_FEE_RECEIVER.balance, mintFee);
     }
 
     function testMintFeeSetter() public {

@@ -12,7 +12,7 @@ import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {MintStageInfo1155} from "../../common/Structs.sol";
-import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+import {LAUNCHPAD_MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 import {IERC1155M} from "./interfaces/IERC1155M.sol";
 import {ERC1155MStorage} from "./ERC1155MStorage.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
@@ -398,7 +398,7 @@ contract ERC1155MInitializableV1_0_2 is
 
     /// @notice Withdraws the contract's balance
     function withdraw() external onlyOwner {
-        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
+        (bool success,) = LAUNCHPAD_MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
         _totalMintFee = 0;
 
@@ -422,7 +422,7 @@ contract ERC1155MInitializableV1_0_2 is
         _totalMintFee = 0;
         uint256 totalAmount = totalFee + remaining;
 
-        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, LAUNCHPAD_MINT_FEE_RECEIVER, totalFee);
         SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
 
         emit WithdrawERC20(_mintCurrency, totalAmount);
