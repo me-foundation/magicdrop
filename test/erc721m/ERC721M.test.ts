@@ -57,7 +57,7 @@ describe('ERC721M', function () {
   beforeEach(async () => {
     [owner, readonly, fundReceiver] = await ethers.getSigners();
 
-    const ERC721M = await ethers.getContractFactory('ERC721M');
+    const ERC721M = await ethers.getContractFactory('contracts/nft/erc721m/ERC721M.sol:ERC721M');
     const erc721M = await ERC721M.deploy(
       'Test',
       'TEST',
@@ -1672,7 +1672,7 @@ describe('ERC721M', function () {
 
   describe('Global wallet limit', function () {
     it('validates global wallet limit in constructor', async () => {
-      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const ERC721M = await ethers.getContractFactory('contracts/nft/erc721m/ERC721M.sol:ERC721M');
       await expect(
         ERC721M.deploy(
           'Test',
@@ -1787,7 +1787,7 @@ describe('ERC721M', function () {
   describe('Cosign', () => {
     it('can deploy with 0x0 cosign', async () => {
       const [owner, cosigner, fundReceiver] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const ERC721M = await ethers.getContractFactory('contracts/nft/erc721m/ERC721M.sol:ERC721M');
       const erc721M = await ERC721M.deploy(
         'Test',
         'TEST',
@@ -1817,7 +1817,7 @@ describe('ERC721M', function () {
 
     it('can deploy with cosign', async () => {
       const [_, minter, cosigner, fundReceiver] = await ethers.getSigners();
-      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const ERC721M = await ethers.getContractFactory('contracts/nft/erc721m/ERC721M.sol:ERC721M');
       const erc721M = await ERC721M.deploy(
         'Test',
         'TEST',

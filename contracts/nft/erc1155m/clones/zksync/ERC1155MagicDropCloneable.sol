@@ -2,13 +2,13 @@
 pragma solidity ^0.8.22;
 
 import {MerkleProofLib} from "solady/src/utils/MerkleProofLib.sol";
-import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
+import {SafeTransferLib} from "solady/src/utils/ext/zksync/SafeTransferLib.sol";
 
-import {ERC1155MagicDropMetadataCloneable} from "./ERC1155MagicDropMetadataCloneable.sol";
-import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
-import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
+import {ERC1155MagicDropMetadataCloneable} from "../ERC1155MagicDropMetadataCloneable.sol";
+import {PublicStage, AllowlistStage, SetupConfig} from "../Types.sol";
+import {IERC1155MagicDropMetadata} from "contracts/nft/erc1155m/interfaces/IERC1155MagicDropMetadata.sol";
 
-import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
+import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
 ///                                                     ........
 ///                             .....                   ..    ...
@@ -60,6 +60,7 @@ import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
 /// @notice A cloneable ERC-1155 drop contract that supports both a public minting stage and an allowlist minting stage.
 /// @dev This contract extends metadata configuration, ownership, and royalty support from its parent, while adding
 ///      time-gated, price-defined minting stages. It also incorporates a payout recipient and protocol fee structure.
+/// @dev ZKsync compatible version
 contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
     /*==============================================================
     =                            STORAGE                           =

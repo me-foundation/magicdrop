@@ -67,8 +67,7 @@ contract ERC721MagicDropCloneableTest is Test {
             publicStage: PublicStage({startTime: uint64(publicStart), endTime: uint64(publicEnd), price: 0.01 ether}),
             payoutRecipient: payoutRecipient,
             royaltyRecipient: royaltyRecipient,
-            royaltyBps: royaltyBps,
-            mintFee: mintFee
+            royaltyBps: royaltyBps
         });
 
         vm.prank(owner);

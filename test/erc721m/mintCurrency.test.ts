@@ -25,7 +25,7 @@ describe('ERC721M: Mint Currency', () => {
       await erc20.deployed();
 
       // Deploy the ERC721M contract
-      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const ERC721M = await ethers.getContractFactory('contracts/nft/erc721m/ERC721M.sol:ERC721M');
       erc721M = await ERC721M.deploy(
         'Test',
         'TEST',
@@ -170,7 +170,7 @@ describe('ERC721M: Mint Currency', () => {
   describe('deployed with zero address as mint currency', function () {
     beforeEach(async function () {
       // Deploy the ERC721M contract
-      const ERC721M = await ethers.getContractFactory('ERC721M');
+      const ERC721M = await ethers.getContractFactory('contracts/nft/erc721m/ERC721M.sol:ERC721M');
       erc721M = await ERC721M.deploy(
         'Test',
         'TEST',
@@ -234,7 +234,7 @@ describe('ERC721CM: Mint Currency', () => {
       await erc20.deployed();
 
       // Deploy the ERC721M contract
-      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const ERC721CM = await ethers.getContractFactory('contracts/nft/erc721m/ERC721CM.sol:ERC721CM');
       erc721CM = await ERC721CM.deploy(
         'Test',
         'TEST',
@@ -383,7 +383,7 @@ describe('ERC721CM: Mint Currency', () => {
       [owner, minter, fundReceiver] = await ethers.getSigners();
 
       // Deploy the ERC721M contract
-      const ERC721CM = await ethers.getContractFactory('ERC721CM');
+      const ERC721CM = await ethers.getContractFactory('contracts/nft/erc721m/ERC721CM.sol:ERC721CM');
       erc721CM = await ERC721CM.deploy(
         'Test',
         'TEST',
