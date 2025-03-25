@@ -19,7 +19,7 @@ import {ERC721MStorage} from "contracts/nft/erc721m/ERC721MStorage.sol";
 import {MintStageInfo, SetupConfig} from "contracts/common/Structs.sol";
 import {Cosignable} from "contracts/common/Cosignable.sol";
 import {AuthorizedMinterControl} from "contracts/common/AuthorizedMinterControl.sol";
-import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {LAUNCHPAD_MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
 ///                                                     ........
 ///                             .....                   ..    ...
@@ -453,7 +453,7 @@ contract ERC721MInitializableV1_0_2 is
     /// @notice Withdraws the total mint fee and remaining balance from the contract
     /// @dev Can only be called by the owner
     function withdraw() external onlyOwner {
-        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
+        (bool success,) = LAUNCHPAD_MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
         _totalMintFee = 0;
 
@@ -477,7 +477,7 @@ contract ERC721MInitializableV1_0_2 is
         _totalMintFee = 0;
         uint256 totalAmount = totalFee + remaining;
 
-        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, LAUNCHPAD_MINT_FEE_RECEIVER, totalFee);
         SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
 
         emit WithdrawERC20(_mintCurrency, totalAmount);
