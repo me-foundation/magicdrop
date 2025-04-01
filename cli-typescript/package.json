@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "clean": "rm -rf ./dist",
+    "clean:all": "rm -rf ./dist ./node_modules ./package-lock.json"
   },
   "keywords": [],
   "author": "",
