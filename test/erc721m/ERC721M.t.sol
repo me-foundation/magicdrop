@@ -33,18 +33,7 @@ contract ERC721MTest is Test {
 
         chainId = block.chainid;
 
-        erc721m = new ERC721M(
-            "Test",
-            "TEST",
-            "suffix",
-            1000,
-            1000,
-            address(this),
-            300,
-            address(0),
-            fundReceiver,
-            0
-        );
+        erc721m = new ERC721M("Test", "TEST", "suffix", 1000, 1000, address(this), 300, address(0), fundReceiver, 0);
     }
 
     function testInitialState() public {
@@ -77,10 +66,7 @@ contract ERC721MTest is Test {
 
         // Funds should go to fundReceiver
         assertEq(address(erc721m).balance, 0);
-        assertEq(
-            address(fundReceiver).balance,
-            fundReceiverBalanceBefore + 100
-        );
+        assertEq(address(fundReceiver).balance, fundReceiverBalanceBefore + 100);
 
         // Non-owner cannot withdraw
         address nonOwner = makeAddr("nonOwner");
@@ -99,18 +85,8 @@ contract ERC721MTest is Test {
         address zeroAddress = address(0);
         address cosigner = address(1);
 
-        ERC721M erc721mTest = new ERC721M(
-            "Test",
-            "TEST",
-            "test/",
-            1000,
-            10,
-            zeroAddress,
-            300,
-            zeroAddress,
-            fundReceiver,
-            0
-        );
+        ERC721M erc721mTest =
+            new ERC721M("Test", "TEST", "test/", 1000, 10, zeroAddress, 300, zeroAddress, fundReceiver, 0);
 
         vm.expectRevert();
         erc721mTest.getCosignDigest(owner, 1, false, 0, 0);
@@ -121,9 +97,7 @@ contract ERC721MTest is Test {
     function testTokenURISuffix() public {
         erc721m.setCosigner(address(0));
         erc721m.setTokenURISuffix(".json");
-        erc721m.setBaseURI(
-            "ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4/"
-        );
+        erc721m.setBaseURI("ipfs://bafybeidntqfipbuvdhdjosntmpxvxyse2dkyfpa635u4g6txruvt5qf7y4/");
         // Create stage data
         MintStageInfo[] memory stages = new MintStageInfo[](1);
 
@@ -167,11 +141,7 @@ contract ERC721MTest is Test {
         erc721m.setStages(stages);
 
         // Verify stage was set correctly
-        (
-            MintStageInfo memory stageInfo,
-            uint32 walletMinted,
-            uint256 stageMinted
-        ) = erc721m.getStageInfo(0);
+        (MintStageInfo memory stageInfo, uint32 walletMinted, uint256 stageMinted) = erc721m.getStageInfo(0);
 
         assertEq(stageInfo.price, uint80(price));
         assertEq(stageInfo.walletLimit, 5);
@@ -289,11 +259,7 @@ contract ERC721MTest is Test {
 
         erc721m.setStages(stages);
 
-        (
-            MintStageInfo memory stageInfo,
-            uint32 walletMintedCount,
-            uint256 stageMinted
-        ) = erc721m.getStageInfo(0);
+        (MintStageInfo memory stageInfo, uint32 walletMintedCount, uint256 stageMinted) = erc721m.getStageInfo(0);
 
         assertEq(stageInfo.price, uint80(0.5 ether));
         assertEq(stageInfo.walletLimit, 3);
@@ -385,9 +351,7 @@ contract ERC721MTest is Test {
     }
 
     function testRevertOnReentrancy() public {
-        TestReentrantExploit exploit = new TestReentrantExploit(
-            address(erc721m)
-        );
+        TestReentrantExploit exploit = new TestReentrantExploit(address(erc721m));
 
         vm.deal(address(exploit), 100 ether);
 
@@ -522,18 +486,8 @@ contract ERC721MTest is Test {
     }
 
     function testMintForFreeWithAFee() public {
-        ERC721M erc721mFee = new ERC721M(
-            "Test",
-            "TEST",
-            "test/",
-            1000,
-            1000,
-            address(this),
-            300,
-            address(0),
-            fundReceiver,
-            0.1 ether
-        );
+        ERC721M erc721mFee =
+            new ERC721M("Test", "TEST", "test/", 1000, 1000, address(this), 300, address(0), fundReceiver, 0.1 ether);
 
         erc721mFee.setCosigner(address(0));
         erc721mFee.setMintable(true);
@@ -589,41 +543,18 @@ contract ERC721MTest is Test {
     //describe('Token URI', function () {
 
     // Helper function to generate signatures
-    function _getCosignSignature(
-        address cosigner,
-        address recipient,
-        uint256 timestamp,
-        uint256 qty,
-        bool feeWaived
-    ) internal returns (bytes memory) {
-        bytes32 digest = erc721m.getCosignDigest(
-            recipient,
-            uint32(qty),
-            feeWaived,
-            0,
-            timestamp
-        );
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            uint256(keccak256(abi.encodePacked(cosigner))),
-            digest
-        );
+    function _getCosignSignature(address cosigner, address recipient, uint256 timestamp, uint256 qty, bool feeWaived)
+        internal
+        returns (bytes memory)
+    {
+        bytes32 digest = erc721m.getCosignDigest(recipient, uint32(qty), feeWaived, 0, timestamp);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(uint256(keccak256(abi.encodePacked(cosigner))), digest);
         return abi.encodePacked(r, s, v);
     }
 
     function testGlobalWalletConstructorLimit() public {
         vm.expectRevert(GlobalWalletLimitOverflow.selector);
-        new ERC721M(
-            "Test",
-            "TEST",
-            "",
-            100,
-            1001,
-            address(0),
-            60,
-            address(0),
-            fundReceiver,
-            0.1 ether
-        );
+        new ERC721M("Test", "TEST", "", 100, 1001, address(0), 60, address(0), fundReceiver, 0.1 ether);
     }
 
     function testSetGlobalWalletLimit() public {
@@ -634,12 +565,10 @@ contract ERC721MTest is Test {
         erc721m.setGlobalWalletLimit(1001);
     }
 
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4)
+    {
         return this.onERC721Received.selector;
     }
 }
@@ -651,20 +580,14 @@ contract TestReentrantExploit {
         erc721m = ERC721M(_erc721m);
     }
 
-    function exploit(
-        bytes32[] memory proof,
-        uint256 timestamp,
-        bytes memory signature
-    ) public payable {
+    function exploit(bytes32[] memory proof, uint256 timestamp, bytes memory signature) public payable {
         erc721m.mint{value: 0.4 ether}(1, 0, proof, timestamp, signature);
     }
 
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4)
+    {
         bytes32[] memory proof = new bytes32[](0);
         exploit(proof, block.timestamp, hex"00");
         return this.onERC721Received.selector;
