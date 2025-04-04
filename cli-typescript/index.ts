@@ -1,0 +1,2 @@
+// error
+const hello = 'hello';
