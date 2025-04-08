@@ -105,6 +105,12 @@ contract ERC721MagicDropMetadataCloneable is
         return _numberMinted(user);
     }
 
+    /// @notice Get the total minted count (including burned)
+    /// @return The total minted count
+    function totalMinted() public view returns (uint256) {
+        return _totalMinted();
+    }
+
     /// @notice Indicates whether this contract implements a given interface.
     /// @dev Supports ERC-2981 (royalties) and ERC-4906 (batch metadata updates), in addition to inherited interfaces.
     /// @param interfaceId The interface ID to check for compliance.
