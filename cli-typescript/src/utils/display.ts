@@ -1,14 +1,13 @@
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
+import { checkSignerNativeBalance, collapseAddress } from './common';
+import { TOKEN_STANDARD } from './constants';
 import {
-  checkSignerNativeBalance,
   getExplorerTxUrl,
   getSymbolFromChainId,
   promptForConfirmation,
-  setRpcUrl,
-} from './common';
-import { TOKEN_STANDARD } from './constants';
-import { collapseAddress } from './utils';
+} from './getters';
+import { setRpcUrl } from './setters';
 
 export const showMainTitle = () => {
   console.log(chalk.bold.blue('Welcome to MagicDrop CLI'));

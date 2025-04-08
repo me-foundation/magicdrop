@@ -1,23 +1,9 @@
 import { confirm } from '@inquirer/prompts';
 import {
+  collapseAddress,
   decodeAddress,
   executeCommand,
-  getContractAddressFromLogs,
-  getExplorerContractUrl,
-  getFactoryAddress,
-  getImplId,
-  getPasswordOptionIfSet,
-  getRegistryAddress,
-  getStandardId,
-  getUseERC721C,
-  getZksyncFlag,
-  goToMainMenuOrExit,
-  promptForConfirmation,
   saveDeploymentData,
-  setChainID,
-  setCollectionName,
-  setCollectionSymbol,
-  setTokenStandard,
   supportsICreatorToken,
 } from '../utils/common';
 import {
@@ -32,10 +18,27 @@ import {
   setTransferValidator,
   setupContract,
 } from '../utils/contractActions';
-import { collapseAddress } from '../utils/utils';
 import { rpcUrls } from '../utils/constants';
 import { ethers } from 'ethers';
 import { TransactionData } from '../utils/types';
+import {
+  setChainID,
+  setCollectionName,
+  setCollectionSymbol,
+  setTokenStandard,
+} from '../utils/setters';
+import {
+  getContractAddressFromLogs,
+  getExplorerContractUrl,
+  getFactoryAddress,
+  getImplId,
+  getPasswordOptionIfSet,
+  getRegistryAddress,
+  getStandardId,
+  getUseERC721C,
+  getZksyncFlag,
+  promptForConfirmation,
+} from '../utils/getters';
 
 export const deployContract = async (collectionFile: string) => {
   console.log('Deploying a new collection...');

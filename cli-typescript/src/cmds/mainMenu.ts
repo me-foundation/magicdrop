@@ -2,13 +2,10 @@ import 'dotenv/config';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { deployContract } from './deployContract';
-import { loadCollection, loadPrivateKey, loadSigner } from './loaders';
+import { loadCollection, loadPrivateKey, loadSigner } from '../utils/loaders';
 import { showMainTitle } from '../utils/display';
-import {
-  goToMainMenuOrExit,
-  promptForCollectionFile,
-  setBaseDir,
-} from '../utils/common';
+import { setBaseDir } from '../utils/setters';
+import { promptForCollectionFile } from '../utils/prompters';
 
 export const mainMenu = async () => {
   setBaseDir();

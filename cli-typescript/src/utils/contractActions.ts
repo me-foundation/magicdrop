@@ -1,23 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { Hex } from 'viem';
-import {
-  executeCommand,
-  getTransferValidatorAddress,
-  getTransferValidatorListId,
-  getZksyncFlag,
-  set1155Uri,
-  setBaseUri,
-  setFundReceiver,
-  setGlobalWalletLimit,
-  setMaxMintableSupply,
-  setMintCurrency,
-  setNumberOf1155Tokens,
-  setRoyalties,
-  setStagesFile,
-  setTokenId,
-  setTokenUriSuffix,
-} from './common';
+import { executeCommand } from './common';
 import {
   DEFAULT_MINT_CURRENCY,
   rpcUrls,
@@ -32,6 +16,23 @@ import {
   showText,
 } from './display';
 import { TransactionData } from './types';
+import {
+  getTransferValidatorAddress,
+  getTransferValidatorListId,
+  getZksyncFlag,
+} from './getters';
+import {
+  set1155Uri,
+  setBaseUri,
+  setFundReceiver,
+  setGlobalWalletLimit,
+  setMaxMintableSupply,
+  setMintCurrency,
+  setNumberOf1155Tokens,
+  setRoyalties,
+  setStagesFile,
+  setTokenUriSuffix,
+} from './setters';
 
 /**
  * Sets the transfer validator for a contract.

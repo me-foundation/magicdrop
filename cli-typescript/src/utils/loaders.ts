@@ -2,14 +2,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import chalk from 'chalk';
-import {
-  executeCommand,
-  getExplorerContractUrl,
-  getPasswordOptionIfSet,
-} from '../utils/common.js';
-import { MAGIC_DROP_KEYSTORE, TOKEN_STANDARD } from '../utils/constants.js';
-import { Collection } from '../utils/types.js';
+import { executeCommand } from './common.js';
+import { MAGIC_DROP_KEYSTORE, TOKEN_STANDARD } from './constants.js';
+import { Collection } from './types.js';
 import dotenv from 'dotenv';
+import { getExplorerContractUrl, getPasswordOptionIfSet } from './getters.js';
 
 /**
  * Loads the signer by retrieving the wallet address using the password.

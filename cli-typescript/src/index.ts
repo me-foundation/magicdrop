@@ -1,7 +1,7 @@
-import { loadDefaults } from './cmds/loaders';
+import { loadDefaults } from './utils/loaders';
 import { mainMenu } from './cmds/mainMenu';
-import { setBaseDir } from './utils/common';
 import 'dotenv/config';
+import { setBaseDir } from './utils/setters';
 
 (async () => {
   try {
