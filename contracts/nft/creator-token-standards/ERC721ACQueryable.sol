@@ -42,6 +42,11 @@ abstract contract ERC721ACQueryable is ERC721AQueryable, CreatorTokenBase {
         }
     }
 
+    /// @dev Get the total minted count (including burned)
+    function totalMinted() public view returns (uint256) {
+        return _totalMinted();
+    }
+
     function _msgSenderERC721A() internal view virtual override returns (address) {
         return _msgSender();
     }

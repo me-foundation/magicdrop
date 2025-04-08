@@ -83,6 +83,8 @@ abstract contract ERC721ACQueryableInitializable is
         }
     }
 
+    /// @dev Get the total minted count (including burned)
+    /// @return The total minted count
     function totalMinted() public view returns (uint256) {
         return _totalMinted();
     }
