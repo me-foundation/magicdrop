@@ -210,6 +210,12 @@ contract ERC721M is
         return _numberMinted(a);
     }
 
+    /// @notice Get the total minted count (including burned)
+    /// @return The total minted count
+    function totalMinted() public view returns (uint256) {
+        return _totalMinted();
+    }
+
     /// @notice Gets the active stage from the timestamp
     /// @param timestamp The timestamp to get the active stage from
     /// @return The active stage
