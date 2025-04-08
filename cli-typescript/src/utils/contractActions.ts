@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs';
-import { Hex } from 'viem';
 import { executeCommand } from './common';
 import {
   DEFAULT_MINT_CURRENCY,
@@ -81,7 +80,7 @@ export const setTransferValidator = (
  * @throws Error if the operation fails.
  */
 export const setTransferList = async (
-  contractAddress: Hex,
+  contractAddress: `0${string}`,
   chainId: string,
   password?: string,
 ): Promise<void> => {
@@ -115,7 +114,7 @@ export const setTransferList = async (
  * Freeze a contract.
  */
 export const freezeContract = (
-  contractAddress: Hex,
+  contractAddress: `0${string}`,
   chainId: string,
   password?: string,
 ) => {

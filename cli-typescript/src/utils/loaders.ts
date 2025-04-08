@@ -2,11 +2,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import chalk from 'chalk';
-import { executeCommand } from './common.js';
-import { MAGIC_DROP_KEYSTORE, TOKEN_STANDARD } from './constants.js';
-import { Collection } from './types.js';
+import { executeCommand } from './common';
+import { MAGIC_DROP_KEYSTORE, TOKEN_STANDARD } from './constants';
+import { Collection } from './types';
 import dotenv from 'dotenv';
-import { getExplorerContractUrl, getPasswordOptionIfSet } from './getters.js';
+import { getExplorerContractUrl, getPasswordOptionIfSet } from './getters';
 
 /**
  * Loads the signer by retrieving the wallet address using the password.
@@ -38,7 +38,7 @@ export const loadSigner = async (): Promise<void> => {
  * @throws Error if `defaults.json` is not found.
  */
 export const loadDefaults = async (): Promise<void> => {
-  let baseDir = process.env.BASE_DIR || path.resolve(__dirname, '..');
+  const baseDir = process.env.BASE_DIR || path.resolve(__dirname, '..');
   let defaultsFile = path.join(baseDir, '../defaults.json');
 
   // Check if defaults.json exists in the expected location
