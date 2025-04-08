@@ -57,15 +57,19 @@ get_registry_address() {
 get_impl_id() {
     if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
         if [ "$chain_id" == "2741" ]; then
-            echo "3" # ERC721C implementation ID / abstract
+            echo "7" # ERC721C implementation ID / abstract
         elif [ "$chain_id" == "8453" ]; then
-            echo "8" # base
+            echo "11" # base
         elif [ "$chain_id" == "1" ]; then
-            echo "7" # ethereum
+            echo "10" # ethereum
         elif [ "$chain_id" == "80094" ]; then
-            echo "2" # berachain
+            echo "5" # berachain
+        elif [ "$chain_id" == "10143"]; then
+            echo "5" # monad testnet
+        elif [ "$chain_id" == "43114" ]; then
+            echo "6" # avalanche
         else
-            echo "5" # all other chains
+            echo "8" # all other chains
         fi
     else
         echo $DEFAULT_IMPL_ID
