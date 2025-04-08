@@ -1,4 +1,5 @@
 import fs from 'fs';
+import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { input, confirm, rawlist, password } from '@inquirer/prompts';
 import {
@@ -30,6 +31,8 @@ import { Hex } from 'viem';
 import path from 'path';
 import { showText } from './display';
 import { collapseAddress, isValidEthereumAddress } from './utils';
+import { HexString } from '../../node_modules/ethers/lib.commonjs/utils/data';
+import { TransactionData } from './types';
 
 export const loadPrivateKey = async (): Promise<string> => {
   const privateKey = await input({
@@ -55,7 +58,7 @@ export const confirmExit = async (): Promise<boolean> => {
 export const executeCommand = (command: string): string => {
   try {
     return execSync(command, { stdio: 'pipe' }).toString().trim();
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error executing command: ${command}`);
     throw error;
   }
@@ -105,7 +108,7 @@ export const getSymbolFromChainId = (chainId: string): string => {
  * @throws Error if the chain ID is unsupported.
  */
 export const setRpcUrl = (chainId: string) => {
-  const rpcUrl = rpcUrls[chainId];
+  const rpcUrl = rpcUrls[chainId as SUPPORTED_CHAINS];
 
   if (!rpcUrl) {
     throw new Error(`Unsupported chain ID: ${chainId}`);
@@ -121,7 +124,7 @@ const promptForChain = async (): Promise<string> => {
   const chainId = await rawlist({
     message: 'Choose a chain to deploy on:',
     choices: Object.keys(supportedChainNames).map((id) => ({
-      name: supportedChainNames[id],
+      name: supportedChainNames[id as SUPPORTED_CHAINS],
       value: id,
     })),
   });
@@ -134,9 +137,9 @@ const promptForChain = async (): Promise<string> => {
  * @returns The selected chain ID.
  * @throws Error if the chain ID is unsupported or invalid.
  */
-export const setChainID = async (): Promise<string> => {
+export const setChainID = async (): Promise<SUPPORTED_CHAINS> => {
   if (process.env.CHAIN_ID) {
-    return process.env.CHAIN_ID;
+    return process.env.CHAIN_ID as SUPPORTED_CHAINS;
   }
 
   // Prompt the user to select a chain
@@ -152,7 +155,7 @@ export const setChainID = async (): Promise<string> => {
   // Set the RPC URL for the selected chain
   setRpcUrl(chainId);
 
-  return chainId;
+  return chainId as SUPPORTED_CHAINS;
 };
 
 export const promptForTokenStandard = async (): Promise<TOKEN_STANDARD> => {
@@ -187,7 +190,8 @@ export const setTokenStandard = async (): Promise<TOKEN_STANDARD> => {
 export const promptForCollectionName = async (): Promise<string> => {
   const collectionName = await input({
     message: 'Enter the collection name:',
-    validate: (input) => (input ? true : 'Collection name is required.'),
+    validate: (input: HexString) =>
+      input ? true : 'Collection name is required.',
     required: true,
   });
 
@@ -247,7 +251,6 @@ export const setCollectionSymbol = async (): Promise<string> => {
  * @throws Error if the balance retrieval fails.
  */
 export const checkSignerNativeBalance = (
-  chainId: string,
   signer: string,
   rpcUrl: string,
 ): string => {
@@ -262,7 +265,7 @@ export const checkSignerNativeBalance = (
 
     // Format the balance to 3 decimal places
     return parseFloat(humanReadableBalance).toFixed(3);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking signer native balance:', error.message);
     throw error;
   }
@@ -327,9 +330,9 @@ export const getStandardId = (tokenStandard: TOKEN_STANDARD): string => {
 
 /**
  * Retrieves the password and account information if set.
- * @returns A string containing the password and account information, or undefined if not set.
+ * @returns A string containing the password and account information, or undefined if not set. e.g `--password <PASSWORD> --account <MAGIC_DROP_KEYSTORE>`
  */
-export const getPasswordIfSet = async (): Promise<string> => {
+export const getPasswordOptionIfSet = async (): Promise<string> => {
   const keystorePassword = process.env.KEYSTORE_PASSWORD;
 
   if (keystorePassword) {
@@ -340,6 +343,7 @@ export const getPasswordIfSet = async (): Promise<string> => {
       mask: '*',
     });
 
+    process.env.KEYSTORE_PASSWORD = passwrd;
     return `--password ${passwrd} --account ${MAGIC_DROP_KEYSTORE}`;
   }
 
@@ -355,7 +359,7 @@ export const promptForConfirmation = async (
   defaultValue?: boolean,
 ): Promise<boolean> => {
   return confirm({
-    message: message ?? 'Do you want to proceed?',
+    message: message ?? 'Please confirm',
     default: defaultValue ?? true,
   });
 };
@@ -368,7 +372,7 @@ export const promptForConfirmation = async (
  * @throws Error if the chain ID is unsupported.
  */
 export const getExplorerTxUrl = (chainId: string, txHash: string): string => {
-  const explorerUrl = explorerUrls[chainId];
+  const explorerUrl = explorerUrls[chainId as SUPPORTED_CHAINS];
 
   if (!explorerUrl) {
     throw new Error(`Unsupported chain ID: ${chainId}`);
@@ -388,7 +392,7 @@ export const getExplorerContractUrl = (
   chainId: string,
   contractAddress: string,
 ): string => {
-  const explorerUrl = explorerUrls[chainId];
+  const explorerUrl = explorerUrls[chainId as SUPPORTED_CHAINS];
 
   if (!explorerUrl) {
     throw new Error(`Unsupported chain ID: ${chainId}`);
@@ -399,18 +403,16 @@ export const getExplorerContractUrl = (
 
 /**
  * Extracts the contract address from deployment logs based on the event signature.
- * @param deploymentData The JSON string containing deployment logs.
+ * @param txnData The transaction data.
  * @param eventSig The event signature to match.
  * @returns The extracted contract address (without the `0x` prefix) or `null` if not found.
  */
 export const getContractAddressFromLogs = (
-  deploymentData: string,
+  txnData: TransactionData,
   eventSig: string,
 ): string | null => {
   try {
-    const logs = JSON.parse(deploymentData).logs;
-
-    for (const log of logs) {
+    for (const log of txnData.logs) {
       const topic0 = log.topics[0];
       if (topic0 === eventSig) {
         return log.data.replace(/^0x/, ''); // Remove the `0x` prefix from the data
@@ -418,7 +420,7 @@ export const getContractAddressFromLogs = (
     }
 
     return null; // Return null if no matching log is found
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error parsing deployment data:', error.message);
     throw new Error('Failed to extract contract address from logs.');
   }
@@ -450,22 +452,21 @@ export const decodeAddress = (chunk: string | null): Hex => {
  * @param contractAddress The address of the contract to check.
  * @param rpcUrl The RPC URL of the blockchain network.
  * @param interfaceId The interface ID of ICreatorToken.
- * @param password Optional password for the keystore.
+ * @param passwordOption Optional password option for the keystore e.g `--password <PASSWORD>`
  * @returns A boolean indicating whether the contract supports ICreatorToken.
  */
 export const supportsICreatorToken = (
   chainId: string,
   contractAddress: Hex,
-  password?: string,
+  passwordOption?: string,
 ): boolean => {
   try {
     console.log('Checking if contract supports ICreatorToken...');
 
-    const rpcUrl = rpcUrls[chainId];
+    const rpcUrl = rpcUrls[chainId as SUPPORTED_CHAINS];
 
     // Construct the `cast call` command
-    const passwordOption = password ? `--password ${password}` : '';
-    const command = `cast call ${contractAddress} "supportsInterface(bytes4)" ${ICREATOR_TOKEN_INTERFACE_ID} --rpc-url "${rpcUrl}" ${passwordOption}`;
+    const command = `cast call ${contractAddress} "supportsInterface(bytes4)" ${ICREATOR_TOKEN_INTERFACE_ID} --rpc-url "${rpcUrl}" ${passwordOption ?? ''}`;
 
     // Execute the command and get the result
     const result = executeCommand(command);
@@ -479,7 +480,7 @@ export const supportsICreatorToken = (
       );
       return false;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking ICreatorToken support:', error.message);
     return false;
   }
@@ -518,7 +519,7 @@ export const saveDeploymentData = (
   let collectionJson;
   try {
     collectionJson = JSON.parse(fileContent);
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(`Error parsing collection file: ${error.message}`);
   }
 
@@ -601,9 +602,12 @@ export const isUnsetOrNull = (value: string | null | undefined): boolean => {
  * @returns The selected file path.
  * @throws Error if the selected file does not exist or the user cancels the operation.
  */
-export const getCollectionFile = async (
-  promptMessage: string,
-  directory: string = path.join(__dirname, '../collections'),
+export const promptForCollectionFile = async (
+  promptMessage = 'Select a collection file:',
+  directory: string = path.join(
+    process.env.BASE_DIR ?? __dirname,
+    '../collections',
+  ),
 ): Promise<string> => {
   try {
     // Ensure the directory exists
@@ -629,7 +633,7 @@ export const getCollectionFile = async (
     // Check if the selected path is a directory
     if (fs.lstatSync(selectedPath).isDirectory()) {
       // Recursively call the function with the selected directory
-      return await getCollectionFile(promptMessage, selectedPath);
+      return await promptForCollectionFile(promptMessage, selectedPath);
     }
 
     // Check if the selected path is a valid file
@@ -638,7 +642,7 @@ export const getCollectionFile = async (
     } else {
       throw new Error(`Invalid file selected: ${selectedPath}`);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error.message);
     throw new Error('Failed to select a collection file.');
   }
@@ -703,7 +707,7 @@ export const promptForNumericInput = async (
  * @returns The updated URI.
  */
 export const set1155Uri = async (title: string): Promise<string> => {
-  const uri = process.env.URI;
+  const uri = process.env.CONTRACT_URI;
 
   if (isUnsetOrNull(uri)) {
     // Display the title
@@ -723,7 +727,7 @@ export const set1155Uri = async (title: string): Promise<string> => {
 
     // Validate the input
     checkInput(newUri, 'URI');
-    process.env.URI = newUri;
+    process.env.CONTRACT_URI = newUri;
 
     console.clear();
     return newUri;
@@ -754,10 +758,12 @@ export const setNumberOf1155Tokens = async (title: string): Promise<number> => {
     // Prompt the user to enter the total number of tokens
     const totalTokensInput = await promptForNumericInput('Enter total tokens');
     totalTokens = String(totalTokensInput);
-  }
 
-  checkInput(totalTokens, 'total tokens');
-  console.clear();
+    checkInput(totalTokens, 'total tokens');
+    console.clear();
+
+    process.env.TOTAL_TOKENS = totalTokens;
+  }
 
   return Number(totalTokens!);
 };
@@ -804,9 +810,9 @@ export const setBaseUri = async (title: string): Promise<string> => {
  */
 export const setTokenUriSuffix = async (
   title: string,
-  defaultTokenUriSuffix = '.json',
+  defaultTokenUriSuffix = process.env.TOKEN_URI_SUFFIX || '.json',
 ): Promise<string> => {
-  const tokenUriSuffix = process.env.TOKEN_URL_SUFFIX;
+  const tokenUriSuffix = process.env.TOKEN_URI_SUFFIX;
 
   if (isUnsetOrNull(tokenUriSuffix)) {
     // Display the title
@@ -839,7 +845,7 @@ export const setTokenUriSuffix = async (
       newTokenUriSuffix = defaultTokenUriSuffix;
     }
 
-    process.env.TOKEN_URL_SUFFIX = newTokenUriSuffix;
+    process.env.TOKEN_URI_SUFFIX = newTokenUriSuffix;
 
     return newTokenUriSuffix;
   }
@@ -943,45 +949,42 @@ export const setMaxMintableSupply = async (
 ): Promise<string> => {
   const maxMintableSupply = process.env.MAX_MINTABLE_SUPPLY;
 
-  if (isUnsetOrNull(maxMintableSupply) || isNaN(Number(maxMintableSupply!))) {
-    if (tokenStandard === TOKEN_STANDARD.ERC1155 && isUnsetOrNull(tokenId)) {
-      // For ERC1155 tokens without a specific token ID
-      showText(title, '> Set max mintable supply for each token <');
-
-      const supplies: number[] = [];
-      for (let i = 0; i < totalTokens; i++) {
-        const tokenSupply = await promptForNumericInput(
-          `Enter max mintable supply for token ${i}`,
-        );
-        checkInput(
-          tokenSupply.toString(),
-          `max mintable supply for token ${i}`,
-        );
-        supplies.push(tokenSupply);
-      }
-
-      process.env.MAX_MINTABLE_SUPPLY = JSON.stringify(supplies);
-
-      return JSON.stringify(supplies);
-    } else if (
-      tokenStandard === TOKEN_STANDARD.ERC721 ||
-      !isUnsetOrNull(tokenId)
-    ) {
-      // For ERC721 tokens or ERC1155 with a specific token ID
-      showText(title, '> Set max mintable supply <');
-
-      const supply = await promptForNumericInput('Enter max mintable supply');
-      checkInput(supply.toString(), 'max mintable supply');
-
-      process.env.MAX_MINTABLE_SUPPLY = supply.toString();
-
-      return supply.toString();
-    } else {
-      throw new Error('Unknown token standard');
-    }
+  if (!isUnsetOrNull(maxMintableSupply)) {
+    return maxMintableSupply!;
   }
 
-  return maxMintableSupply!;
+  if (tokenStandard === TOKEN_STANDARD.ERC1155 && isUnsetOrNull(tokenId)) {
+    // For ERC1155 tokens without a specific token ID
+    showText(title, '> Set max mintable supply for each token <');
+
+    const supplies: number[] = [];
+    for (let i = 0; i < totalTokens; i++) {
+      const tokenSupply = await promptForNumericInput(
+        `Enter max mintable supply for token ${i}`,
+      );
+      checkInput(tokenSupply.toString(), `max mintable supply for token ${i}`);
+      supplies.push(tokenSupply);
+    }
+
+    process.env.MAX_MINTABLE_SUPPLY = JSON.stringify(supplies);
+
+    return JSON.stringify(supplies);
+  } else if (
+    tokenStandard === TOKEN_STANDARD.ERC721 ||
+    !isUnsetOrNull(tokenId)
+  ) {
+    // For ERC721 tokens or ERC1155 with a specific token ID
+    showText(title, '> Set max mintable supply <');
+
+    const supply = await promptForNumericInput('Enter max mintable supply');
+    checkInput(supply.toString(), 'max mintable supply');
+
+    process.env.MAX_MINTABLE_SUPPLY = supply.toString();
+
+    return supply.toString();
+  } else {
+    throw new Error('Unknown token standard');
+  }
 };
 
 /**
@@ -1125,8 +1128,13 @@ export const setRoyalties = async (
   const royaltyFee = process.env.ROYALTY_FEE;
 
   let res = {
-    royaltyReceiver: DEFAULT_ROYALTY_RECEIVER,
-    royaltyFee: DEFAULT_ROYALTY_FEE,
+    royaltyReceiver:
+      royaltyReceiver ??
+      process.env.DEFAULT_ROYALTY_RECEIVER ??
+      DEFAULT_ROYALTY_RECEIVER,
+    royaltyFee:
+      Number(royaltyFee ?? process.env.DEFAULT_ROYALTY_FEE) ??
+      DEFAULT_ROYALTY_FEE,
   };
 
   if (isUnsetOrNull(royaltyReceiver) && isUnsetOrNull(royaltyFee)) {
@@ -1180,14 +1188,16 @@ export const setStagesFile = async (): Promise<string> => {
   if (isUnsetOrNull(stagesFile) && isUnsetOrNull(stagesJson)) {
     console.log('> Set stages file <');
 
-    const selectedFile = await getCollectionFile('Enter stages JSON file');
+    const selectedFile = await promptForCollectionFile(
+      'Enter stages JSON file',
+    );
     process.env.STAGES_FILE = selectedFile;
 
     console.clear();
     return selectedFile;
   }
 
-  return stagesFile || stagesJson || '';
+  return stagesFile || '';
 };
 
 /**
@@ -1195,6 +1205,31 @@ export const setStagesFile = async (): Promise<string> => {
  * @returns The absolute path to the base directory.
  */
 export const setBaseDir = (): string => {
-  process.env.BASE_DIR = path.resolve(__dirname);
-  return path.resolve(__dirname);
+  let baseDir = path.resolve(__dirname);
+  if (baseDir.includes('/dist')) {
+    baseDir = path.resolve(__dirname, '..');
+  }
+
+  process.env.BASE_DIR = baseDir;
+  return process.env.BASE_DIR;
+};
+
+/**
+ * Prompts the user to go to the main menu or exit the application.
+ */
+export const goToMainMenuOrExit = async (
+  mainMenu: () => Promise<void>,
+): Promise<void> => {
+  const goToMainMenu = await confirm({
+    message: 'Go to main menu?',
+    default: true,
+  });
+
+  if (goToMainMenu) {
+    console.clear();
+    await mainMenu();
+  } else {
+    console.log(chalk.yellow('Exiting...'));
+    process.exit(0);
+  }
 };

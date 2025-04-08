@@ -15,6 +15,6 @@ export default tseslint.config({
     'captialized-comments': ['error', 'always'],
     semi: ['error', 'always'],
     quotes: ['error', 'single'],
-    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'no-unused-vars': ['error', { argsIgnorePattern: '^_', vars: 'all' }],
   },
 });

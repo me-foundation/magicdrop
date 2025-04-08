@@ -15,7 +15,13 @@ lcov.info.pruned
 coverage/
 broadcast/
 *deployments*
-*collections*
 *whitelist*
 *invalid*
 *.tmp
+
+# Ignore all collections folders and their contents
+**/collections/*
+
+# Allow example and template folders in all collections directories
+!**/collections/example/
+!**/collections/template/

@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type": "module",
+  "bin": {
+    "drop2": "./bin/index.js",
+    "magicdrop2": "./bin/index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
+    "setup": "npm run clean && npm run build",
     "clean": "rm -rf ./dist",
     "clean:all": "rm -rf ./dist ./node_modules ./package-lock.json",
     "lint": "npm run lint:js",
@@ -30,6 +34,7 @@
     "@inquirer/prompts": "^7.4.0",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
-    "ethers": "^6.13.5"
+    "ethers": "^6.13.5",
+    "ts-eager": "^2.0.2"
   }
 }

@@ -6,11 +6,12 @@ import {
   getExplorerContractUrl,
   getFactoryAddress,
   getImplId,
-  getPasswordIfSet,
+  getPasswordOptionIfSet,
   getRegistryAddress,
   getStandardId,
   getUseERC721C,
   getZksyncFlag,
+  goToMainMenuOrExit,
   promptForConfirmation,
   saveDeploymentData,
   setChainID,
@@ -23,6 +24,7 @@ import {
   confirmDeployment,
   printSignerWithBalance,
   printTransactionHash,
+  showText,
 } from '../utils/display';
 import {
   freezeContract,
@@ -30,6 +32,10 @@ import {
   setTransferValidator,
   setupContract,
 } from '../utils/contractActions';
+import { collapseAddress } from '../utils/utils';
+import { rpcUrls } from '../utils/constants';
+import { ethers } from 'ethers';
+import { TransactionData } from '../utils/types';
 
 export const deployContract = async (collectionFile: string) => {
   console.log('Deploying a new collection...');
@@ -48,36 +54,36 @@ export const deployContract = async (collectionFile: string) => {
   const factoryAddress = getFactoryAddress(chainId);
   const registryAddress = getRegistryAddress(chainId);
   const standardId = getStandardId(tokenStandard);
-  const password = await getPasswordIfSet();
+  const passwordOption = await getPasswordOptionIfSet();
   const useERC721C = getUseERC721C();
   const implId = getImplId(chainId, tokenStandard, useERC721C);
+  const rpcUrl = rpcUrls[chainId];
 
-  console.log('Fetching deployment fee...');
-  const deploymentFeeCommand = `cast call ${registryAddress} "getDeploymentFee(uint8,uint32)" ${standardId} ${implId} --rpc-url "$RPC_URL" ${password}`;
+  showText('Fetching deployment fee...', '', false, false);
+  const deploymentFeeCommand = `cast call ${registryAddress} "getDeploymentFee(uint8,uint32)" ${standardId} ${implId} --rpc-url "${rpcUrl}" ${passwordOption}`;
   const deploymentFee = executeCommand(deploymentFeeCommand);
 
-  let value = '';
+  let value = '0';
   if (deploymentFee !== '0') {
-    value = `--value ${deploymentFee}`;
+    value = `--value ${ethers.toNumber(deploymentFee)}`;
   }
 
   await confirmDeployment({
     name: collectionName,
     symbol: collectionSymbol,
     tokenStandard,
-    initialOwner: process.env.SIGNER || '',
+    initialOwner: collapseAddress(process.env.SIGNER || ''),
     implId,
     chainId,
     deploymentFee,
   });
-  // eheee
 
-  console.log('Deploying contract... this may take a minute.');
+  showText('Deploying contract... this may take a minute.', '', false, false);
   const zksyncFlag = getZksyncFlag(chainId);
 
   const deployCommand = `cast send \
-    --rpc-url "$RPC_URL" \
-    ${factoryAddress} \
+    --rpc-url "${rpcUrl}" \
+    "${factoryAddress}" \
     "${createContractSelector}" \
     "${collectionName}" \
     "${collectionSymbol}" \
@@ -85,26 +91,36 @@ export const deployContract = async (collectionFile: string) => {
     "${process.env.SIGNER}" \
     ${implId} \
     ${zksyncFlag} \
-    ${password} \
+    ${passwordOption} \
     ${value} \
     --json`;
 
   const output = executeCommand(deployCommand);
+  const deploymentData: TransactionData = JSON.parse(output);
 
-  printTransactionHash(output, chainId);
+  if (!deploymentData.transactionHash) {
+    throw new Error(
+      'Transaction hash not found in contract deployment output.',
+    );
+  }
 
-  const sigEvent = `cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)"`;
-  const eventData = getContractAddressFromLogs(output, sigEvent);
-  const contractAddress = decodeAddress(eventData);
+  printTransactionHash(deploymentData.transactionHash, chainId);
 
-  console.log(`Deployed Contract Address: ${contractAddress}`);
-  console.log(getExplorerContractUrl(chainId, contractAddress));
+  const eventSig = executeCommand(
+    `cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)"`,
+  );
+  const eventData = getContractAddressFromLogs(deploymentData, eventSig);
+  // extract address from the first 64 characters
+  const contractAddress = decodeAddress(eventData?.slice(0, 64) ?? '');
+
+  showText(`Deployed Contract Address: ${contractAddress}`, '', false, false);
+  showText(getExplorerContractUrl(chainId, contractAddress), '', false, false);
   saveDeploymentData(contractAddress, process.env.SIGNER || '', collectionFile);
 
   const isICreatorToken = supportsICreatorToken(
     chainId,
     contractAddress,
-    password,
+    passwordOption,
   );
 
   if (isICreatorToken) {
@@ -113,19 +129,18 @@ export const deployContract = async (collectionFile: string) => {
     );
     setTransferValidator(contractAddress, chainId);
     await setTransferList(contractAddress, chainId);
-  }
 
-  if (isICreatorToken) {
     const freezeCollection = await confirm({
       message: 'Would you like to freeze the collection?',
       default: true,
     });
 
     if (freezeCollection) {
-      await freezeContract(contractAddress, chainId, password);
+      freezeContract(contractAddress, chainId, passwordOption);
     }
   }
 
+  console.log('');
   const setupNow = await promptForConfirmation(
     'Would you like to setup the contract?',
   );
@@ -136,7 +151,7 @@ export const deployContract = async (collectionFile: string) => {
       chainId,
       tokenStandard,
       collectionFile,
-      password,
+      passwordOption,
       signer: process.env.SIGNER!,
       web3StorageKey: process.env.WEB3_STORAGE_KEY,
       baseDir: process.env.BASE_DIR,
