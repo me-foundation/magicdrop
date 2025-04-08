@@ -29,7 +29,8 @@
     "precommit": "lint-staged",
     "lint": "npm run lint:js",
     "lint:js": "eslint . --fix",
-    "fmt": "forge fmt"
+    "fmt": "forge fmt",
+    "setup:magicdrop2": "cd ./cli-typescript && npm install && sudo npm run setup"
   },
   "dependencies": {
     "@inquirer/prompts": "^2.2.0",
