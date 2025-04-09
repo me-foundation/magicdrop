@@ -5,22 +5,22 @@ import {
   executeCommand,
   saveDeploymentData,
   supportsICreatorToken,
-} from '../utils/common';
+} from './common';
 import {
   confirmDeployment,
   printSignerWithBalance,
   printTransactionHash,
   showText,
-} from '../utils/display';
+} from './display';
 import {
   freezeContract,
   setTransferList,
   setTransferValidator,
   setupContract,
-} from '../utils/contractActions';
-import { rpcUrls, TOKEN_STANDARD } from '../utils/constants';
+} from './contractActions';
+import { rpcUrls, TOKEN_STANDARD } from './constants';
 import { ethers } from 'ethers';
-import { DeployContractConfig, TransactionData } from '../utils/types';
+import { DeployContractConfig, TransactionData } from './types';
 import {
   getContractAddressFromLogs,
   getExplorerContractUrl,
@@ -32,7 +32,7 @@ import {
   getUseERC721C,
   getZksyncFlag,
   promptForConfirmation,
-} from '../utils/getters';
+} from './getters';
 
 export const deployContract = async ({
   chainId,

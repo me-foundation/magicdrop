@@ -1,6 +1,6 @@
 import { SUPPORTED_CHAINS } from '../../utils/constants';
 import { EvmPlatform } from '../../utils/evmUtils';
-import { createEvmCommand } from '../createCommand';
+import { createEvmCommand } from '../../utils/createCommand';
 
 const platform = new EvmPlatform(
   'Ethereum',

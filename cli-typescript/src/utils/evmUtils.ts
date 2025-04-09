@@ -1,11 +1,15 @@
 import { ethers } from 'ethers';
 import {
+  COLLECTION_DIR,
   SUPPORTED_CHAINS,
   supportedChainNames,
   TOKEN_STANDARD,
 } from './constants';
 import { Collection } from './types';
 import { showError } from './display';
+import path from 'path';
+import fs from 'fs';
+import { getProjectStore } from './fileUtils';
 
 export class EvmPlatform {
   name: string;
@@ -202,4 +206,24 @@ export const validateConfig = (
 
   // If no errors, return true
   return true;
+};
+
+export const init = (
+  collectionName: string,
+): { config: Collection; collectionConfigFile: string } => {
+  // construct collection file path
+  const store = getProjectStore(collectionName);
+
+  if (!store.exists) {
+    throw new Error(`Collection file not found: ${store.root}`);
+  }
+
+  // Step 1: Load config file via collectionConfigFile
+  const config = store.read();
+
+  if (!config) {
+    throw new Error('Collection file is empty');
+  }
+
+  return { config, collectionConfigFile: store.root };
 };
