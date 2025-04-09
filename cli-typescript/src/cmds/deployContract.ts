@@ -18,15 +18,9 @@ import {
   setTransferValidator,
   setupContract,
 } from '../utils/contractActions';
-import { rpcUrls } from '../utils/constants';
+import { rpcUrls, TOKEN_STANDARD } from '../utils/constants';
 import { ethers } from 'ethers';
-import { TransactionData } from '../utils/types';
-import {
-  setChainID,
-  setCollectionName,
-  setCollectionSymbol,
-  setTokenStandard,
-} from '../utils/setters';
+import { DeployContractConfig, TransactionData } from '../utils/types';
 import {
   getContractAddressFromLogs,
   getExplorerContractUrl,
@@ -40,14 +34,26 @@ import {
   promptForConfirmation,
 } from '../utils/getters';
 
-export const deployContract = async (collectionFile: string) => {
-  console.log('Deploying a new collection...');
-
-  // Set chain, token standard, collection name, and symbol
-  const chainId = await setChainID();
-  const tokenStandard = await setTokenStandard();
-  const collectionName = await setCollectionName();
-  const collectionSymbol = await setCollectionSymbol();
+export const deployContract = async ({
+  chainId,
+  collectionConfigFile,
+  tokenStandard,
+  signer,
+  stages,
+  name: collectionName,
+  symbol: collectionSymbol,
+  maxMintableSupply,
+  royaltyFee,
+  royaltyReceiver,
+  globalWalletLimit,
+  fundReceiver,
+  setupContractOption,
+  uri,
+  tokenUriSuffix,
+  mintCurrency,
+  ...otherConfig
+}: DeployContractConfig) => {
+  showText('Deploying a new collection...');
 
   // Print signer with balance
   await printSignerWithBalance(chainId);
@@ -75,7 +81,7 @@ export const deployContract = async (collectionFile: string) => {
     name: collectionName,
     symbol: collectionSymbol,
     tokenStandard,
-    initialOwner: collapseAddress(process.env.SIGNER || ''),
+    initialOwner: collapseAddress(signer || ''),
     implId,
     chainId,
     deploymentFee,
@@ -91,7 +97,7 @@ export const deployContract = async (collectionFile: string) => {
     "${collectionName}" \
     "${collectionSymbol}" \
     "${standardId}" \
-    "${process.env.SIGNER}" \
+    "${signer}" \
     ${implId} \
     ${zksyncFlag} \
     ${passwordOption} \
@@ -118,7 +124,7 @@ export const deployContract = async (collectionFile: string) => {
 
   showText(`Deployed Contract Address: ${contractAddress}`, '', false, false);
   showText(getExplorerContractUrl(chainId, contractAddress), '', false, false);
-  saveDeploymentData(contractAddress, process.env.SIGNER || '', collectionFile);
+  saveDeploymentData(contractAddress, signer, collectionConfigFile);
 
   const isICreatorToken = supportsICreatorToken(
     chainId,
@@ -143,22 +149,49 @@ export const deployContract = async (collectionFile: string) => {
     }
   }
 
-  console.log('');
-  const setupNow = await promptForConfirmation(
-    'Would you like to setup the contract?',
-  );
+  // console.log('setup Contract: 😁', {
+  //   contractAddress,
+  //   chainId,
+  //   tokenStandard,
+  //   collectionFile: collectionConfigFile,
+  //   signer,
+  //   baseDir: process.env.BASE_DIR,
+  //   uri,
+  //   tokenUriSuffix,
+  //   passwordOption,
+  //   stagesJson: JSON.stringify(stages),
+  //   totalTokens: undefined,
+  //   globalWalletLimit,
+  //   maxMintableSupply,
+  //   fundReceiver,
+  //   royaltyReceiver,
+  //   royaltyFee,
+  // });
+
+  const setupNow =
+    setupContractOption === 'yes' ||
+    (setupContractOption === 'deferred' &&
+      (await promptForConfirmation('Would you like to setup the contract?')));
 
   if (setupNow) {
     await setupContract({
       contractAddress,
       chainId,
       tokenStandard,
-      collectionFile,
-      passwordOption,
-      signer: process.env.SIGNER!,
-      web3StorageKey: process.env.WEB3_STORAGE_KEY,
+      collectionFile: collectionConfigFile,
+      signer,
       baseDir: process.env.BASE_DIR,
-      stagesJson: process.env.STAGES_JSON,
+      uri,
+      tokenUriSuffix,
+      passwordOption,
+      stagesJson: JSON.stringify(stages),
+      totalTokens: undefined,
+      globalWalletLimit,
+      maxMintableSupply,
+      fundReceiver,
+      royaltyReceiver,
+      royaltyFee,
+      mintCurrency,
     });
   }
 };

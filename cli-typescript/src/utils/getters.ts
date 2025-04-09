@@ -26,7 +26,9 @@ import { TransactionData } from './types';
  * @param chainId The chain ID of the network.
  * @returns The transfer validator address for the given network.
  */
-export const getTransferValidatorAddress = (chainId: string): string => {
+export const getTransferValidatorAddress = (
+  chainId: SUPPORTED_CHAINS,
+): string => {
   switch (chainId) {
     case SUPPORTED_CHAINS.APECHAIN:
     case SUPPORTED_CHAINS.SEI:
@@ -49,13 +51,13 @@ export const getTransferValidatorAddress = (chainId: string): string => {
   }
 };
 
-export const getZksyncFlag = (chainId: string): string => {
+export const getZksyncFlag = (chainId: SUPPORTED_CHAINS): string => {
   if (chainId === SUPPORTED_CHAINS.ABSTRACT) return '--zksync';
 
   return '';
 };
 
-export const getSymbolFromChainId = (chainId: string): string => {
+export const getSymbolFromChainId = (chainId: SUPPORTED_CHAINS): string => {
   switch (chainId) {
     case SUPPORTED_CHAINS.ETHEREUM:
       return 'ETH';
@@ -91,7 +93,9 @@ export const getSymbolFromChainId = (chainId: string): string => {
  * @param chainId The chain ID of the network.
  * @returns The transfer validator list ID for the given network.
  */
-export const getTransferValidatorListId = (chainId: string): string => {
+export const getTransferValidatorListId = (
+  chainId: SUPPORTED_CHAINS,
+): string => {
   switch (chainId) {
     case SUPPORTED_CHAINS.BERACHAIN:
       return DEFAULT_LIST_ID;
@@ -112,7 +116,7 @@ export const getTransferValidatorListId = (chainId: string): string => {
  * @throws Error if the chain ID is unsupported.
  */
 export const getExplorerContractUrl = (
-  chainId: string,
+  chainId: SUPPORTED_CHAINS,
   contractAddress: string,
 ): string => {
   const explorerUrl = explorerUrls[chainId as SUPPORTED_CHAINS];
@@ -149,7 +153,7 @@ export const getContractAddressFromLogs = (
   }
 };
 
-export const getFactoryAddress = (chainId: string): `0x${string}` => {
+export const getFactoryAddress = (chainId: SUPPORTED_CHAINS): `0x${string}` => {
   if (chainId === SUPPORTED_CHAINS.ABSTRACT) {
     return ABSTRACT_FACTORY_ADDRESS;
   }
@@ -157,7 +161,9 @@ export const getFactoryAddress = (chainId: string): `0x${string}` => {
   return DEFAULT_FACTORY_ADDRESS;
 };
 
-export const getRegistryAddress = (chainId: string): `0x${string}` => {
+export const getRegistryAddress = (
+  chainId: SUPPORTED_CHAINS,
+): `0x${string}` => {
   if (chainId === SUPPORTED_CHAINS.ABSTRACT) {
     return ABSTRACT_REGISTRY_ADDRESS;
   }
@@ -173,7 +179,7 @@ export const getRegistryAddress = (chainId: string): `0x${string}` => {
  * @returns implementation ID
  */
 export const getImplId = (
-  chainId: string,
+  chainId: SUPPORTED_CHAINS,
   tokenStandard: TOKEN_STANDARD,
   useERC721C?: boolean,
 ): string => {
@@ -249,7 +255,10 @@ export const promptForConfirmation = async (
  * @returns The transaction URL.
  * @throws Error if the chain ID is unsupported.
  */
-export const getExplorerTxUrl = (chainId: string, txHash: string): string => {
+export const getExplorerTxUrl = (
+  chainId: SUPPORTED_CHAINS,
+  txHash: string,
+): string => {
   const explorerUrl = explorerUrls[chainId as SUPPORTED_CHAINS];
 
   if (!explorerUrl) {

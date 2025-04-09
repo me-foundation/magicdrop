@@ -89,14 +89,14 @@ export const decodeAddress = (chunk: string | null): `0x${string}` => {
  * @returns A boolean indicating whether the contract supports ICreatorToken.
  */
 export const supportsICreatorToken = (
-  chainId: string,
+  chainId: SUPPORTED_CHAINS,
   contractAddress: `0x${string}`,
   passwordOption?: string,
 ): boolean => {
   try {
     console.log('Checking if contract supports ICreatorToken...');
 
-    const rpcUrl = rpcUrls[chainId as SUPPORTED_CHAINS];
+    const rpcUrl = rpcUrls[chainId];
 
     // Construct the `cast call` command
     const command = `cast call ${contractAddress} "supportsInterface(bytes4)" ${ICREATOR_TOKEN_INTERFACE_ID} --rpc-url "${rpcUrl}" ${passwordOption ?? ''}`;

@@ -1,3 +1,5 @@
+import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
+
 export interface ERC721Stage {
   price: string;
   mintFee: string;
@@ -16,8 +18,8 @@ export interface Deployment {
 export interface ERC721Collection {
   name: string;
   symbol: string;
-  chainId: number;
-  tokenStandard: 'ERC721';
+  chainId: SUPPORTED_CHAINS;
+  tokenStandard: TOKEN_STANDARD.ERC721;
   maxMintableSupply: number;
   globalWalletLimit: number;
   mintCurrency: string;
@@ -45,8 +47,8 @@ export interface ERC1155Stage {
 export interface ERC1155Collection {
   name: string;
   symbol: string;
-  chainId: number;
-  tokenStandard: 'ERC1155';
+  chainId: SUPPORTED_CHAINS;
+  tokenStandard: TOKEN_STANDARD.ERC1155;
   maxMintableSupply: number[];
   globalWalletLimit: number[];
   mintCurrency: string;
@@ -61,6 +63,13 @@ export interface ERC1155Collection {
 }
 
 export type Collection = ERC721Collection | ERC1155Collection;
+
+export type DeployContractConfig = Collection & {
+  collectionConfigFile: string;
+  signer: string;
+  setupContractOption?: 'yes' | 'no' | 'deferred';
+  tokenUriSuffix?: string;
+};
 
 export interface Log {
   address: string;

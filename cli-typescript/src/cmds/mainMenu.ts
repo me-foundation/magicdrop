@@ -1,53 +1,55 @@
 import 'dotenv/config';
-import chalk from 'chalk';
 import { Command } from 'commander';
-import { deployContract } from './deployContract';
-import { loadCollection, loadPrivateKey, loadSigner } from '../utils/loaders';
-import { showMainTitle } from '../utils/display';
+import { loadDefaults, loadPrivateKey } from '../utils/loaders';
+import { showError, showMainTitle } from '../utils/display';
 import { setBaseDir } from '../utils/setters';
-import { promptForCollectionFile } from '../utils/prompters';
+import eth from './eth';
+import monad from './monad';
+
+const presets = async () => {
+  try {
+    console.log('Starting prestart tasks...');
+
+    setBaseDir();
+
+    // Load default configurations
+    await loadDefaults();
+
+    // Check if the default configuration is complete
+    if (process.env.DEFAULT_CONFIG_COMPLETE !== 'true') {
+      throw new Error(
+        'Configuration is incomplete. Please ensure all values are set in defaults.json.',
+      );
+    }
+
+    await loadPrivateKey();
+  } catch (error: any) {
+    showError({ text: `An error occurred: ${error.message}` });
+    process.exit(1);
+  }
+};
 
 export const mainMenu = async () => {
-  setBaseDir();
-
   showMainTitle();
-  await loadSigner();
-  console.log('');
-  await loadPrivateKey();
-
-  console.log('');
-  console.log(chalk.green('Please select a collection configuration file:'));
-  console.log('');
-
-  let collectionFile = '';
-  if (!process.env.COLLECTION_FILE) {
-    collectionFile = await promptForCollectionFile();
-    process.env.COLLECTION_FILE = collectionFile;
-    loadCollection(collectionFile);
-    console.log('');
-  }
 
   const program = new Command();
 
   program
     .name('magicdrop-cli')
     .description('CLI for managing blockchain contracts and tokens')
-    .version('1.0.0');
+    .version('2.0.0');
 
-  program
-    .command('deploy')
-    .description('Deploy Contracts')
-    .action(async () => {
-      await deployContract(collectionFile);
-    });
+  program.hook('preAction', async () => {
+    try {
+      await presets();
+    } catch (error: any) {
+      showError({ text: `setup failed - ${error.message}` });
+    }
+  });
 
-  program
-    .command('quit')
-    .description('Quit the application')
-    .action(() => {
-      console.log('Exiting...');
-      process.exit(0);
-    });
+  // Register sub-commands
+  program.addCommand(eth);
+  program.addCommand(monad);
 
-  program.parse(process.argv);
+  await program.parseAsync(process.argv);
 };

@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import { executeCommand } from './common';
 import { MAGIC_DROP_KEYSTORE, TOKEN_STANDARD } from './constants';
 import { Collection } from './types';
-import dotenv from 'dotenv';
 import { getExplorerContractUrl, getPasswordOptionIfSet } from './getters';
 
 /**
@@ -16,7 +15,7 @@ export const loadSigner = async (): Promise<void> => {
   console.log(chalk.blue('Loading signer... enter password if prompted'));
 
   const password = await getPasswordOptionIfSet();
-  if (password) {
+  if (!!password) {
     try {
       // Execute the `cast wallet address` command to get the signer address
       const signer = executeCommand(`cast wallet address ${password}`);
@@ -27,8 +26,7 @@ export const loadSigner = async (): Promise<void> => {
       process.exit(1);
     }
   } else {
-    console.error(chalk.red('No password set. Skipping signer loading.'));
-    process.exit(1);
+    throw new Error('No password set. Skipping signer loading.');
   }
 };
 
@@ -75,24 +73,24 @@ export const loadDefaults = async (): Promise<void> => {
   process.env.DEFAULT_MERKLE_ROOT = defaults.default_merkle_root || '';
 
   // Create collections directory if it doesn't exist
-  const collectionsDir = path.join(baseDir, '../collections');
-  if (!fs.existsSync(collectionsDir)) {
-    console.log(
-      chalk.green(`Creating collections directory at ${collectionsDir}...`),
-    );
-    fs.mkdirSync(collectionsDir, { recursive: true });
-  }
+  // const collectionsDir = path.join(baseDir, '../collections');
+  // if (!fs.existsSync(collectionsDir)) {
+  //   console.log(
+  //     chalk.green(`Creating collections directory at ${collectionsDir}...`),
+  //   );
+  //   fs.mkdirSync(collectionsDir, { recursive: true });
+  // }
 
-  // Load environment variables from .env file if it exists
-  const envFile = path.join(baseDir, '../.env');
-  if (fs.existsSync(envFile)) {
-    dotenv.config({ path: envFile });
-  }
+  // // Load environment variables from .env file if it exists
+  // const envFile = path.join(baseDir, '../.env');
+  // if (fs.existsSync(envFile)) {
+  //   dotenv.config({ path: envFile });
+  // }
 
   // Load the signer
   await loadSigner();
 
-  process.env.CONFIG_COMPLETE = 'true';
+  process.env.DEFAULT_CONFIG_COMPLETE = 'true';
 };
 
 /**
@@ -176,10 +174,14 @@ export const loadPrivateKey = async (): Promise<void> => {
 /**
  * Loads a collection configuration file and extracts its details.
  * @param collectionFile The path to the collection file.
+ * @param populateEnv if config content should be populated to process.env. defaults to true
  * @returns An object containing the collection details.
  * @throws Error if the collection file is not found or invalid.
  */
-export const loadCollection = (collectionFile: string): Collection => {
+export const loadCollection = (
+  collectionFile: string,
+  populateEnv?: boolean,
+): Collection => {
   if (!fs.existsSync(collectionFile)) {
     throw new Error(`Collection file not found: ${collectionFile}`);
   }
@@ -225,40 +227,42 @@ export const loadCollection = (collectionFile: string): Collection => {
   }
   if (contractAddress) {
     console.log(`Contract: ${contractAddress}`);
-    console.log(getExplorerContractUrl(chainId.toString(), contractAddress));
+    console.log(getExplorerContractUrl(chainId, contractAddress));
   }
 
   // Set variables in process.env with uppercase snake case
-  process.env.COLLECTION_NAME = name;
-  process.env.COLLECTION_SYMBOL = symbol;
-  process.env.CHAIN_ID = chainId.toString();
-  process.env.TOKEN_STANDARD = tokenStandard;
-  process.env.MAX_MINTABLE_SUPPLY = Array.isArray(maxMintableSupply)
-    ? JSON.stringify(maxMintableSupply)
-    : maxMintableSupply.toString();
-  process.env.GLOBAL_WALLET_LIMIT = Array.isArray(globalWalletLimit)
-    ? JSON.stringify(globalWalletLimit)
-    : globalWalletLimit.toString();
-  process.env.MINT_CURRENCY = mintCurrency;
-  process.env.FUND_RECEIVER = fundReceiver;
-  process.env.ROYALTY_RECEIVER = royaltyReceiver;
-  process.env.ROYALTY_FEE = royaltyFee.toString();
-  process.env.STAGES_JSON = JSON.stringify(stages);
-  process.env.DEPLOYMENT_DATA = JSON.stringify(deployment);
-  process.env.MINTABLE = mintable.toString();
-  process.env.COSIGNER = cosigner;
-  process.env.TOKEN_URI_SUFFIX =
-    tokenStandard === TOKEN_STANDARD.ERC721
-      ? collectionData.tokenUriSuffix.toString()
-      : undefined;
-  process.env.CONTRACT_URI = uri;
-  process.env.USE_ERC721C =
-    tokenStandard === TOKEN_STANDARD.ERC721
-      ? collectionData.useERC721C.toString()
-      : undefined;
-  process.env.BASE_URI = baseUri;
-  process.env.URI = contractUri;
-  process.env.CONTRACT_ADDRESS = contractAddress;
+  if (populateEnv) {
+    process.env.COLLECTION_NAME = name;
+    process.env.COLLECTION_SYMBOL = symbol;
+    process.env.CHAIN_ID = chainId.toString();
+    process.env.TOKEN_STANDARD = tokenStandard;
+    process.env.MAX_MINTABLE_SUPPLY = Array.isArray(maxMintableSupply)
+      ? JSON.stringify(maxMintableSupply)
+      : maxMintableSupply.toString();
+    process.env.GLOBAL_WALLET_LIMIT = Array.isArray(globalWalletLimit)
+      ? JSON.stringify(globalWalletLimit)
+      : globalWalletLimit.toString();
+    process.env.MINT_CURRENCY = mintCurrency;
+    process.env.FUND_RECEIVER = fundReceiver;
+    process.env.ROYALTY_RECEIVER = royaltyReceiver;
+    process.env.ROYALTY_FEE = royaltyFee.toString();
+    process.env.STAGES_JSON = JSON.stringify(stages);
+    process.env.DEPLOYMENT_DATA = JSON.stringify(deployment);
+    process.env.MINTABLE = mintable.toString();
+    process.env.COSIGNER = cosigner;
+    process.env.TOKEN_URI_SUFFIX =
+      tokenStandard === TOKEN_STANDARD.ERC721
+        ? collectionData.tokenUriSuffix.toString()
+        : undefined;
+    process.env.CONTRACT_URI = uri;
+    process.env.USE_ERC721C =
+      tokenStandard === TOKEN_STANDARD.ERC721
+        ? collectionData.useERC721C.toString()
+        : undefined;
+    process.env.BASE_URI = baseUri;
+    process.env.URI = contractUri;
+    process.env.CONTRACT_ADDRESS = contractAddress;
+  }
 
   return collectionData;
 };
