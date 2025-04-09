@@ -102,8 +102,7 @@ export const loadDefaults = async (): Promise<void> => {
 export const loadPrivateKey = async (): Promise<void> => {
   console.log(chalk.cyan('Loading private key'));
   const homeDir = os.homedir();
-  const magicDropKeystore =
-    process.env.MAGIC_DROP_KEYSTORE || MAGIC_DROP_KEYSTORE;
+  const magicDropKeystore = MAGIC_DROP_KEYSTORE;
 
   const keystoreFile = path.join(
     homeDir,

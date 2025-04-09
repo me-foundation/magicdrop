@@ -134,7 +134,7 @@ forge test
 ### Install CLI-Typescript
 
 ```bash
-npm run setup:magricdrop2
+npm run setup:magicdrop2
 ```
 
 ### Generate Coverage Report

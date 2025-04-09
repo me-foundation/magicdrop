@@ -50,6 +50,4 @@ export const mainMenu = async () => {
     });
 
   program.parse(process.argv);
-
-  // await goToMainMenuOrExit(mainMenu);
 };
