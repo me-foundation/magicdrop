@@ -43,7 +43,7 @@ export class EvmPlatform {
   getChainIdsByName(chainName: string): SUPPORTED_CHAINS {
     if (!this.chainIdsMap.has(chainName)) {
       throw new Error(
-        `This chain (${chainName}) is not supported on the ${this.name} platform. Try any of ${this.chainIdsMap.keys()}`,
+        `This chain (${chainName}) is not supported on the ${this.name} platform. Try any of ${Array.from(this.chainIdsMap.keys())}.`,
       );
     }
 
@@ -67,13 +67,17 @@ export const validateConfig = (
   const errors: string[] = [];
 
   if (!config.chainId || typeof config.chainId !== 'number') {
-    errors.push('Invalid or missing chainId.');
-  }
-
-  try {
-    platform.getChainIdsByName(supportedChainNames[config.chainId] || '');
-  } catch (error: any) {
-    errors.push(error.message);
+    errors.push(
+      `Invalid or missing chainId. Try any of ${Array.from(platform.chainIdsMap.entries())}`,
+    );
+  } else {
+    try {
+      platform.getChainIdsByName(supportedChainNames[config.chainId] || '');
+    } catch (error: any) {
+      errors.push(
+        `Invalid or missing chainId. Try any of ${Array.from(platform.chainIdsMap.entries())}`,
+      );
+    }
   }
 
   if (

@@ -10,6 +10,7 @@ import {
   confirmDeployment,
   printSignerWithBalance,
   printTransactionHash,
+  showError,
   showText,
 } from './display';
 import {
@@ -70,9 +71,10 @@ export const deployContract = async ({
   showText('Fetching deployment fee...', '', false, false);
   const deploymentFeeCommand = `cast call ${registryAddress} "getDeploymentFee(uint8,uint32)" ${standardId} ${implId} --rpc-url "${rpcUrl}" ${passwordOption}`;
   const deploymentFee = executeCommand(deploymentFeeCommand);
+  console.log(deploymentFeeCommand, 'deploymentFee', deploymentFee);
 
   let value = '0';
-  if (deploymentFee !== '0') {
+  if (deploymentFee !== '0' && deploymentFee !== '0x') {
     value = `--value ${ethers.toNumber(deploymentFee)}`;
   }
 
@@ -119,7 +121,14 @@ export const deployContract = async ({
   );
   const eventData = getContractAddressFromLogs(deploymentData, eventSig);
   // extract address from the first 64 characters
-  const contractAddress = decodeAddress(eventData?.slice(0, 64) ?? '');
+  let contractAddress: `0x${string}` = '0x';
+
+  try {
+    contractAddress = decodeAddress(eventData?.slice(0, 64) ?? '');
+  } catch (error: any) {
+    showError({ text: error.message });
+    process.exit(1);
+  }
 
   showText(`Deployed Contract Address: ${contractAddress}`, '', false, false);
   showText(getExplorerContractUrl(chainId, contractAddress), '', false, false);
@@ -127,7 +136,7 @@ export const deployContract = async ({
 
   const isICreatorToken = supportsICreatorToken(
     chainId,
-    contractAddress,
+    contractAddress as `0x${string}`,
     passwordOption,
   );
 

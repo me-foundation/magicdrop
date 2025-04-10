@@ -3,7 +3,9 @@ import newProjectAction from '../utils/cmdActions/newProjectAction';
 import { tokenStandardOption } from '../utils/cmdOptions';
 import listProjectsAction from '../utils/cmdActions/listProjectsAction';
 
-export const newProjectCmd = new Command('new <collection>')
+export const newProjectCmd = new Command('new')
+  .command('new <collection>')
+  .aliases(['init'])
   .description(
     `
     creates a new launchpad/collection template. 

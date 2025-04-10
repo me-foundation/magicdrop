@@ -5,6 +5,11 @@ import { showError, showText } from '../display';
 
 const listProjectsAction = async () => {
   try {
+    console.log(
+      'COLLECTION_DIR',
+      COLLECTION_DIR,
+      process.env.MAGIC_DROP_COLLECTION_DIR,
+    );
     const projectDir = `${COLLECTION_DIR}/projects`;
 
     if (!fs.existsSync(projectDir)) {

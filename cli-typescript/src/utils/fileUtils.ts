@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { COLLECTION_DIR, TOKEN_STANDARD } from './constants';
+import {
+  COLLECTION_DIR,
+  DEFAULT_COLLECTION_DIR,
+  TOKEN_STANDARD,
+} from './constants';
 import { Collection } from './types';
 
 export class Store {
@@ -9,14 +13,15 @@ export class Store {
   private readonly: boolean = false;
 
   constructor(
+    dir: string,
     collectionName: string,
     configFileName?: string,
     readonly?: boolean,
   ) {
-    const storeDir = path.join(COLLECTION_DIR, collectionName);
+    const storeDir = path.join(dir, collectionName);
 
     if (!fs.existsSync(storeDir)) {
-      fs.mkdirSync(storeDir);
+      fs.mkdirSync(storeDir, { recursive: true });
     }
 
     this.root = path.join(storeDir, configFileName || 'project.json');
@@ -51,13 +56,14 @@ export class Store {
 }
 
 export const getProjectStore = (collection: string) => {
-  const store = new Store(path.join('projects', collection));
+  const store = new Store(COLLECTION_DIR, path.join('projects', collection));
 
   return store;
 };
 
 export const getTemplateStore = (tokenStandard: TOKEN_STANDARD) => {
   const store = new Store(
+    DEFAULT_COLLECTION_DIR,
     'template',
     `${tokenStandard.toLowerCase()}_template.json`,
     true,

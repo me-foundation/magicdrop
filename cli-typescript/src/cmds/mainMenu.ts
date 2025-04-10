@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { Command } from 'commander';
 import { showMainTitle } from '../utils/display';
 import { listProjectsCmd, newProjectCmd } from './general';

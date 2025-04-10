@@ -69,7 +69,7 @@ export const checkSignerNativeBalance = (
 export const decodeAddress = (chunk: string | null): `0x${string}` => {
   if (!chunk || chunk.length < 40) {
     throw new Error(
-      'Invalid input: chunk must be at least 40 characters long.',
+      `Unable to decode address from input (${chunk}): chunk must be at least 40 characters long.`,
     );
   }
 

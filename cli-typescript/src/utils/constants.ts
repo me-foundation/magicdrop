@@ -28,14 +28,13 @@ export const MAGIC_DROP_KEYSTORE_FILE = path.join(
   MAGIC_DROP_KEYSTORE,
 );
 
-export const COLLECTION_DIR =
-  process.env.MAGIC_DROP_COLLECTION_DIR ||
-  path.join(os.homedir(), '.config', 'magicdrop');
-
-export const COLLECTION_TEMPLATE_FILE = path.resolve(
+export const DEFAULT_COLLECTION_DIR = path.resolve(
   __dirname,
-  '../../collections/template',
+  '../../collections',
 );
+
+export const COLLECTION_DIR =
+  process.env.MAGIC_DROP_COLLECTION_DIR || DEFAULT_COLLECTION_DIR;
 
 export const ME_TRANSFER_VALIDATOR_V3 =
   '0x721C00D4FB075b22a5469e9CF2440697F729aA13';

@@ -14,7 +14,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "dev": "tsc --watch",
-    "setup": "npm run clean && npm run build",
+    "setup": "npm install && npm run clean && npm run build",
     "clean": "rm -rf ./dist",
     "clean:all": "rm -rf ./dist ./node_modules ./package-lock.json",
     "lint": "npm run lint:js",

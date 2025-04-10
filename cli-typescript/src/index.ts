@@ -1,4 +1,6 @@
+import dotenv from 'dotenv';
 import { mainMenu } from './cmds/mainMenu';
-import 'dotenv/config';
+
+dotenv.config();
 
 mainMenu();
