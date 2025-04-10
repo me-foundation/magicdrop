@@ -22,8 +22,6 @@ const deployAction = async (
       ...cliOptions,
     };
 
-    // console.log('Merged Config: ', mergedConfig);
-
     // validate config
     const isValid = validateConfig(
       platform,

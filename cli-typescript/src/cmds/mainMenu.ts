@@ -1,9 +1,20 @@
 import 'dotenv/config';
 import { Command } from 'commander';
 import { showMainTitle } from '../utils/display';
-import eth from './eth';
-import monad from './monad';
 import { listProjectsCmd, newProjectCmd } from './general';
+import {
+  abstract,
+  apechain,
+  arbitrum,
+  avalanche,
+  base,
+  berachain,
+  bsc,
+  eth,
+  monad,
+  polygon,
+  sei,
+} from './networks';
 
 export const mainMenu = async () => {
   showMainTitle();
@@ -19,6 +30,15 @@ export const mainMenu = async () => {
   program.addCommand(newProjectCmd);
   program.addCommand(listProjectsCmd);
   program.addCommand(eth);
+  program.addCommand(polygon);
+  program.addCommand(bsc);
+  program.addCommand(base);
+  program.addCommand(sei);
+  program.addCommand(apechain);
+  program.addCommand(berachain);
+  program.addCommand(arbitrum);
+  program.addCommand(abstract);
+  program.addCommand(avalanche);
   program.addCommand(monad);
 
   await program.parseAsync(process.argv);
