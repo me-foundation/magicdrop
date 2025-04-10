@@ -7,3 +7,5 @@ dist
 rollup.cache
 docs
 lib/
+bin
+.eslintrc
