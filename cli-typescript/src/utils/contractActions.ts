@@ -80,7 +80,7 @@ export const setTransferValidator = (
  * @throws Error if the operation fails.
  */
 export const setTransferList = async (
-  contractAddress: Hex,
+  contractAddress: `0x${string}`,
   chainId: SUPPORTED_CHAINS,
   password?: string,
 ): Promise<void> => {
@@ -114,7 +114,7 @@ export const setTransferList = async (
  * Freeze a contract.
  */
 export const freezeContract = (
-  contractAddress: Hex,
+  contractAddress: `0x${string}`,
   chainId: SUPPORTED_CHAINS,
   password?: string,
 ) => {

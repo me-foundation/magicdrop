@@ -60,7 +60,7 @@ export const createEvmCommand = ({
     .addOption(
       getEnvOption(
         `Environment to deploy to (e.g., ${Array.from(platform.chainIdsMap.keys())}`,
-        supportedChainNames[platform.defaultChain],
+        platform.defaultChain,
       ),
     )
     .addOption(setupContractOption)

@@ -1,9 +1,5 @@
 import { ethers } from 'ethers';
-import {
-  SUPPORTED_CHAINS,
-  supportedChainNames,
-  TOKEN_STANDARD,
-} from './constants';
+import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
 import { Collection } from './types';
 import { showError } from './display';
 import { getProjectStore } from './fileUtils';
@@ -11,43 +7,28 @@ import { getProjectStore } from './fileUtils';
 export class EvmPlatform {
   name: string;
   coinSymbol: string;
-  chainIdsMap: Map<string, SUPPORTED_CHAINS> = new Map();
-  defaultChain: SUPPORTED_CHAINS;
 
   constructor(
     name: string,
     coinSymbol: string,
-    supportedChains: SUPPORTED_CHAINS[],
-    defaultChain: SUPPORTED_CHAINS,
+    public chainIdsMap: Map<string, SUPPORTED_CHAINS>,
+    public defaultChain: string,
   ) {
-    if (!supportedChains.includes(defaultChain)) {
+    if (!chainIdsMap.has(defaultChain)) {
       throw new Error(
-        `The given default chain name ${defaultChain} doesn't exist in the given constructor parameter supportedChains`,
+        `The given default chain name ${defaultChain} doesn't exist in the given constructor parameter chainIdsMap`,
       );
     }
 
     this.name = name;
     this.coinSymbol = coinSymbol;
-
-    this._setChainIdsMap(supportedChains);
-    this.defaultChain = defaultChain;
   }
 
-  private _setChainIdsMap(supportedChains: SUPPORTED_CHAINS[]) {
-    supportedChains.forEach((chain) => {
-      if (supportedChainNames[chain])
-        this.chainIdsMap.set(supportedChainNames[chain], chain);
-    });
-  }
-
-  getChainIdsByName(chainName: string): SUPPORTED_CHAINS {
-    if (!this.chainIdsMap.has(chainName)) {
-      throw new Error(
-        `This chain (${chainName}) is not supported on the ${this.name} platform. Try any of ${Array.from(this.chainIdsMap.keys())}.`,
-      );
-    }
-
-    return this.chainIdsMap.get(chainName)!;
+  isChainIdSupported(chainId: number): boolean {
+    return (
+      Array.from(this.chainIdsMap.values()).find((id) => id === chainId) !==
+      undefined
+    );
   }
 }
 
@@ -66,18 +47,14 @@ export const validateConfig = (
 ): boolean => {
   const errors: string[] = [];
 
-  if (!config.chainId || typeof config.chainId !== 'number') {
+  if (
+    !config.chainId ||
+    typeof config.chainId !== 'number' ||
+    !platform.isChainIdSupported(config.chainId)
+  ) {
     errors.push(
-      `Invalid or missing chainId. Try any of ${Array.from(platform.chainIdsMap.entries())}`,
+      `Invalid or missing chainId. Try any of ${Array.from(platform.chainIdsMap.values())}`,
     );
-  } else {
-    try {
-      platform.getChainIdsByName(supportedChainNames[config.chainId] || '');
-    } catch (error: any) {
-      errors.push(
-        `Invalid or missing chainId. Try any of ${Array.from(platform.chainIdsMap.entries())}`,
-      );
-    }
   }
 
   if (
