@@ -68,9 +68,9 @@ export const setRoyalties = async (
       royaltyReceiver ??
       process.env.DEFAULT_ROYALTY_RECEIVER ??
       DEFAULT_ROYALTY_RECEIVER,
-    royaltyFee:
-      Number(royaltyFee ?? process.env.DEFAULT_ROYALTY_FEE) ??
-      DEFAULT_ROYALTY_FEE,
+    royaltyFee: Number(
+      royaltyFee ?? process.env.DEFAULT_ROYALTY_FEE ?? DEFAULT_ROYALTY_FEE,
+    ),
   };
 
   if (isUnsetOrNull(royaltyReceiver) && isUnsetOrNull(royaltyFee)) {

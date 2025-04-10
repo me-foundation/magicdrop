@@ -18,7 +18,7 @@ import {
   setTransferValidator,
   setupContract,
 } from './contractActions';
-import { rpcUrls, TOKEN_STANDARD } from './constants';
+import { rpcUrls } from './constants';
 import { ethers } from 'ethers';
 import { DeployContractConfig, TransactionData } from './types';
 import {
@@ -51,7 +51,6 @@ export const deployContract = async ({
   uri,
   tokenUriSuffix,
   mintCurrency,
-  ...otherConfig
 }: DeployContractConfig) => {
   showText('Deploying a new collection...');
 
@@ -116,7 +115,7 @@ export const deployContract = async ({
   printTransactionHash(deploymentData.transactionHash, chainId);
 
   const eventSig = executeCommand(
-    `cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)"`,
+    'cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)"',
   );
   const eventData = getContractAddressFromLogs(deploymentData, eventSig);
   // extract address from the first 64 characters
@@ -148,25 +147,6 @@ export const deployContract = async ({
       freezeContract(contractAddress, chainId, passwordOption);
     }
   }
-
-  // console.log('setup Contract: 😁', {
-  //   contractAddress,
-  //   chainId,
-  //   tokenStandard,
-  //   collectionFile: collectionConfigFile,
-  //   signer,
-  //   baseDir: process.env.BASE_DIR,
-  //   uri,
-  //   tokenUriSuffix,
-  //   passwordOption,
-  //   stagesJson: JSON.stringify(stages),
-  //   totalTokens: undefined,
-  //   globalWalletLimit,
-  //   maxMintableSupply,
-  //   fundReceiver,
-  //   royaltyReceiver,
-  //   royaltyFee,
-  // });
 
   const setupNow =
     setupContractOption === 'yes' ||

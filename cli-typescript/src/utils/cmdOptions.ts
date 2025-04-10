@@ -7,7 +7,7 @@ export const getEnvOption = (description?: string, defaultEnv?: string) => {
     description ?? 'Environment to deploy to (e.g., mainnet, testnet)',
   );
 
-  return !!defaultEnv ? opt.default(defaultEnv) : opt;
+  return defaultEnv ? opt.default(defaultEnv) : opt;
 };
 
 export const nonceOption = new Option('--nonce <nonce>', 'Transaction nonce');

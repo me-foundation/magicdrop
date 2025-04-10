@@ -3,9 +3,8 @@ import os from 'os';
 import path from 'path';
 import chalk from 'chalk';
 import { executeCommand } from './common';
-import { MAGIC_DROP_KEYSTORE, TOKEN_STANDARD } from './constants';
-import { Collection } from './types';
-import { getExplorerContractUrl, getPasswordOptionIfSet } from './getters';
+import { MAGIC_DROP_KEYSTORE } from './constants';
+import { getPasswordOptionIfSet } from './getters';
 
 /**
  * Loads the signer by retrieving the wallet address using the password.
@@ -15,13 +14,13 @@ export const loadSigner = async (): Promise<void> => {
   console.log(chalk.blue('Loading signer... enter password if prompted'));
 
   const password = await getPasswordOptionIfSet();
-  if (!!password) {
+  if (password) {
     try {
       // Execute the `cast wallet address` command to get the signer address
       const signer = executeCommand(`cast wallet address ${password}`);
       process.env.SIGNER = signer;
       console.log(chalk.green(`Signer loaded successfully: ${signer}`));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(chalk.red('Error loading wallet: Check your password.'));
       process.exit(1);
     }
@@ -71,21 +70,6 @@ export const loadDefaults = async (): Promise<void> => {
   process.env.DEFAULT_ROYALTY_FEE =
     defaults.default_royalty_fee?.toString() || '';
   process.env.DEFAULT_MERKLE_ROOT = defaults.default_merkle_root || '';
-
-  // Create collections directory if it doesn't exist
-  // const collectionsDir = path.join(baseDir, '../collections');
-  // if (!fs.existsSync(collectionsDir)) {
-  //   console.log(
-  //     chalk.green(`Creating collections directory at ${collectionsDir}...`),
-  //   );
-  //   fs.mkdirSync(collectionsDir, { recursive: true });
-  // }
-
-  // // Load environment variables from .env file if it exists
-  // const envFile = path.join(baseDir, '../.env');
-  // if (fs.existsSync(envFile)) {
-  //   dotenv.config({ path: envFile });
-  // }
 
   // Load the signer
   await loadSigner();
@@ -150,7 +134,7 @@ export const loadPrivateKey = async (): Promise<void> => {
   try {
     // Run the `cast wallet import` command interactively
     executeCommand(`cast wallet import --interactive ${magicDropKeystore}`);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(chalk.red('Failed to create keystore'));
     process.exit(1);
   }

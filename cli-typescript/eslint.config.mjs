@@ -7,14 +7,23 @@ import eslintPluginPrettier from 'eslint-plugin-prettier/recommended';
 export default tseslint.config({
   files: ['**/*.ts'],
   extends: [
-    eslint.configs.recommended,
+    // eslint.configs.recommended,
     tseslint.configs.recommended,
     eslintPluginPrettier,
   ],
   rules: {
-    'captialized-comments': ['error', 'always'],
     semi: ['error', 'always'],
     quotes: ['error', 'single'],
-    'no-unused-vars': ['error', { argsIgnorePattern: '^_', vars: 'all' }],
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        vars: 'all',
+        args: 'after-used',
+        ignoreRestSiblings: true,
+      },
+    ],
+    '@typescript-eslint/no-explicit-any': ['warn'],
   },
 });

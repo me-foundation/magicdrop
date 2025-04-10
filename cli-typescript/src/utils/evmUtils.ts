@@ -1,14 +1,11 @@
 import { ethers } from 'ethers';
 import {
-  COLLECTION_DIR,
   SUPPORTED_CHAINS,
   supportedChainNames,
   TOKEN_STANDARD,
 } from './constants';
 import { Collection } from './types';
 import { showError } from './display';
-import path from 'path';
-import fs from 'fs';
 import { getProjectStore } from './fileUtils';
 
 export class EvmPlatform {
