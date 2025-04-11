@@ -71,7 +71,6 @@ export const deployContract = async ({
   showText('Fetching deployment fee...', '', false, false);
   const deploymentFeeCommand = `cast call ${registryAddress} "getDeploymentFee(uint8,uint32)" ${standardId} ${implId} --rpc-url "${rpcUrl}" ${passwordOption}`;
   const deploymentFee = executeCommand(deploymentFeeCommand);
-  console.log(deploymentFeeCommand, 'deploymentFee', deploymentFee);
 
   let value = '0';
   if (deploymentFee !== '0' && deploymentFee !== '0x') {

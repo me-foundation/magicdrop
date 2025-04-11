@@ -20,8 +20,12 @@ export const loadSigner = async (): Promise<void> => {
       const signer = executeCommand(`cast wallet address ${password}`);
       process.env.SIGNER = signer;
       console.log(chalk.green(`Signer loaded successfully: ${signer}`));
-    } catch (error: unknown) {
-      console.error(chalk.red('Error loading wallet: Check your password.'));
+    } catch (error: any) {
+      console.error(
+        chalk.red(
+          `Error loading wallet: Check your password. ${error?.message}`,
+        ),
+      );
       process.exit(1);
     }
   } else {
@@ -134,8 +138,8 @@ export const loadPrivateKey = async (): Promise<void> => {
   try {
     // Run the `cast wallet import` command interactively
     executeCommand(`cast wallet import --interactive ${magicDropKeystore}`);
-  } catch (error: unknown) {
-    console.error(chalk.red('Failed to create keystore'));
+  } catch (error: any) {
+    console.error(chalk.red(`Failed to create keystore ${error.message}`));
     process.exit(1);
   }
 

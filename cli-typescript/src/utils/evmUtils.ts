@@ -189,14 +189,14 @@ export const validateConfig = (
 export const init = (
   collectionName: string,
 ): { config: Collection; collectionConfigFile: string } => {
-  // construct collection file path
+  // Construct collection file path
   const store = getProjectStore(collectionName);
 
   if (!store.exists) {
     throw new Error(`Collection file not found: ${store.root}`);
   }
 
-  // Step 1: Load config file via collectionConfigFile
+  // Load config file via collectionConfigFile
   const config = store.read();
 
   if (!config) {

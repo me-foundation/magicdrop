@@ -1,13 +1,10 @@
 import { Command } from 'commander';
 import { getEnvOption, setupContractOption } from './cmdOptions';
 import { EvmPlatform } from './evmUtils';
-import { supportedChainNames } from './constants';
 import deployAction from './cmdActions/deployAction';
 import { loadDefaults, loadPrivateKey } from './loaders';
 import { setBaseDir } from './setters';
 import { showError } from './display';
-
-// drop2 eth deploy <collection> --env sepolia
 
 const presets = async () => {
   try {
