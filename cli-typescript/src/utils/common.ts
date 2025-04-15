@@ -19,6 +19,18 @@ export const confirmExit = async (): Promise<boolean> => {
 };
 
 /**
+ * Validates if the input is an array of numbers.
+ * @param value The value to validate.
+ * @returns true if the value is an array of numbers, otherwise false.
+ */
+export const isArrayOfNumbers = (value: any): boolean => {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => typeof item === 'number' && !isNaN(item))
+  );
+};
+
+/**
  * Helper function to execute shell commands.
  */
 export const executeCommand = (command: string): string => {

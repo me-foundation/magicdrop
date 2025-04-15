@@ -1,10 +1,16 @@
 import { Command } from 'commander';
-import { getEnvOption, setupContractOption } from './cmdOptions';
+import {
+  getEnvOption,
+  setupContractOption,
+  tokenStandardOption,
+} from './cmdOptions';
 import { EvmPlatform } from './evmUtils';
 import deployAction from './cmdActions/deployAction';
-import { loadDefaults, loadPrivateKey } from './loaders';
+import { loadDefaults, loadPrivateKey, loadSigner } from './loaders';
 import { setBaseDir } from './setters';
 import { showError } from './display';
+import newProjectAction from './cmdActions/newProjectAction';
+import { supportedChainNames, TOKEN_STANDARD } from './constants';
 
 const presets = async () => {
   try {
@@ -23,6 +29,8 @@ const presets = async () => {
     }
 
     await loadPrivateKey();
+    await loadSigner();
+    console.log('Prestart tasks completed successfully.');
   } catch (error: any) {
     showError({ text: `An error occurred: ${error.message}` });
     process.exit(1);
@@ -50,13 +58,52 @@ export const createEvmCommand = ({
   });
 
   newCmd
+    .command('new <collection>')
+    .aliases(['n', 'init'])
+    .description(
+      `    
+      Creates a new launchpad/collection template. 
+      you can specify the collection directory by setting the "MAGIC_DROP_COLLECTION_DIR" env 
+      else it defaults to "./collections" in the project directory.
+      You can also specify the environment and token standard to use for the new project.
+      The default environment is ${platform.defaultChain} and the default token standard is ERC721.
+    `,
+    )
+    .addOption(
+      getEnvOption(
+        Array.from(platform.chainIdsMap.keys()),
+        'Environment to deploy to',
+        platform.defaultChain,
+      ),
+    )
+    .addOption(tokenStandardOption)
+    .action(
+      async (
+        collection: string,
+        params: {
+          env: string;
+          tokenStandard: TOKEN_STANDARD;
+        },
+      ) =>
+        await newProjectAction(collection, {
+          chain:
+            supportedChainNames[
+              platform.chainIdsMap.get(params.env) ??
+                platform.chainIdsMap.get(platform.defaultChain)!
+            ],
+          tokenStandard: params.tokenStandard,
+        }),
+    );
+
+  newCmd
     .command('deploy <collection>')
     .description(
       'Deploys an ERC721 or ERC1155 collection with the given parameters',
     )
     .addOption(
       getEnvOption(
-        `Environment to deploy to (e.g., ${Array.from(platform.chainIdsMap.keys())}`,
+        Array.from(platform.chainIdsMap.keys()),
+        'Environment to deploy to',
         platform.defaultChain,
       ),
     )

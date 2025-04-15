@@ -3,6 +3,7 @@ import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
 import { Collection } from './types';
 import { showError } from './display';
 import { getProjectStore } from './fileUtils';
+import { isArrayOfNumbers } from './common';
 
 export class EvmPlatform {
   name: string;
@@ -70,25 +71,25 @@ export const validateConfig = (
 
   if (!config.name || typeof config.name !== 'string') {
     errors.push(
-      'Invalid or missing collectionName.  Enter the `name` in the config file or pass the --name flag.',
+      'Invalid or missing collectionName.  Enter the `name` in the config file.',
     );
   }
 
   if (!config.symbol || typeof config.symbol !== 'string') {
     errors.push(
-      'Invalid or missing symbol. Enter the `symbol` in the config file or pass the --symbol flag.',
+      'Invalid or missing symbol. Enter the `symbol` in the config file.',
     );
   }
 
   if (!config.cosigner || !ethers.isAddress(config.cosigner)) {
     errors.push(
-      'Invalid or missing cosigner address. Enter the `cosigner` in the config file or pass the --cosigner flag.',
+      'Invalid or missing cosigner address. Enter the `cosigner` in the config file.',
     );
   }
 
   if (!config.mintCurrency || !ethers.isAddress(config.mintCurrency)) {
     errors.push(
-      'Invalid or missing mintCurrency address. It should a number. Enter the `mintCurrency` in the config file or pass the --mintCurrency flag if you want to setup contract.',
+      'Invalid or missing mintCurrency address. It should a number. Enter the `mintCurrency` in the config file.',
     );
   }
 
@@ -99,13 +100,9 @@ export const validateConfig = (
   }
 
   if (config.tokenStandard === TOKEN_STANDARD.ERC721) {
-    if (
-      setupContract &&
-      (config.globalWalletLimit === undefined ||
-        isNaN(config.globalWalletLimit))
-    ) {
+    if (setupContract && isNaN(config.globalWalletLimit)) {
       errors.push(
-        'Invalid or missing globalWalletLimit. It should a number. Enter the `globalWalletLimit` in the config file or pass the --globalWalletLimit flag if you want to setup contract.',
+        'Invalid or missing globalWalletLimit. It should a number. Enter the `globalWalletLimit` in the config file.',
       );
     }
 
@@ -124,53 +121,59 @@ export const validateConfig = (
       (!config.tokenUriSuffix || typeof config.tokenUriSuffix !== 'string')
     ) {
       errors.push(
-        'Invalid or missing tokenUriSuffix. Enter the `tokenUriSuffix` in the config file or pass the --tokenUriSuffix flag if you want to setup contract.',
+        'Invalid or missing tokenUriSuffix. Enter the `tokenUriSuffix` in the config file.',
       );
     }
   }
 
   if (config.tokenStandard === TOKEN_STANDARD.ERC1155) {
-    if (setupContract && !Array.isArray(config.globalWalletLimit)) {
+    if (
+      setupContract &&
+      (!Array.isArray(config.globalWalletLimit) ||
+        !isArrayOfNumbers(config.globalWalletLimit))
+    ) {
       errors.push(
-        'Invalid or missing globalWalletLimit. It should be an array of numbers. Enter the `globalWalletLimit` in the config file or pass the --globalWalletLimit flag if you want to setup contract.',
+        'Invalid or missing globalWalletLimit. It should be an array of numbers. Enter the `globalWalletLimit` in the config file.',
       );
     }
 
-    if (setupContract && !Array.isArray(config.maxMintableSupply)) {
+    if (
+      setupContract &&
+      (!Array.isArray(config.maxMintableSupply) ||
+        !isArrayOfNumbers(config.maxMintableSupply))
+    ) {
       errors.push(
-        'Invalid or missing maxMintableSupply. It should be an array of numbers. It should be an array of numbers. Enter the `maxMintableSupply` in the config file or pass the --maxMintableSupply flag if you want to setup contract.',
+        'Invalid or missing maxMintableSupply. It should be an array of numbers. It should be an array of numbers. Enter the `maxMintableSupply` in the config file.',
       );
     }
 
     if (setupContract && typeof totalTokens !== 'number') {
-      errors.push(
-        'Invalid or missing totalTokens. Pass the --totalTokens flag if you want to setup contract.',
-      );
+      errors.push('Invalid or missing totalTokens.');
     }
   }
 
   if (setupContract) {
     if (!config.uri || typeof config.uri !== 'string') {
       errors.push(
-        'Invalid or missing uri. Enter the `uri` in the config file or pass the --uri flag if you want to setup contract.',
+        'Invalid or missing uri. Enter the `uri` in the config file.',
       );
     }
 
     if (!config.fundReceiver || !ethers.isAddress(config.fundReceiver)) {
       errors.push(
-        'Invalid or missing fundReceiver. Enter the `fundReceiver` in the config file or pass the --fundReceiver flag if you want to setup contract.',
+        'Invalid or missing fundReceiver. Enter the `fundReceiver` in the config file.',
       );
     }
 
     if (!config.royaltyReceiver || !ethers.isAddress(config.royaltyReceiver)) {
       errors.push(
-        'Invalid or missing royaltyReceiver. Enter the `royaltyReceiver` in the config file or pass the --royaltyReceiver flag if you want to setup contract.',
+        'Invalid or missing royaltyReceiver. Enter the `royaltyReceiver` in the config file.',
       );
     }
 
-    if (!config.royaltyFee || isNaN(config.royaltyFee)) {
+    if (!isNaN(config.royaltyFee)) {
       errors.push(
-        'Invalid or missing royaltyFee. Enter the `royaltyFee` in the config file or pass the --royaltyFee flag if you want to setup contract.',
+        'Invalid or missing royaltyFee. Enter the `royaltyFee` in the config file.',
       );
     }
   }

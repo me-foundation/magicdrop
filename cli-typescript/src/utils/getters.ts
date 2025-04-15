@@ -17,6 +17,7 @@ import {
   MAGIC_EDEN_POLYGON_LIST_ID,
   ME_TRANSFER_VALIDATOR_V3,
   SUPPORTED_CHAINS,
+  supportedChainNames,
   TOKEN_STANDARD,
 } from './constants';
 import { TransactionData } from './types';
@@ -88,6 +89,23 @@ export const getSymbolFromChainId = (chainId: SUPPORTED_CHAINS): string => {
   }
 };
 
+/**
+ * Retrieves the chain ID based on the chain name.
+ * @param chainName The name of the chain (e.g., "ethereum", "polygon").
+ * @returns The chain ID corresponding to the given chain name.
+ * @throws Error if the chain name is not found in the supported chains.
+ */
+export const getChainIdFromName = (chainName: string): SUPPORTED_CHAINS => {
+  const chain = Object.entries(supportedChainNames).find(
+    ([_, value]) => value.toLowerCase() === chainName.toLowerCase(),
+  );
+
+  if (chain) {
+    return Number(chain[0]) as SUPPORTED_CHAINS;
+  } else {
+    throw new Error(`Chain name "${chainName}" not found.`);
+  }
+};
 /**
  * Retrieves the transfer validator list ID based on the network (chain ID).
  * @param chainId The chain ID of the network.

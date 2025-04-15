@@ -75,9 +75,6 @@ export const loadDefaults = async (): Promise<void> => {
     defaults.default_royalty_fee?.toString() || '';
   process.env.DEFAULT_MERKLE_ROOT = defaults.default_merkle_root || '';
 
-  // Load the signer
-  await loadSigner();
-
   process.env.DEFAULT_CONFIG_COMPLETE = 'true';
 };
 
@@ -149,12 +146,11 @@ export const loadPrivateKey = async (): Promise<void> => {
     'You can store your password in .env to avoid entering it every time.',
   );
   console.log(
-    chalk.cyan('echo "KEYSTORE_PASSWORD=<your_password>" >> cli/.env'),
+    chalk.cyan(
+      'echo "KEYSTORE_PASSWORD=<your_password>" >> cli-typescript/.env',
+    ),
   );
   console.log('');
-
-  // Load the signer
-  await loadSigner();
 
   process.exit(0);
 };
