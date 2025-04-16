@@ -38,7 +38,7 @@ import {
 import { printTransactionHash, showText } from './display';
 
 export class ContractManager {
-  private wallet: WalletClient;
+  public wallet: WalletClient;
 
   public signer: Hex;
   public client: PublicClient;
