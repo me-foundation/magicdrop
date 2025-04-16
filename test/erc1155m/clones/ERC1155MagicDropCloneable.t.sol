@@ -14,7 +14,7 @@ import {PublicStage, AllowlistStage, SetupConfig} from "contracts/nft/erc1155m/c
 import {IERC1155MagicDropMetadata} from "contracts/nft/erc1155m/interfaces/IERC1155MagicDropMetadata.sol";
 import {IMagicDropMetadata} from "contracts/common/interfaces/IMagicDropMetadata.sol";
 
-import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {SELF_SERVE_MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
 contract ERC1155MagicDropCloneableTest is Test {
     ERC1155MagicDropCloneable public token;
@@ -506,7 +506,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         // Check initial balances
-        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialMintBalance = SELF_SERVE_MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
@@ -519,7 +519,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         uint256 expectedProtocolFee = (0.01 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.01 ether - expectedProtocolFee;
 
-        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        bool sameRecipient = SELF_SERVE_MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
         uint256 expectedMintBalance = sameRecipient
             ? initialMintBalance + expectedMintFee + expectedProtocolFee
             : initialMintBalance + expectedMintFee;
@@ -527,7 +527,7 @@ contract ERC1155MagicDropCloneableTest is Test {
             ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
             : initialProtocolBalance + expectedProtocolFee;
 
-        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(SELF_SERVE_MINT_FEE_RECEIVER.balance, expectedMintBalance);
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
@@ -540,7 +540,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.deal(user, 1 ether);
 
         // Check initial balances
-        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialMintBalance = SELF_SERVE_MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
@@ -553,7 +553,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         uint256 expectedProtocolFee = (0.05 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.05 ether - expectedProtocolFee;
 
-        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        bool sameRecipient = SELF_SERVE_MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
         uint256 expectedMintBalance = sameRecipient
             ? initialMintBalance + expectedMintFee + expectedProtocolFee
             : initialMintBalance + expectedMintFee;
@@ -561,14 +561,14 @@ contract ERC1155MagicDropCloneableTest is Test {
             ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
             : initialProtocolBalance + expectedProtocolFee;
 
-        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(SELF_SERVE_MINT_FEE_RECEIVER.balance, expectedMintBalance);
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
 
     function testSplitProceedsWithZeroPrice() public {
         // Check initial balances
-        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialMintBalance = SELF_SERVE_MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
@@ -591,7 +591,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         uint256 expectedProtocolFee = (0 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0 ether - expectedProtocolFee;
 
-        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        bool sameRecipient = SELF_SERVE_MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
         uint256 expectedMintBalance = sameRecipient
             ? initialMintBalance + expectedMintFee + expectedProtocolFee
             : initialMintBalance + expectedMintFee;
@@ -599,7 +599,7 @@ contract ERC1155MagicDropCloneableTest is Test {
             ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
             : initialProtocolBalance + expectedProtocolFee;
 
-        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(SELF_SERVE_MINT_FEE_RECEIVER.balance, expectedMintBalance);
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
@@ -609,7 +609,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         vm.warp(allowlistStart + 1);
 
         // Check initial balances
-        uint256 initialMintBalance = MINT_FEE_RECEIVER.balance;
+        uint256 initialMintBalance = SELF_SERVE_MINT_FEE_RECEIVER.balance;
         uint256 initialProtocolBalance = token.PROTOCOL_FEE_RECIPIENT().balance;
         uint256 initialPayoutBalance = payoutRecipient.balance;
 
@@ -624,7 +624,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         uint256 expectedProtocolFee = (0.005 ether * token.PROTOCOL_FEE_BPS()) / token.BPS_DENOMINATOR();
         uint256 expectedPayout = 0.005 ether - expectedProtocolFee;
 
-        bool sameRecipient = MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
+        bool sameRecipient = SELF_SERVE_MINT_FEE_RECEIVER == token.PROTOCOL_FEE_RECIPIENT();
         uint256 expectedMintBalance = sameRecipient
             ? initialMintBalance + expectedMintFee + expectedProtocolFee
             : initialMintBalance + expectedMintFee;
@@ -632,7 +632,7 @@ contract ERC1155MagicDropCloneableTest is Test {
             ? initialProtocolBalance + expectedProtocolFee + expectedMintFee
             : initialProtocolBalance + expectedProtocolFee;
 
-        assertEq(MINT_FEE_RECEIVER.balance, expectedMintBalance);
+        assertEq(SELF_SERVE_MINT_FEE_RECEIVER.balance, expectedMintBalance);
         assertEq(token.PROTOCOL_FEE_RECIPIENT().balance, expectedProtocolBalance);
         assertEq(payoutRecipient.balance, initialPayoutBalance + expectedPayout);
     }
