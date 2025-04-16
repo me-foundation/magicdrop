@@ -9,7 +9,7 @@ const newProjectAction = async (
 ) => {
   collection = collection.toLowerCase();
 
-  const projectStore = getProjectStore(collection);
+  const projectStore = getProjectStore(collection, false, true);
 
   if (projectStore.exists) {
     showError({ text: `Project ${collection} already exists` });

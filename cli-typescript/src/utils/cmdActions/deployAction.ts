@@ -1,6 +1,8 @@
+import { ContractManager } from '../ContractManager';
 import { deployContract } from '../deployContract';
 import { showError } from '../display';
 import { EvmPlatform, init, validateConfig } from '../evmUtils';
+import { getTurnkey } from '../turnkey';
 
 const deployAction = async (
   platform: EvmPlatform,
@@ -8,11 +10,11 @@ const deployAction = async (
   params: {
     env: string;
     setupContract: 'yes' | 'no' | 'deferred';
+    totalTokens: number;
   },
 ) => {
   try {
     const { env, ...cliOptions } = params;
-    const signer = process.env.SIGNER!;
 
     const { config, collectionConfigFile } = init(collection);
 
@@ -27,6 +29,7 @@ const deployAction = async (
       platform,
       mergedConfig,
       cliOptions.setupContract === 'yes',
+      cliOptions.totalTokens,
     );
 
     if (!isValid) {
@@ -35,11 +38,15 @@ const deployAction = async (
       );
     }
 
+    const { account } = await getTurnkey();
+
+    const cm = new ContractManager(mergedConfig.chainId, account);
+
     await deployContract({
       ...mergedConfig,
-      signer,
       collectionConfigFile,
       setupContractOption: cliOptions.setupContract,
+      contractManager: cm,
     });
 
     console.log('Contract deployed successfully!');

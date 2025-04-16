@@ -2,12 +2,6 @@ import fs from 'fs';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { confirm } from '@inquirer/prompts';
-import {
-  ICREATOR_TOKEN_INTERFACE_ID,
-  rpcUrls,
-  SUPPORTED_CHAINS,
-  TRUE_HEX,
-} from './constants';
 
 export const confirmExit = async (): Promise<boolean> => {
   const answer = await confirm({
@@ -43,35 +37,6 @@ export const executeCommand = (command: string): string => {
 };
 
 /**
- * Checks the native balance of the signer for a given chain.
- * @param chainId The chain ID to check the balance on.
- * @param signer The address of the signer.
- * @param rpcUrl The RPC URL.
- * @returns The native balance of the signer in a human-readable format (e.g., ETH, MATIC).
- * @throws Error if the balance retrieval fails.
- */
-export const checkSignerNativeBalance = (
-  signer: string,
-  rpcUrl: string,
-): string => {
-  try {
-    // Execute the `cast balance` command to get the balance of the signer
-    const balanceCommand = `cast balance ${signer} --rpc-url "${rpcUrl}"`;
-    const balance = executeCommand(balanceCommand);
-
-    // Convert the balance from Wei to a human-readable format
-    const fromWeiCommand = `cast from-wei ${balance}`;
-    const humanReadableBalance = executeCommand(fromWeiCommand);
-
-    // Format the balance to 3 decimal places
-    return parseFloat(humanReadableBalance).toFixed(3);
-  } catch (error: any) {
-    console.error('Error checking signer native balance:', error.message);
-    throw error;
-  }
-};
-
-/**
  * Decodes an address from a given chunk of data.
  * Extracts the last 40 characters (20 bytes) and prepends "0x".
  * @param chunk The input string containing the encoded address.
@@ -90,45 +55,6 @@ export const decodeAddress = (chunk: string | null): `0x${string}` => {
 
   // Prepend "0x" to make it a valid Ethereum address
   return `0x${address}`;
-};
-
-/**
- * Checks if the contract supports the ICreatorToken interface.
- * @param contractAddress The address of the contract to check.
- * @param rpcUrl The RPC URL of the blockchain network.
- * @param interfaceId The interface ID of ICreatorToken.
- * @param passwordOption Optional password option for the keystore e.g `--password <PASSWORD>`
- * @returns A boolean indicating whether the contract supports ICreatorToken.
- */
-export const supportsICreatorToken = (
-  chainId: SUPPORTED_CHAINS,
-  contractAddress: `0x${string}`,
-  passwordOption?: string,
-): boolean => {
-  try {
-    console.log('Checking if contract supports ICreatorToken...');
-
-    const rpcUrl = rpcUrls[chainId];
-
-    // Construct the `cast call` command
-    const command = `cast call ${contractAddress} "supportsInterface(bytes4)" ${ICREATOR_TOKEN_INTERFACE_ID} --rpc-url "${rpcUrl}" ${passwordOption ?? ''}`;
-
-    // Execute the command and get the result
-    const result = executeCommand(command);
-
-    // Check if the result matches the expected TRUE_HEX value
-    if (result === TRUE_HEX) {
-      return true;
-    } else {
-      console.log(
-        'Contract does not support ICreatorToken, skipping transfer validator setup.',
-      );
-      return false;
-    }
-  } catch (error: any) {
-    console.error('Error checking ICreatorToken support:', error.message);
-    return false;
-  }
 };
 
 /**

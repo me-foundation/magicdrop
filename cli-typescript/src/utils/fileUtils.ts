@@ -14,17 +14,18 @@ export class Store {
 
   constructor(
     dir: string,
-    collectionName: string,
-    configFileName?: string,
+    projectDirName: string,
+    projectFileName?: string,
     readonly?: boolean,
+    createDir: boolean = false,
   ) {
-    const storeDir = path.join(dir, collectionName);
+    const storeDir = path.join(dir, projectDirName);
 
-    if (!fs.existsSync(storeDir)) {
+    if (!fs.existsSync(storeDir) && createDir) {
       fs.mkdirSync(storeDir, { recursive: true });
     }
 
-    this.root = path.join(storeDir, configFileName || 'project.json');
+    this.root = path.join(storeDir, projectFileName || 'project.json');
 
     this.readonly = readonly ?? this.readonly;
   }
@@ -55,8 +56,18 @@ export class Store {
   }
 }
 
-export const getProjectStore = (collection: string) => {
-  const store = new Store(COLLECTION_DIR, path.join('projects', collection));
+export const getProjectStore = (
+  collection: string,
+  readonly = false,
+  createDir = false,
+) => {
+  const store = new Store(
+    COLLECTION_DIR,
+    path.join('projects', collection),
+    'project.json',
+    readonly,
+    createDir,
+  );
 
   return store;
 };

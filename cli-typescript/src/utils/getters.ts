@@ -21,15 +21,28 @@ import {
   TOKEN_STANDARD,
 } from './constants';
 import { TransactionData } from './types';
+import {
+  abstract,
+  apeChain,
+  arbitrum,
+  avalanche,
+  base,
+  berachain,
+  bsc,
+  mainnet,
+  monadTestnet,
+  polygon,
+  sei,
+  sepolia,
+} from 'viem/chains';
+import { Hex } from 'viem';
 
 /**
  * Retrieves the transfer validator address based on the network (chain ID).
  * @param chainId The chain ID of the network.
  * @returns The transfer validator address for the given network.
  */
-export const getTransferValidatorAddress = (
-  chainId: SUPPORTED_CHAINS,
-): string => {
+export const getTransferValidatorAddress = (chainId: SUPPORTED_CHAINS): Hex => {
   switch (chainId) {
     case SUPPORTED_CHAINS.APECHAIN:
     case SUPPORTED_CHAINS.SEI:
@@ -106,6 +119,48 @@ export const getChainIdFromName = (chainName: string): SUPPORTED_CHAINS => {
     throw new Error(`Chain name "${chainName}" not found.`);
   }
 };
+
+/**
+ * Maps SUPPORTED_CHAINS to viem chains.
+ * @param chainId The chain ID of the network.
+ * @returns The viem chain object corresponding to the chain ID.
+ * @throws Error if the chain ID is not supported.
+ */
+export const getViemChainByChainId = (chainId: SUPPORTED_CHAINS) => {
+  switch (chainId) {
+    case SUPPORTED_CHAINS.ETHEREUM:
+      return mainnet;
+    case SUPPORTED_CHAINS.POLYGON:
+      return polygon;
+    case SUPPORTED_CHAINS.BSC:
+      return bsc;
+    case SUPPORTED_CHAINS.ARBITRUM:
+      return arbitrum;
+    case SUPPORTED_CHAINS.AVALANCHE:
+      return avalanche;
+    case SUPPORTED_CHAINS.BASE:
+      return base;
+    case SUPPORTED_CHAINS.SEI:
+      return sei;
+    case SUPPORTED_CHAINS.APECHAIN:
+      return apeChain;
+    case SUPPORTED_CHAINS.BERACHAIN:
+      return berachain;
+    case SUPPORTED_CHAINS.SEPOLIA:
+      return sepolia;
+    case SUPPORTED_CHAINS.ARBITRUM:
+      return arbitrum;
+    case SUPPORTED_CHAINS.ABSTRACT:
+      return abstract;
+    case SUPPORTED_CHAINS.MONAD_TESTNET:
+      return monadTestnet;
+    case SUPPORTED_CHAINS.AVALANCHE:
+      return avalanche;
+    default:
+      throw new Error(`Unsupported chain ID: ${chainId}`);
+  }
+};
+
 /**
  * Retrieves the transfer validator list ID based on the network (chain ID).
  * @param chainId The chain ID of the network.
@@ -113,7 +168,7 @@ export const getChainIdFromName = (chainName: string): SUPPORTED_CHAINS => {
  */
 export const getTransferValidatorListId = (
   chainId: SUPPORTED_CHAINS,
-): string => {
+): number => {
   switch (chainId) {
     case SUPPORTED_CHAINS.BERACHAIN:
       return DEFAULT_LIST_ID;
@@ -200,22 +255,22 @@ export const getImplId = (
   chainId: SUPPORTED_CHAINS,
   tokenStandard: TOKEN_STANDARD,
   useERC721C?: boolean,
-): string => {
+): number => {
   if (tokenStandard !== TOKEN_STANDARD.ERC721 || !useERC721C) {
     return DEFAULT_IMPL_ID;
   }
 
   switch (chainId) {
     case SUPPORTED_CHAINS.ABSTRACT:
-      return '3'; // ERC721C implementation ID / abstract
+      return 3; // ERC721C implementation ID / abstract
     case SUPPORTED_CHAINS.BASE:
-      return '8';
+      return 8;
     case SUPPORTED_CHAINS.ETHEREUM:
-      return '7';
+      return 7;
     case SUPPORTED_CHAINS.BERACHAIN:
-      return '2';
+      return 2;
     default:
-      return '5';
+      return 5;
   }
 };
 

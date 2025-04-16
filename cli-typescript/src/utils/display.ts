@@ -1,13 +1,8 @@
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
-import { checkSignerNativeBalance, collapseAddress } from './common';
+import { collapseAddress } from './common';
 import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
-import {
-  getExplorerTxUrl,
-  getSymbolFromChainId,
-  promptForConfirmation,
-} from './getters';
-import { setRpcUrl } from './setters';
+import { getExplorerTxUrl, promptForConfirmation } from './getters';
 
 export const displayMessage = (message: string) => {
   console.log(chalk.green(message));
@@ -24,23 +19,6 @@ export const promptUser = (prompt: string) => {
       resolve(data.toString().trim());
     });
   });
-};
-
-export const printSignerWithBalance = async (chainId: SUPPORTED_CHAINS) => {
-  setRpcUrl(chainId);
-
-  const rpcUrl = process.env.RPC_URL ?? '';
-  const signer = process.env.SIGNER ?? '';
-
-  if (!rpcUrl || !signer) {
-    throw new Error('RPC_URL or SIGNER environment variable is not set.');
-  }
-
-  const balance = checkSignerNativeBalance(signer, rpcUrl);
-  const symbol = getSymbolFromChainId(chainId);
-
-  console.log(`Signer: ${collapseAddress(signer)}`);
-  console.log(`Balance: ${balance} ${symbol}`);
 };
 
 /**

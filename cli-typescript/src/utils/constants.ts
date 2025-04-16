@@ -60,12 +60,12 @@ export const TRUE_HEX =
   '0x0000000000000000000000000000000000000000000000000000000000000001';
 
 // Used on chains where we don't have a custom list
-export const DEFAULT_LIST_ID = '0';
-export const MAGIC_EDEN_DEFAULT_LIST_ID = '1';
+export const DEFAULT_LIST_ID = 0;
+export const MAGIC_EDEN_DEFAULT_LIST_ID = 1;
 // We use list 3 for Polygon because list 1 was already taken.
-export const MAGIC_EDEN_POLYGON_LIST_ID = '3';
+export const MAGIC_EDEN_POLYGON_LIST_ID = 3;
 
-export const DEFAULT_IMPL_ID = '0';
+export const DEFAULT_IMPL_ID = 0;
 
 export enum TOKEN_STANDARD {
   ERC721 = 'ERC721',
