@@ -2,7 +2,7 @@
   "name": "",
   "symbol": "",
   "chainId": 0,
-  "tokenStandard": "",
+  "tokenStandard": "ERC721",
   "maxMintableSupply": 0,
   "globalWalletLimit": 0,
   "mintCurrency": "0x0000000000000000000000000000000000000000",

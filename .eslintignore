@@ -9,3 +9,4 @@ docs
 lib/
 bin
 .eslintrc
+cli-typescript

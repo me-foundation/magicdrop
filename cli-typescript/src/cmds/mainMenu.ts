@@ -1,53 +1,44 @@
-import 'dotenv/config';
-import chalk from 'chalk';
 import { Command } from 'commander';
-import { deployContract } from './deployContract';
-import { loadCollection, loadPrivateKey, loadSigner } from '../utils/loaders';
 import { showMainTitle } from '../utils/display';
-import { setBaseDir } from '../utils/setters';
-import { promptForCollectionFile } from '../utils/prompters';
+import { listProjectsCmd, newProjectCmd } from './general';
+import {
+  abstract,
+  apechain,
+  arbitrum,
+  avalanche,
+  base,
+  berachain,
+  bsc,
+  eth,
+  monad,
+  polygon,
+  sei,
+} from './networks';
 
 export const mainMenu = async () => {
-  setBaseDir();
-
   showMainTitle();
-  await loadSigner();
-  console.log('');
-  await loadPrivateKey();
-
-  console.log('');
-  console.log(chalk.green('Please select a collection configuration file:'));
-  console.log('');
-
-  let collectionFile = '';
-  if (!process.env.COLLECTION_FILE) {
-    collectionFile = await promptForCollectionFile();
-    process.env.COLLECTION_FILE = collectionFile;
-    loadCollection(collectionFile);
-    console.log('');
-  }
 
   const program = new Command();
 
   program
     .name('magicdrop-cli')
     .description('CLI for managing blockchain contracts and tokens')
-    .version('1.0.0');
+    .version('2.0.0');
 
-  program
-    .command('deploy')
-    .description('Deploy Contracts')
-    .action(async () => {
-      await deployContract(collectionFile);
-    });
+  // Register sub-commands
+  program.addCommand(newProjectCmd);
+  program.addCommand(listProjectsCmd);
+  program.addCommand(eth);
+  program.addCommand(polygon);
+  program.addCommand(bsc);
+  program.addCommand(base);
+  program.addCommand(sei);
+  program.addCommand(apechain);
+  program.addCommand(berachain);
+  program.addCommand(arbitrum);
+  program.addCommand(abstract);
+  program.addCommand(avalanche);
+  program.addCommand(monad);
 
-  program
-    .command('quit')
-    .description('Quit the application')
-    .action(() => {
-      console.log('Exiting...');
-      process.exit(0);
-    });
-
-  program.parse(process.argv);
+  await program.parseAsync(process.argv);
 };

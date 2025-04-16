@@ -43,7 +43,7 @@ import {
  */
 export const setTransferValidator = (
   contractAddress: string,
-  chainId: string,
+  chainId: SUPPORTED_CHAINS,
   password?: string,
 ): void => {
   try {
@@ -80,8 +80,8 @@ export const setTransferValidator = (
  * @throws Error if the operation fails.
  */
 export const setTransferList = async (
-  contractAddress: `0${string}`,
-  chainId: string,
+  contractAddress: `0x${string}`,
+  chainId: SUPPORTED_CHAINS,
   password?: string,
 ): Promise<void> => {
   try {
@@ -114,8 +114,8 @@ export const setTransferList = async (
  * Freeze a contract.
  */
 export const freezeContract = (
-  contractAddress: `0${string}`,
-  chainId: string,
+  contractAddress: `0x${string}`,
+  chainId: SUPPORTED_CHAINS,
   password?: string,
 ) => {
   console.log('Freezing contract... this will take a moment.');
@@ -175,18 +175,16 @@ export const checkSetupLocked = (
  */
 export const processStages = async (params: {
   collectionFile: string;
-  stagesFile: string;
+  stagesFile?: string;
   stagesJson?: string;
   tokenStandard: string;
-  web3StorageKey?: string;
   baseDir: string;
 }): Promise<string> => {
   const {
     collectionFile,
-    stagesFile,
+    stagesFile = '',
     stagesJson,
     tokenStandard,
-    web3StorageKey,
     baseDir,
   } = params;
 
@@ -199,7 +197,7 @@ export const processStages = async (params: {
       `npx ts-node "${path.join(
         baseDir,
         '../../scripts/utils/getStagesData.ts',
-      )}" "${stagesFile}" '${stagesJson}' "${outputFileDir}" "${tokenStandard}" "${web3StorageKey}"`,
+      )}" "${stagesFile}" '${stagesJson}' "${outputFileDir}" "${tokenStandard}"`,
     );
   } catch (error: any) {
     console.error('Error: Failed to get stages data', error.message);
@@ -230,15 +228,23 @@ export const processStages = async (params: {
  */
 export const setupContract = async (params: {
   contractAddress: string;
-  chainId: string;
+  chainId: SUPPORTED_CHAINS;
   tokenStandard: TOKEN_STANDARD;
   collectionFile: string;
   signer: string;
-  web3StorageKey?: string;
   baseDir?: string;
+  uri?: string;
+  tokenUriSuffix?: string;
   passwordOption?: string;
   title?: string;
   stagesJson?: string;
+  totalTokens?: number;
+  globalWalletLimit?: number | number[];
+  maxMintableSupply?: number | number[];
+  fundReceiver?: string;
+  royaltyReceiver?: string;
+  royaltyFee?: number;
+  mintCurrency: string;
 }): Promise<void> => {
   const {
     contractAddress,
@@ -247,7 +253,6 @@ export const setupContract = async (params: {
     collectionFile,
     signer,
     passwordOption,
-    web3StorageKey,
     stagesJson,
     title = 'Setup an existing collection',
     baseDir = __dirname,
@@ -260,36 +265,48 @@ export const setupContract = async (params: {
 
     checkSetupLocked(contractAddress, rpcUrl, passwordOption);
 
-    const stagesFile = await setStagesFile();
+    const stagesFile = !stagesJson ? await setStagesFile() : undefined;
 
     // Define setup selector based on token standard
-    let setupSelector: string;
+    let setupSelector = '';
     let uri = '';
     let baseUri = '';
     let tokenUriSuffix = '';
     let totalTokens = 0;
 
-    if (tokenStandard === TOKEN_STANDARD.ERC1155) {
-      totalTokens = await setNumberOf1155Tokens(title);
-      uri = await set1155Uri(title);
-    } else if (tokenStandard === TOKEN_STANDARD.ERC721) {
-      baseUri = await setBaseUri(title);
-      tokenUriSuffix = await setTokenUriSuffix(title);
+    if (tokenStandard === TOKEN_STANDARD.ERC721) {
+      baseUri = params.uri ?? (await setBaseUri(title));
+      tokenUriSuffix =
+        params.tokenUriSuffix ?? (await setTokenUriSuffix(title));
+      setupSelector =
+        'setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)';
+    } else if (tokenStandard === TOKEN_STANDARD.ERC1155) {
+      totalTokens = params.totalTokens ?? (await setNumberOf1155Tokens(title));
+      uri = params.uri ?? (await set1155Uri(title));
+      setupSelector =
+        'setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)';
+    } else {
+      throw new Error('Unknown token standard');
     }
 
-    const globalWalletLimit = await setGlobalWalletLimit(
-      tokenStandard,
-      totalTokens,
-      title,
-    );
-    const maxMintableSupply = await setMaxMintableSupply(
-      tokenStandard,
-      totalTokens,
-      title,
-    );
-    const mintCurrency = await setMintCurrency(title, DEFAULT_MINT_CURRENCY);
-    const fundReceiver = await setFundReceiver(title, signer);
-    const { royaltyFee, royaltyReceiver } = await setRoyalties(title);
+    const globalWalletLimit =
+      params.globalWalletLimit ??
+      (await setGlobalWalletLimit(tokenStandard, totalTokens, title));
+    const maxMintableSupply =
+      params.maxMintableSupply ??
+      (await setMaxMintableSupply(tokenStandard, totalTokens, title));
+    const mintCurrency =
+      params.mintCurrency ||
+      (await setMintCurrency(title, DEFAULT_MINT_CURRENCY));
+    const fundReceiver =
+      params.fundReceiver ?? (await setFundReceiver(title, signer));
+    const { royaltyFee, royaltyReceiver } =
+      !params.royaltyFee || !params.royaltyReceiver
+        ? await setRoyalties(title)
+        : {
+            royaltyFee: params.royaltyFee,
+            royaltyReceiver: params.royaltyReceiver,
+          };
 
     await printSignerWithBalance(chainId);
     await confirmSetup({
@@ -300,9 +317,9 @@ export const setupContract = async (params: {
       globalWalletLimit,
       mintCurrency,
       royaltyReceiver,
-      royaltyFee: royaltyFee.toString(),
+      royaltyFee,
       stagesFile,
-      stagesJson: process.env.STAGES_JSON,
+      stagesJson,
       fundReceiver,
     });
 
@@ -313,19 +330,8 @@ export const setupContract = async (params: {
       stagesFile,
       stagesJson,
       tokenStandard,
-      web3StorageKey,
       baseDir,
     });
-
-    if (tokenStandard === TOKEN_STANDARD.ERC1155) {
-      setupSelector =
-        'setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)';
-    } else if (tokenStandard === TOKEN_STANDARD.ERC721) {
-      setupSelector =
-        'setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)';
-    } else {
-      throw new Error('Unknown token standard');
-    }
 
     console.log('Setting up contract... this will take a moment.');
 
@@ -336,8 +342,8 @@ export const setupContract = async (params: {
             ${uri} \
             ${baseUri} \
             ${tokenUriSuffix} \
-            ${maxMintableSupply} \
-            ${globalWalletLimit} \
+            ${JSON.stringify(maxMintableSupply)} \
+            ${JSON.stringify(globalWalletLimit)} \
             ${mintCurrency} \
             ${fundReceiver} \
             '${stagesData}' \

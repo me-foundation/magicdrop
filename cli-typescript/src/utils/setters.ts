@@ -25,9 +25,8 @@ import {
  */
 export const setStagesFile = async (): Promise<string> => {
   const stagesFile = process.env.STAGES_FILE;
-  const stagesJson = process.env.STAGES_JSON;
 
-  if (isUnsetOrNull(stagesFile) && isUnsetOrNull(stagesJson)) {
+  if (isUnsetOrNull(stagesFile)) {
     console.log('> Set stages file <');
 
     const selectedFile = await promptForCollectionFile(
@@ -69,9 +68,9 @@ export const setRoyalties = async (
       royaltyReceiver ??
       process.env.DEFAULT_ROYALTY_RECEIVER ??
       DEFAULT_ROYALTY_RECEIVER,
-    royaltyFee:
-      Number(royaltyFee ?? process.env.DEFAULT_ROYALTY_FEE) ??
-      DEFAULT_ROYALTY_FEE,
+    royaltyFee: Number(
+      royaltyFee ?? process.env.DEFAULT_ROYALTY_FEE ?? DEFAULT_ROYALTY_FEE,
+    ),
   };
 
   if (isUnsetOrNull(royaltyReceiver) && isUnsetOrNull(royaltyFee)) {
@@ -219,13 +218,7 @@ export const setMaxMintableSupply = async (
   totalTokens: number,
   title: string,
   tokenId?: string,
-): Promise<string> => {
-  const maxMintableSupply = process.env.MAX_MINTABLE_SUPPLY;
-
-  if (!isUnsetOrNull(maxMintableSupply)) {
-    return maxMintableSupply!;
-  }
-
+): Promise<number | number[]> => {
   if (tokenStandard === TOKEN_STANDARD.ERC1155 && isUnsetOrNull(tokenId)) {
     // For ERC1155 tokens without a specific token ID
     showText(title, '> Set max mintable supply for each token <');
@@ -239,9 +232,7 @@ export const setMaxMintableSupply = async (
       supplies.push(tokenSupply);
     }
 
-    process.env.MAX_MINTABLE_SUPPLY = JSON.stringify(supplies);
-
-    return JSON.stringify(supplies);
+    return supplies;
   } else if (
     tokenStandard === TOKEN_STANDARD.ERC721 ||
     !isUnsetOrNull(tokenId)
@@ -252,9 +243,7 @@ export const setMaxMintableSupply = async (
     const supply = await promptForNumericInput('Enter max mintable supply');
     checkInput(supply.toString(), 'max mintable supply');
 
-    process.env.MAX_MINTABLE_SUPPLY = supply.toString();
-
-    return supply.toString();
+    return supply;
   } else {
     throw new Error('Unknown token standard');
   }
@@ -273,11 +262,7 @@ export const setGlobalWalletLimit = async (
   totalTokens: number,
   title: string,
   tokenId?: string,
-): Promise<string> => {
-  const globalWalletLimit = process.env.GLOBAL_WALLET_LIMIT;
-
-  if (!isUnsetOrNull(globalWalletLimit)) return globalWalletLimit!;
-
+): Promise<number | number[]> => {
   if (tokenStandard === TOKEN_STANDARD.ERC1155 && isUnsetOrNull(tokenId)) {
     // For ERC1155 tokens without a specific token ID
     showText(title, '> Set global wallet limit for each token <');
@@ -293,7 +278,7 @@ export const setGlobalWalletLimit = async (
 
     process.env.GLOBAL_WALLET_LIMIT = JSON.stringify(limits);
 
-    return JSON.stringify(limits);
+    return limits;
   } else if (
     tokenStandard === TOKEN_STANDARD.ERC721 ||
     !isUnsetOrNull(tokenId)
@@ -306,8 +291,7 @@ export const setGlobalWalletLimit = async (
     );
     checkInput(walletLimit.toString(), 'global wallet limit');
 
-    process.env.GLOBAL_WALLET_LIMIT = walletLimit.toString();
-    return walletLimit.toString();
+    return walletLimit;
   } else {
     throw new Error('Unknown token standard');
   }
@@ -348,7 +332,7 @@ export const setTokenId = async (title: string): Promise<number> => {
  */
 export const setTokenUriSuffix = async (
   title: string,
-  defaultTokenUriSuffix = process.env.TOKEN_URI_SUFFIX || '.json',
+  defaultTokenUriSuffix = '.json',
 ): Promise<string> => {
   const tokenUriSuffix = process.env.TOKEN_URI_SUFFIX;
 
@@ -450,8 +434,6 @@ export const setNumberOf1155Tokens = async (title: string): Promise<number> => {
 
     checkInput(totalTokens, 'total tokens');
     console.clear();
-
-    process.env.TOTAL_TOKENS = totalTokens;
   }
 
   return Number(totalTokens!);
@@ -514,7 +496,7 @@ export const setTokenStandard = async (): Promise<TOKEN_STANDARD> => {
  * @param chainId The chain ID for which to set the RPC URL.
  * @throws Error if the chain ID is unsupported.
  */
-export const setRpcUrl = (chainId: string) => {
+export const setRpcUrl = (chainId: SUPPORTED_CHAINS) => {
   const rpcUrl = rpcUrls[chainId as SUPPORTED_CHAINS];
 
   if (!rpcUrl) {
@@ -531,7 +513,7 @@ export const setRpcUrl = (chainId: string) => {
  */
 export const setChainID = async (): Promise<SUPPORTED_CHAINS> => {
   if (process.env.CHAIN_ID) {
-    return process.env.CHAIN_ID as SUPPORTED_CHAINS;
+    return Number(process.env.CHAIN_ID);
   }
 
   // Prompt the user to select a chain
@@ -547,7 +529,7 @@ export const setChainID = async (): Promise<SUPPORTED_CHAINS> => {
   // Set the RPC URL for the selected chain
   setRpcUrl(chainId);
 
-  return chainId as SUPPORTED_CHAINS;
+  return chainId;
 };
 
 export const setCollectionName = async (): Promise<string> => {

@@ -1,18 +1,13 @@
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { checkSignerNativeBalance, collapseAddress } from './common';
-import { TOKEN_STANDARD } from './constants';
+import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
 import {
   getExplorerTxUrl,
   getSymbolFromChainId,
   promptForConfirmation,
 } from './getters';
 import { setRpcUrl } from './setters';
-
-export const showMainTitle = () => {
-  console.log(chalk.bold.blue('Welcome to MagicDrop CLI'));
-  console.log(chalk.blue('=============================='));
-};
 
 export const displayMessage = (message: string) => {
   console.log(chalk.green(message));
@@ -31,7 +26,7 @@ export const promptUser = (prompt: string) => {
   });
 };
 
-export const printSignerWithBalance = async (chainId: string) => {
+export const printSignerWithBalance = async (chainId: SUPPORTED_CHAINS) => {
   setRpcUrl(chainId);
 
   const rpcUrl = process.env.RPC_URL ?? '';
@@ -59,7 +54,7 @@ export const confirmDeployment = async (details: {
   tokenStandard: TOKEN_STANDARD;
   initialOwner: string;
   implId: string;
-  chainId: string;
+  chainId: SUPPORTED_CHAINS;
   deploymentFee: string;
 }): Promise<void> => {
   const {
@@ -102,7 +97,10 @@ export const confirmDeployment = async (details: {
  * @param chainId The chain ID where the transaction occurred.
  * @throws Error if the transaction failed or the output is invalid.
  */
-export const printTransactionHash = (txHash: string, chainId: string): void => {
+export const printTransactionHash = (
+  txHash: string,
+  chainId: SUPPORTED_CHAINS,
+): void => {
   try {
     console.log('');
     console.log('Transaction successful.');
@@ -126,18 +124,35 @@ export const showText = (
   subtext?: string,
   showBorder = true,
   boldText = true,
+  color = chalk.hex('#D48CFF'),
 ): void => {
-  const border = showBorder ? chalk.hex('#D48CFF')('='.repeat(40)) : '';
-  const styledSubtitle = subtext ? chalk.hex('#D48CFF')(subtext) : '';
+  const border = showBorder ? color('='.repeat(40)) : '';
+  const styledSubtitle = subtext ? color(subtext) : '';
 
-  let styledTitle = chalk.hex('#D48CFF')(text);
+  let styledTitle = color(text);
   if (boldText) styledTitle = chalk.bold(styledTitle);
 
-  console.log('\n' + border);
+  if (showBorder) console.log('\n' + border);
   console.log(styledTitle.padStart((40 + styledTitle.length) / 2));
   if (styledSubtitle)
     console.log(styledSubtitle.padStart((40 + styledSubtitle.length) / 2));
-  console.log(border + '\n');
+  if (showBorder) console.log(border + '\n');
+};
+
+export const showError = ({
+  text,
+  subtext,
+  boldText = false,
+}: {
+  text: string;
+  subtext?: string;
+  boldText?: boolean;
+}) => {
+  showText(text, subtext, false, boldText, chalk.red);
+};
+
+export const showMainTitle = () => {
+  showText('Welcome to MagicDrop CLI');
 };
 
 /**
@@ -146,16 +161,16 @@ export const showText = (
  * @throws Error if the user does not confirm the setup.
  */
 export const confirmSetup = async (setupDetails: {
-  chainId: string;
+  chainId: SUPPORTED_CHAINS;
   tokenStandard: string;
   contractAddress: string;
-  maxMintableSupply: string;
-  globalWalletLimit: string;
+  maxMintableSupply: number | number[];
+  globalWalletLimit: number | number[];
   mintCurrency: string;
   royaltyReceiver: string;
-  royaltyFee: string;
-  stagesFile?: string | null;
-  stagesJson?: string | null;
+  royaltyFee: number;
+  stagesFile?: string;
+  stagesJson?: string;
   fundReceiver: string;
 }): Promise<void> => {
   const {

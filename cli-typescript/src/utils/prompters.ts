@@ -136,12 +136,12 @@ export const promptForCollectionFile = async (
   }
 };
 
-export const promptForChain = async (): Promise<string> => {
+export const promptForChain = async (): Promise<SUPPORTED_CHAINS> => {
   const chainId = await rawlist({
     message: 'Choose a chain to deploy on:',
     choices: Object.keys(supportedChainNames).map((id) => ({
-      name: supportedChainNames[id as SUPPORTED_CHAINS],
-      value: id,
+      name: supportedChainNames[Number(id) as SUPPORTED_CHAINS],
+      value: Number(id) as SUPPORTED_CHAINS,
     })),
   });
 

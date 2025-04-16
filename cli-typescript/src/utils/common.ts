@@ -19,6 +19,18 @@ export const confirmExit = async (): Promise<boolean> => {
 };
 
 /**
+ * Validates if the input is an array of numbers.
+ * @param value The value to validate.
+ * @returns true if the value is an array of numbers, otherwise false.
+ */
+export const isArrayOfNumbers = (value: any): boolean => {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => typeof item === 'number' && !isNaN(item))
+  );
+};
+
+/**
  * Helper function to execute shell commands.
  */
 export const executeCommand = (command: string): string => {
@@ -69,7 +81,7 @@ export const checkSignerNativeBalance = (
 export const decodeAddress = (chunk: string | null): `0x${string}` => {
   if (!chunk || chunk.length < 40) {
     throw new Error(
-      'Invalid input: chunk must be at least 40 characters long.',
+      `Unable to decode address from input (${chunk}): chunk must be at least 40 characters long.`,
     );
   }
 
@@ -89,14 +101,14 @@ export const decodeAddress = (chunk: string | null): `0x${string}` => {
  * @returns A boolean indicating whether the contract supports ICreatorToken.
  */
 export const supportsICreatorToken = (
-  chainId: string,
+  chainId: SUPPORTED_CHAINS,
   contractAddress: `0x${string}`,
   passwordOption?: string,
 ): boolean => {
   try {
     console.log('Checking if contract supports ICreatorToken...');
 
-    const rpcUrl = rpcUrls[chainId as SUPPORTED_CHAINS];
+    const rpcUrl = rpcUrls[chainId];
 
     // Construct the `cast call` command
     const command = `cast call ${contractAddress} "supportsInterface(bytes4)" ${ICREATOR_TOKEN_INTERFACE_ID} --rpc-url "${rpcUrl}" ${passwordOption ?? ''}`;

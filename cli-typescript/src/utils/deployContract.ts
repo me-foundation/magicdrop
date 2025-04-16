@@ -5,28 +5,23 @@ import {
   executeCommand,
   saveDeploymentData,
   supportsICreatorToken,
-} from '../utils/common';
+} from './common';
 import {
   confirmDeployment,
   printSignerWithBalance,
   printTransactionHash,
+  showError,
   showText,
-} from '../utils/display';
+} from './display';
 import {
   freezeContract,
   setTransferList,
   setTransferValidator,
   setupContract,
-} from '../utils/contractActions';
-import { rpcUrls } from '../utils/constants';
+} from './contractActions';
+import { rpcUrls } from './constants';
 import { ethers } from 'ethers';
-import { TransactionData } from '../utils/types';
-import {
-  setChainID,
-  setCollectionName,
-  setCollectionSymbol,
-  setTokenStandard,
-} from '../utils/setters';
+import { DeployContractConfig, TransactionData } from './types';
 import {
   getContractAddressFromLogs,
   getExplorerContractUrl,
@@ -38,16 +33,27 @@ import {
   getUseERC721C,
   getZksyncFlag,
   promptForConfirmation,
-} from '../utils/getters';
+} from './getters';
 
-export const deployContract = async (collectionFile: string) => {
-  console.log('Deploying a new collection...');
-
-  // Set chain, token standard, collection name, and symbol
-  const chainId = await setChainID();
-  const tokenStandard = await setTokenStandard();
-  const collectionName = await setCollectionName();
-  const collectionSymbol = await setCollectionSymbol();
+export const deployContract = async ({
+  chainId,
+  collectionConfigFile,
+  tokenStandard,
+  signer,
+  stages,
+  name: collectionName,
+  symbol: collectionSymbol,
+  maxMintableSupply,
+  royaltyFee,
+  royaltyReceiver,
+  globalWalletLimit,
+  fundReceiver,
+  setupContractOption,
+  uri,
+  tokenUriSuffix,
+  mintCurrency,
+}: DeployContractConfig) => {
+  showText('Deploying a new collection...');
 
   // Print signer with balance
   await printSignerWithBalance(chainId);
@@ -67,7 +73,7 @@ export const deployContract = async (collectionFile: string) => {
   const deploymentFee = executeCommand(deploymentFeeCommand);
 
   let value = '0';
-  if (deploymentFee !== '0') {
+  if (deploymentFee !== '0' && deploymentFee !== '0x') {
     value = `--value ${ethers.toNumber(deploymentFee)}`;
   }
 
@@ -75,7 +81,7 @@ export const deployContract = async (collectionFile: string) => {
     name: collectionName,
     symbol: collectionSymbol,
     tokenStandard,
-    initialOwner: collapseAddress(process.env.SIGNER || ''),
+    initialOwner: collapseAddress(signer || ''),
     implId,
     chainId,
     deploymentFee,
@@ -91,7 +97,7 @@ export const deployContract = async (collectionFile: string) => {
     "${collectionName}" \
     "${collectionSymbol}" \
     "${standardId}" \
-    "${process.env.SIGNER}" \
+    "${signer}" \
     ${implId} \
     ${zksyncFlag} \
     ${passwordOption} \
@@ -110,19 +116,26 @@ export const deployContract = async (collectionFile: string) => {
   printTransactionHash(deploymentData.transactionHash, chainId);
 
   const eventSig = executeCommand(
-    `cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)"`,
+    'cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)"',
   );
   const eventData = getContractAddressFromLogs(deploymentData, eventSig);
   // extract address from the first 64 characters
-  const contractAddress = decodeAddress(eventData?.slice(0, 64) ?? '');
+  let contractAddress: `0x${string}` = '0x';
+
+  try {
+    contractAddress = decodeAddress(eventData?.slice(0, 64) ?? '');
+  } catch (error: any) {
+    showError({ text: error.message });
+    process.exit(1);
+  }
 
   showText(`Deployed Contract Address: ${contractAddress}`, '', false, false);
   showText(getExplorerContractUrl(chainId, contractAddress), '', false, false);
-  saveDeploymentData(contractAddress, process.env.SIGNER || '', collectionFile);
+  saveDeploymentData(contractAddress, signer, collectionConfigFile);
 
   const isICreatorToken = supportsICreatorToken(
     chainId,
-    contractAddress,
+    contractAddress as `0x${string}`,
     passwordOption,
   );
 
@@ -143,22 +156,30 @@ export const deployContract = async (collectionFile: string) => {
     }
   }
 
-  console.log('');
-  const setupNow = await promptForConfirmation(
-    'Would you like to setup the contract?',
-  );
+  const setupNow =
+    setupContractOption === 'yes' ||
+    (setupContractOption === 'deferred' &&
+      (await promptForConfirmation('Would you like to setup the contract?')));
 
   if (setupNow) {
     await setupContract({
       contractAddress,
       chainId,
       tokenStandard,
-      collectionFile,
-      passwordOption,
-      signer: process.env.SIGNER!,
-      web3StorageKey: process.env.WEB3_STORAGE_KEY,
+      collectionFile: collectionConfigFile,
+      signer,
       baseDir: process.env.BASE_DIR,
-      stagesJson: process.env.STAGES_JSON,
+      uri,
+      tokenUriSuffix,
+      passwordOption,
+      stagesJson: JSON.stringify(stages),
+      totalTokens: undefined,
+      globalWalletLimit,
+      maxMintableSupply,
+      fundReceiver,
+      royaltyReceiver,
+      royaltyFee,
+      mintCurrency,
     });
   }
 };
