@@ -42,3 +42,13 @@ export const chainOption = new Option(
 )
   .choices(Array.from(Object.values(supportedChainNames)))
   .default(supportedChainNames[SUPPORTED_CHAINS.MONAD_TESTNET]);
+
+export const totalTokensOption = new Option(
+  '--totalTokens <totalTokens>',
+  `
+    Total number of tokens in the collection. This value is used to calculate the minting stages.
+    It is only used for ERC1155 tokenStandard.
+    If you are using ERC721, this value is ignored.
+    Notice: This value should match the number of tokens in the stages file. Otherwise, the contract will revert.
+  `,
+);

@@ -3,14 +3,15 @@ import {
   getEnvOption,
   setupContractOption,
   tokenStandardOption,
+  totalTokensOption,
 } from './cmdOptions';
 import { EvmPlatform } from './evmUtils';
 import deployAction from './cmdActions/deployAction';
-import { loadDefaults, loadPrivateKey, loadSigner } from './loaders';
+import { loadDefaults } from './loaders';
 import { setBaseDir } from './setters';
 import { showError } from './display';
-import newProjectAction from './cmdActions/newProjectAction';
 import { supportedChainNames, TOKEN_STANDARD } from './constants';
+import newProjectAction from './cmdActions/newProjectAction';
 
 const presets = async () => {
   try {
@@ -27,10 +28,6 @@ const presets = async () => {
         'Configuration is incomplete. Please ensure all values are set in defaults.json.',
       );
     }
-
-    await loadPrivateKey();
-    await loadSigner();
-    console.log('Prestart tasks completed successfully.');
   } catch (error: any) {
     showError({ text: `An error occurred: ${error.message}` });
     process.exit(1);
@@ -108,12 +105,14 @@ export const createEvmCommand = ({
       ),
     )
     .addOption(setupContractOption)
+    .addOption(totalTokensOption)
     .action(
       async (
         collection: string,
         params: {
           env: string;
           setupContract: 'yes' | 'no' | 'deferred';
+          totalTokens: number;
         },
       ) => await deployAction(platform, collection, params),
     );
