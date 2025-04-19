@@ -13,6 +13,7 @@ const newProjectAction = async (
   },
 ) => {
   collection = collection.toLowerCase();
+  console.log(params);
 
   const projectStore = getProjectStore(collection, false, true);
 
