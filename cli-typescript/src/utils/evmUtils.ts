@@ -173,7 +173,7 @@ export const validateConfig = (
       );
     }
 
-    if (!isNaN(config.royaltyFee)) {
+    if (isNaN(config.royaltyFee)) {
       errors.push(
         'Invalid or missing royaltyFee. Enter the `royaltyFee` in the config file.',
       );

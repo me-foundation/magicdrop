@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
+import { getBaseDir } from './getters';
 
 /**
  * Loads default configuration values from a `defaults.json` file and sets them in `process.env`.
@@ -8,7 +9,7 @@ import chalk from 'chalk';
  * @throws Error if `defaults.json` is not found.
  */
 export const loadDefaults = async (): Promise<void> => {
-  const baseDir = process.env.BASE_DIR || path.resolve(__dirname, '..');
+  const baseDir = getBaseDir();
   let defaultsFile = path.join(baseDir, '../defaults.json');
 
   // Check if defaults.json exists in the expected location

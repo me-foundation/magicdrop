@@ -5,13 +5,13 @@ import {
   http,
   PublicClient,
   WalletClient,
-  LocalAccount,
   Chain,
   TransactionReceipt,
   decodeEventLog,
   toEventSelector,
   encodeFunctionData,
   decodeFunctionResult,
+  Account,
 } from 'viem';
 import {
   getSymbolFromChainId,
@@ -38,7 +38,7 @@ import {
 import { printTransactionHash, showText } from './display';
 
 export class ContractManager {
-  public wallet: WalletClient;
+  private wallet: WalletClient;
 
   public signer: Hex;
   public client: PublicClient;
@@ -47,7 +47,7 @@ export class ContractManager {
 
   constructor(
     public chainId: SUPPORTED_CHAINS,
-    private turnkeyAccount: LocalAccount,
+    private signerAccount: Account,
   ) {
     this.rpcUrl = rpcUrls[this.chainId];
     this.chain = getViemChainByChainId(this.chainId);
@@ -60,12 +60,12 @@ export class ContractManager {
 
     // Initialize wallet client and signer
     this.wallet = createWalletClient({
-      account: turnkeyAccount,
+      account: signerAccount,
       chain: getViemChainByChainId(this.chainId),
       transport: http(this.rpcUrl),
     }) as WalletClient;
 
-    const signer = this.wallet.account?.address ?? this.turnkeyAccount.address;
+    const signer = this.wallet.account?.address ?? this.signerAccount.address;
 
     if (!signer) {
       throw new Error('ContractManager initialization failed! Signer not set');
@@ -116,7 +116,7 @@ export class ContractManager {
     gasLimit?: bigint;
   }): Promise<Hex> {
     return this.wallet.sendTransaction({
-      account: this.turnkeyAccount,
+      account: this.signerAccount,
       chain: getViemChainByChainId(this.chainId),
       to,
       data,

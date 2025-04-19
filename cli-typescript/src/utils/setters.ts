@@ -42,7 +42,7 @@ export const setStagesFile = async (): Promise<string> => {
 };
 
 /**
- * Gets the base directory of the current script.
+ * Sets the base directory of the current script.
  * @returns The absolute path to the base directory.
  */
 export const setBaseDir = (): string => {

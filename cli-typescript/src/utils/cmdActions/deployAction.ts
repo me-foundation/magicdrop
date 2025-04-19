@@ -2,7 +2,7 @@ import { ContractManager } from '../ContractManager';
 import { deployContract } from '../deployContract';
 import { showError } from '../display';
 import { EvmPlatform, init, validateConfig } from '../evmUtils';
-import { getTurnkey } from '../turnkey';
+import { getProjectSigner } from '../turnkey';
 
 const deployAction = async (
   platform: EvmPlatform,
@@ -38,9 +38,9 @@ const deployAction = async (
       );
     }
 
-    const { account } = await getTurnkey();
+    const { signer } = await getProjectSigner(collection);
 
-    const cm = new ContractManager(mergedConfig.chainId, account);
+    const cm = new ContractManager(mergedConfig.chainId, signer);
 
     await deployContract({
       ...mergedConfig,

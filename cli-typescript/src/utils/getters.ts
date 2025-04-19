@@ -36,6 +36,7 @@ import {
   sepolia,
 } from 'viem/chains';
 import { Hex } from 'viem';
+import { setBaseDir } from './setters';
 
 /**
  * Retrieves the transfer validator address based on the network (chain ID).
@@ -339,4 +340,9 @@ export const getExplorerTxUrl = (
   }
 
   return `${explorerUrl}/tx/${txHash}`;
+};
+
+export const getBaseDir = (): string => {
+  const baseDir = process.env.BASE_DIR || setBaseDir();
+  return baseDir;
 };

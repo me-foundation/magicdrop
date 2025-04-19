@@ -7,6 +7,7 @@ import {
   TOKEN_STANDARD,
 } from './constants';
 import { isValidEthereumAddress } from './common';
+import { getBaseDir } from './getters';
 
 /**
  * Prompts the user to input a numeric value.
@@ -92,10 +93,7 @@ export const promptForEthereumAddress = async (
  */
 export const promptForCollectionFile = async (
   promptMessage = 'Select a collection file:',
-  directory: string = path.join(
-    process.env.BASE_DIR ?? __dirname,
-    '../collections',
-  ),
+  directory: string = path.join(getBaseDir(), '../collections'),
 ): Promise<string> => {
   try {
     // Ensure the directory exists

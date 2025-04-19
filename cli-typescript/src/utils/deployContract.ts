@@ -14,6 +14,7 @@ import {
   ERC721StageData,
 } from './types';
 import {
+  getBaseDir,
   getExplorerContractUrl,
   getFactoryAddress,
   getImplId,
@@ -153,7 +154,7 @@ export const deployContract = async ({
       tokenStandard,
       collectionFile: collectionConfigFile,
       signer: cm.signer,
-      baseDir: process.env.BASE_DIR,
+      baseDir: getBaseDir(),
       uri,
       tokenUriSuffix,
       stagesJson: JSON.stringify(stages),
@@ -273,8 +274,6 @@ const setupContract = async (params: {
     title = 'Setup an existing collection',
     baseDir = __dirname,
   } = params;
-
-  console.log('parameters', params);
 
   try {
     console.clear();

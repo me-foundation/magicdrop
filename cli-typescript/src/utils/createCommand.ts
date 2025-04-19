@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import {
   getEnvOption,
   setupContractOption,
+  setupSignerOption,
   tokenStandardOption,
   totalTokensOption,
 } from './cmdOptions';
@@ -10,8 +11,25 @@ import deployAction from './cmdActions/deployAction';
 import { loadDefaults } from './loaders';
 import { setBaseDir } from './setters';
 import { showError } from './display';
-import { supportedChainNames, TOKEN_STANDARD } from './constants';
+import {
+  COLLECTION_DIR,
+  supportedChainNames,
+  TOKEN_STANDARD,
+} from './constants';
 import newProjectAction from './cmdActions/newProjectAction';
+
+export const getNewProjectCmdDescription = (defaultInfo?: string) => {
+  defaultInfo =
+    defaultInfo ||
+    'The default chain is monad testnet and the default token standard is ERC721.';
+  return `
+    Creates a new launchpad/collection template. 
+    you can specify the collection directory by setting the "MAGIC_DROP_COLLECTION_DIR" env 
+    else it defaults to "${COLLECTION_DIR}" in the project directory.
+    You can also specify the chain and token standard to use for the new project.
+    ${defaultInfo}
+  `;
+};
 
 const presets = async () => {
   try {
@@ -58,13 +76,9 @@ export const createEvmCommand = ({
     .command('new <collection>')
     .aliases(['n', 'init'])
     .description(
-      `    
-      Creates a new launchpad/collection template. 
-      you can specify the collection directory by setting the "MAGIC_DROP_COLLECTION_DIR" env 
-      else it defaults to "./collections" in the project directory.
-      You can also specify the environment and token standard to use for the new project.
-      The default environment is ${platform.defaultChain} and the default token standard is ERC721.
-    `,
+      getNewProjectCmdDescription(
+        `The default environment is ${platform.defaultChain} and the default token standard is ERC721.`,
+      ),
     )
     .addOption(
       getEnvOption(
@@ -74,12 +88,14 @@ export const createEvmCommand = ({
       ),
     )
     .addOption(tokenStandardOption)
+    .addOption(setupSignerOption)
     .action(
       async (
         collection: string,
         params: {
           env: string;
           tokenStandard: TOKEN_STANDARD;
+          setupSigner: boolean;
         },
       ) =>
         await newProjectAction(collection, {
@@ -89,6 +105,7 @@ export const createEvmCommand = ({
                 platform.chainIdsMap.get(platform.defaultChain)!
             ],
           tokenStandard: params.tokenStandard,
+          setupSigner: params.setupSigner,
         }),
     );
 
