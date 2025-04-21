@@ -1,6 +1,7 @@
 import { Hex } from 'viem';
 import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
 import { ContractManager } from './ContractManager';
+import { getProjectStore } from './fileUtils';
 
 export interface ERC721Stage {
   price: string;
@@ -67,11 +68,12 @@ export interface ERC1155Collection {
 export type Collection = ERC721Collection | ERC1155Collection;
 
 export type DeployContractConfig = Collection & {
-  collectionConfigFile: string;
+  store: ReturnType<typeof getProjectStore>;
   setupContractOption?: 'yes' | 'no' | 'deferred';
   tokenUriSuffix?: string;
   contractManager: ContractManager;
   totalTokens?: number;
+  stagesFile?: string;
 };
 
 export interface Log {

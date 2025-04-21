@@ -72,3 +72,10 @@ export const getForceOption = (
     description ?? 'Force the action to be executed',
   ).default(defaultValue ?? false);
 };
+
+export const stagesFileOption = new Option(
+  '--stagesFile <stagesFile>',
+  `
+    Path to the stages file. This file contains the minting stages for the collection.
+  `,
+);

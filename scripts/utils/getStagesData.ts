@@ -658,7 +658,6 @@ const parseAndValidateArgs = () => {
   const tokenStandard = process.argv[5];
   const web3StorageKey = process.argv[6];
   const isJsonOutput = process.argv[7] === 'true';
-  console.log('process.argv[7]🙄 ', process.argv[7], isJsonOutput);
 
   if (!stagesFilePath && !stagesJson) {
     throw new Error(
