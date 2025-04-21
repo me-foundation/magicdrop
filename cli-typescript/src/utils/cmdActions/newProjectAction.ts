@@ -9,11 +9,10 @@ const newProjectAction = async (
   params: {
     tokenStandard: TOKEN_STANDARD;
     chain: string;
-    setupSigner: boolean;
+    setupWallet: boolean;
   },
 ) => {
   collection = collection.toLowerCase();
-  console.log(params);
 
   const projectStore = getProjectStore(collection, false, true);
 
@@ -32,17 +31,19 @@ const newProjectAction = async (
 
   let walletFilePath = 'N/A';
   let signer = undefined;
-  // Create a signer for the project
-  if (params.setupSigner) {
+
+  // Create a wallet for the project
+  if (params.setupWallet) {
     const res = await createProjectSigner(collection);
-    walletFilePath = res.walletFilePath;
+    walletFilePath = res.walletStore.root;
     signer = res.signer;
   }
 
-  const signerInfo = params.setupSigner
-    ? `Note: A signer account: ${signer?.address} was created for this collection, you will need to fund it before you can deploy this collection.`
-    : `Note: A signer account was NOT setup for this collection, you will need to do that manually before you can deploy it.
-      You can do this by creating a wallet.json file in the directory: ${projectStore.storeDir}.`;
+  const signerInfo = params.setupWallet
+    ? `Note: A signer account - "${signer?.address}" - was created for this collection, you will need to fund it before you can deploy this collection.`
+    : `Note: A signer account was NOT setup for this collection, you will need one before you can deploy.
+      You can use the create-wallet command to create a signer account for this collection OR 
+      You can do this manually by creating a wallet.json file in the directory: ${projectStore.storeDir}.`;
 
   showText(
     `Successfully set up new project for ${collection}`,

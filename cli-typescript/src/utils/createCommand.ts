@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import {
   getEnvOption,
   setupContractOption,
-  setupSignerOption,
+  setupWalletOption,
   tokenStandardOption,
   totalTokensOption,
 } from './cmdOptions';
@@ -88,14 +88,14 @@ export const createEvmCommand = ({
       ),
     )
     .addOption(tokenStandardOption)
-    .addOption(setupSignerOption)
+    .addOption(setupWalletOption)
     .action(
       async (
         collection: string,
         params: {
           env: string;
           tokenStandard: TOKEN_STANDARD;
-          setupSigner: boolean;
+          setupWallet: boolean;
         },
       ) =>
         await newProjectAction(collection, {
@@ -105,7 +105,7 @@ export const createEvmCommand = ({
                 platform.chainIdsMap.get(platform.defaultChain)!
             ],
           tokenStandard: params.tokenStandard,
-          setupSigner: params.setupSigner,
+          setupWallet: params.setupWallet,
         }),
     );
 

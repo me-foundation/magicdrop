@@ -47,26 +47,28 @@ export const totalTokensOption = new Option(
   `,
 );
 
-export const setupSignerOption = new Option(
-  '-s --setupSigner',
+export const setupWalletOption = new Option(
+  '-s --setupWallet',
   `
-    Specify if a new signer account should be setup for the collection.
-    Note: if you decide to ignore setup, you will need to setup the signer account manually.
-    You can do this by creating a wallet.json file in the ${COLLECTION_DIR}/projects/<collection> directory.
+    Specify if a new wallet and signer account should be setup for the collection.
+    Note: if you decide to ignore setup, you will need to setup the wallet and signer account manually.
+    You can do this by creating a wallet.json file in the "${COLLECTION_DIR}/projects/<collection>" directory.
   `,
 );
 
-export const walletIdOption = new Option(
-  '-w --walletId <walletId>',
-  `
-    Specify the wallet to use for the collection. You can get the wallet id from the Turnkey dashboard.
-    You can also specify the wallet in the .env file as TURNKEY_WALLET_ID.
-    Note: this option is only used if the setupSigner option is set to 'yes'.
-  `,
-);
 export const setupContractOption = new Option(
   '-s --setupContract <setupContract>',
   'Specify if the contract should be set up after deployment (yes, no, deferred)',
 )
   .choices(['yes', 'no', 'deferred'])
   .default('deferred');
+
+export const getForceOption = (
+  description?: string,
+  defaultValue?: boolean,
+) => {
+  return new Option(
+    '-f --force',
+    description ?? 'Force the action to be executed',
+  ).default(defaultValue ?? false);
+};

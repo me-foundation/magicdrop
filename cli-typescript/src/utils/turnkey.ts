@@ -6,7 +6,7 @@ import {
   TurnkeyApiClient,
   Turnkey as TurnkeySDKServer,
 } from '@turnkey/sdk-server';
-import { getWalletStore } from './fileUtils';
+import { getWalletStore, Store } from './fileUtils';
 
 export const getTurnkey = async (): Promise<{
   turnkey: TurnkeyClient;
@@ -170,7 +170,10 @@ export const getProjectSigner = async (
 
 export const createProjectSigner = async (
   projectName: string,
-): Promise<{ signer: Account; walletFilePath: string }> => {
+): Promise<{
+  signer: Account;
+  walletStore: Store<{ walletId: string; signer: Hex }>;
+}> => {
   const walletStore = getWalletStore(projectName, false, true);
 
   // create a new wallet
@@ -192,7 +195,7 @@ export const createProjectSigner = async (
     // Return the signer/address
     return {
       signer: account,
-      walletFilePath: walletStore.root,
+      walletStore,
     };
   } catch (error: any) {
     throw new Error(`Failed to create a new wallet: ${error.message}`);
