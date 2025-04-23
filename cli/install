@@ -46,6 +46,21 @@ if [[ $? != 0 ]] ; then
     foundryup
 fi
 
+echo "Checking for Foundry ZKSync..."
+which -s foundryup-zksync
+if [[ $? != 0 ]] ; then
+    echo "Foundry ZKSync not installed. Installing..."
+    curl -L https://raw.githubusercontent.com/matter-labs/foundry-zksync/main/install-foundry-zksync | bash
+
+    if [ -f ~/.zshenv ]; then
+        source ~/.zshenv
+    else
+        source ~/.bash_profile
+    fi
+
+    foundryup-zksync
+fi
+
 echo "Checking for Forge..."
 which -s forge
 if [[ $? != 0 ]] ; then
