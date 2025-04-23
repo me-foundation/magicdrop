@@ -78,7 +78,7 @@ export const NEW_CONTRACT_INITIALIZED_EVENT_ABI = {
   ],
 } as const;
 
-export const ERC721mAbis = {
+export const ERC712M_ABIS = {
   setup: {
     type: 'function',
     name: 'setup',
@@ -169,7 +169,7 @@ export const ERC721mAbis = {
   },
 };
 
-export const ERC115mAbis = {
+export const ERC1155M_ABIS = {
   setTransferable: {
     inputs: [
       {

@@ -27,7 +27,7 @@ import {
 import { collapseAddress } from './common';
 import {
   APPLY_LIST_TO_COLLECTION_ABI,
-  ERC115mAbis,
+  ERC1155M_ABIS,
   IS_SETUP_LOCKED_ABI,
   MagicDropCloneFactoryAbis,
   MagicDropTokenImplRegistryAbis,
@@ -356,8 +356,8 @@ export class ContractManager {
     console.log('Freezing contract... this will take a moment.');
 
     const data = encodeFunctionData({
-      abi: [ERC115mAbis.setTransferable],
-      functionName: ERC115mAbis.setTransferable.name,
+      abi: [ERC1155M_ABIS.setTransferable],
+      functionName: ERC1155M_ABIS.setTransferable.name,
       args: [false],
     });
 
