@@ -137,7 +137,12 @@ const config: HardhatUserConfig = {
       url: process.env.MONAD_TESTNET_URL || 'https://testnet-rpc.monad.xyz',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    }
+    },
+    avalanche: {
+      url: process.env.AVALANCHE_URL || 'https://api.avax.network/ext/bc/C/rpc',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -161,7 +166,15 @@ const config: HardhatUserConfig = {
           apiURL: "https://api.berascan.com/api",
           browserURL: "https://berascan.com/"
         }
-      }
+      },
+      {
+        network: 'avalanche',
+        chainId: 43114,
+        urls: {
+          apiURL: 'https://api.avax.network/ext/bc/C/rpc',
+          browserURL: 'https://snowtrace.io/'
+        },
+      },
     ]
   },
   sourcify: {
