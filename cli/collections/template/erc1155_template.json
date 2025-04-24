@@ -12,10 +12,10 @@
   "mintable": true,
   "cosigner": "0x0000000000000000000000000000000000000000",
   "uri": "",
+  "mintFee": "",
   "stages": [
     {
       "price": [""],
-      "mintFee": [""],
       "walletLimit": [0],
       "startTime": "2024-11-04T16:30:00Z",
       "endTime": "2024-11-07T16:25:00Z"
