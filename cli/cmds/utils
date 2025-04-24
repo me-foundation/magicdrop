@@ -92,6 +92,17 @@ process_stages() {
     fi
 }
 
+parse_mint_fee() {
+    parsed_mint_fee=$(npx ts-node "$BASE_DIR/../../scripts/utils/parseMintFee.ts" "$mint_fee")
+    
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to parse mint fee"
+        exit 1
+    fi
+    
+    echo "$parsed_mint_fee"
+}
+
 get_contract_address_from_logs() {
     local deployment_data="$1"
     local event_sig="$2"

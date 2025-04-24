@@ -448,9 +448,9 @@ set_stages_contract() {
 
     if gum confirm "Do you want to proceed?"; then
         if [ "$token_standard" == "ERC1155" ]; then
-            set_stages_selector="setStages((uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[])"
+            set_stages_selector="setStages((uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[])"
         elif [ "$token_standard" == "ERC721" ]; then
-            set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+            set_stages_selector="setStages((uint80,uint32,bytes32,uint24,uint256,uint256)[])"
         else
             echo "Unknown token standard"
             exit 1
@@ -471,6 +471,46 @@ set_stages_contract() {
         print_transaction_hash
     else
         echo "Set stages cancelled."
+        echo ""
+    fi
+}
+
+set_mint_fee_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Mint Fee"
+
+    set_chain
+    set_contract_address
+    set_mint_fee
+
+    echo ""
+    echo "You are about to set the mint fee of $(format_address $contract_address) to $mint_fee"
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        set_mint_fee_selector="setMintFee(uint256)"
+        password=$(get_password_if_set)
+
+        echo "Setting mint fee... this will take a moment."
+
+        parsed_mint_fee=$(parse_mint_fee "$mint_fee")
+
+        output=$(cast send $contract_address \
+            $set_mint_fee_selector \
+            $parsed_mint_fee \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Set mint fee cancelled."
         echo ""
     fi
 }

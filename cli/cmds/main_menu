@@ -62,6 +62,7 @@ contract_management_menu() {
         "Set Base URI (ERC721 Only)" \
         "Set URI (ERC1155 Only)" \
         "Set Stages" \
+        "Set Mint Fee" \
         "Set Royalties" \
         "Set Global Wallet Limit" \
         "Set Max Mintable Supply" \
@@ -93,6 +94,9 @@ contract_management_menu() {
             ;;
         "Set Stages")
             set_stages_contract
+            ;;
+        "Set Mint Fee")
+            set_mint_fee_contract
             ;;
         "Set Timestamp Expiry")
             set_timestamp_expiry_contract

@@ -14,17 +14,16 @@
   "tokenUriSuffix": ".json",
   "uri": "https://example.com/token/",
   "useERC721C": false,
+  "mintFee": "0.0001",
   "stages": [
     {
       "price": "0.0069",
-      "mintFee": "0.0001",
       "walletLimit": 5,
       "startTime": "2024-11-04T16:30:00Z",
       "endTime": "2024-11-07T16:25:00Z"
     },
     {
       "price": "0.0042",
-      "mintFee": "0.0001",
       "walletLimit": 5,
       "maxStageSupply": 420,
       "startTime": "2024-11-07T16:30:00Z",
@@ -32,7 +31,6 @@
     },
     {
       "price": "0.069",
-      "mintFee": "0.0001",
       "walletLimit": 5,
       "maxStageSupply": 69,
       "startTime": "2024-12-09T16:05:00Z",
