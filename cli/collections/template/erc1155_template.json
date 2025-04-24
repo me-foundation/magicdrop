@@ -12,7 +12,6 @@
   "mintable": true,
   "cosigner": "0x0000000000000000000000000000000000000000",
   "uri": "",
-  "mintFee": "",
   "stages": [
     {
       "price": [""],

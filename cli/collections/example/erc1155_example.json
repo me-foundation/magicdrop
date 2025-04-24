@@ -12,7 +12,6 @@
   "mintable": true,
   "cosigner": "0x0000000000000000000000000000000000000000",
   "uri": "https://example.com/token/",
-  "mintFee": "0.0001",
   "stages": [
     {
       "price": ["0.0069"],

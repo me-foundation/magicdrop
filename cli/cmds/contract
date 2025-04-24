@@ -29,6 +29,12 @@ deploy_contract() {
         value="--value $deployment_fee"
     fi
 
+    echo "Fetching mint fee..."
+    mint_fee=$(cast call $registry_address "getMintFee(uint8,uint32)" $standard_id $impl_id --rpc-url "$RPC_URL" $password)
+    if [ "$mint_fee" == "0" ]; then
+        value="--value $mint_fee"
+    fi
+
     confirm_deployment
 
     echo "Deploying contract... this may take a minute."
@@ -50,7 +56,7 @@ deploy_contract() {
 
     print_transaction_hash
 
-    sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
+    sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string,uint256)")
     event_data=$(get_contract_address_from_logs "$output" "$sig_event")
     chunks=($(echo "$event_data" | fold -w64))
     contract_address=$(decode_address "${chunks[0]}")
@@ -79,6 +85,11 @@ deploy_contract() {
     # ask if they would like to setup the contract now
     if gum confirm "Would you like to setup the contract?"; then
         setup_contract
+    fi
+
+    # ask if they would like to set the mint fee now
+    if gum confirm "Would you like to set the mint fee?"; then
+        set_mint_fee_contract
     fi
 }
 
@@ -201,9 +212,9 @@ setup_contract() {
     password=$(get_password_if_set)
 
     if [ "$token_standard" == "ERC1155" ]; then
-        setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
+        setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
     elif [ "$token_standard" == "ERC721" ]; then
-        setup_selector="setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+        setup_selector="setup(string,string,uint256,uint256,address,address,(uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
     else
         echo "Unknown token standard"
         exit 1
@@ -497,11 +508,17 @@ set_mint_fee_contract() {
 
         echo "Setting mint fee... this will take a moment."
 
+        # Add error handling for parse_mint_fee
         parsed_mint_fee=$(parse_mint_fee "$mint_fee")
+        if [ $? -ne 0 ]; then
+            echo "Error: Failed to parse mint fee"
+            exit 1
+        fi
+        echo "Parsed mint fee: $parsed_mint_fee"
 
         output=$(cast send $contract_address \
-            $set_mint_fee_selector \
-            $parsed_mint_fee \
+            "$set_mint_fee_selector" \
+            "$parsed_mint_fee" \
             $password \
             $(zksync_flag) \
             --chain-id $chain_id \
