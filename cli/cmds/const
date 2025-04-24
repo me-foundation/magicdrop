@@ -38,39 +38,25 @@ DEFAULT_IMPL_ID="0"
 get_factory_address() {
     # abstract factory address
     if [ "$chain_id" == "2741" ]; then
-        echo "0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19"
+        echo "0x01c1C2f5271aDeA338dAfba77121Fc20B5176620"
     else # default
-        echo "0x000000009e44eBa131196847C685F20Cd4b68aC4"
+        echo "0x00000000bEa935F8315156894Aa4a45D3c7a0075"
     fi
 }
 
 get_registry_address() {
     # abstract registry address 
     if [ "$chain_id" == "2741" ]; then
-        echo "0x9b60ad31F145ec7EE3c559153bB57928B65C0F87"
+        echo "0x17c9921D99c1Fa6d3dC992719DA1123dCb2CaedA"
     else # default
-        echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
+        echo "0x000000000e447e71b2EC36CD62048Dd2a1Cd0a57"
     fi
 }
 
 # The latest MagicDrop v1.0.1 implementation ID for each supported chain.
 get_impl_id() {
     if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
-        if [ "$chain_id" == "2741" ]; then
-            echo "7" # ERC721C implementation ID / abstract
-        elif [ "$chain_id" == "8453" ]; then
-            echo "11" # base
-        elif [ "$chain_id" == "1" ]; then
-            echo "10" # ethereum
-        elif [ "$chain_id" == "80094" ]; then
-            echo "5" # berachain
-        elif [ "$chain_id" == "10143"]; then
-            echo "5" # monad testnet
-        elif [ "$chain_id" == "43114" ]; then
-            echo "6" # avalanche
-        else
-            echo "8" # all other chains
-        fi
+         echo "2" # 721C implementation ID on all chains
     else
         echo $DEFAULT_IMPL_ID
     fi
