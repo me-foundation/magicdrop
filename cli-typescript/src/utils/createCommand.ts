@@ -2,15 +2,34 @@ import { Command } from 'commander';
 import {
   getEnvOption,
   setupContractOption,
+  setupWalletOption,
   tokenStandardOption,
+  totalTokensOption,
 } from './cmdOptions';
 import { EvmPlatform } from './evmUtils';
 import deployAction from './cmdActions/deployAction';
-import { loadDefaults, loadPrivateKey, loadSigner } from './loaders';
+import { loadDefaults } from './loaders';
 import { setBaseDir } from './setters';
 import { showError } from './display';
+import {
+  COLLECTION_DIR,
+  supportedChainNames,
+  TOKEN_STANDARD,
+} from './constants';
 import newProjectAction from './cmdActions/newProjectAction';
-import { supportedChainNames, TOKEN_STANDARD } from './constants';
+
+export const getNewProjectCmdDescription = (defaultInfo?: string) => {
+  defaultInfo =
+    defaultInfo ||
+    'The default chain is monad testnet and the default token standard is ERC721.';
+  return `
+    Creates a new launchpad/collection template. 
+    you can specify the collection directory by setting the "MAGIC_DROP_COLLECTION_DIR" env 
+    else it defaults to "${COLLECTION_DIR}" in the project directory.
+    You can also specify the chain and token standard to use for the new project.
+    ${defaultInfo}
+  `;
+};
 
 const presets = async () => {
   try {
@@ -27,10 +46,6 @@ const presets = async () => {
         'Configuration is incomplete. Please ensure all values are set in defaults.json.',
       );
     }
-
-    await loadPrivateKey();
-    await loadSigner();
-    console.log('Prestart tasks completed successfully.');
   } catch (error: any) {
     showError({ text: `An error occurred: ${error.message}` });
     process.exit(1);
@@ -61,13 +76,9 @@ export const createEvmCommand = ({
     .command('new <collection>')
     .aliases(['n', 'init'])
     .description(
-      `    
-      Creates a new launchpad/collection template. 
-      you can specify the collection directory by setting the "MAGIC_DROP_COLLECTION_DIR" env 
-      else it defaults to "./collections" in the project directory.
-      You can also specify the environment and token standard to use for the new project.
-      The default environment is ${platform.defaultChain} and the default token standard is ERC721.
-    `,
+      getNewProjectCmdDescription(
+        `The default environment is ${platform.defaultChain} and the default token standard is ERC721.`,
+      ),
     )
     .addOption(
       getEnvOption(
@@ -77,12 +88,14 @@ export const createEvmCommand = ({
       ),
     )
     .addOption(tokenStandardOption)
+    .addOption(setupWalletOption)
     .action(
       async (
         collection: string,
         params: {
           env: string;
           tokenStandard: TOKEN_STANDARD;
+          setupWallet: boolean;
         },
       ) =>
         await newProjectAction(collection, {
@@ -92,6 +105,7 @@ export const createEvmCommand = ({
                 platform.chainIdsMap.get(platform.defaultChain)!
             ],
           tokenStandard: params.tokenStandard,
+          setupWallet: params.setupWallet,
         }),
     );
 
@@ -108,12 +122,14 @@ export const createEvmCommand = ({
       ),
     )
     .addOption(setupContractOption)
+    .addOption(totalTokensOption)
     .action(
       async (
         collection: string,
         params: {
           env: string;
           setupContract: 'yes' | 'no' | 'deferred';
+          totalTokens: number;
         },
       ) => await deployAction(platform, collection, params),
     );

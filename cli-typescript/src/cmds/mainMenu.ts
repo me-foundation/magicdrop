@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { showMainTitle } from '../utils/display';
-import { listProjectsCmd, newProjectCmd } from './general';
+import { createNewWalletCmd, listProjectsCmd, newProjectCmd } from './general';
 import {
   abstract,
   apechain,
@@ -27,6 +27,7 @@ export const mainMenu = async () => {
 
   // Register sub-commands
   program.addCommand(newProjectCmd);
+  program.addCommand(createNewWalletCmd);
   program.addCommand(listProjectsCmd);
   program.addCommand(eth);
   program.addCommand(polygon);

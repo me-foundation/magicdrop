@@ -6,25 +6,29 @@ import {
   TOKEN_STANDARD,
 } from './constants';
 import { Collection } from './types';
+import { Hex } from 'viem';
 
-export class Store {
+export class Store<T> {
   public root: string;
-  public data?: Collection;
+  public storeDir: string;
+  public data?: T;
   private readonly: boolean = false;
 
   constructor(
     dir: string,
-    collectionName: string,
-    configFileName?: string,
+    projectDirName: string,
+    projectFileName?: string,
     readonly?: boolean,
+    createDir: boolean = false,
   ) {
-    const storeDir = path.join(dir, collectionName);
+    const storeDir = path.join(dir, projectDirName);
 
-    if (!fs.existsSync(storeDir)) {
+    if (!fs.existsSync(storeDir) && createDir) {
       fs.mkdirSync(storeDir, { recursive: true });
     }
 
-    this.root = path.join(storeDir, configFileName || 'project.json');
+    this.storeDir = storeDir;
+    this.root = path.join(storeDir, projectFileName || 'project.json');
 
     this.readonly = readonly ?? this.readonly;
   }
@@ -33,7 +37,7 @@ export class Store {
     return fs.existsSync(this.root);
   }
 
-  read(): Collection | undefined {
+  read(): T | undefined {
     try {
       this.data = JSON.parse(fs.readFileSync(this.root, 'utf-8'));
       return this.data;
@@ -50,19 +54,45 @@ export class Store {
     fs.writeFileSync(this.root, JSON.stringify(this.data, null, 2));
   }
 
-  json(): Collection | undefined {
+  json(): T | undefined {
     return JSON.parse(fs.readFileSync(this.root, 'utf-8'));
   }
 }
 
-export const getProjectStore = (collection: string) => {
-  const store = new Store(COLLECTION_DIR, path.join('projects', collection));
+export const getProjectStore = (
+  collection: string,
+  readonly = false,
+  createDir = false,
+) => {
+  const store = new Store<Collection>(
+    COLLECTION_DIR,
+    path.join('projects', collection),
+    'project.json',
+    readonly,
+    createDir,
+  );
+
+  return store;
+};
+
+export const getWalletStore = (
+  projectName: string,
+  readonly = false,
+  createDir = false,
+) => {
+  const store = new Store<{ walletId: string; signer: Hex }>(
+    COLLECTION_DIR,
+    path.join('projects', projectName),
+    'wallet.json',
+    readonly,
+    createDir,
+  );
 
   return store;
 };
 
 export const getTemplateStore = (tokenStandard: TOKEN_STANDARD) => {
-  const store = new Store(
+  const store = new Store<Collection>(
     DEFAULT_COLLECTION_DIR,
     'template',
     `${tokenStandard.toLowerCase()}_template.json`,

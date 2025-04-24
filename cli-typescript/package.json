@@ -15,8 +15,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "setup": "npm install && npm run clean && npm run build && npm link",
-    "clean": "rm -rf ./dist",
-    "clean:all": "rm -rf ./dist ./node_modules ./package-lock.json",
+    "clean": "sudo rm -rf ./dist",
+    "clean:all": "sudo rm -rf ./dist ./node_modules ./package-lock.json",
     "lint": "npm run lint:js",
     "lint:js": "eslint . --fix"
   },
@@ -36,9 +36,15 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.4.0",
+    "@turnkey/api-key-stamper": "^0.4.4",
+    "@turnkey/http": "^3.0.0",
+    "@turnkey/sdk-server": "^3.0.1",
+    "@turnkey/viem": "^0.7.2",
     "chalk": "4.1.2",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
-    "ethers": "^6.13.5"
+    "ethers": "^6.13.5",
+    "ox": "^0.7.0",
+    "viem": "^2.26.3"
   }
 }
