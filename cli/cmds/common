@@ -219,6 +219,13 @@ set_cosigner_address() {
     fi
 }
 
+set_mint_fee() {
+    show_title "$title" "> Enter mint fee <"
+    mint_fee=$(gum input --placeholder "Enter a decimal mint fee (e.g. 0.0001)")
+    check_input "$mint_fee" "mint fee"
+    clear
+}
+
 set_timestamp_expiry() {
     if is_unset_or_null "$timestamp_expiry"; then
         show_title "$title" "> Enter the timestamp expiry <"

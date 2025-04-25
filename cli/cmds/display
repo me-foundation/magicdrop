@@ -80,6 +80,7 @@ confirm_deployment() {
     fi
     echo "Chain ID:                     $(gum style --foreground 212 "$chain_id")"
     echo "Deployment Fee:               $(gum style --foreground 212 "$deployment_fee")"
+    echo "Mint Fee:                     $(gum style --foreground 212 "$mint_fee")"
     echo "============================================================"
     echo ""
 

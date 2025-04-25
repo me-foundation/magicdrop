@@ -6,7 +6,6 @@ import path from 'path';
 
 type Stage = {
   price: number;
-  mintFee: number;
   walletLimit: number;
   whitelistPath?: string;
   maxStageSupply: number;
@@ -16,7 +15,6 @@ type Stage = {
 
 type Stage1155 = {
   price: number[];
-  mintFee: number[];
   walletLimit: number[];
   whitelistPath?: string[];
   maxStageSupply: number[];
@@ -201,11 +199,6 @@ function isStage(stage: any): stage is Stage {
     isValid = false;
   }
 
-  if (!isNumberOrString(stage.mintFee)) {
-    console.error('Invalid mintFee', stage.mintFee);
-    isValid = false;
-  }
-
   if (!isNumberOrString(stage.walletLimit)) {
     console.error('Invalid walletLimit', stage.walletLimit);
     isValid = false;
@@ -249,11 +242,6 @@ function isStage1155(stage: any): stage is Stage1155 {
 
   if (!Array.isArray(stage.price) || !stage.price.every(isNumberOrString)) {
     console.error('Invalid price array', stage.price);
-    isValid = false;
-  }
-
-  if (!Array.isArray(stage.mintFee) || !stage.mintFee.every(isNumberOrString)) {
-    console.error('Invalid mintFee array', stage.mintFee);
     isValid = false;
   }
 
@@ -307,7 +295,7 @@ function isStage1155(stage: any): stage is Stage1155 {
  * @throws Error if any arrays have inconsistent lengths
  *
  * @remarks
- * - Required arrays (must exist): price, mintFee, walletLimit
+ * - Required arrays (must exist): price, walletLimit
  * - Optional arrays: whitelistPath, maxStageSupply
  * - All present arrays must have the same length as they correspond to different
  *   properties for each token ID in the collection
@@ -316,7 +304,6 @@ function verifyStage1155ArrayLengths(stage: Stage1155): void {
   // Define required fields that must always be arrays
   const requiredArrayFields = [
     { name: 'price', array: stage.price },
-    { name: 'mintFee', array: stage.mintFee },
     { name: 'walletLimit', array: stage.walletLimit },
   ];
 
@@ -403,7 +390,6 @@ const processERC1155Stage = async (
 
   return formatStageData([
     `[${stage.price.map((p) => ethers.utils.parseEther(p.toString())).join(',')}]`,
-    `[${stage.mintFee.map((f) => ethers.utils.parseEther(f.toString())).join(',')}]`,
     `[${stage.walletLimit.join(',')}]`,
     `[${merkleRoots.join(',')}]`,
     `[${maxStageSupply.join(',')}]`,
@@ -512,7 +498,6 @@ const processERC721Stage = async (
 
   return formatStageData([
     ethers.utils.parseEther(stage.price.toString()),
-    ethers.utils.parseEther(stage.mintFee.toString()),
     stage.walletLimit,
     merkleRoot,
     stage.maxStageSupply ?? 0,
