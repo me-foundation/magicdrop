@@ -349,7 +349,19 @@ const processERC1155Stage = async (
   stageIdx: number,
   outputFileDir: string,
   web3StorageKey: string,
-): Promise<string> => {
+  isJsonOutput: boolean = false,
+): Promise<
+  | {
+      price: string[];
+      mintFee: string[];
+      walletLimit: number[];
+      merkleRoot: string[];
+      maxStageSupply: number[];
+      startTime: number;
+      endTime: number;
+    }
+  | string
+> => {
   verifyStage1155ArrayLengths(stage);
   const merkleRoots = await generateERC1155MerkleRoots(
     stage,
@@ -359,6 +371,22 @@ const processERC1155Stage = async (
   );
   const maxStageSupply =
     stage.maxStageSupply ?? new Array(merkleRoots.length).fill(0);
+
+  if (isJsonOutput) {
+    return {
+      price: stage.price.map((p) =>
+        ethers.utils.parseEther(p.toString()).toString(),
+      ),
+      mintFee: stage.mintFee.map((f) =>
+        ethers.utils.parseEther(f.toString()).toString(),
+      ),
+      walletLimit: stage.walletLimit,
+      merkleRoot: merkleRoots,
+      maxStageSupply,
+      startTime: new Date(stage.startTime).getTime() / 1000,
+      endTime: new Date(stage.endTime).getTime() / 1000,
+    };
+  }
 
   return formatStageData([
     `[${stage.price.map((p) => ethers.utils.parseEther(p.toString())).join(',')}]`,
@@ -434,13 +462,39 @@ const processERC721Stage = async (
   stageIdx: number,
   outputFileDir: string,
   web3StorageKey: string,
-): Promise<string> => {
+  isJsonOutput: boolean = false,
+): Promise<
+  | {
+      price: string;
+      mintFee: string;
+      walletLimit: number;
+      merkleRoot: string;
+      maxStageSupply: number;
+      startTime: number;
+      endTime: number;
+    }
+  | string
+> => {
   const merkleRoot = await generateERC721MerkleRoot(
     stage,
     stageIdx,
     outputFileDir,
     web3StorageKey,
   );
+
+  const data = {
+    price: ethers.utils.parseEther(stage.price.toString()).toString(),
+    mintFee: ethers.utils.parseEther(stage.mintFee.toString()).toString(),
+    walletLimit: stage.walletLimit,
+    merkleRoot,
+    maxStageSupply: stage.maxStageSupply ?? 0,
+    startTime: new Date(stage.startTime).getTime() / 1000,
+    endTime: new Date(stage.endTime).getTime() / 1000,
+  };
+
+  if (isJsonOutput) {
+    return data;
+  }
 
   return formatStageData([
     ethers.utils.parseEther(stage.price.toString()),
@@ -511,6 +565,7 @@ const main = async () => {
     isERC1155,
     web3StorageKey,
     stagesJson,
+    isJsonOutput,
   } = parseAndValidateArgs();
 
   await getStagesData(
@@ -519,6 +574,7 @@ const main = async () => {
     outputFileDir,
     web3StorageKey,
     stagesJson,
+    isJsonOutput,
   );
 };
 
@@ -528,6 +584,7 @@ const getStagesData = async (
   outputFileDir: string,
   web3StorageKey: string,
   stagesJson?: string,
+  isJsonOutput: boolean = false,
 ) => {
   const rawStages = loadAndValidateStages(
     stagesFilePath,
@@ -542,15 +599,32 @@ const getStagesData = async (
     const stagesData = await Promise.all(
       typedStages.map(async (stage, stageIdx) =>
         isERC1155 && isStage1155(stage)
-          ? processERC1155Stage(stage, stageIdx, outputFileDir, web3StorageKey)
+          ? processERC1155Stage(
+              stage,
+              stageIdx,
+              outputFileDir,
+              web3StorageKey,
+              isJsonOutput,
+            )
           : isStage(stage)
-            ? processERC721Stage(stage, stageIdx, outputFileDir, web3StorageKey)
+            ? processERC721Stage(
+                stage,
+                stageIdx,
+                outputFileDir,
+                web3StorageKey,
+                isJsonOutput,
+              )
             : '',
       ),
     );
 
-    const stagesInput = '[' + stagesData.join(',') + ']';
-    const outputFilePath = path.join(outputFileDir, `stagesInput.tmp`);
+    const stagesInput = isJsonOutput
+      ? JSON.stringify(stagesData)
+      : '[' + stagesData.join(',') + ']';
+    const outputFilePath = path.join(
+      outputFileDir,
+      isJsonOutput ? 'stagesInput.tmp.json' : `stagesInput.tmp`,
+    );
     fs.writeFileSync(outputFilePath, stagesInput, 'utf-8');
     console.log(`Stages input written to temp file: ${outputFilePath}`);
   } catch (error) {
@@ -568,6 +642,7 @@ const parseAndValidateArgs = () => {
   const outputFileDir = process.argv[4];
   const tokenStandard = process.argv[5];
   const web3StorageKey = process.argv[6];
+  const isJsonOutput = process.argv[7] === 'true';
 
   if (!stagesFilePath && !stagesJson) {
     throw new Error(
@@ -581,6 +656,7 @@ const parseAndValidateArgs = () => {
     isERC1155: tokenStandard === 'ERC1155',
     web3StorageKey,
     stagesJson,
+    isJsonOutput,
   };
 };
 

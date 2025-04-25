@@ -42,7 +42,7 @@ export const setStagesFile = async (): Promise<string> => {
 };
 
 /**
- * Gets the base directory of the current script.
+ * Sets the base directory of the current script.
  * @returns The absolute path to the base directory.
  */
 export const setBaseDir = (): string => {
@@ -98,9 +98,6 @@ export const setRoyalties = async (
       );
       checkInput(newRoyaltyFee.toString(), 'royalty fee numerator');
 
-      process.env.ROYALTY_RECEIVER = newRoyaltyReceiver;
-      process.env.ROYALTY_FEE = newRoyaltyFee.toString();
-
       console.clear();
 
       res = {
@@ -123,40 +120,32 @@ export const setFundReceiver = async (
   title: string,
   signer: string,
 ): Promise<string> => {
-  const fundReceiver = process.env.FUND_RECEIVER;
+  // Display the title
+  showText(title, '> Set fund receiver <');
 
-  if (isUnsetOrNull(fundReceiver)) {
-    // Display the title
-    showText(title, '> Set fund receiver <');
+  // Prompt the user to confirm if they want to override the default fund receiver
+  const override = await confirm({
+    message: `Override fund receiver? (default: ${collapseAddress(signer)})`,
+    default: false,
+  });
 
-    // Prompt the user to confirm if they want to override the default fund receiver
-    const override = await confirm({
-      message: `Override fund receiver? (default: ${collapseAddress(signer)})`,
-      default: false,
-    });
+  let newFundReceiver: string;
 
-    let newFundReceiver: string;
-
-    if (override) {
-      // Prompt the user to enter a new fund receiver address
-      newFundReceiver = await promptForEthereumAddress(
-        'Fund receiver (e.g., 0x000...000)',
-      );
-    } else {
-      // Use the default signer address as the fund receiver
-      newFundReceiver = signer;
-    }
-
-    // Validate the input
-    checkInput(newFundReceiver, 'fund receiver');
-
-    process.env.FUND_RECEIVER = newFundReceiver;
-
-    console.clear();
-    return newFundReceiver;
+  if (override) {
+    // Prompt the user to enter a new fund receiver address
+    newFundReceiver = await promptForEthereumAddress(
+      'Fund receiver (e.g., 0x000...000)',
+    );
+  } else {
+    // Use the default signer address as the fund receiver
+    newFundReceiver = signer;
   }
 
-  return fundReceiver!;
+  // Validate the input
+  checkInput(newFundReceiver, 'fund receiver');
+
+  console.clear();
+  return newFundReceiver;
 };
 
 /**
@@ -169,40 +158,32 @@ export const setMintCurrency = async (
   title: string,
   defaultMintCurrency: string,
 ): Promise<string> => {
-  const mintCurrency = process.env.MINT_CURRENCY;
+  // Display the title
+  showText(title, '> Set mint currency <');
 
-  if (isUnsetOrNull(mintCurrency)) {
-    // Display the title
-    showText(title, '> Set mint currency <');
+  // Prompt the user to confirm if they want to override the default mint currency
+  const override = await confirm({
+    message: `Override default mint currency? (${defaultMintCurrency})`,
+    default: false,
+  });
 
-    // Prompt the user to confirm if they want to override the default mint currency
-    const override = await confirm({
-      message: `Override default mint currency? (${defaultMintCurrency})`,
-      default: false,
-    });
+  let newMintCurrency: string;
 
-    let newMintCurrency: string;
-
-    if (override) {
-      // Prompt the user to enter a new mint currency
-      newMintCurrency = await promptForEthereumAddress(
-        'Mint currency (default: Native Gas Token)',
-      );
-    } else {
-      // Use the default mint currency
-      newMintCurrency = defaultMintCurrency;
-    }
-
-    // Validate the input
-    checkInput(newMintCurrency, 'mint currency');
-
-    process.env.MINT_CURRENCY = newMintCurrency;
-
-    console.clear();
-    return newMintCurrency;
+  if (override) {
+    // Prompt the user to enter a new mint currency
+    newMintCurrency = await promptForEthereumAddress(
+      'Mint currency (default: Native Gas Token)',
+    );
+  } else {
+    // Use the default mint currency
+    newMintCurrency = defaultMintCurrency;
   }
 
-  return mintCurrency!;
+  // Validate the input
+  checkInput(newMintCurrency, 'mint currency');
+
+  console.clear();
+  return newMintCurrency;
 };
 
 /**
@@ -223,7 +204,7 @@ export const setMaxMintableSupply = async (
     // For ERC1155 tokens without a specific token ID
     showText(title, '> Set max mintable supply for each token <');
 
-    const supplies: number[] = [];
+    const supplies = [];
     for (let i = 0; i < totalTokens; i++) {
       const tokenSupply = await promptForNumericInput(
         `Enter max mintable supply for token ${i}`,
@@ -267,7 +248,7 @@ export const setGlobalWalletLimit = async (
     // For ERC1155 tokens without a specific token ID
     showText(title, '> Set global wallet limit for each token <');
 
-    const limits: number[] = [];
+    const limits = [];
     for (let i = 0; i < totalTokens; i++) {
       const tokenLimit = await promptForNumericInput(
         `Enter global wallet limit for token ${i} (0 for no limit)`,
@@ -275,8 +256,6 @@ export const setGlobalWalletLimit = async (
       checkInput(tokenLimit.toString(), `global wallet limit for token ${i}`);
       limits.push(tokenLimit);
     }
-
-    process.env.GLOBAL_WALLET_LIMIT = JSON.stringify(limits);
 
     return limits;
   } else if (
@@ -416,25 +395,21 @@ export const setBaseUri = async (title: string): Promise<string> => {
  * @returns The updated total number of tokens.
  */
 export const setNumberOf1155Tokens = async (title: string): Promise<number> => {
-  let totalTokens = process.env.TOTAL_TOKENS;
+  // Display the title
+  showText(title, '> Enter total tokens <');
+  showText(
+    'Notice: This value should match the number of tokens in the stages file. Otherwise, the contract will revert.',
+    '',
+    false,
+    false,
+  );
 
-  if (isUnsetOrNull(totalTokens)) {
-    // Display the title
-    showText(title, '> Enter total tokens <');
-    showText(
-      'Notice: This value should match the number of tokens in the stages file. Otherwise, the contract will revert.',
-      '',
-      false,
-      false,
-    );
+  // Prompt the user to enter the total number of tokens
+  const totalTokensInput = await promptForNumericInput('Enter total tokens');
+  const totalTokens = String(totalTokensInput);
 
-    // Prompt the user to enter the total number of tokens
-    const totalTokensInput = await promptForNumericInput('Enter total tokens');
-    totalTokens = String(totalTokensInput);
-
-    checkInput(totalTokens, 'total tokens');
-    console.clear();
-  }
+  checkInput(totalTokens, 'total tokens');
+  console.clear();
 
   return Number(totalTokens!);
 };

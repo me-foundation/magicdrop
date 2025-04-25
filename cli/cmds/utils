@@ -17,6 +17,7 @@ set_rpc_url() {
         2741) RPC_URL="https://api.mainnet.abs.xyz" ;; # Abstract
         80094) RPC_URL="https://rpc.berachain.com" ;; # Berachain
         10143) RPC_URL="https://testnet-rpc.monad.xyz" ;; # Monad Testnet
+        43114) RPC_URL="https://api.avax.network/ext/bc/C/rpc" ;; # Avalanche
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -37,6 +38,7 @@ chain_id_to_symbol() {
         2741) echo "ETH" ;;
         80094) echo "BERA" ;;
         10143) echo "MON" ;;
+        43114) echo "AVAX" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -55,6 +57,7 @@ chain_id_to_explorer_url() {
         2741) echo "https://abscan.org" ;;
         80094) echo "https://berascan.com" ;;
         10143) echo "https://testnet.monadexplorer.com" ;;
+        43114) echo "https://snowtrace.io" ;;
         *) echo "Unknown" ;;
     esac
 }

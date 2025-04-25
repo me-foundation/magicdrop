@@ -1,10 +1,12 @@
+import { Hex } from 'viem';
 import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
+import { ContractManager } from './ContractManager';
 
 export interface ERC721Stage {
   price: string;
   mintFee: string;
   walletLimit: number;
-  maxStageSupply?: number; // Optional, as it is not present in all stages
+  maxStageSupply?: number;
   startTime: string;
   endTime: string;
 }
@@ -66,9 +68,10 @@ export type Collection = ERC721Collection | ERC1155Collection;
 
 export type DeployContractConfig = Collection & {
   collectionConfigFile: string;
-  signer: string;
   setupContractOption?: 'yes' | 'no' | 'deferred';
   tokenUriSuffix?: string;
+  contractManager: ContractManager;
+  totalTokens?: number;
 };
 
 export interface Log {
@@ -100,3 +103,23 @@ export interface TransactionData {
   to: string;
   contractAddress: string | null;
 }
+
+export type ERC721StageData = {
+  price: string;
+  mintFee: string;
+  walletLimit: number;
+  merkleRoot: string;
+  maxStageSupply: number;
+  startTime: number;
+  endTime: number;
+};
+
+export type ERC1155StageData = {
+  price: string[];
+  mintFee: string[];
+  walletLimit: number[];
+  merkleRoot: Hex[];
+  maxStageSupply: number[];
+  startTime: number;
+  endTime: number;
+};

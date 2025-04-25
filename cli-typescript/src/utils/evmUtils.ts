@@ -147,8 +147,10 @@ export const validateConfig = (
       );
     }
 
-    if (setupContract && typeof totalTokens !== 'number') {
-      errors.push('Invalid or missing totalTokens.');
+    if (!!totalTokens && isNaN(totalTokens)) {
+      errors.push(
+        'Invalid or missing totalTokens. Pass the --totalTokens flag if you want to setup contract.',
+      );
     }
   }
 
@@ -171,7 +173,7 @@ export const validateConfig = (
       );
     }
 
-    if (!isNaN(config.royaltyFee)) {
+    if (isNaN(config.royaltyFee)) {
       errors.push(
         'Invalid or missing royaltyFee. Enter the `royaltyFee` in the config file.',
       );
