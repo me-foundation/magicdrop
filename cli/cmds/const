@@ -39,6 +39,8 @@ get_factory_address() {
     # abstract factory address
     if [ "$chain_id" == "2741" ]; then
         echo "0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19"
+    elif [ "$chain_id" == "43114" ]; then
+        echo "0x0b49bDcf2eC9329Fa6F42DCCC66e8906a3E4ACF0"
     else # default
         echo "0x000000009e44eBa131196847C685F20Cd4b68aC4"
     fi
@@ -48,6 +50,8 @@ get_registry_address() {
     # abstract registry address 
     if [ "$chain_id" == "2741" ]; then
         echo "0x9b60ad31F145ec7EE3c559153bB57928B65C0F87"
+    elif [ "$chain_id" == "43114" ]; then
+        echo "0x09E0135dfBb7528D6eAA5beB69f3C030dF26F57c"
     else # default
         echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
     fi
