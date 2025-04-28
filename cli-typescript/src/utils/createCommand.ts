@@ -140,7 +140,7 @@ export const createEvmCommand = ({
 
   newCmd
     .command('init-contract <collection>')
-    .description('Initializes/Set up a deployed collection (contract).')
+    .description('Initialize/Set up a deployed collection (contract).')
     .addOption(stagesFileOption)
     .action(initContractAction);
 
