@@ -10,17 +10,18 @@ const deployAction = async (
   params: {
     env: string;
     setupContract: 'yes' | 'no' | 'deferred';
-    totalTokens: number;
+    totalTokens?: number;
+    stagesFile?: string;
   },
 ) => {
   try {
     const { env, ...cliOptions } = params;
 
-    const { config, collectionConfigFile } = init(collection);
+    const { store } = init(collection);
 
     // Step 2: Override config file with CLI flag options if provided
     const mergedConfig = {
-      ...config,
+      ...store.data!,
       ...cliOptions,
     };
 
@@ -44,9 +45,9 @@ const deployAction = async (
 
     await deployContract({
       ...mergedConfig,
-      collectionConfigFile,
       setupContractOption: cliOptions.setupContract,
       contractManager: cm,
+      store,
     });
 
     console.log('Contract deployed successfully!');

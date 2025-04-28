@@ -1,9 +1,9 @@
-import { ethers } from 'ethers';
 import { SUPPORTED_CHAINS, TOKEN_STANDARD } from './constants';
 import { Collection } from './types';
 import { showError } from './display';
 import { getProjectStore } from './fileUtils';
 import { isArrayOfNumbers } from './common';
+import { isAddress } from 'viem';
 
 export class EvmPlatform {
   name: string;
@@ -81,13 +81,13 @@ export const validateConfig = (
     );
   }
 
-  if (!config.cosigner || !ethers.isAddress(config.cosigner)) {
+  if (!config.cosigner || !isAddress(config.cosigner)) {
     errors.push(
       'Invalid or missing cosigner address. Enter the `cosigner` in the config file.',
     );
   }
 
-  if (!config.mintCurrency || !ethers.isAddress(config.mintCurrency)) {
+  if (!config.mintCurrency || !isAddress(config.mintCurrency)) {
     errors.push(
       'Invalid or missing mintCurrency address. It should a number. Enter the `mintCurrency` in the config file.',
     );
@@ -147,7 +147,7 @@ export const validateConfig = (
       );
     }
 
-    if (!!totalTokens && isNaN(totalTokens)) {
+    if (totalTokens !== undefined && isNaN(totalTokens)) {
       errors.push(
         'Invalid or missing totalTokens. Pass the --totalTokens flag if you want to setup contract.',
       );
@@ -161,13 +161,13 @@ export const validateConfig = (
       );
     }
 
-    if (!config.fundReceiver || !ethers.isAddress(config.fundReceiver)) {
+    if (!config.fundReceiver || !isAddress(config.fundReceiver)) {
       errors.push(
         'Invalid or missing fundReceiver. Enter the `fundReceiver` in the config file.',
       );
     }
 
-    if (!config.royaltyReceiver || !ethers.isAddress(config.royaltyReceiver)) {
+    if (!config.royaltyReceiver || !isAddress(config.royaltyReceiver)) {
       errors.push(
         'Invalid or missing royaltyReceiver. Enter the `royaltyReceiver` in the config file.',
       );
@@ -193,7 +193,7 @@ export const validateConfig = (
 
 export const init = (
   collectionName: string,
-): { config: Collection; collectionConfigFile: string } => {
+): { store: ReturnType<typeof getProjectStore> } => {
   // Construct collection file path
   const store = getProjectStore(collectionName);
 
@@ -208,5 +208,5 @@ export const init = (
     throw new Error('Collection file is empty');
   }
 
-  return { config, collectionConfigFile: store.root };
+  return { store };
 };

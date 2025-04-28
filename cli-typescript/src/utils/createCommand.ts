@@ -3,6 +3,7 @@ import {
   getEnvOption,
   setupContractOption,
   setupWalletOption,
+  stagesFileOption,
   tokenStandardOption,
   totalTokensOption,
 } from './cmdOptions';
@@ -17,6 +18,7 @@ import {
   TOKEN_STANDARD,
 } from './constants';
 import newProjectAction from './cmdActions/newProjectAction';
+import initContractAction from './cmdActions/initContractAction';
 
 export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   defaultInfo =
@@ -123,16 +125,24 @@ export const createEvmCommand = ({
     )
     .addOption(setupContractOption)
     .addOption(totalTokensOption)
+    .addOption(stagesFileOption)
     .action(
       async (
         collection: string,
         params: {
           env: string;
           setupContract: 'yes' | 'no' | 'deferred';
-          totalTokens: number;
+          totalTokens?: number;
+          stagesFile?: string;
         },
       ) => await deployAction(platform, collection, params),
     );
+
+  newCmd
+    .command('init-contract <collection>')
+    .description('Initialize/Set up a deployed collection (contract).')
+    .addOption(stagesFileOption)
+    .action(initContractAction);
 
   return newCmd;
 };

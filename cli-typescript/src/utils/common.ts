@@ -1,4 +1,3 @@
-import fs from 'fs';
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { confirm } from '@inquirer/prompts';
@@ -55,54 +54,6 @@ export const decodeAddress = (chunk: string | null): `0x${string}` => {
 
   // Prepend "0x" to make it a valid Ethereum address
   return `0x${address}`;
-};
-
-/**
- * Saves deployment data to a collection file.
- * @param contractAddress The deployed contract address.
- * @param initialOwner The initial owner of the contract.
- * @param collectionFile The path to the collection file.
- * @throws Error if the collection file is not found or if saving fails.
- */
-export const saveDeploymentData = (
-  contractAddress: string,
-  initialOwner: string,
-  collectionFile: string,
-): void => {
-  // Get the current timestamp
-  const timestamp = Date.now();
-  const deployedAt = new Date(timestamp).toISOString();
-
-  // Check if the collection file exists
-  if (!fs.existsSync(collectionFile)) {
-    throw new Error(`Error: Collection file not found: ${collectionFile}`);
-  }
-
-  // Create deployment object
-  const deploymentData = {
-    contract_address: contractAddress,
-    initial_owner: initialOwner,
-    deployed_at: deployedAt,
-  };
-
-  // Read the existing collection file
-  const fileContent = fs.readFileSync(collectionFile, 'utf-8');
-  let collectionJson;
-  try {
-    collectionJson = JSON.parse(fileContent);
-  } catch (error: any) {
-    throw new Error(`Error parsing collection file: ${error.message}`);
-  }
-
-  // Add deployment data to the collection JSON
-  collectionJson.deployment = deploymentData;
-
-  // Write the updated JSON back to the collection file
-  const tempFile = `${collectionFile}.tmp`;
-  fs.writeFileSync(tempFile, JSON.stringify(collectionJson, null, 2));
-  fs.renameSync(tempFile, collectionFile);
-
-  console.log(`Deployment details added to ${collectionFile}`);
 };
 
 /**

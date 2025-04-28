@@ -6,7 +6,7 @@ import {
   TurnkeyApiClient,
   Turnkey as TurnkeySDKServer,
 } from '@turnkey/sdk-server';
-import { getWalletStore, Store } from './fileUtils';
+import { getWalletStore } from './fileUtils';
 
 export const getTurnkey = async (): Promise<{
   turnkey: TurnkeyClient;
@@ -164,7 +164,7 @@ export const getProjectSigner = async (
       signer: await getSignerAccount(address),
     };
   } catch (error: any) {
-    throw new Error(`Failed to validate wallet.json: ${error.message}`);
+    throw new Error(`Failed to fetch signer: ${error.message}`);
   }
 };
 
@@ -172,7 +172,7 @@ export const createProjectSigner = async (
   projectName: string,
 ): Promise<{
   signer: Account;
-  walletStore: Store<{ walletId: string; signer: Hex }>;
+  walletStore: ReturnType<typeof getWalletStore>;
 }> => {
   const walletStore = getWalletStore(projectName, false, true);
 
