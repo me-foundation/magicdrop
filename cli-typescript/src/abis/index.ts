@@ -167,6 +167,20 @@ export const ERC712M_ABIS = {
     outputs: [],
     stateMutability: 'nonpayable',
   },
+
+  setBaseUri: {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'baseURI',
+        type: 'string',
+      },
+    ],
+    name: 'setBaseURI',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 };
 
 export const ERC1155M_ABIS = {
@@ -278,6 +292,19 @@ export const ERC1155M_ABIS = {
     ],
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  setUri: {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'newURI',
+        type: 'string',
+      },
+    ],
+    name: 'setURI',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
   },
 } as const;
 
