@@ -8,11 +8,11 @@ import { printTransactionHash, showError } from '../display';
 import { collapseAddress } from '../common';
 
 export const manageAuthorizedMintersAction = async (
-  collection: string,
+  symbol: string,
   { minter, action }: { minter: Hex; action: 'add' | 'remove' },
 ) => {
   try {
-    const { cm, config } = await actionPresets(collection);
+    const { cm, config } = await actionPresets(symbol);
     if (!isAddress(minter)) {
       throw new Error('minter must be a valid address');
     }

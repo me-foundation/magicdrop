@@ -3,38 +3,38 @@ import { getProjectStore, getWalletStore } from '../fileUtils';
 import { createProjectSigner } from '../turnkey';
 
 const newWalletAction = async (
-  collection: string,
+  symbol: string,
   params: {
     force?: boolean;
   },
 ) => {
-  collection = collection.toLowerCase();
+  symbol = symbol.toLowerCase();
 
-  const projectStore = getProjectStore(collection, false, true);
+  const projectStore = getProjectStore(symbol, false, true);
 
   if (!projectStore.exists) {
-    showError({ text: `Project ${collection} does not exists` });
+    showError({ text: `Project ${symbol} does not exists` });
     process.exit(1);
   }
 
-  const walletStore = getWalletStore(collection, false, true);
+  const walletStore = getWalletStore(symbol, false, true);
   if (walletStore.exists && !params.force) {
     showError({
-      text: `A Wallet file already exists for ${collection}. Use --force to overwrite.`,
+      text: `A Wallet file already exists for ${symbol}. Use --force to overwrite.`,
     });
     process.exit(1);
   }
 
-  const walletName = params.force ? `${collection}-${Date.now()}` : collection;
+  const walletName = params.force ? `${symbol}-${Date.now()}` : symbol;
 
   // Create a wallet for the project
-  const res = await createProjectSigner(collection, walletName);
+  const res = await createProjectSigner(symbol, walletName);
   const signer = res.signer;
 
   const signerInfo = `Note: A signer account: "${signer?.address}" was created for this collection, you will need to fund it before you can deploy this collection.`;
 
   showText(
-    `Successfully set up new wallet for ${collection}`,
+    `Successfully set up new wallet for ${symbol}`,
     `
     wallet: ${res.walletStore.root}
 

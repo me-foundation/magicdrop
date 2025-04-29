@@ -5,14 +5,14 @@ import { ERC1155M_ABIS, ERC712M_ABIS } from '../../abis';
 import { printTransactionHash, showError } from '../display';
 
 export const setMaxMintableSupplyAction = async (
-  collection: string,
+  symbol: string,
   params: {
     tokenId?: number;
     maxMintableSupply: number;
   },
 ) => {
   try {
-    const { cm, config, store } = await actionPresets(collection);
+    const { cm, config, store } = await actionPresets(symbol);
     if (isNaN(params.maxMintableSupply))
       throw new Error('maxMintableSupply must be a number');
 

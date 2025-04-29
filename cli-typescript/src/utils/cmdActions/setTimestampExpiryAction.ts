@@ -5,13 +5,13 @@ import { printTransactionHash, showError, showText } from '../display';
 import { TOKEN_STANDARD } from '../constants';
 
 export const setTimestampExpiryAction = async (
-  collection: string,
+  symbol: string,
   params: {
     expiry: number;
   },
 ) => {
   try {
-    const { cm, config } = await actionPresets(collection);
+    const { cm, config } = await actionPresets(symbol);
     if (config.tokenStandard !== TOKEN_STANDARD.ERC721)
       throw new Error(
         `this action is only supported for ${TOKEN_STANDARD.ERC721} collections`,

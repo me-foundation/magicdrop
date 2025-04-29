@@ -5,19 +5,19 @@ import { getChainIdFromName } from '../getters';
 import { createProjectSigner } from '../turnkey';
 
 const newProjectAction = async (
-  collection: string,
+  symbol: string,
   params: {
     tokenStandard: TOKEN_STANDARD;
     chain: string;
     setupWallet: boolean;
   },
 ) => {
-  collection = collection.toLowerCase();
+  symbol = symbol.toLowerCase();
 
-  const projectStore = getProjectStore(collection, false, true);
+  const projectStore = getProjectStore(symbol, false, true);
 
   if (projectStore.exists) {
-    showError({ text: `Project ${collection} already exists` });
+    showError({ text: `Project ${symbol} already exists` });
     process.exit(1);
   }
 
@@ -34,7 +34,7 @@ const newProjectAction = async (
 
   // Create a wallet for the project
   if (params.setupWallet) {
-    const res = await createProjectSigner(collection);
+    const res = await createProjectSigner(symbol);
     walletFilePath = res.walletStore.root;
     signer = res.signer;
   }
@@ -46,7 +46,7 @@ const newProjectAction = async (
       You can do this manually by creating a wallet.json file in the directory: ${projectStore.storeDir}.`;
 
   showText(
-    `Successfully set up new project for ${collection}`,
+    `Successfully set up new project for ${symbol}`,
     `
     path: ${projectStore.root}
     wallet: ${walletFilePath}

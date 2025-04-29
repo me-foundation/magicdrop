@@ -42,7 +42,7 @@ import { ownerMintAction } from '../utils/cmdActions/ownerMintAction';
 import { checkSignerBalanceAction } from '../utils/cmdActions/checkSignerBalanceAction';
 
 export const newProjectCmd = new Command('new')
-  .command('new <collection>')
+  .command('new <symbol>')
   .aliases(['n', 'init'])
   .description(getNewProjectCmdDescription())
   .addOption(getChainOption())
@@ -51,7 +51,7 @@ export const newProjectCmd = new Command('new')
   .action(newProjectAction);
 
 export const createNewWalletCmd = new Command('create-wallet')
-  .command('create-wallet <collection>')
+  .command('create-wallet <symbol>')
   .description('create a new wallet for a collection')
   .addOption(
     getForceOption(
@@ -71,13 +71,13 @@ export const listProjectsCmd = new Command('list')
   .action(listProjectsAction);
 
 export const initContractCmd = new Command('init-contract')
-  .command('init-contract <collection>')
+  .command('init-contract <symbol>')
   .description('Initializes/Set up a deployed collection (contract).')
   .addOption(getStagesFileOption().makeOptionMandatory(false))
   .action(initContractAction);
 
 export const setUriCmd = new Command('set-uri')
-  .command('set-uri <collection>')
+  .command('set-uri <symbol>')
   .addOption(getUriOption().makeOptionMandatory())
   .description(
     'Set the URI for the collection. Note: this will overwrite the existing URI.',
@@ -85,7 +85,7 @@ export const setUriCmd = new Command('set-uri')
   .action(setUriAction);
 
 export const setStagesCmd = new Command('set-stages')
-  .command('set-stages <collection>')
+  .command('set-stages <symbol>')
   .addOption(getStagesFileOption().makeOptionMandatory())
   .description(
     'Set the stages for the collection. Note: this will overwrite the existing stages.',
@@ -93,7 +93,7 @@ export const setStagesCmd = new Command('set-stages')
   .action(setStagesAction);
 
 export const setGlobalWalletLimitCmd = new Command('set-global-wallet-limit')
-  .command('set-global-wallet-limit <collection>')
+  .command('set-global-wallet-limit <symbol>')
   .alias('sgwl')
   .description(
     'Set the globalWalletLimit for the collection. Note: this will overwrite the existing global wallet limit.',
@@ -103,7 +103,7 @@ export const setGlobalWalletLimitCmd = new Command('set-global-wallet-limit')
   .action(setGlobalWalletLimitAction);
 
 export const setMaxMintableSupplyCmd = new Command('set-max-mintable-supply')
-  .command('set-max-mintable-supply <collection>')
+  .command('set-max-mintable-supply <symbol>')
   .alias('smms')
   .description(
     'Set the maxMintableSupply for the collection. Note: this will overwrite the existing maxMintableSupply.',
@@ -113,7 +113,7 @@ export const setMaxMintableSupplyCmd = new Command('set-max-mintable-supply')
   .action(setMaxMintableSupplyAction);
 
 export const setCosginerCmd = new Command('set-cosigner')
-  .command('set-cosigner <collection>')
+  .command('set-cosigner <symbol>')
   .addOption(getCosignerOption().makeOptionMandatory())
   .description(
     `Set the cosigner for the collection. Note: this will overwrite the existing cosigner. Support for ${TOKEN_STANDARD.ERC721} only.`,
@@ -121,7 +121,7 @@ export const setCosginerCmd = new Command('set-cosigner')
   .action(setCosignerAction);
 
 export const setTimestampExpiryCmd = new Command('set-expiry')
-  .command('set-timestamp-expiry <collection>')
+  .command('set-timestamp-expiry <symbol>')
   .alias('set-expiry')
   .addOption(getExpiryTimestampOption().makeOptionMandatory())
   .description(
@@ -132,12 +132,12 @@ export const setTimestampExpiryCmd = new Command('set-expiry')
 export const withdrawContractBalanceCmd = new Command(
   'withdraw-contract-balance',
 )
-  .command('withdraw-contract-balance <collection>')
+  .command('withdraw-contract-balance <symbol>')
   .description('Withdraws the contract balance to the specified address.')
   .action(withdrawContractBalanceAction);
 
 export const freezeThawContractCmd = new Command('freeze-thaw-contract')
-  .command('freeze-thaw-contract <collection>')
+  .command('freeze-thaw-contract <symbol>')
   .alias('ftc')
   .alias('freeze-thaw')
   .description(
@@ -147,7 +147,7 @@ export const freezeThawContractCmd = new Command('freeze-thaw-contract')
   .action(freezeThawContractAction);
 
 export const transferOwnershipCmd = new Command('transfer-ownership')
-  .command('transfer-ownership <collection>')
+  .command('transfer-ownership <symbol>')
   .description(
     'Allows the owner to transfer the collection ownership to `newOwner`.',
   )
@@ -157,7 +157,7 @@ export const transferOwnershipCmd = new Command('transfer-ownership')
 export const manageAuthorizedMintersCmd = new Command(
   'manage-authorized-minters',
 )
-  .command('manage-authorized-minters <collection>')
+  .command('manage-authorized-minters <symbol>')
   .alias('mam')
   .alias('manage-minters')
   .description('Add/Remove authorized minters to the collection.')
@@ -166,7 +166,7 @@ export const manageAuthorizedMintersCmd = new Command(
   .action(manageAuthorizedMintersAction);
 
 export const setMintableCmd = new Command('set-mintable')
-  .command('set-mintable <collection>')
+  .command('set-mintable <symbol>')
   .description(
     `Sets mintable for the collection. this will overwrite the existing mintable value. Support for ${TOKEN_STANDARD.ERC721} only.`,
   )
@@ -174,7 +174,7 @@ export const setMintableCmd = new Command('set-mintable')
   .action(setMintableAction);
 
 export const setTokenURISuffixCmd = new Command('set-token-uri-suffix')
-  .command('set-token-uri-suffix <collection>')
+  .command('set-token-uri-suffix <symbol>')
   .alias('stus')
   .description(
     `Sets the tokenURISuffix for the collection. This will overwrite the existing tokenUriSuffix value. Support for ${TOKEN_STANDARD.ERC721} only.`,
@@ -183,7 +183,7 @@ export const setTokenURISuffixCmd = new Command('set-token-uri-suffix')
   .action(setTokenUriSuffixAction);
 
 export const ownerMintCmd = new Command('owner-mint')
-  .command('owner-mint <collection>')
+  .command('owner-mint <symbol>')
   .description(
     'Mints token(s) by owner. NOTE: This function bypasses validations thus only available for owner. This is typically used for owner to pre-mint or mint the remaining of the supply.',
   )
@@ -193,7 +193,7 @@ export const ownerMintCmd = new Command('owner-mint')
   .action(ownerMintAction);
 
 export const checkSignerBalanceCmd = new Command('check-signer-balance')
-  .command('check-signer-balance <collection>')
+  .command('check-signer-balance <symbol>')
   .alias('csb')
   .description('Check the balance of the signer account for the collection.')
   .action(checkSignerBalanceAction);

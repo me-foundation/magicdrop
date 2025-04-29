@@ -4,13 +4,13 @@ import { printTransactionHash, showError, showText } from '../display';
 import { TOKEN_STANDARD } from '../constants';
 
 export const freezeThawContractAction = async (
-  collection: string,
+  symbol: string,
   params: {
     choice: 'freeze' | 'thaw';
   },
 ) => {
   try {
-    const { cm, config } = await actionPresets(collection);
+    const { cm, config } = await actionPresets(symbol);
 
     if (config.tokenStandard !== TOKEN_STANDARD.ERC1155)
       throw new Error(

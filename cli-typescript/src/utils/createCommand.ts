@@ -75,7 +75,7 @@ export const createEvmCommand = ({
   });
 
   newCmd
-    .command('new <collection>')
+    .command('new <symbol>')
     .aliases(['n', 'init'])
     .description(
       getNewProjectCmdDescription(
@@ -93,14 +93,14 @@ export const createEvmCommand = ({
     .addOption(getSetupWalletOption())
     .action(
       async (
-        collection: string,
+        symbol: string,
         params: {
           env: string;
           tokenStandard: TOKEN_STANDARD;
           setupWallet: boolean;
         },
       ) =>
-        await newProjectAction(collection, {
+        await newProjectAction(symbol, {
           chain:
             supportedChainNames[
               platform.chainIdsMap.get(params.env) ??
@@ -112,7 +112,7 @@ export const createEvmCommand = ({
     );
 
   newCmd
-    .command('deploy <collection>')
+    .command('deploy <symbol>')
     .description(
       'Deploys an ERC721 or ERC1155 collection with the given parameters',
     )
@@ -128,14 +128,14 @@ export const createEvmCommand = ({
     .addOption(getStagesFileOption().makeOptionMandatory(false))
     .action(
       async (
-        collection: string,
+        symbol: string,
         params: {
           env: string;
           setupContract: 'yes' | 'no' | 'deferred';
           totalTokens?: number;
           stagesFile?: string;
         },
-      ) => await deployAction(platform, collection, params),
+      ) => await deployAction(platform, symbol, params),
     );
 
   newCmd

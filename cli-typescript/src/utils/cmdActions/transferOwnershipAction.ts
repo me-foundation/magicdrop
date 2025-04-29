@@ -20,7 +20,7 @@ const displayOwnershipTransferWarning = (): void => {
 };
 
 export const transferOwnershipAction = async (
-  collection: string,
+  symbol: string,
   {
     newOwner,
   }: {
@@ -28,7 +28,7 @@ export const transferOwnershipAction = async (
   },
 ) => {
   try {
-    const { cm, config } = await actionPresets(collection);
+    const { cm, config } = await actionPresets(symbol);
 
     if (!isAddress(newOwner)) {
       throw new Error('New owner must be a valid address');

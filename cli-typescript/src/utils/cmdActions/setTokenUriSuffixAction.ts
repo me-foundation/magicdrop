@@ -6,13 +6,13 @@ import { TOKEN_STANDARD } from '../constants';
 import { ERC721Collection } from '../types';
 
 export const setTokenUriSuffixAction = async (
-  collection: string,
+  symbol: string,
   params: {
     tokenUriSuffix: string;
   },
 ) => {
   try {
-    const { cm, config, store } = await actionPresets(collection);
+    const { cm, config, store } = await actionPresets(symbol);
     if (config.tokenStandard !== TOKEN_STANDARD.ERC721)
       throw new Error(
         `this action is only supported for ${TOKEN_STANDARD.ERC721} collections.`,

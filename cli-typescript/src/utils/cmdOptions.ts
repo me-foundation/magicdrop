@@ -50,7 +50,7 @@ export const getSetupWalletOption = () =>
     `
     Specify if a new wallet and signer account should be setup for the collection.
     Note: if you decide to ignore setup, you will need to setup the wallet and signer account manually.
-    You can do this by creating a wallet.json file in the "${COLLECTION_DIR}/projects/<collection>" directory.
+    You can do this by creating a wallet.json file in the "${COLLECTION_DIR}/projects/<symbol>" directory.
   `,
   );
 

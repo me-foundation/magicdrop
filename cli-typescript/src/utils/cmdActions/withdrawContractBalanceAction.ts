@@ -4,9 +4,9 @@ import { WITHDRAW_CONTRACT_BALANCE_ABI } from '../../abis';
 import { printTransactionHash, showError, showText } from '../display';
 import { promptForConfirmation } from '../getters';
 
-export const withdrawContractBalanceAction = async (collection: string) => {
+export const withdrawContractBalanceAction = async (symbol: string) => {
   try {
-    const { cm, config } = await actionPresets(collection);
+    const { cm, config } = await actionPresets(symbol);
 
     const balance = await cm.client.getBalance({
       address: config.deployment!.contract_address as Hex,

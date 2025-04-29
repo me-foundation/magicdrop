@@ -12,13 +12,13 @@ import { ERC1155StageData, ERC721StageData } from '../types';
 import { actionPresets } from './common';
 
 export const setStagesAction = async (
-  collection: string,
+  symbol: string,
   params: {
     stagesFile: string;
   },
 ) => {
   try {
-    const { cm, config, store } = await actionPresets(collection);
+    const { cm, config, store } = await actionPresets(symbol);
 
     // Process stages file
     console.log('Processing stages file... this will take a moment.');

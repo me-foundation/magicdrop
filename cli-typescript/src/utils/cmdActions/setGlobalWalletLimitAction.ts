@@ -5,14 +5,14 @@ import { ERC1155M_ABIS, ERC712M_ABIS } from '../../abis';
 import { printTransactionHash, showError } from '../display';
 
 export const setGlobalWalletLimitAction = async (
-  collection: string,
+  symbol: string,
   params: {
     tokenId?: number;
     globalWalletLimit: number;
   },
 ) => {
   try {
-    const { cm, config, store } = await actionPresets(collection);
+    const { cm, config, store } = await actionPresets(symbol);
     if (isNaN(params.globalWalletLimit))
       throw new Error('globalWalletLimit must be a number');
 

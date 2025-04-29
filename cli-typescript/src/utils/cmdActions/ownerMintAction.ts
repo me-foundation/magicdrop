@@ -6,11 +6,11 @@ import { collapseAddress } from '../common';
 import { TOKEN_STANDARD } from '../constants';
 
 export const ownerMintAction = async (
-  collection: string,
+  symbol: string,
   { receiver, tokenId, qty }: { receiver: Hex; tokenId?: number; qty: number },
 ) => {
   try {
-    const { cm, config } = await actionPresets(collection);
+    const { cm, config } = await actionPresets(symbol);
     const errors = [];
     if (!isAddress(receiver)) {
       errors.push('receiver must be a valid address');

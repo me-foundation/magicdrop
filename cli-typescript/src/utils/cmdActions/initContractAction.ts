@@ -7,18 +7,18 @@ import { showError } from '../display';
 import { verifyContractDeployment } from '../common';
 
 const initContractAction = async (
-  collection: string,
+  symbol: string,
   params: { stagesFile: string },
 ) => {
   try {
-    collection = collection.toLowerCase();
+    symbol = symbol.toLowerCase();
 
-    const { store } = init(collection);
+    const { store } = init(symbol);
     const config = store.data!;
 
     verifyContractDeployment(config.deployment?.contract_address);
 
-    const { signer } = await getProjectSigner(collection);
+    const { signer } = await getProjectSigner(symbol);
 
     const cm = new ContractManager(config.chainId, signer);
 

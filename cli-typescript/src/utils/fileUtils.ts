@@ -60,13 +60,13 @@ export class Store<T> {
 }
 
 export const getProjectStore = (
-  collection: string,
+  symbol: string,
   readonly = false,
   createDir = false,
 ) => {
   const store = new Store<Collection>(
     COLLECTION_DIR,
-    path.join('projects', collection),
+    path.join('projects', symbol),
     'project.json',
     readonly,
     createDir,

@@ -4,12 +4,9 @@ import { TOKEN_STANDARD } from '../constants';
 import { printTransactionHash, showText } from '../display';
 import { actionPresets } from './common';
 
-export const setUriAction = async (
-  collection: string,
-  params: { uri: string },
-) => {
+export const setUriAction = async (symbol: string, params: { uri: string }) => {
   try {
-    const { config, cm, store } = await actionPresets(collection);
+    const { config, cm, store } = await actionPresets(symbol);
 
     let data: Hex;
 

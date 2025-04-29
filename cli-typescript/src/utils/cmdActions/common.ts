@@ -4,18 +4,18 @@ import { init } from '../evmUtils';
 import { getProjectSigner } from '../turnkey';
 
 export const actionPresets = async (
-  collection: string,
+  symbol: string,
   verifyDeployment: boolean = true,
 ) => {
-  collection = collection.toLowerCase();
+  symbol = symbol.toLowerCase();
 
-  const { store } = init(collection);
+  const { store } = init(symbol);
   const config = store.data!;
 
   if (verifyDeployment)
     verifyContractDeployment(config.deployment?.contract_address);
 
-  const { signer } = await getProjectSigner(collection);
+  const { signer } = await getProjectSigner(symbol);
 
   const cm = new ContractManager(config.chainId, signer);
 

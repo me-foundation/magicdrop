@@ -6,7 +6,7 @@ import { getProjectSigner } from '../turnkey';
 
 const deployAction = async (
   platform: EvmPlatform,
-  collection: string,
+  symbol: string,
   params: {
     env: string;
     setupContract: 'yes' | 'no' | 'deferred';
@@ -17,7 +17,7 @@ const deployAction = async (
   try {
     const { env, ...cliOptions } = params;
 
-    const { store } = init(collection);
+    const { store } = init(symbol);
 
     // Step 2: Override config file with CLI flag options if provided
     const mergedConfig = {
@@ -39,7 +39,7 @@ const deployAction = async (
       );
     }
 
-    const { signer } = await getProjectSigner(collection);
+    const { signer } = await getProjectSigner(symbol);
 
     const cm = new ContractManager(mergedConfig.chainId, signer);
 
