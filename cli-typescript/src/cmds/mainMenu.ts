@@ -1,6 +1,12 @@
 import { Command } from 'commander';
 import { showMainTitle } from '../utils/display';
-import { createNewWalletCmd, listProjectsCmd, newProjectCmd } from './general';
+import {
+  createNewWalletCmd,
+  initContractCmd,
+  listProjectsCmd,
+  newProjectCmd,
+  setUriCmd,
+} from './general';
 import {
   abstract,
   apechain,
@@ -29,6 +35,10 @@ export const mainMenu = async () => {
   program.addCommand(newProjectCmd);
   program.addCommand(createNewWalletCmd);
   program.addCommand(listProjectsCmd);
+  program.addCommand(initContractCmd);
+  program.addCommand(setUriCmd);
+
+  // network cmds
   program.addCommand(eth);
   program.addCommand(polygon);
   program.addCommand(bsc);

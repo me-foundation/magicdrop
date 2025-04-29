@@ -311,8 +311,9 @@ export const setupContract = async (params: {
     });
 
     console.log('Setting up contract... this will take a moment.');
+    let txHash: Hex;
     if (tokenStandard === TOKEN_STANDARD.ERC721) {
-      await sendERC721SetupTransaction({
+      txHash = await sendERC721SetupTransaction({
         cm: params.cm,
         contractAddress,
         uri,
@@ -326,7 +327,7 @@ export const setupContract = async (params: {
         royaltyFee,
       });
     } else {
-      await sendERC1155SetupTransaction({
+      txHash = await sendERC1155SetupTransaction({
         cm: params.cm,
         contractAddress,
         uri,
@@ -341,6 +342,7 @@ export const setupContract = async (params: {
     }
 
     console.log('Contract setup completed.');
+    printTransactionHash(txHash, cm.chainId);
   } catch (error: any) {
     console.error('Error setting up contract:', error.message);
     throw new Error('Failed to set up contract.');
