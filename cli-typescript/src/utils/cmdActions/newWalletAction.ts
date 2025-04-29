@@ -25,8 +25,10 @@ const newWalletAction = async (
     process.exit(1);
   }
 
+  const walletName = params.force ? `${collection}-${Date.now()}` : collection;
+
   // Create a wallet for the project
-  const res = await createProjectSigner(collection);
+  const res = await createProjectSigner(collection, walletName);
   const signer = res.signer;
 
   const signerInfo = `Note: A signer account: "${signer?.address}" was created for this collection, you will need to fund it before you can deploy this collection.`;

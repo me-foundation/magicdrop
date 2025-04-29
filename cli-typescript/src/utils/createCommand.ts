@@ -1,11 +1,11 @@
 import { Command } from 'commander';
 import {
   getEnvOption,
-  setupContractOption,
-  setupWalletOption,
-  stagesFileOption,
-  tokenStandardOption,
-  totalTokensOption,
+  getSetupContractOption,
+  getSetupWalletOption,
+  getStagesFileOption,
+  getTokenStandardOption,
+  getTotalTokensOption,
 } from './cmdOptions';
 import { EvmPlatform } from './evmUtils';
 import deployAction from './cmdActions/deployAction';
@@ -89,8 +89,8 @@ export const createEvmCommand = ({
         platform.defaultChain,
       ),
     )
-    .addOption(tokenStandardOption)
-    .addOption(setupWalletOption)
+    .addOption(getTokenStandardOption())
+    .addOption(getSetupWalletOption())
     .action(
       async (
         collection: string,
@@ -123,9 +123,9 @@ export const createEvmCommand = ({
         platform.defaultChain,
       ),
     )
-    .addOption(setupContractOption)
-    .addOption(totalTokensOption)
-    .addOption(stagesFileOption)
+    .addOption(getSetupContractOption())
+    .addOption(getTotalTokensOption())
+    .addOption(getStagesFileOption().makeOptionMandatory(false))
     .action(
       async (
         collection: string,
@@ -141,7 +141,7 @@ export const createEvmCommand = ({
   newCmd
     .command('init-contract <collection>')
     .description('Initialize/Set up a deployed collection (contract).')
-    .addOption(stagesFileOption)
+    .addOption(getStagesFileOption())
     .action(initContractAction);
 
   return newCmd;

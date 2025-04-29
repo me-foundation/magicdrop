@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { confirm } from '@inquirer/prompts';
+import { isAddress } from 'viem';
 
 export const confirmExit = async (): Promise<boolean> => {
   const answer = await confirm({
@@ -122,4 +123,16 @@ export const collapseAddress = (address: string): string => {
   const prefix = address.slice(0, 6);
   const suffix = address.slice(-4);
   return `${prefix}...${suffix}`;
+};
+
+export const verifyContractDeployment = (
+  address: string | null | undefined,
+): boolean => {
+  if (!address || !isAddress(address)) {
+    throw Error(
+      'Invalid or missing collection address. Please deploy the contract first.',
+    );
+  }
+
+  return true;
 };

@@ -78,6 +78,70 @@ export const NEW_CONTRACT_INITIALIZED_EVENT_ABI = {
   ],
 } as const;
 
+export const SET_COSIGNER_ABI = {
+  inputs: [
+    {
+      internalType: 'address',
+      name: 'cosigner',
+      type: 'address',
+    },
+  ],
+  name: 'setCosigner',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const;
+
+export const WITHDRAW_CONTRACT_BALANCE_ABI = {
+  inputs: [],
+  name: 'withdraw',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const;
+
+export const ADD_AUTHORIZED_MINTER_ABI = {
+  inputs: [
+    {
+      internalType: 'address',
+      name: 'minter',
+      type: 'address',
+    },
+  ],
+  name: 'addAuthorizedMinter',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const;
+
+export const REMOVE_AUTHORIZED_MINTER_ABI = {
+  inputs: [
+    {
+      internalType: 'address',
+      name: 'minter',
+      type: 'address',
+    },
+  ],
+  name: 'removeAuthorizedMinter',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const;
+
+export const TRANSFER_OWNERSHIP_ABI = {
+  inputs: [
+    {
+      internalType: 'address',
+      name: 'newOwner',
+      type: 'address',
+    },
+  ],
+  name: 'transferOwnership',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const;
+
 export const ERC712M_ABIS = {
   setup: {
     type: 'function',
@@ -167,7 +231,6 @@ export const ERC712M_ABIS = {
     outputs: [],
     stateMutability: 'nonpayable',
   },
-
   setBaseUri: {
     inputs: [
       {
@@ -177,6 +240,139 @@ export const ERC712M_ABIS = {
       },
     ],
     name: 'setBaseURI',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setStages: {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: 'uint80',
+            name: 'price',
+            type: 'uint80',
+          },
+          {
+            internalType: 'uint80',
+            name: 'mintFee',
+            type: 'uint80',
+          },
+          {
+            internalType: 'uint32',
+            name: 'walletLimit',
+            type: 'uint32',
+          },
+          {
+            internalType: 'bytes32',
+            name: 'merkleRoot',
+            type: 'bytes32',
+          },
+          {
+            internalType: 'uint24',
+            name: 'maxStageSupply',
+            type: 'uint24',
+          },
+          {
+            internalType: 'uint256',
+            name: 'startTimeUnixSeconds',
+            type: 'uint256',
+          },
+          {
+            internalType: 'uint256',
+            name: 'endTimeUnixSeconds',
+            type: 'uint256',
+          },
+        ],
+        internalType: 'struct IERC721M.MintStageInfo[]',
+        name: 'newStages',
+        type: 'tuple[]',
+      },
+    ],
+    name: 'setStages',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setGlobalWalletLimit: {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'globalWalletLimit',
+        type: 'uint256',
+      },
+    ],
+    name: 'setGlobalWalletLimit',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setMaxMintableSupply: {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'maxMintableSupply',
+        type: 'uint256',
+      },
+    ],
+    name: 'setMaxMintableSupply',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setTimestampExpirySeconds: {
+    inputs: [
+      {
+        internalType: 'uint64',
+        name: 'expiry',
+        type: 'uint64',
+      },
+    ],
+    name: 'SetTimestampExpirySeconds',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setMintable: {
+    inputs: [
+      {
+        internalType: 'bool',
+        name: 'mintable',
+        type: 'bool',
+      },
+    ],
+    name: 'setMintable',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setTokenUriSuffix: {
+    inputs: [
+      {
+        internalType: 'string',
+        name: 'suffix',
+        type: 'string',
+      },
+    ],
+    name: 'setTokenURISuffix',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  ownerMint: {
+    inputs: [
+      {
+        internalType: 'uint32',
+        name: 'qty',
+        type: 'uint32',
+      },
+      {
+        internalType: 'address',
+        name: 'to',
+        type: 'address',
+      },
+    ],
+    name: 'ownerMint',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
@@ -302,6 +498,115 @@ export const ERC1155M_ABIS = {
       },
     ],
     name: 'setURI',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setStages: {
+    inputs: [
+      {
+        components: [
+          {
+            internalType: 'uint80[]',
+            name: 'price',
+            type: 'uint80[]',
+          },
+          {
+            internalType: 'uint80[]',
+            name: 'mintFee',
+            type: 'uint80[]',
+          },
+          {
+            internalType: 'uint32[]',
+            name: 'walletLimit',
+            type: 'uint32[]',
+          },
+          {
+            internalType: 'bytes32[]',
+            name: 'merkleRoot',
+            type: 'bytes32[]',
+          },
+          {
+            internalType: 'uint24[]',
+            name: 'maxStageSupply',
+            type: 'uint24[]',
+          },
+          {
+            internalType: 'uint256',
+            name: 'startTimeUnixSeconds',
+            type: 'uint256',
+          },
+          {
+            internalType: 'uint256',
+            name: 'endTimeUnixSeconds',
+            type: 'uint256',
+          },
+        ],
+        internalType: 'struct IERC1155M.MintStageInfo[]',
+        name: 'newStages',
+        type: 'tuple[]',
+      },
+    ],
+    name: 'setStages',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setGlobalWalletLimit: {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'tokenId',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: 'globalWalletLimit',
+        type: 'uint256',
+      },
+    ],
+    name: 'setGlobalWalletLimit',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  setMaxMintableSupply: {
+    inputs: [
+      {
+        internalType: 'uint256',
+        name: 'tokenId',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint256',
+        name: 'maxMintableSupply',
+        type: 'uint256',
+      },
+    ],
+    name: 'setMaxMintableSupply',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  ownerMint: {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'to',
+        type: 'address',
+      },
+      {
+        internalType: 'uint256',
+        name: 'tokenId',
+        type: 'uint256',
+      },
+      {
+        internalType: 'uint32',
+        name: 'qty',
+        type: 'uint32',
+      },
+    ],
+    name: 'ownerMint',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',

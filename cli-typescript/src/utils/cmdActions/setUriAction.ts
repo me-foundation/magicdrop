@@ -1,27 +1,15 @@
-import { encodeFunctionData, Hex, isAddress } from 'viem';
-import { init } from '../evmUtils';
-import { ContractManager } from '../ContractManager';
-import { getProjectSigner } from '../turnkey';
+import { encodeFunctionData, Hex } from 'viem';
 import { ERC1155M_ABIS, ERC712M_ABIS } from '../../abis';
 import { TOKEN_STANDARD } from '../constants';
 import { printTransactionHash, showText } from '../display';
+import { actionPresets } from './common';
 
-export const setUriAction = async (collection: string, uri: string) => {
+export const setUriAction = async (
+  collection: string,
+  params: { uri: string },
+) => {
   try {
-    collection = collection.toLowerCase();
-
-    const { store } = init(collection);
-    const config = store.data!;
-
-    if (!config.deployment || !isAddress(config.deployment.contract_address)) {
-      throw Error(
-        'Invalid or missing collection address. Please deploy the contract first.',
-      );
-    }
-
-    const { signer } = await getProjectSigner(collection);
-
-    const cm = new ContractManager(config.chainId, signer);
+    const { config, cm, store } = await actionPresets(collection);
 
     let data: Hex;
 
@@ -31,21 +19,21 @@ export const setUriAction = async (collection: string, uri: string) => {
       data = encodeFunctionData({
         abi: [ERC712M_ABIS.setBaseUri],
         functionName: ERC712M_ABIS.setBaseUri.name,
-        args: [uri],
+        args: [params.uri],
       });
     } else if (config.tokenStandard === TOKEN_STANDARD.ERC1155) {
       showText(`Setting URI for ${config.tokenStandard} collection...`);
       data = encodeFunctionData({
         abi: [ERC1155M_ABIS.setUri],
         functionName: ERC1155M_ABIS.setUri.name,
-        args: [uri],
+        args: [params.uri],
       });
     } else {
       throw new Error('Unsupported token standard. Please check the config.');
     }
 
     const txHash = await cm.sendTransaction({
-      to: config.deployment.contract_address,
+      to: config.deployment?.contract_address as Hex,
       data,
     });
     const receipt = await cm.waitForTransactionReceipt(txHash);
@@ -54,7 +42,7 @@ export const setUriAction = async (collection: string, uri: string) => {
       throw new Error('Transaction failed');
     }
 
-    store.data!.uri = uri;
+    store.data!.uri = params.uri;
     store.write();
 
     printTransactionHash(txHash, config.chainId);
