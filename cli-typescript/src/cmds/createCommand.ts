@@ -6,19 +6,36 @@ import {
   getStagesFileOption,
   getTokenStandardOption,
   getTotalTokensOption,
-} from './cmdOptions';
-import { EvmPlatform } from './evmUtils';
-import deployAction from './cmdActions/deployAction';
-import { loadDefaults } from './loaders';
-import { setBaseDir } from './setters';
-import { showError } from './display';
+} from '../utils/cmdOptions';
+import { EvmPlatform } from '../utils/evmUtils';
+import deployAction from '../utils/cmdActions/deployAction';
+import { loadDefaults } from '../utils/loaders';
+import { setBaseDir } from '../utils/setters';
+import { showError } from '../utils/display';
 import {
   COLLECTION_DIR,
   supportedChainNames,
   TOKEN_STANDARD,
-} from './constants';
-import newProjectAction from './cmdActions/newProjectAction';
-import initContractAction from './cmdActions/initContractAction';
+} from '../utils/constants';
+import newProjectAction from '../utils/cmdActions/newProjectAction';
+import {
+  createNewWalletCmd,
+  freezeThawContractCmd,
+  initContractCmd,
+  listProjectsCmd,
+  manageAuthorizedMintersCmd,
+  ownerMintCmd,
+  setCosginerCmd,
+  setGlobalWalletLimitCmd,
+  setMaxMintableSupplyCmd,
+  setMintableCmd,
+  setStagesCmd,
+  setTimestampExpiryCmd,
+  setTokenURISuffixCmd,
+  setUriCmd,
+  transferOwnershipCmd,
+  withdrawContractBalanceCmd,
+} from './general';
 
 export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   defaultInfo =
@@ -138,11 +155,22 @@ export const createEvmCommand = ({
       ) => await deployAction(platform, symbol, params),
     );
 
-  newCmd
-    .command('init-contract <collection>')
-    .description('Initialize/Set up a deployed collection (contract).')
-    .addOption(getStagesFileOption())
-    .action(initContractAction);
+  newCmd.addCommand(createNewWalletCmd);
+  newCmd.addCommand(listProjectsCmd);
+  newCmd.addCommand(initContractCmd);
+  newCmd.addCommand(setUriCmd);
+  newCmd.addCommand(setStagesCmd);
+  newCmd.addCommand(setGlobalWalletLimitCmd);
+  newCmd.addCommand(setMaxMintableSupplyCmd);
+  newCmd.addCommand(setCosginerCmd);
+  newCmd.addCommand(setTimestampExpiryCmd);
+  newCmd.addCommand(withdrawContractBalanceCmd);
+  newCmd.addCommand(freezeThawContractCmd);
+  newCmd.addCommand(transferOwnershipCmd);
+  newCmd.addCommand(manageAuthorizedMintersCmd);
+  newCmd.addCommand(setMintableCmd);
+  newCmd.addCommand(setTokenURISuffixCmd);
+  newCmd.addCommand(ownerMintCmd);
 
   return newCmd;
 };

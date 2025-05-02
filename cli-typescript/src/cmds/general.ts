@@ -1,7 +1,5 @@
 import { Command } from 'commander';
-import newProjectAction from '../utils/cmdActions/newProjectAction';
 import {
-  getChainOption,
   getCosignerOption,
   getExpiryTimestampOption,
   getForceOption,
@@ -14,15 +12,12 @@ import {
   getNewOwnerOption,
   getQtyOption,
   getReceiverOption,
-  getSetupWalletOption,
   getStagesFileOption,
   getTokenIdOption,
-  getTokenStandardOption,
   getTokenUriSuffixOption,
   getUriOption,
 } from '../utils/cmdOptions';
 import listProjectsAction from '../utils/cmdActions/listProjectsAction';
-import { getNewProjectCmdDescription } from '../utils/createCommand';
 import newWalletAction from '../utils/cmdActions/newWalletAction';
 import setUriAction from '../utils/cmdActions/setUriAction';
 import initContractAction from '../utils/cmdActions/initContractAction';
@@ -40,15 +35,6 @@ import { setMintableAction } from '../utils/cmdActions/setMintableAction';
 import { setTokenUriSuffixAction } from '../utils/cmdActions/setTokenUriSuffixAction';
 import { ownerMintAction } from '../utils/cmdActions/ownerMintAction';
 import { checkSignerBalanceAction } from '../utils/cmdActions/checkSignerBalanceAction';
-
-export const newProjectCmd = new Command('new')
-  .command('new <symbol>')
-  .aliases(['n', 'init'])
-  .description(getNewProjectCmdDescription())
-  .addOption(getChainOption())
-  .addOption(getTokenStandardOption())
-  .addOption(getSetupWalletOption())
-  .action(newProjectAction);
 
 export const createNewWalletCmd = new Command('create-wallet')
   .command('create-wallet <symbol>')

@@ -1,5 +1,5 @@
 import { SUPPORTED_CHAINS } from '../../utils/constants';
-import { createEvmCommand } from '../../utils/createCommand';
+import { createEvmCommand } from '../createCommand';
 import { EvmPlatform } from '../../utils/evmUtils';
 import { getSymbolFromChainId } from '../../utils/getters';
 
