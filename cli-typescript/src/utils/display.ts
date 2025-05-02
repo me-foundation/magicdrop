@@ -172,8 +172,12 @@ export const confirmSetup = async (setupDetails: {
     `Contract Address:             ${chalk.cyan(collapseAddress(contractAddress))}`,
   );
   console.log('======================= SETUP INFO =======================');
-  console.log(`Max Mintable Supply:          ${chalk.cyan(maxMintableSupply)}`);
-  console.log(`Global Wallet Limit:          ${chalk.cyan(globalWalletLimit)}`);
+  console.log(
+    `Max Mintable Supply:          ${chalk.cyan(JSON.stringify(maxMintableSupply))}`,
+  );
+  console.log(
+    `Global Wallet Limit:          ${chalk.cyan(JSON.stringify(globalWalletLimit))}`,
+  );
   console.log(
     `Mint Currency:                ${chalk.cyan(collapseAddress(mintCurrency))}`,
   );

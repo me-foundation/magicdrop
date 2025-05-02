@@ -170,6 +170,7 @@ export const getProjectSigner = async (
 
 export const createProjectSigner = async (
   projectName: string,
+  walletName?: string,
 ): Promise<{
   signer: Account;
   walletStore: ReturnType<typeof getWalletStore>;
@@ -178,7 +179,9 @@ export const createProjectSigner = async (
 
   // create a new wallet
   try {
-    const { walletId, addresses } = await createNewWallet(projectName);
+    const { walletId, addresses } = await createNewWallet(
+      walletName || projectName,
+    );
 
     if (!addresses?.length || !addresses[0]) {
       throw new Error('Failed to create a signer account.');

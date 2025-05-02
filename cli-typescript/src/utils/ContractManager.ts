@@ -12,6 +12,7 @@ import {
   encodeFunctionData,
   decodeFunctionResult,
   Account,
+  formatEther,
 } from 'viem';
 import {
   getSymbolFromChainId,
@@ -91,10 +92,14 @@ export class ContractManager {
         data,
       });
 
+      showText('Fetching deployment fee...', '', false, false);
+
+      if (!result.data) return BigInt(0);
+
       const decodedResult = decodeFunctionResult({
         abi: [MagicDropTokenImplRegistryAbis.getDeploymentFee],
         functionName: MagicDropTokenImplRegistryAbis.getDeploymentFee.name,
-        data: result.data ?? '0x',
+        data: result.data,
       });
 
       return decodedResult;
@@ -141,11 +146,10 @@ export class ContractManager {
         address: this.signer,
       });
 
-      // Convert the balance from Wei to Ether (or native token)
-      const humanReadableBalance = Number(balance) / 10 ** 18;
+      // Convert the balance from Wei to Ether
+      const humanReadableBalance = formatEther(balance);
 
-      // Format the balance to 3 decimal places
-      return humanReadableBalance.toFixed(3);
+      return humanReadableBalance;
     } catch (error: any) {
       console.error('Error checking signer native balance:', error.message);
       throw new Error('Failed to fetch signer native balance.');
@@ -352,8 +356,13 @@ export class ContractManager {
    * Freeze a contract.
    * @param contractAddress The address of the contract.
    */
-  public async freezeContract(contractAddress: Hex): Promise<Hex> {
-    console.log('Freezing contract... this will take a moment.');
+  public async freezeThawContract(
+    contractAddress: Hex,
+    freeze: boolean,
+  ): Promise<Hex> {
+    console.log(
+      `${freeze ? 'Freezing' : 'Thawing'} contract... this will take a moment.`,
+    );
 
     const data = encodeFunctionData({
       abi: [ERC1155M_ABIS.setTransferable],
@@ -365,10 +374,6 @@ export class ContractManager {
       to: contractAddress,
       data,
     });
-
-    printTransactionHash(txHash, this.chainId);
-
-    console.log('Token transfers frozen.');
 
     return txHash;
   }

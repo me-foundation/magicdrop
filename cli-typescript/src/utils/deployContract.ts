@@ -73,8 +73,6 @@ export const deployContract = async ({
   const useERC721C = getUseERC721C();
   const implId = getImplId(cm.chainId, tokenStandard, useERC721C);
 
-  showText('Fetching deployment fee...', '', false, false);
-
   const deploymentFee = await cm.getDeploymentFee(
     registryAddress,
     Number(standardId),
@@ -138,7 +136,10 @@ export const deployContract = async ({
     });
 
     if (freezeCollection) {
-      cm.freezeContract(contractAddress);
+      const txHash = await cm.freezeThawContract(contractAddress, true);
+      printTransactionHash(txHash, cm.chainId);
+
+      console.log('Token transfers frozen.');
     }
   }
 
@@ -401,6 +402,46 @@ export const processStages = async (params: {
   return JSON.parse(stagesData);
 };
 
+export const getERC721ParsedStagesData = (stagesData: ERC721StageData[]) => {
+  const parsedStagesData = stagesData.map((stage) => {
+    return [
+      BigInt(stage.price),
+      BigInt(stage.mintFee),
+      stage.walletLimit,
+      stage.merkleRoot as Hex,
+      stage.maxStageSupply,
+      BigInt(stage.startTime),
+      BigInt(stage.endTime),
+    ] as readonly [bigint, bigint, number, Hex, number, bigint, bigint];
+  });
+
+  return parsedStagesData;
+};
+
+export const getERC1155ParsedStagesData = (stagesData: ERC1155StageData[]) => {
+  const parsedStagesData = stagesData.map((stage) => {
+    return [
+      stage.price.map((price) => BigInt(price)),
+      stage.mintFee.map((fee) => BigInt(fee)),
+      stage.walletLimit,
+      stage.merkleRoot,
+      stage.maxStageSupply,
+      BigInt(stage.startTime),
+      BigInt(stage.endTime),
+    ] as readonly [
+      bigint[],
+      bigint[],
+      number[],
+      Hex[],
+      number[],
+      bigint,
+      bigint,
+    ];
+  });
+
+  return parsedStagesData;
+};
+
 const sendERC721SetupTransaction = async ({
   cm,
   contractAddress,
@@ -432,18 +473,7 @@ const sendERC721SetupTransaction = async ({
 
     const abi = AbiFunction.from(setupSignature);
 
-    const parsedStagesData = stagesData.map((stage) => {
-      return [
-        BigInt(stage.price),
-        BigInt(stage.mintFee),
-        stage.walletLimit,
-        stage.merkleRoot as Hex,
-        stage.maxStageSupply,
-        BigInt(stage.startTime),
-        BigInt(stage.endTime),
-      ] as readonly [bigint, bigint, number, Hex, number, bigint, bigint];
-    });
-
+    const parsedStagesData = getERC721ParsedStagesData(stagesData);
     const encodedData = AbiFunction.encodeData(abi, [
       uri as string,
       tokenUriSuffix as string,
@@ -499,26 +529,7 @@ const sendERC1155SetupTransaction = async ({
 
     const abi = AbiFunction.from(setupSignature);
 
-    const parsedStagesData = stagesData.map((stage) => {
-      return [
-        stage.price.map((price) => BigInt(price)),
-        stage.mintFee.map((fee) => BigInt(fee)),
-        stage.walletLimit,
-        stage.merkleRoot,
-        stage.maxStageSupply,
-        BigInt(stage.startTime),
-        BigInt(stage.endTime),
-      ] as readonly [
-        bigint[],
-        bigint[],
-        number[],
-        Hex[],
-        number[],
-        bigint,
-        bigint,
-      ];
-    });
-
+    const parsedStagesData = getERC1155ParsedStagesData(stagesData);
     const encodedData = AbiFunction.encodeData(abi, [
       uri as string,
       maxMintableSupply.map((supply) => BigInt(supply)),

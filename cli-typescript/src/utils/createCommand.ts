@@ -1,11 +1,11 @@
 import { Command } from 'commander';
 import {
   getEnvOption,
-  setupContractOption,
-  setupWalletOption,
-  stagesFileOption,
-  tokenStandardOption,
-  totalTokensOption,
+  getSetupContractOption,
+  getSetupWalletOption,
+  getStagesFileOption,
+  getTokenStandardOption,
+  getTotalTokensOption,
 } from './cmdOptions';
 import { EvmPlatform } from './evmUtils';
 import deployAction from './cmdActions/deployAction';
@@ -75,7 +75,7 @@ export const createEvmCommand = ({
   });
 
   newCmd
-    .command('new <collection>')
+    .command('new <symbol>')
     .aliases(['n', 'init'])
     .description(
       getNewProjectCmdDescription(
@@ -89,18 +89,18 @@ export const createEvmCommand = ({
         platform.defaultChain,
       ),
     )
-    .addOption(tokenStandardOption)
-    .addOption(setupWalletOption)
+    .addOption(getTokenStandardOption())
+    .addOption(getSetupWalletOption())
     .action(
       async (
-        collection: string,
+        symbol: string,
         params: {
           env: string;
           tokenStandard: TOKEN_STANDARD;
           setupWallet: boolean;
         },
       ) =>
-        await newProjectAction(collection, {
+        await newProjectAction(symbol, {
           chain:
             supportedChainNames[
               platform.chainIdsMap.get(params.env) ??
@@ -112,7 +112,7 @@ export const createEvmCommand = ({
     );
 
   newCmd
-    .command('deploy <collection>')
+    .command('deploy <symbol>')
     .description(
       'Deploys an ERC721 or ERC1155 collection with the given parameters',
     )
@@ -123,25 +123,25 @@ export const createEvmCommand = ({
         platform.defaultChain,
       ),
     )
-    .addOption(setupContractOption)
-    .addOption(totalTokensOption)
-    .addOption(stagesFileOption)
+    .addOption(getSetupContractOption())
+    .addOption(getTotalTokensOption())
+    .addOption(getStagesFileOption().makeOptionMandatory(false))
     .action(
       async (
-        collection: string,
+        symbol: string,
         params: {
           env: string;
           setupContract: 'yes' | 'no' | 'deferred';
           totalTokens?: number;
           stagesFile?: string;
         },
-      ) => await deployAction(platform, collection, params),
+      ) => await deployAction(platform, symbol, params),
     );
 
   newCmd
     .command('init-contract <collection>')
     .description('Initialize/Set up a deployed collection (contract).')
-    .addOption(stagesFileOption)
+    .addOption(getStagesFileOption())
     .action(initContractAction);
 
   return newCmd;
