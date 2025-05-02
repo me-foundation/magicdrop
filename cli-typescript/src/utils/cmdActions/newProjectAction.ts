@@ -2,7 +2,7 @@ import { TOKEN_STANDARD } from '../constants';
 import { showError, showText } from '../display';
 import { getProjectStore } from '../fileUtils';
 import { getChainIdFromName } from '../getters';
-import { ERC1155_TEMPLATE, ERC721_TEMPLATE } from '../templates';
+import { ERC1155_TEMPLATE, ERC721_TEMPLATE } from '../../templates';
 import { createProjectSigner } from '../turnkey';
 import { Collection } from '../types';
 

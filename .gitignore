@@ -22,6 +22,3 @@ broadcast/
 # Ignore all collections folders and their contents
 **/collections/*
 
-# Allow example and template folders in all collections directories
-!**/collections/example/
-!**/collections/template/
