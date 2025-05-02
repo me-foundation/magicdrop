@@ -2,6 +2,10 @@ import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { confirm } from '@inquirer/prompts';
 import { isAddress } from 'viem';
+import {
+  GetSecretValueCommand,
+  SecretsManagerClient,
+} from '@aws-sdk/client-secrets-manager';
 
 export const confirmExit = async (): Promise<boolean> => {
   const answer = await confirm({
@@ -135,4 +139,28 @@ export const verifyContractDeployment = (
   }
 
   return true;
+};
+
+/**
+ * Fetches a secret from AWS Secrets Manager.
+ * @param secretName The name of the secret to fetch.
+ * @returns A parsed object containing the secret's key-value pairs.
+ */
+export const fetchSecretFromAWS = async (
+  secretName: string,
+): Promise<Record<string, string>> => {
+  const secretsClient = new SecretsManagerClient({});
+
+  try {
+    const command = new GetSecretValueCommand({ SecretId: secretName });
+    const response = await secretsClient.send(command);
+
+    if (!response.SecretString) {
+      throw new Error(`Secret ${secretName} does not contain a valid string.`);
+    }
+
+    return JSON.parse(response.SecretString);
+  } catch (error: any) {
+    throw new Error(`Failed to fetch secret ${secretName}: ${error.message}`);
+  }
 };

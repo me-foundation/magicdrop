@@ -80,7 +80,7 @@ export const getWalletStore = (
   readonly = false,
   createDir = false,
 ) => {
-  const store = new Store<{ walletId: string; signer: Hex }>(
+  const store = new Store<{ subOrgId: string; walletId: string; signer: Hex }>(
     COLLECTION_DIR,
     path.join('projects', projectName),
     'wallet.json',
