@@ -153,3 +153,11 @@ export const getReceiverOption = () =>
   new Option('-r --receiver <receiver>', 'the receiver address.');
 
 export const getQtyOption = () => new Option('--qty <qty>', 'the token qty.');
+
+export const getConfigFileOption = () =>
+  new Option(
+    '--configFile <configFile>',
+    `
+    Path to the project configuration file. This file contains the config for the collection.
+  `,
+  );
