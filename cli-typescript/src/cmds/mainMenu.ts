@@ -4,6 +4,7 @@ import {
   createNewWalletCmd,
   freezeThawContractCmd,
   checkSignerBalanceCmd,
+  getWalletInfoCmd,
   initContractCmd,
   listProjectsCmd,
   manageAuthorizedMintersCmd,
@@ -63,6 +64,7 @@ export const mainMenu = async () => {
   program.addCommand(setTokenURISuffixCmd);
   program.addCommand(ownerMintCmd);
   program.addCommand(checkSignerBalanceCmd);
+  program.addCommand(getWalletInfoCmd);
 
   // network sub-commands
   program.addCommand(eth);

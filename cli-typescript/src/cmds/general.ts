@@ -40,6 +40,7 @@ import { setMintableAction } from '../utils/cmdActions/setMintableAction';
 import { setTokenUriSuffixAction } from '../utils/cmdActions/setTokenUriSuffixAction';
 import { ownerMintAction } from '../utils/cmdActions/ownerMintAction';
 import { checkSignerBalanceAction } from '../utils/cmdActions/checkSignerBalanceAction';
+import getWalletInfoAction from '../utils/cmdActions/getWalletInfoAction';
 
 export const newProjectCmd = new Command('new')
   .command('new <symbol>')
@@ -197,3 +198,8 @@ export const checkSignerBalanceCmd = new Command('check-signer-balance')
   .alias('csb')
   .description('Check the balance of the signer account for the collection.')
   .action(checkSignerBalanceAction);
+
+export const getWalletInfoCmd = new Command('get-wallet-info')
+  .command('get-wallet-info <symbol>')
+  .description('Get the wallet info for a collection')
+  .action(getWalletInfoAction);
