@@ -7,19 +7,40 @@ import {
   getStagesFileOption,
   getTokenStandardOption,
   getTotalTokensOption,
-} from './cmdOptions';
-import { EvmPlatform } from './evmUtils';
-import deployAction from './cmdActions/deployAction';
-import { setBaseDir } from './setters';
-import { showError } from './display';
+} from '../utils/cmdOptions';
+import { EvmPlatform } from '../utils/evmUtils';
+import deployAction from '../utils/cmdActions/deployAction';
+import { setBaseDir } from '../utils/setters';
+import { showError } from '../utils/display';
 import {
   COLLECTION_DIR,
   supportedChainNames,
   TOKEN_STANDARD,
-} from './constants';
-import newProjectAction from './cmdActions/newProjectAction';
-import initContractAction from './cmdActions/initContractAction';
-import fillProjectConfigAction from './cmdActions/fillProjectConfigAction';
+} from '../utils/constants';
+import newProjectAction from '../utils/cmdActions/newProjectAction';
+import {
+  checkSignerBalanceCmd,
+  createNewWalletCmd,
+  freezeThawContractCmd,
+  getConfigCmd,
+  getWalletInfoCmd,
+  initContractCmd,
+  manageAuthorizedMintersCmd,
+  ownerMintCmd,
+  setCosginerCmd,
+  setGlobalWalletLimitCmd,
+  setMaxMintableSupplyCmd,
+  setMintableCmd,
+  setStagesCmd,
+  setTimestampExpiryCmd,
+  setTokenURISuffixCmd,
+  setUriCmd,
+  transferOwnershipCmd,
+  withdrawContractBalanceCmd,
+} from './general';
+import listProjectsAction from '../utils/cmdActions/listProjectsAction';
+import { getProjectStore } from '../utils/fileUtils';
+import fillProjectConfigAction from '../utils/cmdActions/fillProjectConfigAction';
 
 export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   defaultInfo =
@@ -45,6 +66,8 @@ const presets = async () => {
   }
 };
 
+const SUBCOMMAND_EXCLUDE_LIST = ['new', 'list'];
+
 export const createEvmCommand = ({
   platform,
   commandAliases,
@@ -52,7 +75,7 @@ export const createEvmCommand = ({
   platform: EvmPlatform;
   commandAliases: string[];
 }) => {
-  const newCmd = new Command()
+  const newCmd = new Command(platform.name.toLowerCase())
     .name(platform.name.toLowerCase())
     .description(`${platform.name} launchpad commands`)
     .aliases(commandAliases);
@@ -103,6 +126,14 @@ export const createEvmCommand = ({
     );
 
   newCmd
+    .command('list')
+    .alias('ls')
+    .description(
+      `list all collections/projects supported on the ${platform.name} platform`,
+    )
+    .action(async () => await listProjectsAction(platform));
+
+  newCmd
     .command('deploy <symbol>')
     .description(
       'Deploys an ERC721 or ERC1155 collection with the given parameters',
@@ -129,11 +160,22 @@ export const createEvmCommand = ({
       ) => await deployAction(platform, symbol, params),
     );
 
-  newCmd
-    .command('init-contract <symbol>')
-    .description('Initialize/Set up a deployed collection (contract).')
-    .addOption(getStagesFileOption())
-    .action(initContractAction);
+  // subcommand hook; verify if the collection is supported on the platform
+  newCmd.hook('preAction', (_, actionCommand) => {
+    const symbol = actionCommand.args[0];
+    if (!SUBCOMMAND_EXCLUDE_LIST.includes(actionCommand.name()) || !!symbol) {
+      const store = getProjectStore(symbol);
+      store.read();
+
+      if (!platform.isChainIdSupported(store.data?.chainId ?? 0)) {
+        showError({
+          text: `collection '${symbol}' not supported on the ${platform.name} platform.`,
+        });
+
+        process.exit(1);
+      }
+    }
+  });
 
   newCmd
     .command('configure-project <symbol>')
@@ -151,6 +193,25 @@ export const createEvmCommand = ({
         await fillProjectConfigAction(platform, symbol, params);
       },
     );
+
+  newCmd.addCommand(createNewWalletCmd());
+  newCmd.addCommand(initContractCmd());
+  newCmd.addCommand(setUriCmd());
+  newCmd.addCommand(setStagesCmd());
+  newCmd.addCommand(setGlobalWalletLimitCmd());
+  newCmd.addCommand(setMaxMintableSupplyCmd());
+  newCmd.addCommand(setCosginerCmd());
+  newCmd.addCommand(setTimestampExpiryCmd());
+  newCmd.addCommand(withdrawContractBalanceCmd());
+  newCmd.addCommand(freezeThawContractCmd());
+  newCmd.addCommand(transferOwnershipCmd());
+  newCmd.addCommand(manageAuthorizedMintersCmd());
+  newCmd.addCommand(setMintableCmd());
+  newCmd.addCommand(setTokenURISuffixCmd());
+  newCmd.addCommand(ownerMintCmd());
+  newCmd.addCommand(checkSignerBalanceCmd());
+  newCmd.addCommand(getWalletInfoCmd());
+  newCmd.addCommand(getConfigCmd());
 
   return newCmd;
 };
