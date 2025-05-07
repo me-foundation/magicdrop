@@ -10,7 +10,6 @@ import {
 } from './cmdOptions';
 import { EvmPlatform } from './evmUtils';
 import deployAction from './cmdActions/deployAction';
-import { loadDefaults } from './loaders';
 import { setBaseDir } from './setters';
 import { showError } from './display';
 import {
@@ -40,16 +39,6 @@ const presets = async () => {
     console.log('Starting prestart tasks...');
 
     setBaseDir();
-
-    // Load default configurations
-    await loadDefaults();
-
-    // Check if the default configuration is complete
-    if (process.env.DEFAULT_CONFIG_COMPLETE !== 'true') {
-      throw new Error(
-        'Configuration is incomplete. Please ensure all values are set in defaults.json.',
-      );
-    }
   } catch (error: any) {
     showError({ text: `An error occurred: ${error.message}` });
     process.exit(1);

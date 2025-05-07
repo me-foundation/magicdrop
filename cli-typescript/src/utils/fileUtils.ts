@@ -1,10 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import {
-  COLLECTION_DIR,
-  DEFAULT_COLLECTION_DIR,
-  TOKEN_STANDARD,
-} from './constants';
+import { COLLECTION_DIR } from './constants';
 import { Collection } from './types';
 import { Hex } from 'viem';
 
@@ -87,19 +83,6 @@ export const getWalletStore = (
     readonly,
     createDir,
   );
-
-  return store;
-};
-
-export const getTemplateStore = (tokenStandard: TOKEN_STANDARD) => {
-  const store = new Store<Collection>(
-    DEFAULT_COLLECTION_DIR,
-    'template',
-    `${tokenStandard.toLowerCase()}_template.json`,
-    true,
-  );
-
-  store.read();
 
   return store;
 };

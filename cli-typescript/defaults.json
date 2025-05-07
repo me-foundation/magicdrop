@@ -1,9 +1,0 @@
-{
-  "default_token_uri_suffix": ".json",
-  "default_royalty_receiver": "0x0000000000000000000000000000000000000000",
-  "default_royalty_fee": 0,
-  "default_cosigner": "0x0000000000000000000000000000000000000000",
-  "default_timestamp_expiry": 300,
-  "default_mint_currency": "0x0000000000000000000000000000000000000000",
-  "default_merkle_root": "0x0000000000000000000000000000000000000000000000000000000000000000"
-}

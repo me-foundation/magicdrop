@@ -41,13 +41,8 @@ export const setRoyalties = async (
   const royaltyFee = process.env.ROYALTY_FEE;
 
   let res = {
-    royaltyReceiver:
-      royaltyReceiver ??
-      process.env.DEFAULT_ROYALTY_RECEIVER ??
-      DEFAULT_ROYALTY_RECEIVER,
-    royaltyFee: Number(
-      royaltyFee ?? process.env.DEFAULT_ROYALTY_FEE ?? DEFAULT_ROYALTY_FEE,
-    ),
+    royaltyReceiver: royaltyReceiver ?? DEFAULT_ROYALTY_RECEIVER,
+    royaltyFee: Number(royaltyFee ?? DEFAULT_ROYALTY_FEE),
   };
 
   if (isUnsetOrNull(royaltyReceiver) && isUnsetOrNull(royaltyFee)) {

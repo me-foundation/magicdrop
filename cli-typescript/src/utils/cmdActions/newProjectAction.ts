@@ -1,8 +1,10 @@
 import { TOKEN_STANDARD } from '../constants';
 import { showError, showText } from '../display';
-import { getProjectStore, getTemplateStore } from '../fileUtils';
+import { getProjectStore } from '../fileUtils';
 import { getChainIdFromName } from '../getters';
+import { ERC1155_TEMPLATE, ERC721_TEMPLATE } from '../../templates';
 import { createProjectSigner } from '../turnkey';
+import { Collection } from '../types';
 
 const newProjectAction = async (
   symbol: string,
@@ -21,8 +23,11 @@ const newProjectAction = async (
     process.exit(1);
   }
 
-  const templateStore = getTemplateStore(params.tokenStandard);
-  projectStore.data = templateStore.data;
+  projectStore.data = projectStore.data = (
+    params.tokenStandard === TOKEN_STANDARD.ERC721
+      ? ERC721_TEMPLATE
+      : ERC1155_TEMPLATE
+  ) as Collection;
 
   if (projectStore.data) {
     projectStore.data.chainId = getChainIdFromName(params.chain);
