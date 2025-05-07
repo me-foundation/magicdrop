@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import {
+  getConfigFileOption,
   getEnvOption,
   getSetupContractOption,
   getSetupWalletOption,
@@ -19,6 +20,7 @@ import {
 } from './constants';
 import newProjectAction from './cmdActions/newProjectAction';
 import initContractAction from './cmdActions/initContractAction';
+import fillProjectConfigAction from './cmdActions/fillProjectConfigAction';
 
 export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   defaultInfo =
@@ -139,10 +141,27 @@ export const createEvmCommand = ({
     );
 
   newCmd
-    .command('init-contract <collection>')
+    .command('init-contract <symbol>')
     .description('Initialize/Set up a deployed collection (contract).')
     .addOption(getStagesFileOption())
     .action(initContractAction);
+
+  newCmd
+    .command('configure-project <symbol>')
+    .description(
+      'Configure the project for a specific collection. Note: this will work only for not-yet-deployed projects.',
+    )
+    .addOption(getConfigFileOption().makeOptionMandatory())
+    .action(
+      async (
+        symbol: string,
+        params: {
+          configFile: string;
+        },
+      ) => {
+        await fillProjectConfigAction(platform, symbol, params);
+      },
+    );
 
   return newCmd;
 };
