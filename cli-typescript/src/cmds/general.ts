@@ -41,6 +41,7 @@ import { setTokenUriSuffixAction } from '../utils/cmdActions/setTokenUriSuffixAc
 import { ownerMintAction } from '../utils/cmdActions/ownerMintAction';
 import { checkSignerBalanceAction } from '../utils/cmdActions/checkSignerBalanceAction';
 import getWalletInfoAction from '../utils/cmdActions/getWalletInfoAction';
+import getProjectConfigAction from '../utils/cmdActions/getProjectConfigAction';
 
 export const newProjectCmd = new Command('new')
   .command('new <symbol>')
@@ -203,3 +204,9 @@ export const getWalletInfoCmd = new Command('get-wallet-info')
   .command('get-wallet-info <symbol>')
   .description('Get the wallet info for a collection')
   .action(getWalletInfoAction);
+
+export const getConfigCmd = new Command('get-config')
+  .command('get-config <symbol>')
+  .alias('gc')
+  .description('Retrieve the project configuration for a specific collection.')
+  .action(getProjectConfigAction);

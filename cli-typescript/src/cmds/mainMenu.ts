@@ -5,6 +5,7 @@ import {
   freezeThawContractCmd,
   checkSignerBalanceCmd,
   getWalletInfoCmd,
+  getConfigCmd,
   initContractCmd,
   listProjectsCmd,
   manageAuthorizedMintersCmd,
@@ -65,6 +66,7 @@ export const mainMenu = async () => {
   program.addCommand(ownerMintCmd);
   program.addCommand(checkSignerBalanceCmd);
   program.addCommand(getWalletInfoCmd);
+  program.addCommand(getConfigCmd);
 
   // network sub-commands
   program.addCommand(eth);
