@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { COLLECTION_DIR } from './constants';
 import { Collection } from './types';
-import { Hex } from 'viem';
 
 export class Store<T> {
   public root: string;
@@ -64,22 +63,6 @@ export const getProjectStore = (
     COLLECTION_DIR,
     path.join('projects', symbol),
     'project.json',
-    readonly,
-    createDir,
-  );
-
-  return store;
-};
-
-export const getWalletStore = (
-  projectName: string,
-  readonly = false,
-  createDir = false,
-) => {
-  const store = new Store<{ walletId: string; signer: Hex }>(
-    COLLECTION_DIR,
-    path.join('projects', projectName),
-    'wallet.json',
     readonly,
     createDir,
   );

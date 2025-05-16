@@ -5,6 +5,6 @@ export const checkSignerBalanceAction = async (collection: string) => {
   try {
     await actionPresets(collection, false);
   } catch (error: any) {
-    showError({ text: `Error setting expiry: ${error.message}` });
+    showError({ text: `Error checking signer balance: ${error.message}` });
   }
 };

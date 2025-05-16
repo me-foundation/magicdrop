@@ -17,7 +17,7 @@ export const actionPresets = async (
 
   const { signer } = await getProjectSigner(symbol);
 
-  const cm = new ContractManager(config.chainId, signer);
+  const cm = new ContractManager(config.chainId, signer, symbol);
 
   await cm.printSignerWithBalance();
 

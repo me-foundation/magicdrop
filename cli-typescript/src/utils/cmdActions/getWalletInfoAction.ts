@@ -1,5 +1,6 @@
 import { showError, showText } from '../display';
-import { getProjectStore, getWalletStore } from '../fileUtils';
+import { getProjectStore } from '../fileUtils';
+import { getMETurnkeyServiceClient } from '../turnkey';
 
 const getWalletInfoAction = async (symbol: string) => {
   symbol = symbol.toLowerCase();
@@ -11,24 +12,24 @@ const getWalletInfoAction = async (symbol: string) => {
     process.exit(1);
   }
 
-  const walletStore = getWalletStore(symbol, false, true);
-  if (!walletStore.exists) {
+  try {
+    const walletInfo = await getMETurnkeyServiceClient().getWallet(symbol);
+    if (!walletInfo) {
+      showError({
+        text: `Failed to retrieve wallet information for ${symbol}.`,
+      });
+      process.exit(1);
+    }
+
+    showText('Wallet information retrieved successfully.');
+    console.log(walletInfo);
+  } catch (error: any) {
     showError({
-      text: `A Wallet file does not exists for ${symbol}.`,
+      text: `Failed to retrieve wallet information for ${symbol}.`,
+      subtext: error.message,
     });
     process.exit(1);
   }
-
-  walletStore.read();
-  if (!walletStore.data) {
-    showError({
-      text: `No data found for the wallet of ${symbol}.`,
-    });
-    process.exit(1);
-  }
-
-  showText('Wallet information retrieved successfully.');
-  console.log(walletStore.data);
 };
 
 export default getWalletInfoAction;

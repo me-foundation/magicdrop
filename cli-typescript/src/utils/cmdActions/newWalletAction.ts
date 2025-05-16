@@ -1,13 +1,8 @@
 import { showError, showText } from '../display';
-import { getProjectStore, getWalletStore } from '../fileUtils';
-import { createProjectSigner } from '../turnkey';
+import { getProjectStore } from '../fileUtils';
+import { getMETurnkeyServiceClient } from '../turnkey';
 
-const newWalletAction = async (
-  symbol: string,
-  params: {
-    force?: boolean;
-  },
-) => {
+const newWalletAction = async (symbol: string) => {
   symbol = symbol.toLowerCase();
 
   const projectStore = getProjectStore(symbol, false, true);
@@ -17,31 +12,37 @@ const newWalletAction = async (
     process.exit(1);
   }
 
-  const walletStore = getWalletStore(symbol, false, true);
-  if (walletStore.exists && !params.force) {
-    showError({
-      text: `A Wallet file already exists for ${symbol}. Use --force to overwrite.`,
-    });
-    process.exit(1);
-  }
-
-  const walletName = params.force ? `${symbol}-${Date.now()}` : symbol;
+  try {
+    const walletInfo = await getMETurnkeyServiceClient().getWallet(symbol);
+    if (walletInfo) {
+      showError({
+        text: `A Wallet already exists for ${symbol}.`,
+      });
+      process.exit(1);
+    }
+  } catch {}
 
   // Create a wallet for the project
-  const res = await createProjectSigner(symbol, walletName);
-  const signer = res.signer;
+  try {
+    const walletInfo = await getMETurnkeyServiceClient().createWallet(symbol);
 
-  const signerInfo = `Note: A signer account: "${signer?.address}" was created for this collection, you will need to fund it before you can deploy this collection.`;
+    const signerInfo = `Note: A signer account: "${walletInfo.address}" was created for this collection, you will need to fund it before you can deploy this collection.`;
 
-  showText(
-    `Successfully set up new wallet for ${symbol}`,
-    `
-    wallet: ${res.walletStore.root}
+    showText(
+      `Successfully set up new wallet for ${symbol}`,
+      `
+    walletInfo: ${JSON.stringify(walletInfo, null, 2)}
 
     ${signerInfo}
     `,
-    true,
-  );
+      true,
+    );
+  } catch (error: any) {
+    showError({
+      text: `Failed to create a new wallet for ${symbol}: ${error.message}`,
+    });
+    process.exit(1);
+  }
 };
 
 export default newWalletAction;

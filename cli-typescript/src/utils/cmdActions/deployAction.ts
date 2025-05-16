@@ -41,7 +41,11 @@ const deployAction = async (
 
     const { signer } = await getProjectSigner(symbol);
 
-    const cm = new ContractManager(mergedConfig.chainId, signer);
+    const cm = new ContractManager(
+      mergedConfig.chainId,
+      signer,
+      symbol.toLowerCase(),
+    );
 
     await deployContract({
       ...mergedConfig,
