@@ -3,7 +3,7 @@ import { showError, showText } from '../display';
 import { getProjectStore } from '../fileUtils';
 import { getChainIdFromName } from '../getters';
 import { ERC1155_TEMPLATE, ERC721_TEMPLATE } from '../../templates';
-import { createProjectSigner } from '../turnkey';
+import { getMETurnkeyServiceClient } from '../turnkey';
 import { Collection } from '../types';
 
 const newProjectAction = async (
@@ -34,27 +34,23 @@ const newProjectAction = async (
     projectStore.write();
   }
 
-  let walletFilePath = 'N/A';
-  let signer = undefined;
+  let walletInfo = undefined;
 
   // Create a wallet for the project
   if (params.setupWallet) {
-    const res = await createProjectSigner(symbol);
-    walletFilePath = res.walletStore.root;
-    signer = res.signer;
+    walletInfo = await getMETurnkeyServiceClient().createWallet(symbol);
   }
 
   const signerInfo = params.setupWallet
-    ? `Note: A signer account - "${signer?.address}" - was created for this collection, you will need to fund it before you can deploy this collection.`
+    ? `Note: A signer account - "${walletInfo?.address}" - was created for this collection, you will need to fund it before you can deploy this collection.`
     : `Note: A signer account was NOT setup for this collection, you will need one before you can deploy.
-      You can use the create-wallet command to create a signer account for this collection OR 
-      You can do this manually by creating a wallet.json file in the directory: ${projectStore.storeDir}.`;
+      You can use the create-wallet command to create a signer account for this collection.`;
 
   showText(
     `Successfully set up new project for ${symbol}`,
     `
     path: ${projectStore.root}
-    wallet: ${walletFilePath}
+    walletInfo: ${JSON.stringify(walletInfo, null, 2)}
 
     ${signerInfo}
     `,

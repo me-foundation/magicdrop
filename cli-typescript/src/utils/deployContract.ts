@@ -149,8 +149,6 @@ export const deployContract = async ({
       (await promptForConfirmation('Would you like to setup the contract?')));
 
   if (setupNow) {
-    console.clear();
-
     await setupContract({
       cm,
       contractAddress,

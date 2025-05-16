@@ -1,5 +1,4 @@
 import path from 'path';
-import os from 'os';
 
 export const ERROR_MESSAGES = {
   INVALID_OPTION: 'Invalid option selected. Please try again.',
@@ -19,14 +18,6 @@ export const CONFIG = {
   DEFAULT_COLLECTION_FILE: 'default_collection.json',
   MAX_RETRIES: 3,
 };
-
-export const MAGIC_DROP_KEYSTORE = 'MAGIC_DROP_KEYSTORE';
-export const MAGIC_DROP_KEYSTORE_FILE = path.join(
-  os.homedir(),
-  '.foundry',
-  'keystores',
-  MAGIC_DROP_KEYSTORE,
-);
 
 export const DEFAULT_COLLECTION_DIR = path.resolve(
   __dirname,

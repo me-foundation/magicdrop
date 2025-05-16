@@ -1,17 +1,14 @@
 import {
   createPublicClient,
-  createWalletClient,
   Hex,
   http,
   PublicClient,
-  WalletClient,
   Chain,
   TransactionReceipt,
   decodeEventLog,
   toEventSelector,
   encodeFunctionData,
   decodeFunctionResult,
-  Account,
   formatEther,
 } from 'viem';
 import {
@@ -25,7 +22,7 @@ import {
   rpcUrls,
   SUPPORTED_CHAINS,
 } from './constants';
-import { collapseAddress } from './common';
+import { collapseAddress, isValidEthereumAddress } from './common';
 import {
   APPLY_LIST_TO_COLLECTION_ABI,
   ERC1155M_ABIS,
@@ -37,21 +34,22 @@ import {
   SUPPORTS_INTERFACE_ABI,
 } from '../abis';
 import { printTransactionHash, showText } from './display';
+import { getMETurnkeyServiceClient } from './turnkey';
 
 export class ContractManager {
-  private wallet: WalletClient;
-
-  public signer: Hex;
   public client: PublicClient;
   public rpcUrl: string;
   public chain: Chain;
+  private meTurnkeServiceClient: ReturnType<typeof getMETurnkeyServiceClient>;
 
   constructor(
     public chainId: SUPPORTED_CHAINS,
-    private signerAccount: Account,
+    public signer: Hex,
+    public symbol: string,
   ) {
     this.rpcUrl = rpcUrls[this.chainId];
     this.chain = getViemChainByChainId(this.chainId);
+    this.meTurnkeServiceClient = getMETurnkeyServiceClient();
 
     // Initialize viem client
     this.client = createPublicClient({
@@ -59,17 +57,10 @@ export class ContractManager {
       transport: http(this.rpcUrl),
     }) as PublicClient;
 
-    // Initialize wallet client and signer
-    this.wallet = createWalletClient({
-      account: signerAccount,
-      chain: getViemChainByChainId(this.chainId),
-      transport: http(this.rpcUrl),
-    }) as WalletClient;
-
-    const signer = this.wallet.account?.address ?? this.signerAccount.address;
-
-    if (!signer) {
-      throw new Error('ContractManager initialization failed! Signer not set');
+    if (!this.signer && !isValidEthereumAddress(this.signer)) {
+      throw new Error(
+        'ContractManager initialization failed! Signer is invalid.',
+      );
     }
 
     this.signer = signer;
@@ -109,6 +100,9 @@ export class ContractManager {
     }
   }
 
+  /**
+   * Sends a transaction using METurnkeyServiceClient for signing.
+   */
   public async sendTransaction({
     to,
     data,
@@ -120,13 +114,12 @@ export class ContractManager {
     value?: bigint;
     gasLimit?: bigint;
   }): Promise<Hex> {
-    return this.wallet.sendTransaction({
-      account: this.signerAccount,
-      chain: getViemChainByChainId(this.chainId),
+    return this.meTurnkeServiceClient.sendTransaction(this.symbol, {
       to,
       data,
       value,
       gasLimit,
+      chainId: this.chainId,
     });
   }
 
