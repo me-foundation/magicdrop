@@ -353,7 +353,6 @@ const processERC1155Stage = async (
 ): Promise<
   | {
       price: string[];
-      mintFee: string[];
       walletLimit: number[];
       merkleRoot: string[];
       maxStageSupply: number[];
@@ -376,9 +375,6 @@ const processERC1155Stage = async (
     return {
       price: stage.price.map((p) =>
         ethers.utils.parseEther(p.toString()).toString(),
-      ),
-      mintFee: stage.mintFee.map((f) =>
-        ethers.utils.parseEther(f.toString()).toString(),
       ),
       walletLimit: stage.walletLimit,
       merkleRoot: merkleRoots,
@@ -466,7 +462,6 @@ const processERC721Stage = async (
 ): Promise<
   | {
       price: string;
-      mintFee: string;
       walletLimit: number;
       merkleRoot: string;
       maxStageSupply: number;
@@ -484,7 +479,6 @@ const processERC721Stage = async (
 
   const data = {
     price: ethers.utils.parseEther(stage.price.toString()).toString(),
-    mintFee: ethers.utils.parseEther(stage.mintFee.toString()).toString(),
     walletLimit: stage.walletLimit,
     merkleRoot,
     maxStageSupply: stage.maxStageSupply ?? 0,
