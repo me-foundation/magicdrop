@@ -163,7 +163,7 @@ export const createEvmCommand = ({
   // subcommand hook; verify if the collection is supported on the platform
   newCmd.hook('preAction', (_, actionCommand) => {
     const symbol = actionCommand.args[0];
-    if (!SUBCOMMAND_EXCLUDE_LIST.includes(actionCommand.name()) || !!symbol) {
+    if (!SUBCOMMAND_EXCLUDE_LIST.includes(actionCommand.name()) && !!symbol) {
       const store = getProjectStore(symbol);
       store.read();
 
