@@ -15,7 +15,6 @@ const newProjectAction = async (
   },
 ) => {
   symbol = symbol.toLowerCase();
-
   const projectStore = getProjectStore(symbol, false, true);
 
   if (projectStore.exists) {
@@ -23,7 +22,7 @@ const newProjectAction = async (
     process.exit(1);
   }
 
-  projectStore.data = projectStore.data = (
+  projectStore.data = (
     params.tokenStandard === TOKEN_STANDARD.ERC721
       ? ERC721_TEMPLATE
       : ERC1155_TEMPLATE
@@ -36,9 +35,11 @@ const newProjectAction = async (
 
   let walletInfo = undefined;
 
+  const meTurnkeyServiceClient = await getMETurnkeyServiceClient();
+
   // Create a wallet for the project
   if (params.setupWallet) {
-    walletInfo = await getMETurnkeyServiceClient().createWallet(symbol);
+    walletInfo = await meTurnkeyServiceClient.createWallet(symbol);
   }
 
   const signerInfo = params.setupWallet
@@ -50,7 +51,7 @@ const newProjectAction = async (
     `Successfully set up new project for ${symbol}`,
     `
     path: ${projectStore.root}
-    walletInfo: ${JSON.stringify(walletInfo, null, 2)}
+    ${walletInfo ? `walletInfo: ${JSON.stringify(walletInfo, null, 2)}` : ''}
 
     ${signerInfo}
     `,

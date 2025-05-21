@@ -12,8 +12,10 @@ const newWalletAction = async (symbol: string) => {
     process.exit(1);
   }
 
+  const meTurnkeyServiceClient = await getMETurnkeyServiceClient();
+
   try {
-    const walletInfo = await getMETurnkeyServiceClient().getWallet(symbol);
+    const walletInfo = await meTurnkeyServiceClient.getWallet(symbol);
     if (walletInfo) {
       showError({
         text: `A Wallet already exists for ${symbol}.`,
@@ -24,7 +26,7 @@ const newWalletAction = async (symbol: string) => {
 
   // Create a wallet for the project
   try {
-    const walletInfo = await getMETurnkeyServiceClient().createWallet(symbol);
+    const walletInfo = await meTurnkeyServiceClient.createWallet(symbol);
 
     const signerInfo = `Note: A signer account: "${walletInfo.address}" was created for this collection, you will need to fund it before you can deploy this collection.`;
 

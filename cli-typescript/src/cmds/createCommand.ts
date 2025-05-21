@@ -41,6 +41,7 @@ import {
 import listProjectsAction from '../utils/cmdActions/listProjectsAction';
 import { getProjectStore } from '../utils/fileUtils';
 import fillProjectConfigAction from '../utils/cmdActions/fillProjectConfigAction';
+import { authenticate } from '../utils/auth';
 
 export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   defaultInfo =
@@ -55,9 +56,15 @@ export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   `;
 };
 
-const presets = async () => {
+const presets = async (cliCmd: string) => {
   try {
     console.log('Starting prestart tasks...');
+
+    console.log('Authenticating...');
+    await authenticate();
+
+    // set cmd name globally
+    process.env.MAGICDROP_CLI_CMD = cliCmd;
 
     setBaseDir();
   } catch (error: any) {
@@ -80,11 +87,29 @@ export const createEvmCommand = ({
     .description(`${platform.name} launchpad commands`)
     .aliases(commandAliases);
 
-  newCmd.hook('preAction', async () => {
+  newCmd.hook('preAction', async (_, actionCommand) => {
     try {
-      await presets();
+      await presets(actionCommand.name());
     } catch (error: any) {
       showError({ text: `setup failed - ${error.message}` });
+    }
+  });
+
+  // subcommand hook; verify if the collection is supported on the platform
+  newCmd.hook('preAction', (_, actionCommand) => {
+    const symbol = actionCommand.args[0];
+
+    if (!SUBCOMMAND_EXCLUDE_LIST.includes(actionCommand.name()) && !!symbol) {
+      const store = getProjectStore(symbol);
+      store.read();
+
+      if (!platform.isChainIdSupported(store.data?.chainId ?? 0)) {
+        showError({
+          text: `collection '${symbol}' not supported on the ${platform.name} platform.`,
+        });
+
+        process.exit(1);
+      }
     }
   });
 
@@ -159,23 +184,6 @@ export const createEvmCommand = ({
         },
       ) => await deployAction(platform, symbol, params),
     );
-
-  // subcommand hook; verify if the collection is supported on the platform
-  newCmd.hook('preAction', (_, actionCommand) => {
-    const symbol = actionCommand.args[0];
-    if (!SUBCOMMAND_EXCLUDE_LIST.includes(actionCommand.name()) && !!symbol) {
-      const store = getProjectStore(symbol);
-      store.read();
-
-      if (!platform.isChainIdSupported(store.data?.chainId ?? 0)) {
-        showError({
-          text: `collection '${symbol}' not supported on the ${platform.name} platform.`,
-        });
-
-        process.exit(1);
-      }
-    }
-  });
 
   newCmd
     .command('configure-project <symbol>')

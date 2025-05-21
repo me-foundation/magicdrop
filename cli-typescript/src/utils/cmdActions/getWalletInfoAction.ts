@@ -13,7 +13,8 @@ const getWalletInfoAction = async (symbol: string) => {
   }
 
   try {
-    const walletInfo = await getMETurnkeyServiceClient().getWallet(symbol);
+    const meTurnkeyServiceClient = await getMETurnkeyServiceClient();
+    const walletInfo = await meTurnkeyServiceClient.getWallet(symbol);
     if (!walletInfo) {
       showError({
         text: `Failed to retrieve wallet information for ${symbol}.`,
