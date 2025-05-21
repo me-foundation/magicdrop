@@ -40,16 +40,17 @@ export class ContractManager {
   public client: PublicClient;
   public rpcUrl: string;
   public chain: Chain;
-  private meTurnkeServiceClient: ReturnType<typeof getMETurnkeyServiceClient>;
+  private meTurnkeyServiceClient: ReturnType<typeof getMETurnkeyServiceClient>;
 
   constructor(
     public chainId: SUPPORTED_CHAINS,
     public signer: Hex,
     public symbol: string,
   ) {
+    this.symbol = this.symbol.toLowerCase();
     this.rpcUrl = rpcUrls[this.chainId];
     this.chain = getViemChainByChainId(this.chainId);
-    this.meTurnkeServiceClient = getMETurnkeyServiceClient();
+    this.meTurnkeyServiceClient = getMETurnkeyServiceClient();
 
     // Initialize viem client
     this.client = createPublicClient({
@@ -114,7 +115,7 @@ export class ContractManager {
     value?: bigint;
     gasLimit?: bigint;
   }): Promise<Hex> {
-    return this.meTurnkeServiceClient.sendTransaction(this.symbol, {
+    return this.meTurnkeyServiceClient.sendTransaction(this.symbol, {
       to,
       data,
       value,
