@@ -20,7 +20,7 @@ const initContractAction = async (
 
     const { signer } = await getProjectSigner(symbol);
 
-    const cm = new ContractManager(config.chainId, signer);
+    const cm = new ContractManager(config.chainId, signer, symbol);
 
     await setupContract({
       cm,
@@ -29,7 +29,7 @@ const initContractAction = async (
       stagesFile: params.stagesFile,
       contractAddress: config.deployment!.contract_address as Hex,
       collectionFile: store.root,
-      signer: signer.address,
+      signer: signer,
     });
   } catch (error: any) {
     showError({ text: `Error initializing contract: ${error.message}` });
