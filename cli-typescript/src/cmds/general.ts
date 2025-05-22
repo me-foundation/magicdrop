@@ -41,16 +41,6 @@ export const createNewWalletCmd = () =>
   new Command('create-wallet')
     .command('create-wallet <symbol>')
     .description('create a new wallet for a collection')
-    .addOption(
-      getForceOption(
-        `
-    overwrite the existing wallet.json for the collection.
-    Note: this will NOT delete the existing wallet in turnkey if a wallet with the same collection name already exists.
-    Please reconcile manually in turnkey if you want to delete the existing wallet.
-  `,
-        false,
-      ),
-    )
     .action(newWalletAction);
 
 export const initContractCmd = () =>

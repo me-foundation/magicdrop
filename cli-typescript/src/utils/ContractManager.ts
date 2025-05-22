@@ -40,7 +40,6 @@ export class ContractManager {
   public client: PublicClient;
   public rpcUrl: string;
   public chain: Chain;
-  private meTurnkeyServiceClient: ReturnType<typeof getMETurnkeyServiceClient>;
 
   constructor(
     public chainId: SUPPORTED_CHAINS,
@@ -50,7 +49,6 @@ export class ContractManager {
     this.symbol = this.symbol.toLowerCase();
     this.rpcUrl = rpcUrls[this.chainId];
     this.chain = getViemChainByChainId(this.chainId);
-    this.meTurnkeyServiceClient = getMETurnkeyServiceClient();
 
     // Initialize viem client
     this.client = createPublicClient({
@@ -115,7 +113,8 @@ export class ContractManager {
     value?: bigint;
     gasLimit?: bigint;
   }): Promise<Hex> {
-    return this.meTurnkeyServiceClient.sendTransaction(this.symbol, {
+    const meTurnkeyServiceClient = await getMETurnkeyServiceClient();
+    return await meTurnkeyServiceClient.sendTransaction(this.symbol, {
       to,
       data,
       value,
@@ -361,7 +360,7 @@ export class ContractManager {
     const data = encodeFunctionData({
       abi: [ERC1155M_ABIS.setTransferable],
       functionName: ERC1155M_ABIS.setTransferable.name,
-      args: [false],
+      args: [!freeze],
     });
 
     const txHash = await this.sendTransaction({
