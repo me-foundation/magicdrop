@@ -12,11 +12,7 @@ import { EvmPlatform } from '../utils/evmUtils';
 import deployAction from '../utils/cmdActions/deployAction';
 import { setBaseDir } from '../utils/setters';
 import { showError } from '../utils/display';
-import {
-  COLLECTION_DIR,
-  supportedChainNames,
-  TOKEN_STANDARD,
-} from '../utils/constants';
+import { supportedChainNames, TOKEN_STANDARD } from '../utils/constants';
 import newProjectAction from '../utils/cmdActions/newProjectAction';
 import {
   checkSignerBalanceCmd,
@@ -42,6 +38,7 @@ import listProjectsAction from '../utils/cmdActions/listProjectsAction';
 import { getProjectStore } from '../utils/fileUtils';
 import fillProjectConfigAction from '../utils/cmdActions/fillProjectConfigAction';
 import { authenticate } from '../utils/auth';
+import { getCollectionDir } from '../utils/getters';
 
 export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   defaultInfo =
@@ -50,7 +47,7 @@ export const getNewProjectCmdDescription = (defaultInfo?: string) => {
   return `
     Creates a new launchpad/collection template. 
     you can specify the collection directory by setting the "MAGIC_DROP_COLLECTION_DIR" env 
-    else it defaults to "${COLLECTION_DIR}" in the project directory.
+    else it defaults to "${getCollectionDir()}" in the project directory.
     You can also specify the chain and token standard to use for the new project.
     ${defaultInfo}
   `;

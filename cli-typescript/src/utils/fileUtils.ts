@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { COLLECTION_DIR } from './constants';
 import { Collection } from './types';
+import { getCollectionDir } from './getters';
 
 export class Store<T> {
   public root: string;
@@ -60,7 +60,7 @@ export const getProjectStore = (
   createDir = false,
 ) => {
   const store = new Store<Collection>(
-    COLLECTION_DIR,
+    getCollectionDir(),
     path.join('projects', symbol),
     'project.json',
     readonly,

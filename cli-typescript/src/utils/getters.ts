@@ -2,6 +2,7 @@ import { confirm } from '@inquirer/prompts';
 import {
   ABSTRACT_FACTORY_ADDRESS,
   ABSTRACT_REGISTRY_ADDRESS,
+  DEFAULT_COLLECTION_DIR,
   DEFAULT_FACTORY_ADDRESS,
   DEFAULT_IMPL_ID,
   DEFAULT_LIST_ID,
@@ -320,4 +321,8 @@ export const getExplorerTxUrl = (
 export const getBaseDir = (): string => {
   const baseDir = process.env.BASE_DIR || setBaseDir();
   return baseDir;
+};
+
+export const getCollectionDir = (): string => {
+  return process.env.MAGIC_DROP_COLLECTION_DIR || DEFAULT_COLLECTION_DIR;
 };

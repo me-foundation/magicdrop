@@ -24,9 +24,6 @@ export const DEFAULT_COLLECTION_DIR = path.resolve(
   '../../collections',
 );
 
-export const COLLECTION_DIR =
-  process.env.MAGIC_DROP_COLLECTION_DIR || DEFAULT_COLLECTION_DIR;
-
 export const ME_TRANSFER_VALIDATOR_V3 =
   '0x721C00D4FB075b22a5469e9CF2440697F729aA13';
 export const LIMITBREAK_TRANSFER_VALIDATOR_V3 =
@@ -94,18 +91,28 @@ export const supportedChainNames: { [key in SUPPORTED_CHAINS]: string } = {
 };
 
 export const rpcUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
-  [SUPPORTED_CHAINS.ETHEREUM]: 'https://eth.llamarpc.com', // Ethereum
-  [SUPPORTED_CHAINS.BSC]: 'https://bsc-dataseed.binance.org', // BSC
-  [SUPPORTED_CHAINS.POLYGON]: 'https://polygon-rpc.com', // Polygon
-  [SUPPORTED_CHAINS.BASE]: 'https://mainnet.base.org', // Base
-  [SUPPORTED_CHAINS.ARBITRUM]: 'https://arb1.arbitrum.io/rpc', // Arbitrum
-  [SUPPORTED_CHAINS.SEI]: 'https://evm-rpc.sei-apis.com', // Sei
-  [SUPPORTED_CHAINS.APECHAIN]: 'https://rpc.apechain.com/http', // ApeChain
-  [SUPPORTED_CHAINS.SEPOLIA]: 'https://ethereum-sepolia-rpc.publicnode.com', // Sepolia
-  [SUPPORTED_CHAINS.ABSTRACT]: 'https://api.mainnet.abs.xyz', // Abstract
-  [SUPPORTED_CHAINS.BERACHAIN]: 'https://rpc.berachain.com', // Berachain
-  [SUPPORTED_CHAINS.MONAD_TESTNET]: 'https://testnet-rpc.monad.xyz', // Monad Testnet
-  [SUPPORTED_CHAINS.AVALANCHE]: 'https://avalanche.drpc.org', // Avalanche
+  [SUPPORTED_CHAINS.ETHEREUM]:
+    'https://evm-router.magiceden.io/ethereum/mainnet/me2024', // Ethereum
+  [SUPPORTED_CHAINS.BSC]: 'https://evm-router.magiceden.io/bsc/mainnet/me2024', // BSC
+  [SUPPORTED_CHAINS.POLYGON]:
+    'https://evm-router.magiceden.io/polygon/mainnet/me2024', // Polygon
+  [SUPPORTED_CHAINS.BASE]:
+    'https://evm-router.magiceden.io/base/mainnet/me2024', // Base
+  [SUPPORTED_CHAINS.ARBITRUM]:
+    'https://evm-router.magiceden.io/arbitrum/mainnet/me2024', // Arbitrum
+  [SUPPORTED_CHAINS.SEI]: 'https://evm-router.magiceden.io/sei/mainnet/me2024', // Sei
+  [SUPPORTED_CHAINS.APECHAIN]:
+    'https://evm-router.magiceden.io/apechain/mainnet/me2024', // ApeChain
+  [SUPPORTED_CHAINS.SEPOLIA]:
+    'https://evm-router.magiceden.io/ethereum/sepolia/me2024', // Sepolia
+  [SUPPORTED_CHAINS.ABSTRACT]:
+    'https://evm-router.magiceden.io/abstract/mainnet/me2024', // Abstract
+  [SUPPORTED_CHAINS.BERACHAIN]:
+    'https://evm-router.magiceden.io/berachain/mainnet/me2024"', // Berachain
+  [SUPPORTED_CHAINS.MONAD_TESTNET]:
+    'https://evm-router.magiceden.io/monad/testnet/me2024', // Monad Testnet
+  [SUPPORTED_CHAINS.AVALANCHE]:
+    'https://evm-router.magiceden.io/avalanche/mainnet/me2024', // Avalanche
 };
 
 export const explorerUrls: { [chainId in SUPPORTED_CHAINS]: string } = {

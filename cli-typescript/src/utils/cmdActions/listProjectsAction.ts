@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { COLLECTION_DIR } from '../constants';
 import { showError, showText } from '../display';
 import { EvmPlatform } from '../evmUtils';
 import { getProjectStore } from '../fileUtils';
+import { getCollectionDir } from '../getters';
 
 const listProjectsAction = async (platform?: EvmPlatform) => {
   try {
-    const projectDir = `${COLLECTION_DIR}/projects`;
+    const projectDir = `${getCollectionDir()}/projects`;
 
     if (!fs.existsSync(projectDir)) {
       throw new Error(
