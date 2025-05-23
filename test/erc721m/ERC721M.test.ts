@@ -7,7 +7,7 @@ import { ERC721M } from '../../typechain-types';
 import { BigNumber } from 'ethers';
 
 const { keccak256, getAddress } = ethers.utils;
-const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
+const LAUNCHPAD_MINT_FEE_RECEIVER = '0x4ea582a85cE4F75cF5f182733000979164f10b68';
 const MINT_FEE = ethers.utils.parseEther('0.00002');
 
 chai.use(chaiAsPromised);
@@ -683,7 +683,7 @@ describe('ERC721M', function () {
         contract.address,
       );
       const mintFeeReceiverBalanceInitial =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -709,7 +709,7 @@ describe('ERC721M', function () {
       expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(MINT_FEE);
 
       const mintFeeReceiverBalancePost =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(0);
@@ -737,7 +737,7 @@ describe('ERC721M', function () {
         contract.address,
       );
       const mintFeeReceiverBalanceInitial =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
 
       // Setup the test context: Update block.timestamp to comply to the stage being active
       await ethers.provider.send('evm_mine', [stageStart - 1]);
@@ -766,7 +766,7 @@ describe('ERC721M', function () {
       expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
 
       const mintFeeReceiverBalancePost =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(MINT_FEE);
