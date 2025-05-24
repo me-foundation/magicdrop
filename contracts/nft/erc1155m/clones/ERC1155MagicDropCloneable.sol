@@ -8,7 +8,7 @@ import {ERC1155MagicDropMetadataCloneable} from "./ERC1155MagicDropMetadataClone
 import {PublicStage, AllowlistStage, SetupConfig} from "./Types.sol";
 import {IERC1155MagicDropMetadata} from "../interfaces/IERC1155MagicDropMetadata.sol";
 
-import {MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
+import {SELF_SERVE_MINT_FEE_RECEIVER} from "../../../utils/Constants.sol";
 
 ///                                                     ........
 ///                             .....                   ..    ...
@@ -438,7 +438,7 @@ contract ERC1155MagicDropCloneable is ERC1155MagicDropMetadataCloneable {
         if (mintFee > 0) {
             uint256 totalMintFee = mintFee * qty;
             proceeds -= totalMintFee;
-            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, totalMintFee);
+            SafeTransferLib.safeTransferETH(SELF_SERVE_MINT_FEE_RECEIVER, totalMintFee);
         }
 
         // If there are no remaining proceeds after mint fee is taken, exit early

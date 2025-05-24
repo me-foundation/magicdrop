@@ -10,7 +10,7 @@ import {ERC721MInitializableV1_0_2 as ERC721MInitializable} from
 import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
-import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {LAUNCHPAD_MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 import {Ownable} from "solady/src/auth/Ownable.sol";
 
 contract MockERC721M is ERC721MInitializable {
@@ -308,7 +308,7 @@ contract ERC721MInitializableTest is Test {
         vm.prank(owner);
         nft.withdraw();
         assertEq(fundReceiver.balance, 0.5 ether);
-        assertEq(MINT_FEE_RECEIVER.balance, mintFee);
+        assertEq(LAUNCHPAD_MINT_FEE_RECEIVER.balance, mintFee);
     }
 
     function testMintFeeSetter() public {

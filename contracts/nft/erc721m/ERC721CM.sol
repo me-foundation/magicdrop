@@ -15,7 +15,7 @@ import {ERC721MStorage} from "./ERC721MStorage.sol";
 import {Cosignable} from "../../common/Cosignable.sol";
 import {AuthorizedMinterControl} from "../../common/AuthorizedMinterControl.sol";
 import {MintStageInfo} from "../../common/Structs.sol";
-import {MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
+import {LAUNCHPAD_MINT_FEE_RECEIVER} from "../../utils/Constants.sol";
 
 /// @title ERC721CM
 /// @notice An initializable ERC721 contract with multi-stage minting, royalties, and authorized minters
@@ -345,7 +345,7 @@ contract ERC721CM is
     /// @notice Withdraws the total mint fee and remaining balance from the contract
     /// @dev Can only be called by the owner
     function withdraw() external onlyOwner {
-        (bool success,) = MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
+        (bool success,) = LAUNCHPAD_MINT_FEE_RECEIVER.call{value: _totalMintFee}("");
         if (!success) revert TransferFailed();
         _totalMintFee = 0;
 
@@ -369,7 +369,7 @@ contract ERC721CM is
         _totalMintFee = 0;
         uint256 totalAmount = totalFee + remaining;
 
-        SafeTransferLib.safeTransfer(_mintCurrency, MINT_FEE_RECEIVER, totalFee);
+        SafeTransferLib.safeTransfer(_mintCurrency, LAUNCHPAD_MINT_FEE_RECEIVER, totalFee);
         SafeTransferLib.safeTransfer(_mintCurrency, _fundReceiver, remaining);
 
         emit WithdrawERC20(_mintCurrency, totalAmount);
