@@ -1,7 +1,6 @@
 import path from 'path';
-import fs from 'fs';
 import { confirm } from '@inquirer/prompts';
-import { collapseAddress, executeCommand } from './common';
+import { collapseAddress } from './common';
 import {
   confirmDeployment,
   confirmSetup,
@@ -14,7 +13,6 @@ import {
   ERC721StageData,
 } from './types';
 import {
-  getBaseDir,
   getExplorerContractUrl,
   getFactoryAddress,
   getImplId,
@@ -43,6 +41,7 @@ import {
   setTokenUriSuffix,
 } from './setters';
 import { getProjectStore } from './fileUtils';
+import { getStagesData } from './evmUtils';
 
 export const deployContract = async ({
   store,
@@ -364,16 +363,16 @@ export const processStages = async (params: {
 
   const outputFileDir = path.dirname(collectionFile);
   console.log(`Output file directory: ${outputFileDir}`);
-  const saveToJson = true;
 
   try {
-    // Execute the script to process stages
-    executeCommand(
-      `npx ts-node "${path.join(
-        getBaseDir(),
-        '../../scripts/utils/getStagesData.ts',
-      )}" "${stagesFile}" '${stagesJson}' "${outputFileDir}" "${tokenStandard}" "" "${saveToJson}"`,
+    const stagesData = await getStagesData(
+      stagesFile,
+      tokenStandard === TOKEN_STANDARD.ERC1155,
+      outputFileDir,
+      stagesJson,
     );
+
+    return stagesData as ERC721StageData[] | ERC1155StageData[];
   } catch (error: any) {
     console.error(
       'Error: Failed to get stages data',
@@ -382,22 +381,6 @@ export const processStages = async (params: {
     );
     throw new Error('Failed to get stages data');
   }
-
-  // Check if the output file exists
-  const outputFilePath = path.join(outputFileDir, 'stagesInput.tmp.json');
-
-  if (!fs.existsSync(outputFilePath)) {
-    console.error(`Error: Output file not found: ${outputFilePath}`);
-    throw new Error(`Output file not found: ${outputFilePath}`);
-  }
-
-  // Read the stages data
-  const stagesData = fs.readFileSync(outputFilePath, 'utf-8');
-
-  // Delete the temporary file
-  fs.unlinkSync(outputFilePath);
-
-  return JSON.parse(stagesData);
 };
 
 export const getERC721ParsedStagesData = (stagesData: ERC721StageData[]) => {
