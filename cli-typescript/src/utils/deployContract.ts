@@ -22,7 +22,7 @@ import {
   promptForConfirmation,
 } from './getters';
 import { ContractManager } from './ContractManager';
-import { Hex } from 'viem';
+import { Hex, parseEther } from 'viem';
 import {
   DEFAULT_MINT_CURRENCY,
   SUPPORTED_CHAINS,
@@ -77,6 +77,11 @@ export const deployContract = async ({
     Number(standardId),
     Number(implId),
   );
+  const mintFee = await cm.getMintFee(
+    registryAddress,
+    Number(standardId),
+    Number(implId),
+  );
 
   await confirmDeployment({
     name: collectionName,
@@ -86,6 +91,7 @@ export const deployContract = async ({
     implId: implId.toString(),
     chainId: cm.chainId,
     deploymentFee: deploymentFee.toString(),
+    mintFee: mintFee.toString(),
   });
 
   showText('Deploying contract... this may take a minute.', '', false, false);
@@ -166,6 +172,18 @@ export const deployContract = async ({
       royaltyFee,
       mintCurrency,
       totalTokens,
+    });
+  }
+
+  const shouldSetMintFee = await promptForConfirmation(
+    'Would you like to set the mint fee?',
+  );
+
+  if (shouldSetMintFee) {
+    await setMintFee({
+      cm,
+      contractAddress,
+      mintFee,
     });
   }
 };
@@ -387,13 +405,12 @@ export const getERC721ParsedStagesData = (stagesData: ERC721StageData[]) => {
   const parsedStagesData = stagesData.map((stage) => {
     return [
       BigInt(stage.price),
-      BigInt(stage.mintFee),
       stage.walletLimit,
       stage.merkleRoot as Hex,
       stage.maxStageSupply,
       BigInt(stage.startTime),
       BigInt(stage.endTime),
-    ] as readonly [bigint, bigint, number, Hex, number, bigint, bigint];
+    ] as readonly [bigint, number, Hex, number, bigint, bigint];
   });
 
   return parsedStagesData;
@@ -403,21 +420,12 @@ export const getERC1155ParsedStagesData = (stagesData: ERC1155StageData[]) => {
   const parsedStagesData = stagesData.map((stage) => {
     return [
       stage.price.map((price) => BigInt(price)),
-      stage.mintFee.map((fee) => BigInt(fee)),
       stage.walletLimit,
       stage.merkleRoot,
       stage.maxStageSupply,
       BigInt(stage.startTime),
       BigInt(stage.endTime),
-    ] as readonly [
-      bigint[],
-      bigint[],
-      number[],
-      Hex[],
-      number[],
-      bigint,
-      bigint,
-    ];
+    ] as readonly [bigint[], number[], Hex[], number[], bigint, bigint];
   });
 
   return parsedStagesData;
@@ -450,7 +458,7 @@ const sendERC721SetupTransaction = async ({
 }) => {
   try {
     const setupSignature =
-      'function setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)';
+      'function setup(string,string,uint256,uint256,address,address,(uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)';
 
     const abi = AbiFunction.from(setupSignature);
 
@@ -506,7 +514,7 @@ const sendERC1155SetupTransaction = async ({
 }) => {
   try {
     const setupSignature =
-      'function setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)';
+      'function setup(string,uint256[],uint256[],address,address,(uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)';
 
     const abi = AbiFunction.from(setupSignature);
 
@@ -533,5 +541,51 @@ const sendERC1155SetupTransaction = async ({
   } catch (error) {
     console.error('Error sending transaction:', error);
     throw error;
+  }
+};
+
+export const setMintFee = async ({
+  cm,
+  contractAddress,
+  mintFee,
+}: {
+  cm: ContractManager;
+  contractAddress: Hex;
+  mintFee: bigint;
+}) => {
+  showText(
+    `You are about to set the mint fee of ${collapseAddress(contractAddress)} to ${mintFee}`,
+  );
+
+  await cm.printSignerWithBalance();
+
+  const proceed = await promptForConfirmation('Do you want to proceed?');
+
+  if (!proceed) {
+    showText('Set mint fee cancelled');
+    return;
+  }
+
+  const { transactionHash } = await cm.setMintFee(
+    contractAddress,
+    parseMintFee(mintFee.toString()),
+  );
+
+  printTransactionHash(transactionHash, cm.chainId);
+  console.log(`Mint fee set to: ${mintFee}`);
+};
+
+export const parseMintFee = (mintFee: string) => {
+  if (!mintFee) {
+    console.error('No mint fee provided');
+    throw new Error('No mint fee provided');
+  }
+
+  try {
+    const parsedFee = parseEther(mintFee);
+    return parsedFee;
+  } catch (error: any) {
+    console.error('Failed to parse mint fee:', error.message);
+    throw new Error('Failed to parse mint fee');
   }
 };

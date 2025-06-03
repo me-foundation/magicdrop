@@ -255,22 +255,11 @@ export const getImplId = (
   tokenStandard: TOKEN_STANDARD,
   useERC721C?: boolean,
 ): number => {
-  if (tokenStandard !== TOKEN_STANDARD.ERC721 || !useERC721C) {
-    return DEFAULT_IMPL_ID;
+  if (tokenStandard === TOKEN_STANDARD.ERC721 && useERC721C) {
+    return 2;
   }
 
-  switch (chainId) {
-    case SUPPORTED_CHAINS.ABSTRACT:
-      return 3; // ERC721C implementation ID / abstract
-    case SUPPORTED_CHAINS.BASE:
-      return 8;
-    case SUPPORTED_CHAINS.ETHEREUM:
-      return 7;
-    case SUPPORTED_CHAINS.BERACHAIN:
-      return 2;
-    default:
-      return 5;
-  }
+  return DEFAULT_IMPL_ID;
 };
 
 export const getStandardId = (tokenStandard: TOKEN_STANDARD): string => {

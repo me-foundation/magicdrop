@@ -63,15 +63,13 @@ const sendERC721StagesTransaction = async (
   const args = stagesData.map((stage) => {
     return {
       price: stage[0],
-      mintFee: stage[1],
-      walletLimit: stage[2],
-      merkleRoot: stage[3],
-      maxStageSupply: stage[4],
-      startTimeUnixSeconds: stage[5],
-      endTimeUnixSeconds: stage[6],
+      walletLimit: stage[1],
+      merkleRoot: stage[2],
+      maxStageSupply: stage[3],
+      startTimeUnixSeconds: stage[4],
+      endTimeUnixSeconds: stage[5],
     } as {
       price: bigint;
-      mintFee: bigint;
       walletLimit: number;
       merkleRoot: Hex;
       maxStageSupply: number;
@@ -106,15 +104,13 @@ const sendERC1155SetupTransaction = async (
   const args = stagesData.map((stage) => {
     return {
       price: stage[0],
-      mintFee: stage[1],
-      walletLimit: stage[2],
-      merkleRoot: stage[3],
-      maxStageSupply: stage[4],
-      startTimeUnixSeconds: stage[5],
-      endTimeUnixSeconds: stage[6],
+      walletLimit: stage[1],
+      merkleRoot: stage[2],
+      maxStageSupply: stage[3],
+      startTimeUnixSeconds: stage[4],
+      endTimeUnixSeconds: stage[5],
     } as {
       price: bigint[];
-      mintFee: bigint[];
       walletLimit: number[];
       merkleRoot: `0x${string}`[];
       maxStageSupply: number[];

@@ -34,6 +34,7 @@ export const confirmDeployment = async (details: {
   implId: string;
   chainId: SUPPORTED_CHAINS;
   deploymentFee: string;
+  mintFee: string;
 }): Promise<void> => {
   const {
     name,
@@ -43,6 +44,7 @@ export const confirmDeployment = async (details: {
     implId,
     chainId,
     deploymentFee,
+    mintFee,
   } = details;
 
   console.log('');
@@ -56,6 +58,7 @@ export const confirmDeployment = async (details: {
   );
   console.log(`Chain ID:                     ${chalk.cyan(chainId)}`);
   console.log(`Deployment Fee:               ${chalk.cyan(deploymentFee)}`);
+  console.log(`Mint Fee:                     ${chalk.cyan(mintFee)}`);
   console.log('============================================================');
   console.log('');
 

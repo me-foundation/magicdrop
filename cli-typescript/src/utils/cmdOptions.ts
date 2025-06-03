@@ -159,3 +159,11 @@ export const getConfigFileOption = () =>
     Path to the project configuration file. This file contains the config for the collection.
   `,
   );
+
+export const mintFeeOption = () =>
+  new Option(
+    '--mintFee <mintFee>',
+    `
+    The mint fee for the collection in ether. This value is used to set the mint fee for the collection.
+  `,
+  );

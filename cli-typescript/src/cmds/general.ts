@@ -16,6 +16,7 @@ import {
   getTokenIdOption,
   getTokenUriSuffixOption,
   getUriOption,
+  mintFeeOption,
 } from '../utils/cmdOptions';
 import newWalletAction from '../utils/cmdActions/newWalletAction';
 import setUriAction from '../utils/cmdActions/setUriAction';
@@ -36,6 +37,7 @@ import { ownerMintAction } from '../utils/cmdActions/ownerMintAction';
 import { checkSignerBalanceAction } from '../utils/cmdActions/checkSignerBalanceAction';
 import getWalletInfoAction from '../utils/cmdActions/getWalletInfoAction';
 import getProjectConfigAction from '../utils/cmdActions/getProjectConfigAction';
+import setMintFeeAction from '../utils/cmdActions/setMintFeeAction';
 
 export const createNewWalletCmd = () =>
   new Command('create-wallet')
@@ -196,3 +198,11 @@ export const checkSignerBalanceCmd = () =>
     .alias('csb')
     .description('Check the balance of the signer account for the collection.')
     .action(checkSignerBalanceAction);
+
+export const setMintFeeCmd = () =>
+  new Command('set-mint-fee')
+    .command('set-mint-fee <symbol>')
+    .alias('smf')
+    .description('set the mint fee for the collection')
+    .addOption(mintFeeOption().makeOptionMandatory())
+    .action(setMintFeeAction);
