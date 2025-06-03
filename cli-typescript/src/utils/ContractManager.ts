@@ -30,6 +30,7 @@ import {
   MagicDropCloneFactoryAbis,
   MagicDropTokenImplRegistryAbis,
   NEW_CONTRACT_INITIALIZED_EVENT_ABI,
+  SET_MINT_FEE_ABI,
   SET_TRANSFER_VALIDATOR_ABI,
   SUPPORTS_INTERFACE_ABI,
 } from '../abis';
@@ -96,6 +97,67 @@ export class ContractManager {
     } catch (error: any) {
       console.error('Error fetching deployment fee:', error.message);
       throw new Error('Failed to fetch deployment fee.');
+    }
+  }
+
+  public async getMintFee(
+    registryAddress: Hex,
+    standardId: number,
+    implId: number,
+  ): Promise<bigint> {
+    try {
+      const data = encodeFunctionData({
+        abi: [MagicDropTokenImplRegistryAbis.getMintFee],
+        functionName: MagicDropTokenImplRegistryAbis.getMintFee.name,
+        args: [standardId, implId],
+      });
+
+      const result = await this.client.call({
+        to: registryAddress,
+        data,
+      });
+
+      showText('Fetching mint fee...', '', false, false);
+
+      if (!result.data) return BigInt(0);
+
+      const decodedResult = decodeFunctionResult({
+        abi: [MagicDropTokenImplRegistryAbis.getMintFee],
+        functionName: MagicDropTokenImplRegistryAbis.getMintFee.name,
+        data: result.data,
+      });
+
+      return decodedResult;
+    } catch (error: any) {
+      console.error('Error fetching deployment fee:', error.message);
+      throw new Error('Failed to fetch deployment fee.');
+    }
+  }
+
+  public async setMintFee(
+    contractAddress: Hex,
+    mintFee: bigint,
+  ): Promise<TransactionReceipt> {
+    try {
+      const data = encodeFunctionData({
+        abi: [SET_MINT_FEE_ABI],
+        functionName: SET_MINT_FEE_ABI.name,
+        args: [mintFee],
+      });
+
+      showText('Setting mint fee... this will take a moment', '', false, false);
+
+      const txHash = await this.sendTransaction({
+        to: contractAddress,
+        data,
+      });
+
+      const receipt = await this.waitForTransactionReceipt(txHash);
+
+      return receipt;
+    } catch (error: any) {
+      console.error('Error setting mint fee:', error.message);
+      throw new Error('Failed to set mint fee.');
     }
   }
 

@@ -75,6 +75,7 @@ export const NEW_CONTRACT_INITIALIZED_EVENT_ABI = {
     { name: 'standardId', type: 'uint8' },
     { name: 'name', type: 'string' },
     { name: 'symbol', type: 'string' },
+    { name: 'mintFee', type: 'uint256' },
   ],
 } as const;
 
@@ -137,6 +138,20 @@ export const TRANSFER_OWNERSHIP_ABI = {
     },
   ],
   name: 'transferOwnership',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const;
+
+export const SET_MINT_FEE_ABI = {
+  inputs: [
+    {
+      internalType: 'uint256',
+      name: 'mintFee',
+      type: 'uint256',
+    },
+  ],
+  name: 'setMintFee',
   outputs: [],
   stateMutability: 'nonpayable',
   type: 'function',
@@ -251,11 +266,6 @@ export const ERC712M_ABIS = {
           {
             internalType: 'uint80',
             name: 'price',
-            type: 'uint80',
-          },
-          {
-            internalType: 'uint80',
-            name: 'mintFee',
             type: 'uint80',
           },
           {
@@ -509,11 +519,6 @@ export const ERC1155M_ABIS = {
           {
             internalType: 'uint80[]',
             name: 'price',
-            type: 'uint80[]',
-          },
-          {
-            internalType: 'uint80[]',
-            name: 'mintFee',
             type: 'uint80[]',
           },
           {
