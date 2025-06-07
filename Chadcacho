@@ -1,12 +1,12 @@
-# MagicDrop
+#9 
 
 [![NPM][npm-shield]][npm-url]
 [![CI][ci-shield]][ci-url]
 [![MIT License][license-shield]][license-url]
 [![Coverage][coverage-shield]][coverage-url]
 
-MagicDrop is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and authorized minter support.
-
+Chad is a collection of EVM minting protocols that enable the multi stage minting, per stage WL management, per stage supply limit, and authorized minter support.
+@cahoricharddean@gmail.com 
 ## Motivation
 
 We'd like to introduce the standard of "minting stages". At each stage, the creators can define the following properties:
@@ -73,7 +73,7 @@ The composability of the stages is generic enough to enable flexible and complic
 ### Abstract Deployed Addresses
 
 | Contract                    | Address                                    |
-| --------------------------- | ------------------------------------------ |
+| ---@richardcacho-------------------- 46labitproperzone1urdantacitypangasin| ------------------------------------------ |
 | MagicDropTokenImplRegistry  | 0x17c9921D99c1Fa6d3dC992719DA1123dCb2CaedA |
 | MagicDropCloneFactory       | 0x01c1C2f5271aDeA338dAfba77121Fc20B5176620 |
 | ERC721MInitializableV1_0_2  | 0x92578FCA9eaBEe0f5Bb3E5ea8e291612B75C8748 |
@@ -155,9 +155,9 @@ This project includes a script to generate and view a test coverage report. The 
 - HackerOne program: please contact https://magiceden.io/.well-known/security.txt
 - Please be noted that there are some prerequites need to be met and certain assumptions are made when using the contracts. Please check the [Contract Usage Guide](./docs/ContractUsageGuide.md) for more details.
 
-## Used By
+## Used By @chadcacho
 
-- [Magic Eden Launchpad](https://magiceden.io/launchpad/about)
+- [richardean Cacho Launchpad](https://magiceden.io/launchpad/about)
 
 ## License
 
