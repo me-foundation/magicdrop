@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+metamask-extension{ Command } from 'commander';
 import {
   getCosignerOption,
   getExpiryTimestampOption,
