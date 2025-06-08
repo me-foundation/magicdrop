@@ -1,0 +1,948 @@
+#!/usr/bin/env bash
+
+trap "echo 'Exiting...'; exit 1" SIGINT
+
+deploy_contract() {
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    clear 
+
+    title="Deploy a new collection"
+
+    set_chain
+    set_token_standard
+    set_collection_name
+    set_collection_symbol
+
+    print_signer_with_balance $chain_id
+
+    create_contract_selector="createContract(string,string,uint8,address,uint32)"
+    factory_address=$(get_factory_address $chain_id)
+    registry_address=$(get_registry_address $chain_id)
+    standard_id=$(get_standard_id $token_standard)
+    password=$(get_password_if_set)
+
+    impl_id=$(get_impl_id)
+
+    echo "Fetching deployment fee..."
+    deployment_fee=$(cast call $registry_address "getDeploymentFee(uint8,uint32)" $standard_id $impl_id --rpc-url "$RPC_URL" $password)
+    if [ "$deployment_fee" == "0" ]; then
+        value="--value $deployment_fee"
+    fi
+
+    confirm_deployment
+
+    echo "Deploying contract... this may take a minute."
+    echo ""
+
+    output=$(cast send \
+        --rpc-url "$RPC_URL" \
+        $factory_address \
+        "$create_contract_selector" \
+        "$name" \
+        "$symbol" \
+        "$standard_id" \
+        "$SIGNER" \
+        $impl_id \
+        $(zksync_flag) \
+        $password \
+        $value \
+        --json)
+
+    print_transaction_hash
+
+    sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
+    event_data=$(get_contract_address_from_logs "$output" "$sig_event")
+    chunks=($(echo "$event_data" | fold -w64))
+    contract_address=$(decode_address "${chunks[0]}")
+
+    echo "Deployed Contract Address: $contract_address"
+    echo $(format_explorer_contract_url $chain_id $contract_address)
+    echo ""
+    save_deployment_data $contract_address $SIGNER
+    echo ""
+
+    supports_icreatortoken
+    is_icreatortoken=$?
+
+    if [ $is_icreatortoken -eq 0 ]; then
+        echo "Contract supports ICreatorToken, updating transfer validator and transfer list"
+        set_transfer_validator
+        set_transfer_list
+    fi
+
+    if [ $is_icreatortoken -eq 0 ]; then
+        if gum confirm "Would you like to freeze the collection?" --default=true; then
+            freeze_contract
+        fi
+    fi
+
+    # ask if they would like to setup the contract now
+    if gum confirm "Would you like to setup the contract?"; then
+        setup_contract
+    fi
+}
+
+supports_icreatortoken() {
+    echo "Checking if contract supports ICreatorToken..."
+    supports_interface=$(cast call $contract_address "supportsInterface(bytes4)" $ICREATOR_TOKEN_INTERFACE_ID --rpc-url "$RPC_URL" $password)
+    if [ "$supports_interface" == "$TRUE_HEX" ]; then
+        return 0
+    else
+        echo "Contract does not support ICreatorToken, skipping transfer validator setup."
+        return 1
+    fi
+}
+
+set_transfer_validator() {
+    tf_address=$(get_transfer_validator_address $chain_id)
+    echo "Setting transfer validator to $tf_address..."
+    output=$(cast send $contract_address "setTransferValidator(address)" $tf_address $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    print_transaction_hash $output
+    echo "Transfer validator set."
+    echo ""
+}
+
+set_transfer_list() {
+    tf_list_id=$(get_transfer_validator_list_id $chain_id)
+    echo "Setting transfer list to list ID $tf_list_id..."
+    output=$(cast send $tf_address "applyListToCollection(address,uint120)" $contract_address $tf_list_id $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    print_transaction_hash $output
+    echo "Transfer list set."
+    echo ""
+}
+
+freeze_thaw_contract() {
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    clear 
+
+    title="Deploy a new collection"
+
+    set_chain
+    set_contract_address
+    
+    print_signer_with_balance $chain_id
+
+    choice=$(gum choose "Freeze" "Thaw")
+    if [ "$choice" == "Freeze" ]; then
+        freeze_contract
+    else
+        thaw_contract
+    fi
+}
+
+freeze_contract() {
+    echo "Freezing contract... this will take a moment."
+
+    output=$(cast send $contract_address "setTransferable(bool)" false $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+
+    print_transaction_hash $output
+    echo "Token transfers frozen."
+    echo ""
+}
+
+thaw_contract() {
+    echo "Thawing contract... this will take a moment."
+
+    output=$(cast send $contract_address "setTransferable(bool)" true $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+
+    print_transaction_hash $output
+    echo "Token transfers thawed."
+    echo ""
+}
+
+check_setup_locked() {
+    setup_locked=$(cast call $contract_address "isSetupLocked()" --rpc-url "$RPC_URL" $password)
+    if [ "$setup_locked" == "$TRUE_HEX" ]; then
+        echo "This contract has already been setup. Please use other commands from the 'Manage Contracts' menu to update the contract."
+        exit 1
+    fi
+}
+
+setup_contract() {
+    clear 
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Setup an existing collection"
+
+    check_setup_locked
+
+    set_chain
+    set_contract_address
+    set_token_standard
+    set_stages_file
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_number_of_1155_tokens
+        set_1155_uri
+        token_uri_suffix=
+        base_uri=
+    elif [ "$token_standard" == "ERC721" ]; then
+        set_base_uri
+        set_token_uri_suffix
+        uri=
+    fi
+
+    set_global_wallet_limit
+    set_max_mintable_supply
+    set_mint_currency
+    set_fund_receiver
+    set_royalties
+
+    print_signer_with_balance $chain_id
+    confirm_setup
+
+    echo "Processing stages file... this will take a moment."
+    process_stages
+    output_file_dir="$(dirname "$collection_file")"
+    stages_data=$(cat "$output_file_dir/stagesInput.tmp") # this file is created by getStagesData.ts
+    rm "$output_file_dir/stagesInput.tmp"
+    echo ""
+
+    password=$(get_password_if_set)
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
+    elif [ "$token_standard" == "ERC721" ]; then
+        setup_selector="setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+    else
+        echo "Unknown token standard"
+        exit 1
+    fi
+
+    echo "Setting up contract... this will take a moment."
+
+    output=$(cast send $contract_address \
+        "$setup_selector" \
+        $uri \
+        $base_uri \
+        $token_uri_suffix \
+        "$max_mintable_supply" \
+        "$global_wallet_limit" \
+        "$mint_currency" \
+        "$fund_receiver" \
+        "$stages_data" \
+        "$royalty_receiver" \
+        "$royalty_fee" \
+        $password \
+        $(zksync_flag) \
+        --rpc-url "$RPC_URL" \
+        --json)
+
+    print_transaction_hash
+}
+
+set_base_uri_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Base URI"
+
+    if [ "$token_standard" != "ERC721" ]; then
+        echo "Base URI is not supported for $token_standard"
+        exit 1
+    fi
+
+    set_contract_address
+    set_chain
+    set_base_uri
+
+    print_signer_with_balance $chain_id
+    confirm_set_base_uri
+
+    base_uri_selector="setBaseURI(string)"
+    password=$(get_password_if_set)
+    
+    echo "Setting base URI... this will take a moment."
+
+    output=$(cast send $contract_address \
+        $base_uri_selector \
+        $base_uri \
+        $password \
+        $(zksync_flag) \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
+
+    print_transaction_hash
+}
+
+set_global_wallet_limit_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Global Wallet Limit"
+
+    set_contract_address
+    set_chain
+    set_token_standard
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_token_id
+    else
+        token_id=
+    fi
+
+    set_global_wallet_limit
+
+    print_signer_with_balance $chain_id
+
+    global_wallet_limit_selector="setGlobalWalletLimit(uint256)"
+    if [ "$token_standard" == "ERC1155" ]; then
+        echo ""
+        echo "Setting global wallet limit for token $token_id"
+        echo ""
+        global_wallet_limit_selector="setGlobalWalletLimit(uint256,uint256)"
+        global_wallet_limit=$(echo $global_wallet_limit | jq -r ".[$token_id]")
+
+        if [ -z "$global_wallet_limit" ]; then
+            echo "Index $token_id not found in global wallet limit array"
+            exit 1
+        fi
+    fi
+
+    confirm_set_global_wallet_limit
+
+    password=$(get_password_if_set)
+
+    echo "Setting global wallet limit... this will take a moment."
+
+    output=$(cast send $contract_address \
+        "$global_wallet_limit_selector" \
+        $token_id \
+        "$global_wallet_limit" \
+        $(zksync_flag) \
+        $password \
+        --rpc-url "$RPC_URL" \
+        --json)
+
+    print_transaction_hash
+}
+
+set_max_mintable_supply_contract() {
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    clear
+
+    title="Set Max Mintable Supply"
+
+    set_chain
+    set_contract_address
+    set_token_standard
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_token_id
+    fi
+
+    set_max_mintable_supply
+
+    echo ""
+    if [ "$token_standard" == "ERC1155" ]; then
+
+        max_mintable_supply=$(echo $max_mintable_supply | jq -r ".[$token_id]")
+
+        if [ -z "$max_mintable_supply" ]; then
+            echo "Index $token_id not found in max mintable supply array"
+            exit 1
+        fi
+
+        echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply for token $token_id"
+    else
+        echo "You are about to set the max mintable supply of $(format_address $contract_address) to $max_mintable_supply"
+    fi
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        set_max_mintable_supply_selector="setMaxMintableSupply(uint256)"
+        if [ "$token_standard" == "ERC1155" ]; then
+            set_max_mintable_supply_selector="setMaxMintableSupply(uint256,uint256)"
+        fi
+
+        password=$(get_password_if_set)
+
+        echo "Setting max mintable supply... this will take a moment."
+
+        output=$(cast send $contract_address \
+            $set_max_mintable_supply_selector \
+            $token_id \
+            $max_mintable_supply \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Set max mintable supply cancelled."
+        echo ""
+    fi
+}
+
+set_mintable_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Mintable"
+
+    set_chain
+    set_contract_address
+    set_token_standard
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        echo "setMintable is not supported for ERC1155"
+        exit 1
+    fi
+
+    set_mintable
+
+    echo ""
+    echo "You are about to set the mintable status of $(format_address $contract_address) to $mintable"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        set_mintable_selector="setMintable(bool)"
+        password=$(get_password_if_set)
+
+        echo "Setting mintable... this will take a moment."
+
+        output=$(cast send $contract_address \
+            $set_mintable_selector \
+            $mintable \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Set mintable cancelled."
+        echo ""
+    fi
+}
+
+set_stages_contract() {
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    clear 
+
+    title="Set Stages"
+
+    set_chain
+    set_contract_address
+    set_token_standard
+    set_stages_file
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_number_of_1155_tokens
+        set_1155_uri
+    fi
+
+    print_signer_with_balance $chain_id
+
+    process_stages
+    output_file_dir="$(dirname "$collection_file")"
+    stages_data=$(cat "$output_file_dir/stagesInput.tmp") # this file is created by getStagesData.ts
+    rm "$output_file_dir/stagesInput.tmp"
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        if [ "$token_standard" == "ERC1155" ]; then
+            set_stages_selector="setStages((uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[])"
+        elif [ "$token_standard" == "ERC721" ]; then
+            set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+        else
+            echo "Unknown token standard"
+            exit 1
+        fi
+
+        password=$(get_password_if_set)
+
+        echo "Setting stages... this will take a moment."
+
+        output=$(cast send $contract_address \
+            "$set_stages_selector" \
+            "$stages_data" \
+            $password \
+            $(zksync_flag) \
+            --rpc-url "$RPC_URL" \
+            --json)
+        
+        print_transaction_hash
+    else
+        echo "Set stages cancelled."
+        echo ""
+    fi
+}
+
+set_cosigner_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Cosigner"
+
+    set_chain
+    set_contract_address
+    set_cosigner_address
+
+    echo ""
+    echo "You are about to set the cosigner of $(format_address $contract_address) to $(format_address $cosigner)"
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        set_cosigner_selector="setCosigner(address)"
+        password=$(get_password_if_set)
+
+        echo "Setting cosigner... this will take a moment."
+
+        output=$(cast send $contract_address \
+            $set_cosigner_selector \
+            $cosigner \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Set cosigner cancelled."
+        echo ""
+    fi
+}
+
+set_timestamp_expiry_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Timestamp Expiry"
+
+    set_chain
+    set_contract_address
+    set_timestamp_expiry
+
+    echo ""
+    echo "You are about to set the timestamp expiry of $(format_address $contract_address) to $timestamp_expiry seconds."
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        timestamp_expiry_selector="setTimestampExpirySeconds(uint256)"
+        password=$(get_password_if_set)
+
+        echo "Setting timestamp expiry... this will take a moment."
+
+        output=$(cast send $contract_address \
+            $timestamp_expiry_selector \
+            $timestamp_expiry \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Timestamp expiry cancelled."
+        echo ""
+    fi
+}
+
+transfer_ownership_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Complete Ownership Handover"
+
+    echo ""
+    echo "################################################################################"
+    echo "WARNING: This action will transfer ownership of the contract to the new owner."
+    echo "Please triple check the new owner's address before proceeding!"
+    echo "################################################################################"
+    echo ""
+
+    if ! gum confirm "Do you want to proceed?"; then
+        echo "Exiting..."
+        exit 1
+    fi
+
+    set_chain
+    set_contract_address
+    set_new_owner
+    
+    echo ""
+    echo "You are about to transfer ownership of $(format_address $contract_address) to $(format_address $new_owner)"
+    echo "This action cannot be undone."
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        transfer_ownership_selector="transferOwnership(address)"
+        password=$(get_password_if_set)
+
+        echo "Transferring ownership... this will take a moment."
+
+        output=$(cast send $contract_address \
+            $transfer_ownership_selector \
+            $new_owner \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Transfer ownership cancelled."
+        echo ""
+    fi
+}
+
+set_token_uri_suffix_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+    title="Set Token URI Suffix"
+
+    set_chain
+    set_contract_address
+    set_token_uri_suffix
+
+    print_signer_with_balance $chain_id
+    confirm_set_token_uri_suffix
+
+    token_uri_suffix_selector="setTokenURISuffix(string)"
+    password=$(get_password_if_set)
+
+    echo "Setting token URI suffix... this will take a moment."
+
+    output=$(cast send $contract_address \
+        $token_uri_suffix_selector \
+        $token_uri_suffix \
+        $password \
+        $(zksync_flag) \
+        --chain-id $chain_id \
+        --rpc-url "$RPC_URL" \
+        --json)
+
+    print_transaction_hash
+}
+
+set_uri_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set URI (ERC1155 Only)"
+
+    if [ "$token_standard" != "ERC1155" ]; then
+        echo "URI is not supported for $token_standard"
+        exit 1
+    fi
+
+    set_contract_address
+    set_chain
+    set_1155_uri
+
+    echo ""
+    echo "You are about to set the URI of $(format_address $contract_address) to $uri"
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        set_uri_selector="setURI(string)"
+        password=$(get_password_if_set)
+
+        echo "Setting URI... this will take a moment."
+
+        output=$(cast send $contract_address \
+            $set_uri_selector \
+            $uri \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Set URI cancelled."
+        echo ""
+    fi
+}
+
+set_royalties_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Royalties"
+
+    echo ""
+    echo "Notice: This only works for contracts that implement the ERC2981 standard."
+    echo "Newer versions of ERC721M and ERC1155M support this out of the box."
+    echo ""
+
+    set_chain
+    set_contract_address
+    set_receiver_address
+    set_fee_numerator
+    
+    echo ""
+    percentage=$(echo "scale=2; $fee_numerator / 100" | bc)
+    echo "You are about to set the royalties of $(format_address $contract_address) to $(format_address $receiver) with a fee numerator of $fee_numerator ($percentage%)"
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        set_royalties_selector="setDefaultRoyalty(address,uint96)"
+        password=$(get_password_if_set)
+
+        echo "Setting royalties... this will take a moment."
+
+        output=$(cast send $contract_address \
+            $set_royalties_selector \
+            $receiver \
+            $fee_numerator \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Set royalties cancelled."
+        echo ""
+    fi
+}
+
+owner_mint_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Owner Mint"
+
+    echo $chain_id
+
+    set_chain
+    set_contract_address
+    set_token_standard
+
+    if [ "$token_standard" == "ERC1155" ]; then
+        set_token_id
+    fi
+
+    set_receiver_address
+    set_quantity
+
+    mint_selector="ownerMint(uint32,address)"
+    mint_args="$quantity $receiver"
+
+    echo ""
+    if [ "$token_standard" == "ERC1155" ]; then
+        mint_selector="ownerMint(address,uint256,uint32)"
+        mint_args="$receiver $token_id $quantity"
+
+        echo "You are about to mint $quantity token(s) to $(format_address $receiver) for token $token_id"
+    else
+        echo "You are about to mint $quantity token(s) to $(format_address $receiver)"
+    fi
+    echo ""
+
+    if gum confirm "Do you want to proceed?"; then
+        password=$(get_password_if_set)
+
+        echo "Minting tokens... this will take a moment."
+
+        output=$(cast send $contract_address \
+            "$mint_selector" \
+            $mint_args \
+            $password \
+            $(zksync_flag) \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Owner Mint cancelled."
+        echo ""
+    fi
+}
+
+send_erc721_batch_contract() {
+    echo "Not implemented, please use the hardhat script instead."
+}
+
+manage_authorized_minters_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Manage Authorized Minters"
+
+    set_chain
+    set_contract_address
+
+    show_title "$title" "> Choose an action <"
+    action=$(gum choose "Add Authorized Minter" "Remove Authorized Minter")
+    clear
+
+    set_authorized_minter
+
+    if [ "$action" == "Add Authorized Minter" ]; then
+        add_authorized_minter_contract $contract_address $minter $chain_id
+    else
+        remove_authorized_minter_contract $contract_address $minter $chain_id
+    fi
+}
+
+add_authorized_minter_contract() {
+    contract_address=$1
+    minter=$2
+    chain_id=$3
+
+    password=$(get_password_if_set)
+    add_authorized_minter_selector="addAuthorizedMinter(address)"
+
+    echo ""
+    echo "You are about to add $(format_address $minter) as an authorized minter of $(format_address $contract_address)"
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        echo "Adding authorized minter... this will take a moment."
+
+        output=$(cast send $contract_address \
+            "$add_authorized_minter_selector" \
+            $minter \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Add authorized minter cancelled."
+        echo ""
+    fi
+}
+
+remove_authorized_minter_contract() {
+    contract_address=$1
+    minter=$2
+    chain_id=$3
+
+    password=$(get_password_if_set)
+    remove_authorized_minter_selector="removeAuthorizedMinter(address)"
+
+    echo ""
+    echo "You are about to remove $(format_address $minter) as an authorized minter of $(format_address $contract_address)"
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        echo "Removing authorized minter... this will take a moment."
+
+        output=$(cast send $contract_address \
+            "$remove_authorized_minter_selector" \
+            $minter \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+        --json)
+
+        print_transaction_hash
+    else
+        echo "Remove authorized minter cancelled."
+        echo ""
+    fi
+}
+
+set_cosigner_contract() {
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Cosigner"
+
+    set_chain
+    set_contract_address
+    set_cosigner_address
+
+    password=$(get_password_if_set)
+    set_cosigner_selector="setCosigner(address)"
+
+    echo ""
+    echo "You are about to set the cosigner of $(format_address $contract_address) to $(format_address $cosigner)"
+    echo ""
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to proceed?"; then
+        echo "Setting cosigner... this will take a moment."
+
+        output=$(cast send $contract_address \
+            "$set_cosigner_selector" \
+            $cosigner \
+            $password \
+            $(zksync_flag) \
+            --chain-id $chain_id \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Set cosigner cancelled."
+        echo ""
+    fi
+}
+
+
+withdraw_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Withdraw Contract Balance"
+
+    set_chain
+    set_contract_address
+
+    # Get contract balance
+    balance=$(cast balance $contract_address --rpc-url "$RPC_URL")
+    formatted_balance=$(cast --from-wei $balance)
+
+    echo ""
+    echo "Contract balance: $formatted_balance ETH"
+    echo ""
+
+    if [ "$balance" == "0" ]; then
+        echo "Contract has no balance to withdraw."
+        exit 1
+    fi
+
+    print_signer_with_balance $chain_id
+
+    if gum confirm "Do you want to withdraw the entire balance?"; then
+        withdraw_selector="withdraw()"
+        password=$(get_password_if_set)
+
+        echo "Withdrawing funds... this will take a moment."
+
+        output=$(cast send $contract_address \
+            "$withdraw_selector" \
+            $password \
+            $(zksync_flag) \
+            --rpc-url "$RPC_URL" \
+            --json)
+
+        print_transaction_hash
+    else
+        echo "Withdrawal cancelled."
+        echo ""
+    fi
+}

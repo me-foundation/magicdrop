@@ -1,0 +1,51 @@
+export const ERC721_TEMPLATE = {
+  name: '',
+  symbol: '',
+  chainId: 0,
+  tokenStandard: 'ERC721',
+  maxMintableSupply: 0,
+  globalWalletLimit: 0,
+  mintCurrency: '0x0000000000000000000000000000000000000000',
+  fundReceiver: '0x0000000000000000000000000000000000000000',
+  royaltyReceiver: '0x0000000000000000000000000000000000000000',
+  royaltyFee: 0,
+  mintable: true,
+  cosigner: '0x0000000000000000000000000000000000000000',
+  tokenUriSuffix: '.json',
+  uri: '',
+  useERC721C: false,
+  stages: [
+    {
+      price: '',
+      mintFee: '',
+      walletLimit: 0,
+      startTime: '2024-11-04T16:30:00Z',
+      endTime: '2024-11-07T16:25:00Z',
+    },
+  ],
+};
+
+export const ERC1155_TEMPLATE = {
+  name: '',
+  symbol: '',
+  chainId: 0,
+  tokenStandard: 'ERC1155',
+  maxMintableSupply: [0],
+  globalWalletLimit: [0],
+  mintCurrency: '0x0000000000000000000000000000000000000000',
+  fundReceiver: '0x0000000000000000000000000000000000000000',
+  royaltyReceiver: '0x0000000000000000000000000000000000000000',
+  royaltyFee: 0,
+  mintable: true,
+  cosigner: '0x0000000000000000000000000000000000000000',
+  uri: '',
+  stages: [
+    {
+      price: [''],
+      mintFee: [''],
+      walletLimit: [0],
+      startTime: '2024-11-04T16:30:00Z',
+      endTime: '2024-11-07T16:25:00Z',
+    },
+  ],
+};

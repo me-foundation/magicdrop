@@ -1,0 +1,20 @@
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+[profile.default]
+src = "contracts"
+out = "out"
+libs = ["lib", "node_modules"]
+solc_version = "0.8.22"
+evm_version = "cancun"
+via_ir = true
+optimizer_runs = 777
+cbor_metadata = false
+bytecode_hash = "none"
+
+[etherscan]
+apechain = {key = "${VERIFICATION_API_KEY_APECHAIN}", chain = 33139, url = "https://api.apescan.io/api"}
+sei = {key = "${VERIFICATION_API_KEY_SEI}", chain = 1329, url = "https://api.seiscan.io/api"}
+arbitrum = {key = "${VERIFICATION_API_KEY_ARBISCAN}", chain = 42161, url = "https://api.arbiscan.io/api"}
+berachain = {key = "${VERIFICATION_API_KEY_BERACHAIN}", chain = 80094, url = "https://api.berascan.com/api"}
+abstract = {key = "${VERIFICATION_API_KEY_ABSTRACT}", chain = 2741, url = "https://api.abscan.org/api"}
+avalanche = {key = "${VERIFICATION_API_KEY_AVALANCHE}", chain = 43114, url = "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan"}

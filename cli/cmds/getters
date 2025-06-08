@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+
+
+get_numeric_input() {
+    local prompt="$1"
+    local input
+    while true; do
+        input=$(gum input --placeholder "$prompt (or 'exit' to quit)")
+        
+        if [[ -z "$input" ]]; then
+            echo "Exiting program..."
+            kill $$
+        elif [[ "$input" == "exit" || "$input" == "quit" ]]; then
+            echo "Exiting program..."
+            kill $$
+        fi
+
+        # If the input is numeric, return it
+        if is_number "$input"; then
+            echo "$input"
+            return
+        fi
+    done
+}
+
+get_ethereum_address() {
+    local prompt="$1"
+    local address
+
+    address=$(gum input --placeholder "$prompt (or 'exit' to quit)")
+    if [[ -z "$address" ]]; then
+        echo "Exiting program..."
+        kill $$
+    elif [[ "$address" == "exit" || "$address" == "quit" ]]; then
+        echo "Exiting program..."
+        kill $$
+    fi
+
+    if is_valid_ethereum_address "$address"; then
+        echo "$address"
+    else
+        echo "Invalid input. Exiting..."
+        exit 1
+    fi
+}
+
+get_collection_file() {
+    local prompt="$1"
+    local directory="${2:-$BASE_DIR/../collections}"  # Use provided directory or default
+    local file=$(gum file --directory "$directory" --height 10)
+
+    if [[ -d "$file" ]]; then
+        # Recursively call with the selected directory
+        get_collection_file "$prompt" "$file"
+    elif file_exists "$file"; then
+        echo "$file"
+    else 
+        exit 1
+    fi
+}
+
+get_password_if_set() {
+    if [[ -n "$KEYSTORE_PASSWORD" ]]; then
+        echo "--password $KEYSTORE_PASSWORD --account $MAGIC_DROP_KEYSTORE"
+    elif file_exists "$MAGIC_DROP_KEYSTORE_FILE"; then
+        local password=$(gum input --placeholder "Enter password")
+        echo "--password $password --account $MAGIC_DROP_KEYSTORE"
+    fi
+}
+
+select_chain() {
+    local chain=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | cut -d':' -f2 | gum choose)
+    local chain_id=$(printf "%s\n" "${SUPPORTED_CHAINS[@]}" | grep "$chain" | cut -d':' -f1)
+    echo "$chain_id:$chain"
+}
+
+get_transfer_validator_address() {
+    local network="$1"
+    case $network in
+        "33139"|"1329")
+            echo "$ME_TRANSFER_VALIDATOR_V3"
+            ;;
+        "42161"|"8453"|"1"|"11155111")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
+            ;;
+        "2741")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT"
+            ;;
+        "80094")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN"
+            ;;
+        *)
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
+            ;;
+    esac
+}
+
+get_transfer_validator_list_id() {
+    local network="$1"
+    case $network in
+        "80094")
+            echo $DEFAULT_LIST_ID
+            ;;
+        "137")
+            echo $MAGIC_EDEN_POLYGON_LIST_ID
+            ;;
+        *)
+            echo $MAGIC_EDEN_DEFAULT_LIST_ID
+            ;;
+    esac
+}
+
+is_number() {
+    local input="$1"
+    [[ "$input" =~ ^[0-9]+$ ]]
+}
+
+is_valid_ethereum_address() {
+    local address="$1"
+    [[ "$address" =~ ^0x[a-fA-F0-9]{40}$ ]]
+}
+
+file_exists() {
+    local file="$1"
+    [[ -f "$file" ]]
+}

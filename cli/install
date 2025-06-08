@@ -1,0 +1,148 @@
+#! /bin/bash
+
+
+echo "Checking for Homebrew..."
+which -s brew
+if [[ $? != 0 ]] ; then
+    echo "Homebrew not installed. Attempting to install..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+echo "Checking for dependencies..."
+which -s brew
+if [[ $? == 0 ]] ; then
+    echo "Checking for gum..."
+    brew list | grep -q gum
+    if [[ $? != 0 ]] ; then
+        echo "Installing gum..."
+        brew install gum
+    fi
+    echo "Checking for jq..."
+    brew list | grep -q jq
+    if [[ $? != 0 ]] ; then
+        echo "Installing jq..."
+        brew install jq
+    fi
+    echo "Checking for libusb..."
+    brew list | grep -q libusb
+    if [[ $? != 0 ]] ; then
+        echo "Installing libusb..."
+        brew install libusb
+    fi
+fi
+
+echo "Checking for Foundry..."
+which -s foundryup
+if [[ $? != 0 ]] ; then
+    echo "Foundry not installed. Installing..."
+    curl -L https://foundry.paradigm.xyz | bash
+
+    if [ -f ~/.zshenv ]; then
+        source ~/.zshenv
+    else
+        source ~/.bash_profile
+    fi
+
+    foundryup
+fi
+
+echo "Checking for Foundry ZKSync..."
+which -s foundryup-zksync
+if [[ $? != 0 ]] ; then
+    echo "Foundry ZKSync not installed. Installing..."
+    curl -L https://raw.githubusercontent.com/matter-labs/foundry-zksync/main/install-foundry-zksync | bash
+
+    if [ -f ~/.zshenv ]; then
+        source ~/.zshenv
+    else
+        source ~/.bash_profile
+    fi
+
+    foundryup-zksync
+fi
+
+echo "Checking for Forge..."
+which -s forge
+if [[ $? != 0 ]] ; then
+    echo "Forge not installed."
+    exit 1
+else
+    echo "Forge installed. Installing project dependencies..."
+    forge install
+    # build contracts
+    forge build --via-ir
+fi
+
+echo "Checking for Git..."
+which -s git
+if [[ $? != 0 ]] ; then
+    echo "Git not installed. Installing..."
+    brew install git && git pull
+else 
+    echo "Git installed. Pulling latest changes..."
+    git pull
+fi
+
+echo "Checking for Node..."
+which -s npm
+if [[ $? != 0 ]] ; then
+    echo "Node not installed. Installing..."
+    brew install node && npm install
+else
+    echo "Node installed. Installing project dependencies..."
+    npm install
+fi
+
+echo "Checking for ts-node..."
+if ! npm list -g ts-node > /dev/null 2>&1; then
+    echo "ts-node not installed. Installing..."
+    npm install -g ts-node
+else
+    echo "ts-node is already installed."
+fi
+
+echo "Creating .env file for optional configuration..."
+touch .env
+
+echo "Making magicdrop executable..."
+chmod +x "$(pwd)/magicdrop"
+
+echo "Adding magicdrop directory to PATH..."
+MAGICDROP_DIR="$(pwd)"
+SHELL_CONFIG_FILE=""
+
+# Determine which shell configuration file to use
+if [[ "$SHELL" == */zsh ]]; then
+    SHELL_CONFIG_FILE="$HOME/.zshrc"
+elif [[ "$SHELL" == */bash ]]; then
+    SHELL_CONFIG_FILE="$HOME/.bashrc"
+fi
+
+echo ""
+
+if [ -n "$SHELL_CONFIG_FILE" ]; then
+    if ! grep -q "export PATH=\"\$PATH:$MAGICDROP_DIR\"" "$SHELL_CONFIG_FILE"; then
+        echo "export PATH=\"\$PATH:$MAGICDROP_DIR\"" >> "$SHELL_CONFIG_FILE"
+        echo "Added $MAGICDROP_DIR to PATH in $SHELL_CONFIG_FILE."
+    else
+        echo "$MAGICDROP_DIR is already in PATH."
+    fi
+
+    # Add alias for 'drop'
+    if ! grep -q "alias drop='magicdrop'" "$SHELL_CONFIG_FILE"; then
+        echo "alias drop='magicdrop'" >> "$SHELL_CONFIG_FILE"
+        echo "Added alias 'drop' for 'magicdrop' in $SHELL_CONFIG_FILE."
+    else
+        echo "Alias 'drop' already exists in $SHELL_CONFIG_FILE."
+    fi
+
+    echo "Please restart your terminal or run 'source $SHELL_CONFIG_FILE' to apply changes."
+else
+    echo "Could not determine shell configuration file. Please add $MAGICDROP_DIR to your PATH manually."
+    echo "Also, manually add alias 'drop' for 'magicdrop' in your shell configuration file."
+fi
+
+echo ""
+echo "Installation complete!"
+echo "Run 'magicdrop' or 'drop' to start"
+echo ""
