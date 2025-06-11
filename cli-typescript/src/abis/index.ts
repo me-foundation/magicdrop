@@ -142,6 +142,20 @@ export const TRANSFER_OWNERSHIP_ABI = {
   type: 'function',
 } as const;
 
+export const SET_TRANSFERABLE_ABI = {
+  inputs: [
+    {
+      internalType: 'bool',
+      name: 'transferable',
+      type: 'bool',
+    },
+  ],
+  name: 'setTransferable',
+  outputs: [],
+  stateMutability: 'nonpayable',
+  type: 'function',
+} as const;
+
 export const ERC712M_ABIS = {
   setup: {
     type: 'function',
@@ -380,19 +394,6 @@ export const ERC712M_ABIS = {
 };
 
 export const ERC1155M_ABIS = {
-  setTransferable: {
-    inputs: [
-      {
-        internalType: 'bool',
-        name: 'transferable',
-        type: 'bool',
-      },
-    ],
-    name: 'setTransferable',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
   setup: {
     type: 'function',
     name: 'setup',

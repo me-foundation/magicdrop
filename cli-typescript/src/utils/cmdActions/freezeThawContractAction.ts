@@ -12,11 +12,6 @@ export const freezeThawContractAction = async (
   try {
     const { cm, config } = await actionPresets(symbol);
 
-    if (config.tokenStandard !== TOKEN_STANDARD.ERC1155)
-      throw new Error(
-        `this action is only supported for ${TOKEN_STANDARD.ERC1155} collections`,
-      );
-
     showText(
       `You're about to ${params.choice} the contract: ${config.deployment!.contract_address}`,
       '',
@@ -41,6 +36,9 @@ export const freezeThawContractAction = async (
       `Token transfers ${params.choice === 'freeze' ? 'frozen' : 'thawed'}.`,
     );
   } catch (error: any) {
-    showError({ text: `Failed to ${params.choice}: ${error.message}` });
+    showError({
+      text: `Failed to ${params.choice}: ${error.message}`,
+      subtext: `contract is probably already ${params.choice === 'freeze' ? 'frozen' : 'thawed'}. Try ${params.choice === 'freeze' ? 'thawing' : 'freezing'} it again.`,
+    });
   }
 };

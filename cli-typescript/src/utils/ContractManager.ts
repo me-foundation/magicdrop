@@ -31,6 +31,7 @@ import {
   MagicDropTokenImplRegistryAbis,
   NEW_CONTRACT_INITIALIZED_EVENT_ABI,
   SET_TRANSFER_VALIDATOR_ABI,
+  SET_TRANSFERABLE_ABI,
   SUPPORTS_INTERFACE_ABI,
 } from '../abis';
 import { printTransactionHash, showText } from './display';
@@ -358,8 +359,8 @@ export class ContractManager {
     );
 
     const data = encodeFunctionData({
-      abi: [ERC1155M_ABIS.setTransferable],
-      functionName: ERC1155M_ABIS.setTransferable.name,
+      abi: [SET_TRANSFERABLE_ABI],
+      functionName: SET_TRANSFERABLE_ABI.name,
       args: [!freeze],
     });
 

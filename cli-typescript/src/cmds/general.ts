@@ -120,9 +120,7 @@ export const freezeThawContractCmd = () =>
     .command('freeze-thaw-contract <symbol>')
     .alias('ftc')
     .alias('freeze-thaw')
-    .description(
-      `Freeze/Thaw contract. Support for ${TOKEN_STANDARD.ERC1155} only`,
-    )
+    .description('Freeze or Thaw contract.')
     .addOption(getFreezeThawOption().makeOptionMandatory())
     .action(freezeThawContractAction);
 
