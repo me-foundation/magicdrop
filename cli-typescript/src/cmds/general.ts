@@ -62,9 +62,9 @@ export const setUriCmd = () =>
 export const setStagesCmd = () =>
   new Command('set-stages')
     .command('set-stages <symbol>')
-    .addOption(getStagesFileOption().makeOptionMandatory())
+    .addOption(getStagesFileOption())
     .description(
-      'Set the stages for the collection. Note: this will overwrite the existing stages.',
+      `Set the stages for the collection. Note: this will overwrite the existing stages. You can provide a stages file or update the existing stages in the config.`,
     )
     .action(setStagesAction);
 
@@ -176,6 +176,7 @@ export const ownerMintCmd = () =>
 export const getWalletInfoCmd = () =>
   new Command('get-wallet-info')
     .command('get-wallet-info <symbol>')
+    .alias('gwi')
     .description('Get the wallet info for a collection')
     .action(getWalletInfoAction);
 

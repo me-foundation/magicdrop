@@ -14,14 +14,14 @@ import { actionPresets } from './common';
 export const setStagesAction = async (
   symbol: string,
   params: {
-    stagesFile: string;
+    stagesFile?: string;
   },
 ) => {
   try {
     const { cm, config, store } = await actionPresets(symbol);
 
-    // Process stages file
-    console.log('Processing stages file... this will take a moment.');
+    // Process stages data
+    console.log('Processing stages data... this will take a moment.');
     const stagesData = await processStages({
       collectionFile: store.root,
       stagesFile: params.stagesFile,
