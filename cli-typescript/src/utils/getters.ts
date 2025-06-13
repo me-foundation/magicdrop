@@ -9,8 +9,6 @@ import {
   DEFAULT_REGISTRY_ADDRESS,
   explorerUrls,
   LIMIT_BREAK_TRANSFER_VALIDATOR_V5,
-  MAGIC_EDEN_DEFAULT_LIST_ID,
-  MAGIC_EDEN_POLYGON_LIST_ID,
   SUPPORTED_CHAINS,
   supportedChainNames,
   TOKEN_STANDARD,
@@ -140,23 +138,13 @@ export const getViemChainByChainId = (chainId: SUPPORTED_CHAINS) => {
 };
 
 /**
- * Retrieves the transfer validator list ID based on the network (chain ID).
- * @param chainId The chain ID of the network.
- * @returns The transfer validator list ID for the given network.
+ * Retrieves the transfer validator list ID
+ * @returns The transfer validator list ID
  */
-export const getTransferValidatorListId = (
-  chainId: SUPPORTED_CHAINS,
-): number => {
-  switch (chainId) {
-    case SUPPORTED_CHAINS.BERACHAIN:
-      return DEFAULT_LIST_ID;
-
-    case SUPPORTED_CHAINS.POLYGON:
-      return MAGIC_EDEN_POLYGON_LIST_ID;
-
-    default:
-      return MAGIC_EDEN_DEFAULT_LIST_ID;
-  }
+export const getTransferValidatorListId = (): number => {
+  // The standard Limit Break owned list is 0
+  // This should support SeaPort (and thus Magic Eden) by default
+  return DEFAULT_LIST_ID;
 };
 
 /**
