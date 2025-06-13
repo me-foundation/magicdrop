@@ -80,19 +80,10 @@ get_transfer_validator_address() {
     echo "$LIMIT_BREAK_TRANSFER_VALIDATOR_V5"
 }
 
+# The standard Limit Break owned list is 0
+# This should support SeaPort (and thus Magic Eden) by default
 get_transfer_validator_list_id() {
-    local network="$1"
-    case $network in
-        "80094")
-            echo $DEFAULT_LIST_ID
-            ;;
-        "137")
-            echo $MAGIC_EDEN_POLYGON_LIST_ID
-            ;;
-        *)
-            echo $MAGIC_EDEN_DEFAULT_LIST_ID
-            ;;
-    esac
+    echo "$DEFAULT_LIST_ID"
 }
 
 is_number() {
