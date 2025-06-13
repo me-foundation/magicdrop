@@ -65,7 +65,7 @@ get_impl_id() {
             echo "10" # ethereum
         elif [ "$chain_id" == "80094" ]; then
             echo "5" # berachain
-        elif [ "$chain_id" == "10143"]; then
+        elif [ "$chain_id" == "10143" ]; then
             echo "5" # monad testnet
         elif [ "$chain_id" == "43114" ]; then
             echo "6" # avalanche
