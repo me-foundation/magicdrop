@@ -283,7 +283,7 @@ export class ContractManager {
   public async setTransferValidator(contractAddress: Hex): Promise<Hex> {
     try {
       // Get the transfer validator address for the given chain ID
-      const tfAddress = getTransferValidatorAddress(this.chainId);
+      const tfAddress = getTransferValidatorAddress();
       console.log(`Setting transfer validator to ${tfAddress}...`);
 
       const data = encodeFunctionData({
@@ -321,7 +321,7 @@ export class ContractManager {
       console.log(`Setting transfer list to list ID ${tfListId}...`);
 
       // Get the transfer validator address
-      const tfAddress = getTransferValidatorAddress(this.chainId) as Hex;
+      const tfAddress = getTransferValidatorAddress() as Hex;
 
       const data = encodeFunctionData({
         abi: [APPLY_LIST_TO_COLLECTION_ABI],

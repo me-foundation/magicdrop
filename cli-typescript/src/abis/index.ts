@@ -20,9 +20,9 @@ export const APPLY_LIST_TO_COLLECTION_ABI = {
       type: 'address',
     },
     {
-      internalType: 'uint120',
+      internalType: 'uint48',
       name: 'id',
-      type: 'uint120',
+      type: 'uint48',
     },
   ],
   name: 'applyListToCollection',
