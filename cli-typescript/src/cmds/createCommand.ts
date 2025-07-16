@@ -59,6 +59,7 @@ const presets = async (cliCmd: string) => {
 
     console.log('Authenticating...');
     await authenticate();
+    console.log('Authentication successful.');
 
     // set cmd name globally
     process.env.MAGICDROP_CLI_CMD = cliCmd;

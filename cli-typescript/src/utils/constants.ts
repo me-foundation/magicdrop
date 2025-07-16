@@ -35,11 +35,15 @@ export const LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN =
 
 export const ABSTRACT_FACTORY_ADDRESS =
   '0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19';
+export const AVALANCHE_FACTORY_ADDRESS =
+  '0x0b49bDcf2eC9329Fa6F42DCCC66e8906a3E4ACF0';
 export const DEFAULT_FACTORY_ADDRESS =
   '0x000000009e44eBa131196847C685F20Cd4b68aC4';
 
 export const ABSTRACT_REGISTRY_ADDRESS =
   '0x9b60ad31F145ec7EE3c559153bB57928B65C0F87';
+export const AVALANCHE_REGISTRY_ADDRESS =
+  '0x09E0135dfBb7528D6eAA5beB69f3C030dF26F57c';
 export const DEFAULT_REGISTRY_ADDRESS =
   '0x00000000caF1E3978e291c5Fb53FeedB957eC146';
 
@@ -127,7 +131,7 @@ export const explorerUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
   [SUPPORTED_CHAINS.ABSTRACT]: 'https://abscan.org', // Abstract
   [SUPPORTED_CHAINS.BERACHAIN]: 'https://berascan.com', // Berachain
   [SUPPORTED_CHAINS.MONAD_TESTNET]: 'https://testnet.monadexplorer.com', // Monad Testnet
-  [SUPPORTED_CHAINS.AVALANCHE]: 'https://subnets.avax.network/', // Avalanche
+  [SUPPORTED_CHAINS.AVALANCHE]: 'https://snowtrace.io', // Avalanche
 };
 
 export const DEFAULT_TOKEN_URI_SUFFIX = '.json';

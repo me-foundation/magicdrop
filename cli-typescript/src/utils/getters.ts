@@ -2,6 +2,8 @@ import { confirm } from '@inquirer/prompts';
 import {
   ABSTRACT_FACTORY_ADDRESS,
   ABSTRACT_REGISTRY_ADDRESS,
+  AVALANCHE_FACTORY_ADDRESS,
+  AVALANCHE_REGISTRY_ADDRESS,
   DEFAULT_COLLECTION_DIR,
   DEFAULT_FACTORY_ADDRESS,
   DEFAULT_IMPL_ID,
@@ -230,6 +232,10 @@ export const getFactoryAddress = (chainId: SUPPORTED_CHAINS): `0x${string}` => {
     return ABSTRACT_FACTORY_ADDRESS;
   }
 
+  if (chainId === SUPPORTED_CHAINS.AVALANCHE) {
+    return AVALANCHE_FACTORY_ADDRESS;
+  }
+
   return DEFAULT_FACTORY_ADDRESS;
 };
 
@@ -238,6 +244,10 @@ export const getRegistryAddress = (
 ): `0x${string}` => {
   if (chainId === SUPPORTED_CHAINS.ABSTRACT) {
     return ABSTRACT_REGISTRY_ADDRESS;
+  }
+
+  if (chainId === SUPPORTED_CHAINS.AVALANCHE) {
+    return AVALANCHE_REGISTRY_ADDRESS;
   }
 
   return DEFAULT_REGISTRY_ADDRESS;
@@ -261,15 +271,19 @@ export const getImplId = (
 
   switch (chainId) {
     case SUPPORTED_CHAINS.ABSTRACT:
-      return 3; // ERC721C implementation ID / abstract
+      return 7; // ERC721C implementation ID / abstract
     case SUPPORTED_CHAINS.BASE:
-      return 8;
+      return 11;
     case SUPPORTED_CHAINS.ETHEREUM:
-      return 7;
+      return 10;
     case SUPPORTED_CHAINS.BERACHAIN:
-      return 2;
-    default:
       return 5;
+    case SUPPORTED_CHAINS.MONAD_TESTNET:
+      return 5;
+    case SUPPORTED_CHAINS.AVALANCHE:
+      return 6;
+    default:
+      return 8;
   }
 };
 
