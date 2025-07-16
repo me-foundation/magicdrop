@@ -73,6 +73,7 @@ export enum SUPPORTED_CHAINS {
   ABSTRACT = 2741,
   BERACHAIN = 80094,
   MONAD_TESTNET = 10143,
+  MEGAETH_TESTNET = 6342,
 }
 
 export const supportedChainNames: { [key in SUPPORTED_CHAINS]: string } = {
@@ -88,6 +89,7 @@ export const supportedChainNames: { [key in SUPPORTED_CHAINS]: string } = {
   [SUPPORTED_CHAINS.ABSTRACT]: 'abstract',
   [SUPPORTED_CHAINS.BERACHAIN]: 'berachain',
   [SUPPORTED_CHAINS.MONAD_TESTNET]: 'monadTestnet',
+  [SUPPORTED_CHAINS.MEGAETH_TESTNET]: 'megaethTestnet',
 };
 
 export const rpcUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
@@ -113,6 +115,8 @@ export const rpcUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
     'https://evm-router.magiceden.io/monad/testnet/me2024', // Monad Testnet
   [SUPPORTED_CHAINS.AVALANCHE]:
     'https://evm-router.magiceden.io/avalanche/mainnet/me2024', // Avalanche
+  [SUPPORTED_CHAINS.MEGAETH_TESTNET]:
+    'https://evm-router.magiceden.io/megaeth/testnet/me2024', // MegaETH Testnet
 };
 
 export const explorerUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
@@ -128,6 +132,7 @@ export const explorerUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
   [SUPPORTED_CHAINS.BERACHAIN]: 'https://berascan.com', // Berachain
   [SUPPORTED_CHAINS.MONAD_TESTNET]: 'https://testnet.monadexplorer.com', // Monad Testnet
   [SUPPORTED_CHAINS.AVALANCHE]: 'https://subnets.avax.network/', // Avalanche
+  [SUPPORTED_CHAINS.MEGAETH_TESTNET]: 'https://megaexplorer.xyz', // MegaETH Testnet
 };
 
 export const DEFAULT_TOKEN_URI_SUFFIX = '.json';
