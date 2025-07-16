@@ -143,6 +143,11 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    megaeth_testnet: {
+      url: process.env.MEGAETH_TESTNET_URL || 'https://carrot.megaeth.com/rpc',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -173,6 +178,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://api.avax.network/ext/bc/C/rpc',
           browserURL: 'https://snowtrace.io/'
+        },
+      },
+      {
+        network: 'megaeth_testnet',
+        chainId: 6342,
+        urls: {
+          apiURL: 'https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/megaeth-testnet',
+          browserURL: 'https://megaexplorer.xyz/'
         },
       },
     ]
