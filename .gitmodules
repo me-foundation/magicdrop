@@ -25,3 +25,6 @@
 [submodule "lib/creator-token-standards"]
 	path = lib/creator-token-standards
 	url = https://github.com/limitbreakinc/creator-token-standards
+[submodule "lib/absmate"]
+	path = lib/absmate
+	url = https://github.com/abstract-foundation/absmate
