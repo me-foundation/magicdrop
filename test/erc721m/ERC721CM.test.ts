@@ -69,6 +69,7 @@ describe('ERC721CM', function () {
       ethers.constants.AddressZero,
       fundReceiver.address,
       MINT_FEE,
+      owner.address,
     );
     await erc721cm.deployed();
 
@@ -1670,6 +1671,7 @@ describe('ERC721CM', function () {
           ethers.constants.AddressZero,
           fundReceiver.address,
           MINT_FEE,
+          owner.address,
         ),
       ).to.be.revertedWith('GlobalWalletLimitOverflow');
     });
@@ -1786,6 +1788,7 @@ describe('ERC721CM', function () {
         ethers.constants.AddressZero,
         fundReceiver.address,
         MINT_FEE,
+        owner.address,
       );
       await erc721cm.deployed();
       const ownerConn = erc721cm.connect(owner);
@@ -1816,6 +1819,7 @@ describe('ERC721CM', function () {
         ethers.constants.AddressZero,
         fundReceiver.address,
         MINT_FEE,
+        owner.address,
       );
       await erc721cm.deployed();
 
