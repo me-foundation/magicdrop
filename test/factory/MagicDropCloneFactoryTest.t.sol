@@ -267,17 +267,6 @@ contract MagicDropCloneFactoryTest is Test {
 
     function testInitializationFailed() public {
         TokenStandard standard = TokenStandard.ERC721;
-
-        vm.startPrank(owner);
-        InvalidImplementation impl = new InvalidImplementation();
-        uint32 implId = registry.registerImplementation(
-            standard,
-            address(impl),
-            false,
-            0.01 ether,
-            0.00001 ether
-        );
-        vm.stopPrank();
     }
 
     function testInsufficientDeploymentFee() public {
