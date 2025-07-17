@@ -46,9 +46,12 @@ contract MagicDropCloneFactoryTest is Test {
 
     uint32 internal erc721ImplId;
     uint32 internal erc1155ImplId;
+    InvalidImplementation invalidImplementation;
 
     function setUp() public {
         vm.startPrank(owner);
+
+        invalidImplementation = new InvalidImplementation();
 
         // Deploy and initialize registry
         address registryImpl = LibClone.clone(
@@ -267,6 +270,27 @@ contract MagicDropCloneFactoryTest is Test {
 
     function testInitializationFailed() public {
         TokenStandard standard = TokenStandard.ERC721;
+
+        vm.startPrank(owner);
+
+        uint32 implId = registry.registerImplementation(
+            standard,
+            address(invalidImplementation),
+            false,
+            0.01 ether,
+            0.00001 ether
+        );
+        vm.stopPrank();
+
+        vm.expectRevert(MagicDropCloneFactory.InitializationFailed.selector);
+        factory.createContractDeterministic{value: 0.01 ether}(
+            "TestNFT",
+            "TNFT",
+            standard,
+            payable(user),
+            implId,
+            bytes32(uint256(102))
+        );
     }
 
     function testInsufficientDeploymentFee() public {
