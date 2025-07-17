@@ -192,10 +192,15 @@ contract MagicDropCloneFactoryTest is Test {
         uint32 implId = registry.registerImplementation(standard, address(impl), false, 0.01 ether, 0.00001 ether);
         vm.stopPrank();
 
+        // give user some ether
+        vm.deal(user, 100 ether);
+
+        vm.startPrank(user);
         vm.expectRevert(MagicDropCloneFactory.InitializationFailed.selector);
         factory.createContractDeterministic{value: 0.01 ether}(
             "TestNFT", "TNFT", standard, payable(user), implId, bytes32(uint256(102))
         );
+        vm.stopPrank();
     }
 
     function testInsufficientDeploymentFee() public {
