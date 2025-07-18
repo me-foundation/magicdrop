@@ -7,7 +7,7 @@ import { ERC1155M } from '../../typechain-types';
 import { BigNumber, Contract } from 'ethers';
 
 const { getAddress, parseEther } = ethers.utils;
-const MINT_FEE_RECEIVER = '0x0B98151bEdeE73f9Ba5F2C7b72dEa02D38Ce49Fc';
+const LAUNCHPAD_MINT_FEE_RECEIVER = '0x4ea582a85cE4F75cF5f182733000979164f10b68';
 const ZERO_PROOF = ethers.utils.hexZeroPad('0x00', 32);
 const PAYMENT_ADDRESS = '0x0000000000000000000000000000000000000000';
 const WALLET_1 = '0x0764844ac95ABCa4F6306E592c7D9C9f3615f590';
@@ -535,7 +535,7 @@ describe('ERC1155M', function () {
         contract.address,
       );
       const mintFeeReceiverBalanceInitial =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
 
       await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0').add(MINT_FEE),
@@ -552,7 +552,7 @@ describe('ERC1155M', function () {
       expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(MINT_FEE);
 
       const mintFeeReceiverBalancePost =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(0);
@@ -574,7 +574,7 @@ describe('ERC1155M', function () {
         contract.address,
       );
       const mintFeeReceiverBalanceInitial =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
 
       await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.1').add(MINT_FEE),
@@ -594,7 +594,7 @@ describe('ERC1155M', function () {
       expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
 
       const mintFeeReceiverBalancePost =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(MINT_FEE);
@@ -945,7 +945,7 @@ describe('ERC1155M', function () {
         contract.address,
       );
       const mintFeeReceiverBalanceInitial =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
 
       await readonlyContract.mint(1, 5, 0, [ZERO_PROOF], {
         value: parseEther('0').add(MINT_FEE).mul(5),
@@ -977,7 +977,7 @@ describe('ERC1155M', function () {
       await contract.withdraw();
       
       const mintFeeReceiverBalancePost =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(MINT_FEE.mul(15));
@@ -999,7 +999,7 @@ describe('ERC1155M', function () {
         contract.address,
       );
       const mintFeeReceiverBalanceInitial =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
 
       await readonlyContract.mint(0, 1, 0, [ZERO_PROOF], {
         value: parseEther('0.1').add(MINT_FEE),
@@ -1034,7 +1034,7 @@ describe('ERC1155M', function () {
       expect(contractBalancePost.sub(contractBalanceInitial)).to.equal(0);
 
       const mintFeeReceiverBalancePost =
-        await ethers.provider.getBalance(MINT_FEE_RECEIVER);
+        await ethers.provider.getBalance(LAUNCHPAD_MINT_FEE_RECEIVER);
       expect(
         mintFeeReceiverBalancePost.sub(mintFeeReceiverBalanceInitial),
       ).to.equal(MINT_FEE.mul(3));

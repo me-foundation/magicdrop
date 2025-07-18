@@ -1,6 +1,5 @@
 import { Command } from 'commander';
 import { showMainTitle } from '../utils/display';
-import { createNewWalletCmd, listProjectsCmd, newProjectCmd } from './general';
 import {
   abstract,
   apechain,
@@ -25,10 +24,7 @@ export const mainMenu = async () => {
     .description('CLI for managing blockchain contracts and tokens')
     .version('2.0.0');
 
-  // Register sub-commands
-  program.addCommand(newProjectCmd);
-  program.addCommand(createNewWalletCmd);
-  program.addCommand(listProjectsCmd);
+  // network sub-commands
   program.addCommand(eth);
   program.addCommand(polygon);
   program.addCommand(bsc);

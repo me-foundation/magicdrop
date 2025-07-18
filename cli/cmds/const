@@ -13,6 +13,7 @@ SUPPORTED_CHAINS=(
     "2741:Abstract"
     "80094:Berachain"
     "10143:MonadTestnet"
+    "6342:MegaETHTestnet"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
@@ -56,7 +57,11 @@ get_registry_address() {
 # The latest MagicDrop v1.0.1 implementation ID for each supported chain.
 get_impl_id() {
     if [ "$token_standard" == "ERC721" ] && [ "$use_erc721c" == "true" ]; then
-         echo "2" # 721C implementation ID on all chains
+        if [ "$chain_id" == "6342" ]; then
+            echo "2" # 721C implementation ID for MegaETH Testnet
+        else
+            echo "7" # 721C implementation ID on all chains
+        fi
     else
         echo $DEFAULT_IMPL_ID
     fi

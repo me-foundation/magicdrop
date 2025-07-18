@@ -1,17 +1,15 @@
 import {
   createPublicClient,
-  createWalletClient,
   Hex,
   http,
   PublicClient,
-  WalletClient,
   Chain,
   TransactionReceipt,
   decodeEventLog,
   toEventSelector,
   encodeFunctionData,
   decodeFunctionResult,
-  Account,
+  formatEther,
 } from 'viem';
 import {
   getSymbolFromChainId,
@@ -24,7 +22,7 @@ import {
   rpcUrls,
   SUPPORTED_CHAINS,
 } from './constants';
-import { collapseAddress } from './common';
+import { collapseAddress, isValidEthereumAddress } from './common';
 import {
   APPLY_LIST_TO_COLLECTION_ABI,
   ERC1155M_ABIS,
@@ -33,22 +31,23 @@ import {
   MagicDropTokenImplRegistryAbis,
   NEW_CONTRACT_INITIALIZED_EVENT_ABI,
   SET_TRANSFER_VALIDATOR_ABI,
+  SET_TRANSFERABLE_ABI,
   SUPPORTS_INTERFACE_ABI,
 } from '../abis';
 import { printTransactionHash, showText } from './display';
+import { getMETurnkeyServiceClient } from './turnkey';
 
 export class ContractManager {
-  private wallet: WalletClient;
-
-  public signer: Hex;
   public client: PublicClient;
   public rpcUrl: string;
   public chain: Chain;
 
   constructor(
     public chainId: SUPPORTED_CHAINS,
-    private signerAccount: Account,
+    public signer: Hex,
+    public symbol: string,
   ) {
+    this.symbol = this.symbol.toLowerCase();
     this.rpcUrl = rpcUrls[this.chainId];
     this.chain = getViemChainByChainId(this.chainId);
 
@@ -58,17 +57,10 @@ export class ContractManager {
       transport: http(this.rpcUrl),
     }) as PublicClient;
 
-    // Initialize wallet client and signer
-    this.wallet = createWalletClient({
-      account: signerAccount,
-      chain: getViemChainByChainId(this.chainId),
-      transport: http(this.rpcUrl),
-    }) as WalletClient;
-
-    const signer = this.wallet.account?.address ?? this.signerAccount.address;
-
-    if (!signer) {
-      throw new Error('ContractManager initialization failed! Signer not set');
+    if (!this.signer && !isValidEthereumAddress(this.signer)) {
+      throw new Error(
+        'ContractManager initialization failed! Signer is invalid.',
+      );
     }
 
     this.signer = signer;
@@ -91,10 +83,14 @@ export class ContractManager {
         data,
       });
 
+      showText('Fetching deployment fee...', '', false, false);
+
+      if (!result.data) return BigInt(0);
+
       const decodedResult = decodeFunctionResult({
         abi: [MagicDropTokenImplRegistryAbis.getDeploymentFee],
         functionName: MagicDropTokenImplRegistryAbis.getDeploymentFee.name,
-        data: result.data ?? '0x',
+        data: result.data,
       });
 
       return decodedResult;
@@ -104,6 +100,9 @@ export class ContractManager {
     }
   }
 
+  /**
+   * Sends a transaction using METurnkeyServiceClient for signing.
+   */
   public async sendTransaction({
     to,
     data,
@@ -115,13 +114,13 @@ export class ContractManager {
     value?: bigint;
     gasLimit?: bigint;
   }): Promise<Hex> {
-    return this.wallet.sendTransaction({
-      account: this.signerAccount,
-      chain: getViemChainByChainId(this.chainId),
+    const meTurnkeyServiceClient = await getMETurnkeyServiceClient();
+    return await meTurnkeyServiceClient.sendTransaction(this.symbol, {
       to,
       data,
       value,
       gasLimit,
+      chainId: this.chainId,
     });
   }
 
@@ -141,11 +140,10 @@ export class ContractManager {
         address: this.signer,
       });
 
-      // Convert the balance from Wei to Ether (or native token)
-      const humanReadableBalance = Number(balance) / 10 ** 18;
+      // Convert the balance from Wei to Ether
+      const humanReadableBalance = formatEther(balance);
 
-      // Format the balance to 3 decimal places
-      return humanReadableBalance.toFixed(3);
+      return humanReadableBalance;
     } catch (error: any) {
       console.error('Error checking signer native balance:', error.message);
       throw new Error('Failed to fetch signer native balance.');
@@ -352,23 +350,24 @@ export class ContractManager {
    * Freeze a contract.
    * @param contractAddress The address of the contract.
    */
-  public async freezeContract(contractAddress: Hex): Promise<Hex> {
-    console.log('Freezing contract... this will take a moment.');
+  public async freezeThawContract(
+    contractAddress: Hex,
+    freeze: boolean,
+  ): Promise<Hex> {
+    console.log(
+      `${freeze ? 'Freezing' : 'Thawing'} contract... this will take a moment.`,
+    );
 
     const data = encodeFunctionData({
-      abi: [ERC1155M_ABIS.setTransferable],
-      functionName: ERC1155M_ABIS.setTransferable.name,
-      args: [false],
+      abi: [SET_TRANSFERABLE_ABI],
+      functionName: SET_TRANSFERABLE_ABI.name,
+      args: [!freeze],
     });
 
     const txHash = await this.sendTransaction({
       to: contractAddress,
       data,
     });
-
-    printTransactionHash(txHash, this.chainId);
-
-    console.log('Token transfers frozen.');
 
     return txHash;
   }

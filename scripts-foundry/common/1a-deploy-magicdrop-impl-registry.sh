@@ -45,7 +45,7 @@ if [ $ZK_SYNC ]; then
       usage
   fi
 else
-  if [ -z "$CHAIN_ID" ] || [ -z "$REGISTRY_SALT" ] || [ -z "$REGISTRY_EXPECTED_ADDRESS"]; then
+  if [ -z "$CHAIN_ID" ] || [ -z "$REGISTRY_SALT" ] || [ -z "$REGISTRY_EXPECTED_ADDRESS" ]; then
       usage
   fi
 fi

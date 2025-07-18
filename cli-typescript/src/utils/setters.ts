@@ -11,35 +11,12 @@ import {
 } from './constants';
 import {
   promptForChain,
-  promptForCollectionFile,
   promptForCollectionName,
   promptForCollectionSymbol,
   promptForEthereumAddress,
   promptForNumericInput,
   promptForTokenStandard,
 } from './prompters';
-
-/**
- * Prompts the user to set the stages file if it is not already set.
- * @returns The updated stages file path.
- */
-export const setStagesFile = async (): Promise<string> => {
-  const stagesFile = process.env.STAGES_FILE;
-
-  if (isUnsetOrNull(stagesFile)) {
-    console.log('> Set stages file <');
-
-    const selectedFile = await promptForCollectionFile(
-      'Enter stages JSON file',
-    );
-    process.env.STAGES_FILE = selectedFile;
-
-    console.clear();
-    return selectedFile;
-  }
-
-  return stagesFile || '';
-};
 
 /**
  * Sets the base directory of the current script.
@@ -64,13 +41,8 @@ export const setRoyalties = async (
   const royaltyFee = process.env.ROYALTY_FEE;
 
   let res = {
-    royaltyReceiver:
-      royaltyReceiver ??
-      process.env.DEFAULT_ROYALTY_RECEIVER ??
-      DEFAULT_ROYALTY_RECEIVER,
-    royaltyFee: Number(
-      royaltyFee ?? process.env.DEFAULT_ROYALTY_FEE ?? DEFAULT_ROYALTY_FEE,
-    ),
+    royaltyReceiver: royaltyReceiver ?? DEFAULT_ROYALTY_RECEIVER,
+    royaltyFee: Number(royaltyFee ?? DEFAULT_ROYALTY_FEE),
   };
 
   if (isUnsetOrNull(royaltyReceiver) && isUnsetOrNull(royaltyFee)) {

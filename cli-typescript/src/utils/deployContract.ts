@@ -1,7 +1,6 @@
 import path from 'path';
-import fs from 'fs';
 import { confirm } from '@inquirer/prompts';
-import { collapseAddress, executeCommand, saveDeploymentData } from './common';
+import { collapseAddress } from './common';
 import {
   confirmDeployment,
   confirmSetup,
@@ -14,7 +13,6 @@ import {
   ERC721StageData,
 } from './types';
 import {
-  getBaseDir,
   getExplorerContractUrl,
   getFactoryAddress,
   getImplId,
@@ -40,14 +38,16 @@ import {
   setMintCurrency,
   setNumberOf1155Tokens,
   setRoyalties,
-  setStagesFile,
   setTokenUriSuffix,
 } from './setters';
+import { getProjectStore } from './fileUtils';
+import { getStagesData } from './evmUtils';
 
 export const deployContract = async ({
-  collectionConfigFile,
+  store,
   tokenStandard,
   stages,
+  stagesFile,
   name: collectionName,
   symbol: collectionSymbol,
   maxMintableSupply,
@@ -71,8 +71,6 @@ export const deployContract = async ({
   const standardId = getStandardId(tokenStandard);
   const useERC721C = getUseERC721C();
   const implId = getImplId(cm.chainId, tokenStandard, useERC721C);
-
-  showText('Fetching deployment fee...', '', false, false);
 
   const deploymentFee = await cm.getDeploymentFee(
     registryAddress,
@@ -119,7 +117,7 @@ export const deployContract = async ({
     false,
   );
 
-  saveDeploymentData(contractAddress, cm.signer, collectionConfigFile);
+  saveDeploymentData(store, contractAddress, cm.signer);
 
   const isICreatorToken = await cm.supportsICreatorToken(contractAddress);
 
@@ -137,7 +135,10 @@ export const deployContract = async ({
     });
 
     if (freezeCollection) {
-      cm.freezeContract(contractAddress);
+      const txHash = await cm.freezeThawContract(contractAddress, true);
+      printTransactionHash(txHash, cm.chainId);
+
+      console.log('Token transfers frozen.');
     }
   }
 
@@ -152,12 +153,12 @@ export const deployContract = async ({
       contractAddress,
       chainId: cm.chainId,
       tokenStandard,
-      collectionFile: collectionConfigFile,
+      collectionFile: store.root,
       signer: cm.signer,
-      baseDir: getBaseDir(),
       uri,
       tokenUriSuffix,
       stagesJson: JSON.stringify(stages),
+      stagesFile,
       globalWalletLimit,
       maxMintableSupply,
       fundReceiver,
@@ -169,73 +170,39 @@ export const deployContract = async ({
   }
 };
 
-const sendERC721SetupTransaction = async ({
-  cm,
-  contractAddress,
-  tokenUriSuffix,
-  uri,
-  maxMintableSupply,
-  globalWalletLimit,
-  mintCurrency,
-  fundReceiver,
-  stagesData,
-  royaltyReceiver,
-  royaltyFee,
-}: {
-  cm: ContractManager;
-  contractAddress: Hex;
-  tokenUriSuffix: string;
-  uri: string;
-  maxMintableSupply: number;
-  globalWalletLimit: number;
-  mintCurrency: string;
-  fundReceiver: string;
-  stagesData: ERC721StageData[];
-  royaltyReceiver: string;
-  royaltyFee: number;
-}) => {
-  try {
-    const setupSignature =
-      'function setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)';
+/**
+ * Saves deployment data to a collection file.
+ * @param contractAddress The deployed contract address.
+ * @param initialOwner The initial owner of the contract.
+ * @throws Error if the collection file is not found or if saving fails.
+ */
+export const saveDeploymentData = (
+  store: ReturnType<typeof getProjectStore>,
+  contractAddress: Hex,
+  initialOwner: Hex,
+): void => {
+  // Get the current timestamp
+  const timestamp = Date.now();
+  const deployedAt = new Date(timestamp).toISOString();
 
-    const abi = AbiFunction.from(setupSignature);
+  store.read();
 
-    const parsedStagesData = stagesData.map((stage) => {
-      return [
-        BigInt(stage.price),
-        BigInt(stage.mintFee),
-        stage.walletLimit,
-        stage.merkleRoot as Hex,
-        stage.maxStageSupply,
-        BigInt(stage.startTime),
-        BigInt(stage.endTime),
-      ] as readonly [bigint, bigint, number, Hex, number, bigint, bigint];
-    });
+  // Create deployment object
+  const deploymentData = {
+    contract_address: contractAddress,
+    initial_owner: initialOwner,
+    deployed_at: deployedAt,
+  };
 
-    const encodedData = AbiFunction.encodeData(abi, [
-      uri as string,
-      tokenUriSuffix as string,
-      BigInt(maxMintableSupply as number),
-      BigInt(globalWalletLimit as number),
-      mintCurrency as Hex,
-      fundReceiver as Hex,
-      parsedStagesData,
-      royaltyReceiver as Hex,
-      BigInt(royaltyFee),
-    ]);
-
-    const hash = await cm.sendTransaction({
-      to: contractAddress,
-      data: encodedData,
-    });
-
-    const receipt = await cm.waitForTransactionReceipt(hash);
-
-    return receipt.transactionHash;
-  } catch (error) {
-    console.error('Error sending transaction:', error);
-    throw error;
+  // Add deployment data to the collection JSON
+  if (!store.data) {
+    throw Error('Collection config data not found!');
   }
+
+  store.data.deployment = deploymentData;
+  store.write();
+
+  console.log(`Deployment details added to ${store.root}`);
 };
 
 /**
@@ -243,18 +210,18 @@ const sendERC721SetupTransaction = async ({
  * @param params
  * @throws Error if the operation fails.
  */
-const setupContract = async (params: {
+export const setupContract = async (params: {
   cm: ContractManager;
   contractAddress: Hex;
   chainId: SUPPORTED_CHAINS;
   tokenStandard: TOKEN_STANDARD;
   collectionFile: string;
   signer: string;
-  baseDir?: string;
   uri?: string;
   tokenUriSuffix?: string;
   title?: string;
   stagesJson?: string;
+  stagesFile?: string;
   totalTokens?: number;
   globalWalletLimit?: number | number[];
   maxMintableSupply?: number | number[];
@@ -271,16 +238,16 @@ const setupContract = async (params: {
     collectionFile,
     signer,
     stagesJson,
+    stagesFile,
     title = 'Setup an existing collection',
-    baseDir = __dirname,
   } = params;
 
   try {
-    console.clear();
-
     await cm.checkSetupLocked(contractAddress);
 
-    const stagesFile = !stagesJson ? await setStagesFile() : undefined;
+    if (!stagesFile && !stagesJson) {
+      throw new Error('No stages file or JSON provided.');
+    }
 
     // Define setup selector based on token standard
     let uri = '';
@@ -339,12 +306,12 @@ const setupContract = async (params: {
       stagesFile,
       stagesJson,
       tokenStandard,
-      baseDir,
     });
 
     console.log('Setting up contract... this will take a moment.');
+    let txHash: Hex;
     if (tokenStandard === TOKEN_STANDARD.ERC721) {
-      await sendERC721SetupTransaction({
+      txHash = await sendERC721SetupTransaction({
         cm: params.cm,
         contractAddress,
         uri,
@@ -358,7 +325,7 @@ const setupContract = async (params: {
         royaltyFee,
       });
     } else {
-      await sendERC1155SetupTransaction({
+      txHash = await sendERC1155SetupTransaction({
         cm: params.cm,
         contractAddress,
         uri,
@@ -373,6 +340,7 @@ const setupContract = async (params: {
     }
 
     console.log('Contract setup completed.');
+    printTransactionHash(txHash, cm.chainId);
   } catch (error: any) {
     console.error('Error setting up contract:', error.message);
     throw new Error('Failed to set up contract.');
@@ -390,28 +358,21 @@ export const processStages = async (params: {
   stagesFile?: string;
   stagesJson?: string;
   tokenStandard: string;
-  baseDir: string;
 }): Promise<ERC721StageData[] | ERC1155StageData[]> => {
-  const {
-    collectionFile,
-    stagesFile = '',
-    stagesJson,
-    tokenStandard,
-    baseDir,
-  } = params;
+  const { collectionFile, stagesFile = '', stagesJson, tokenStandard } = params;
 
   const outputFileDir = path.dirname(collectionFile);
   console.log(`Output file directory: ${outputFileDir}`);
-  const saveToJson = true;
 
   try {
-    // Execute the script to process stages
-    executeCommand(
-      `npx ts-node "${path.join(
-        baseDir,
-        '../../scripts/utils/getStagesData.ts',
-      )}" "${stagesFile}" '${stagesJson}' "${outputFileDir}" "${tokenStandard}" "" "${saveToJson}"`,
+    const stagesData = await getStagesData(
+      stagesFile,
+      tokenStandard === TOKEN_STANDARD.ERC1155,
+      outputFileDir,
+      stagesJson,
     );
+
+    return stagesData as ERC721StageData[] | ERC1155StageData[];
   } catch (error: any) {
     console.error(
       'Error: Failed to get stages data',
@@ -420,22 +381,104 @@ export const processStages = async (params: {
     );
     throw new Error('Failed to get stages data');
   }
+};
 
-  // Check if the output file exists
-  const outputFilePath = path.join(outputFileDir, 'stagesInput.tmp.json');
+export const getERC721ParsedStagesData = (stagesData: ERC721StageData[]) => {
+  const parsedStagesData = stagesData.map((stage) => {
+    return [
+      BigInt(stage.price),
+      BigInt(stage.mintFee),
+      stage.walletLimit,
+      stage.merkleRoot as Hex,
+      stage.maxStageSupply,
+      BigInt(stage.startTime),
+      BigInt(stage.endTime),
+    ] as readonly [bigint, bigint, number, Hex, number, bigint, bigint];
+  });
 
-  if (!fs.existsSync(outputFilePath)) {
-    console.error(`Error: Output file not found: ${outputFilePath}`);
-    throw new Error(`Output file not found: ${outputFilePath}`);
+  return parsedStagesData;
+};
+
+export const getERC1155ParsedStagesData = (stagesData: ERC1155StageData[]) => {
+  const parsedStagesData = stagesData.map((stage) => {
+    return [
+      stage.price.map((price) => BigInt(price)),
+      stage.mintFee.map((fee) => BigInt(fee)),
+      stage.walletLimit,
+      stage.merkleRoot,
+      stage.maxStageSupply,
+      BigInt(stage.startTime),
+      BigInt(stage.endTime),
+    ] as readonly [
+      bigint[],
+      bigint[],
+      number[],
+      Hex[],
+      number[],
+      bigint,
+      bigint,
+    ];
+  });
+
+  return parsedStagesData;
+};
+
+const sendERC721SetupTransaction = async ({
+  cm,
+  contractAddress,
+  tokenUriSuffix,
+  uri,
+  maxMintableSupply,
+  globalWalletLimit,
+  mintCurrency,
+  fundReceiver,
+  stagesData,
+  royaltyReceiver,
+  royaltyFee,
+}: {
+  cm: ContractManager;
+  contractAddress: Hex;
+  tokenUriSuffix: string;
+  uri: string;
+  maxMintableSupply: number;
+  globalWalletLimit: number;
+  mintCurrency: string;
+  fundReceiver: string;
+  stagesData: ERC721StageData[];
+  royaltyReceiver: string;
+  royaltyFee: number;
+}) => {
+  try {
+    const setupSignature =
+      'function setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)';
+
+    const abi = AbiFunction.from(setupSignature);
+
+    const parsedStagesData = getERC721ParsedStagesData(stagesData);
+    const encodedData = AbiFunction.encodeData(abi, [
+      uri as string,
+      tokenUriSuffix as string,
+      BigInt(maxMintableSupply as number),
+      BigInt(globalWalletLimit as number),
+      mintCurrency as Hex,
+      fundReceiver as Hex,
+      parsedStagesData,
+      royaltyReceiver as Hex,
+      BigInt(royaltyFee),
+    ]);
+
+    const hash = await cm.sendTransaction({
+      to: contractAddress,
+      data: encodedData,
+    });
+
+    const receipt = await cm.waitForTransactionReceipt(hash);
+
+    return receipt.transactionHash;
+  } catch (error) {
+    console.error('Error sending transaction:', error);
+    throw error;
   }
-
-  // Read the stages data
-  const stagesData = fs.readFileSync(outputFilePath, 'utf-8');
-
-  // Delete the temporary file
-  fs.unlinkSync(outputFilePath);
-
-  return JSON.parse(stagesData);
 };
 
 const sendERC1155SetupTransaction = async ({
@@ -467,26 +510,7 @@ const sendERC1155SetupTransaction = async ({
 
     const abi = AbiFunction.from(setupSignature);
 
-    const parsedStagesData = stagesData.map((stage) => {
-      return [
-        stage.price.map((price) => BigInt(price)),
-        stage.mintFee.map((fee) => BigInt(fee)),
-        stage.walletLimit,
-        stage.merkleRoot,
-        stage.maxStageSupply,
-        BigInt(stage.startTime),
-        BigInt(stage.endTime),
-      ] as readonly [
-        bigint[],
-        bigint[],
-        number[],
-        Hex[],
-        number[],
-        bigint,
-        bigint,
-      ];
-    });
-
+    const parsedStagesData = getERC1155ParsedStagesData(stagesData);
     const encodedData = AbiFunction.encodeData(abi, [
       uri as string,
       maxMintableSupply.map((supply) => BigInt(supply)),

@@ -1,8 +1,8 @@
-import fs from 'fs';
-import { confirm, password } from '@inquirer/prompts';
+import { confirm } from '@inquirer/prompts';
 import {
   ABSTRACT_FACTORY_ADDRESS,
   ABSTRACT_REGISTRY_ADDRESS,
+  DEFAULT_COLLECTION_DIR,
   DEFAULT_FACTORY_ADDRESS,
   DEFAULT_IMPL_ID,
   DEFAULT_LIST_ID,
@@ -11,8 +11,6 @@ import {
   LIMITBREAK_TRANSFER_VALIDATOR_V3,
   LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT,
   LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN,
-  MAGIC_DROP_KEYSTORE,
-  MAGIC_DROP_KEYSTORE_FILE,
   MAGIC_EDEN_DEFAULT_LIST_ID,
   MAGIC_EDEN_POLYGON_LIST_ID,
   ME_TRANSFER_VALIDATOR_V3,
@@ -286,28 +284,6 @@ export const getStandardId = (tokenStandard: TOKEN_STANDARD): string => {
   }
 };
 
-/**
- * Retrieves the password and account information if set.
- * @returns A string containing the password and account information, or undefined if not set. e.g `--password <PASSWORD> --account <MAGIC_DROP_KEYSTORE>`
- */
-export const getPasswordOptionIfSet = async (): Promise<string> => {
-  const keystorePassword = process.env.KEYSTORE_PASSWORD;
-
-  if (keystorePassword) {
-    return `--password ${keystorePassword} --account ${MAGIC_DROP_KEYSTORE}`;
-  } else if (fs.existsSync(MAGIC_DROP_KEYSTORE_FILE)) {
-    const passwrd = await password({
-      message: 'Enter password:',
-      mask: '*',
-    });
-
-    process.env.KEYSTORE_PASSWORD = passwrd;
-    return `--password ${passwrd} --account ${MAGIC_DROP_KEYSTORE}`;
-  }
-
-  return '';
-};
-
 export const getUseERC721C = (): boolean => {
   return process.env.USE_ERC721C === 'true' ? true : false;
 };
@@ -345,4 +321,8 @@ export const getExplorerTxUrl = (
 export const getBaseDir = (): string => {
   const baseDir = process.env.BASE_DIR || setBaseDir();
   return baseDir;
+};
+
+export const getCollectionDir = (): string => {
+  return process.env.MAGIC_DROP_COLLECTION_DIR || DEFAULT_COLLECTION_DIR;
 };

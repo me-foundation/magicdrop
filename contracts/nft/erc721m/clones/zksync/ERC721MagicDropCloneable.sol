@@ -12,7 +12,7 @@ import {ERC721ACloneable} from "../ERC721ACloneable.sol";
 import {IERC721MagicDropMetadata} from "contracts/nft/erc721m/interfaces/IERC721MagicDropMetadata.sol";
 import {PublicStage, AllowlistStage, SetupConfig} from "../Types.sol";
 
-import {MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
+import {SELF_SERVE_MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";
 
 ///                                                     ........
 ///                             .....                   ..    ...
@@ -420,7 +420,7 @@ contract ERC721MagicDropCloneable is ERC721MagicDropMetadataCloneable {
         if (mintFee > 0) {
             uint256 totalMintFee = mintFee * qty;
             proceeds -= totalMintFee;
-            SafeTransferLib.safeTransferETH(MINT_FEE_RECEIVER, totalMintFee);
+            SafeTransferLib.safeTransferETH(SELF_SERVE_MINT_FEE_RECEIVER, totalMintFee);
         }
 
         // If there are no remaining proceeds after mint fee is taken, exit early

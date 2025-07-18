@@ -1,12 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import {
-  COLLECTION_DIR,
-  DEFAULT_COLLECTION_DIR,
-  TOKEN_STANDARD,
-} from './constants';
 import { Collection } from './types';
-import { Hex } from 'viem';
+import { getCollectionDir } from './getters';
 
 export class Store<T> {
   public root: string;
@@ -60,46 +55,17 @@ export class Store<T> {
 }
 
 export const getProjectStore = (
-  collection: string,
+  symbol: string,
   readonly = false,
   createDir = false,
 ) => {
   const store = new Store<Collection>(
-    COLLECTION_DIR,
-    path.join('projects', collection),
+    getCollectionDir(),
+    path.join('projects', symbol),
     'project.json',
     readonly,
     createDir,
   );
-
-  return store;
-};
-
-export const getWalletStore = (
-  projectName: string,
-  readonly = false,
-  createDir = false,
-) => {
-  const store = new Store<{ walletId: string; signer: Hex }>(
-    COLLECTION_DIR,
-    path.join('projects', projectName),
-    'wallet.json',
-    readonly,
-    createDir,
-  );
-
-  return store;
-};
-
-export const getTemplateStore = (tokenStandard: TOKEN_STANDARD) => {
-  const store = new Store<Collection>(
-    DEFAULT_COLLECTION_DIR,
-    'template',
-    `${tokenStandard.toLowerCase()}_template.json`,
-    true,
-  );
-
-  store.read();
 
   return store;
 };
