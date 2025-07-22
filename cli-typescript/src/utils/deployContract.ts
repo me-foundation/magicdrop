@@ -18,7 +18,6 @@ import {
   getImplId,
   getRegistryAddress,
   getStandardId,
-  getUseERC721C,
   promptForConfirmation,
 } from './getters';
 import { ContractManager } from './ContractManager';
@@ -61,6 +60,7 @@ export const deployContract = async ({
   mintCurrency,
   contractManager: cm,
   totalTokens,
+  useERC721C,
 }: DeployContractConfig) => {
   showText('Deploying a new collection...');
 
@@ -69,7 +69,6 @@ export const deployContract = async ({
   const factoryAddress = getFactoryAddress(cm.chainId);
   const registryAddress = getRegistryAddress(cm.chainId);
   const standardId = getStandardId(tokenStandard);
-  const useERC721C = getUseERC721C();
   const implId = getImplId(cm.chainId, tokenStandard, useERC721C);
 
   const deploymentFee = await cm.getDeploymentFee(
