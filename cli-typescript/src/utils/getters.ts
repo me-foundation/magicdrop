@@ -298,10 +298,6 @@ export const getStandardId = (tokenStandard: TOKEN_STANDARD): string => {
   }
 };
 
-export const getUseERC721C = (): boolean => {
-  return process.env.USE_ERC721C === 'true' ? true : false;
-};
-
 export const promptForConfirmation = async (
   message?: string,
   defaultValue?: boolean,

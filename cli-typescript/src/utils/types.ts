@@ -74,6 +74,7 @@ export type DeployContractConfig = Collection & {
   contractManager: ContractManager;
   totalTokens?: number;
   stagesFile?: string;
+  useERC721C?: boolean;
 };
 
 export interface Log {
