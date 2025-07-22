@@ -69,7 +69,6 @@ export const deployContract = async ({
   const factoryAddress = getFactoryAddress(cm.chainId);
   const registryAddress = getRegistryAddress(cm.chainId);
   const standardId = getStandardId(tokenStandard);
-  console.log('useERC721C:🥶', useERC721C);
   const implId = getImplId(cm.chainId, tokenStandard, useERC721C);
 
   const deploymentFee = await cm.getDeploymentFee(
