@@ -25,7 +25,6 @@ import {
 import { collapseAddress, isValidEthereumAddress } from './common';
 import {
   APPLY_LIST_TO_COLLECTION_ABI,
-  ERC1155M_ABIS,
   IS_SETUP_LOCKED_ABI,
   MagicDropCloneFactoryAbis,
   MagicDropTokenImplRegistryAbis,
@@ -160,6 +159,47 @@ export class ContractManager {
 
     console.log(`Signer: ${collapseAddress(this.signer)}`);
     console.log(`Balance: ${balance} ${symbol}`);
+  }
+
+  /**
+   * Transfers native currency (ETH, MATIC, etc.) to a recipient address
+   * @param to The recipient address
+   * @param amount The amount to transfer in wei
+   * @returns Transaction hash
+   */
+  public async transferNative({
+    to,
+    amount,
+    gasLimit,
+  }: {
+    to: Hex;
+    amount: bigint;
+    gasLimit?: bigint;
+  }): Promise<Hex> {
+    const symbol = getSymbolFromChainId(this.chainId);
+    showText(
+      `Transferring ${formatEther(amount)} ${symbol} to ${collapseAddress(to)}...`,
+    );
+
+    // Check if sender has enough balance
+    const balance = await this.client.getBalance({
+      address: this.signer,
+    });
+
+    if (balance < amount) {
+      throw new Error(
+        `Insufficient balance. Available: ${formatEther(balance)} ${symbol}, Required: ${formatEther(amount)} ${symbol}`,
+      );
+    }
+
+    const txHash = await this.sendTransaction({
+      to,
+      data: '0x',
+      value: amount,
+      gasLimit,
+    });
+
+    return txHash;
   }
 
   static getContractAddressFromLogs(logs: TransactionReceipt['logs']) {

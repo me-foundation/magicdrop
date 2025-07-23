@@ -32,6 +32,7 @@ import {
   setTokenURISuffixCmd,
   setUriCmd,
   transferOwnershipCmd,
+  transferSignerBalanceCmd,
   withdrawContractBalanceCmd,
 } from './general';
 import listProjectsAction from '../utils/cmdActions/listProjectsAction';
@@ -216,6 +217,7 @@ export const createEvmCommand = ({
   newCmd.addCommand(setTokenURISuffixCmd());
   newCmd.addCommand(ownerMintCmd());
   newCmd.addCommand(checkSignerBalanceCmd());
+  newCmd.addCommand(transferSignerBalanceCmd());
   newCmd.addCommand(getWalletInfoCmd());
   newCmd.addCommand(getConfigCmd());
 
