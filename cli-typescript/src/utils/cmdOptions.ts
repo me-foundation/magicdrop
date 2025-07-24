@@ -150,6 +150,9 @@ export const getTokenUriSuffixOption = () =>
 export const getReceiverOption = () =>
   new Option('-r --receiver <receiver>', 'the receiver address.');
 
+export const getGasLimitOption = () =>
+  new Option('-g --gasLimit <gasLimit>', 'the gas limit for the transaction.');
+
 export const getQtyOption = () => new Option('--qty <qty>', 'the token qty.');
 
 export const getConfigFileOption = () =>

@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import {
   getCosignerOption,
   getExpiryTimestampOption,
-  getForceOption,
   getFreezeThawOption,
+  getGasLimitOption,
   getGlobalWalletLimitOption,
   getIsMintableOption,
   getMaxMintableSupplyOption,
@@ -26,7 +26,7 @@ import { setMaxMintableSupplyAction } from '../utils/cmdActions/setMaxMintableSu
 import { setCosignerAction } from '../utils/cmdActions/setCosignerAction';
 import { setTimestampExpiryAction } from '../utils/cmdActions/setTimestampExpiryAction';
 import { withdrawContractBalanceAction } from '../utils/cmdActions/withdrawContractBalanceAction';
-import { TOKEN_STANDARD } from '../utils/constants';
+import { STANDARD_GAS_LIMIT, TOKEN_STANDARD } from '../utils/constants';
 import { freezeThawContractAction } from '../utils/cmdActions/freezeThawContractAction';
 import { transferOwnershipAction } from '../utils/cmdActions/transferOwnershipAction';
 import { manageAuthorizedMintersAction } from '../utils/cmdActions/manageAuthorizedMinters';
@@ -34,6 +34,7 @@ import { setMintableAction } from '../utils/cmdActions/setMintableAction';
 import { setTokenUriSuffixAction } from '../utils/cmdActions/setTokenUriSuffixAction';
 import { ownerMintAction } from '../utils/cmdActions/ownerMintAction';
 import { checkSignerBalanceAction } from '../utils/cmdActions/checkSignerBalanceAction';
+import { transferSignerBalanceAction } from '../utils/cmdActions/transferSignerBalanceAction';
 import getWalletInfoAction from '../utils/cmdActions/getWalletInfoAction';
 import getProjectConfigAction from '../utils/cmdActions/getProjectConfigAction';
 
@@ -195,3 +196,14 @@ export const checkSignerBalanceCmd = () =>
     .alias('csb')
     .description('Check the balance of the signer account for the collection.')
     .action(checkSignerBalanceAction);
+
+export const transferSignerBalanceCmd = () =>
+  new Command('transfer-signer-balance')
+    .command('transfer-signer-balance <symbol>')
+    .alias('tsb')
+    .description(
+      'Transfer all native balance from the signer account for the collection to the specified address.',
+    )
+    .addOption(getReceiverOption().makeOptionMandatory())
+    .addOption(getGasLimitOption().default(STANDARD_GAS_LIMIT + 6000)) // Default gas limit with buffer
+    .action(transferSignerBalanceAction);
