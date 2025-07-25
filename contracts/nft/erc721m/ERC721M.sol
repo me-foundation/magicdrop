@@ -158,7 +158,7 @@ contract ERC721M is
     /// @return The stage info, wallet minted count, and stage minted count
     function getStageInfo(uint256 index) external view override returns (MintStageInfo memory, uint32, uint256) {
         if (index >= _mintStages.length) {
-            revert("InvalidStage");
+            revert InvalidStage();
         }
         uint32 walletMinted = _stageMintedCountsPerWallet[index][msg.sender];
         uint256 stageMinted = _stageMintedCounts[index];
