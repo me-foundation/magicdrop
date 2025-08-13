@@ -24,14 +24,8 @@ export const DEFAULT_COLLECTION_DIR = path.resolve(
   '../../collections',
 );
 
-export const ME_TRANSFER_VALIDATOR_V3 =
-  '0x721C00D4FB075b22a5469e9CF2440697F729aA13';
-export const LIMITBREAK_TRANSFER_VALIDATOR_V3 =
-  '0x721C0078c2328597Ca70F5451ffF5A7B38D4E947';
-export const LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT =
-  '0x3203c3f64312AF9344e42EF8Aa45B97C9DFE4594';
-export const LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN =
-  '0x721c002b0059009a671d00ad1700c9748146cd1b';
+export const LIMIT_BREAK_TRANSFER_VALIDATOR_V5 =
+  "0x721C008fdff27BF06E7E123956E2Fe03B63342e3"
 
 export const ABSTRACT_FACTORY_ADDRESS =
   '0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19';
@@ -51,11 +45,9 @@ export const ICREATOR_TOKEN_INTERFACE_ID = '0xad0d7f6c'; // type(ICreatorToken).
 export const TRUE_HEX =
   '0x0000000000000000000000000000000000000000000000000000000000000001';
 
-// Used on chains where we don't have a custom list
+// The standard Limit Break owned list is 0
+// This should support SeaPort (and thus Magic Eden) by default
 export const DEFAULT_LIST_ID = 0;
-export const MAGIC_EDEN_DEFAULT_LIST_ID = 1;
-// We use list 3 for Polygon because list 1 was already taken.
-export const MAGIC_EDEN_POLYGON_LIST_ID = 3;
 
 export const DEFAULT_IMPL_ID = 0;
 

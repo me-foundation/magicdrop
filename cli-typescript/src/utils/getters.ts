@@ -10,12 +10,7 @@ import {
   DEFAULT_LIST_ID,
   DEFAULT_REGISTRY_ADDRESS,
   explorerUrls,
-  LIMITBREAK_TRANSFER_VALIDATOR_V3,
-  LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT,
-  LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN,
-  MAGIC_EDEN_DEFAULT_LIST_ID,
-  MAGIC_EDEN_POLYGON_LIST_ID,
-  ME_TRANSFER_VALIDATOR_V3,
+  LIMIT_BREAK_TRANSFER_VALIDATOR_V5,
   SUPPORTED_CHAINS,
   supportedChainNames,
   TOKEN_STANDARD,
@@ -39,31 +34,13 @@ import { Hex } from 'viem';
 import { setBaseDir } from './setters';
 
 /**
- * Retrieves the transfer validator address based on the network (chain ID).
- * @param chainId The chain ID of the network.
- * @returns The transfer validator address for the given network.
+ * Retrieves the transfer validator address
+ * @returns The transfer validator address
  */
-export const getTransferValidatorAddress = (chainId: SUPPORTED_CHAINS): Hex => {
-  switch (chainId) {
-    case SUPPORTED_CHAINS.APECHAIN:
-    case SUPPORTED_CHAINS.SEI:
-      return ME_TRANSFER_VALIDATOR_V3;
-
-    case SUPPORTED_CHAINS.ARBITRUM:
-    case SUPPORTED_CHAINS.BASE:
-    case SUPPORTED_CHAINS.ETHEREUM:
-    case SUPPORTED_CHAINS.SEPOLIA:
-      return LIMITBREAK_TRANSFER_VALIDATOR_V3;
-
-    case SUPPORTED_CHAINS.ABSTRACT:
-      return LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT;
-
-    case SUPPORTED_CHAINS.BERACHAIN:
-      return LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN;
-
-    default:
-      return LIMITBREAK_TRANSFER_VALIDATOR_V3;
-  }
+export const getTransferValidatorAddress = (): Hex => {
+  // Limit Break CreatorTokenTransferValidator is deployed to the same
+  // Address on all of our mainnet production EVM chains
+  return LIMIT_BREAK_TRANSFER_VALIDATOR_V5;
 };
 
 export const getZksyncFlag = (chainId: SUPPORTED_CHAINS): string => {
@@ -163,23 +140,13 @@ export const getViemChainByChainId = (chainId: SUPPORTED_CHAINS) => {
 };
 
 /**
- * Retrieves the transfer validator list ID based on the network (chain ID).
- * @param chainId The chain ID of the network.
- * @returns The transfer validator list ID for the given network.
+ * Retrieves the transfer validator list ID
+ * @returns The transfer validator list ID
  */
-export const getTransferValidatorListId = (
-  chainId: SUPPORTED_CHAINS,
-): number => {
-  switch (chainId) {
-    case SUPPORTED_CHAINS.BERACHAIN:
-      return DEFAULT_LIST_ID;
-
-    case SUPPORTED_CHAINS.POLYGON:
-      return MAGIC_EDEN_POLYGON_LIST_ID;
-
-    default:
-      return MAGIC_EDEN_DEFAULT_LIST_ID;
-  }
+export const getTransferValidatorListId = (): number => {
+  // The standard Limit Break owned list is 0
+  // This should support SeaPort (and thus Magic Eden) by default
+  return DEFAULT_LIST_ID;
 };
 
 /**

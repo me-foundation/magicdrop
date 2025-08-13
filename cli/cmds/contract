@@ -105,7 +105,7 @@ set_transfer_validator() {
 set_transfer_list() {
     tf_list_id=$(get_transfer_validator_list_id $chain_id)
     echo "Setting transfer list to list ID $tf_list_id..."
-    output=$(cast send $tf_address "applyListToCollection(address,uint120)" $contract_address $tf_list_id $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    output=$(cast send $tf_address "applyListToCollection(address,uint48)" $contract_address $tf_list_id $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
     print_transaction_hash $output
     echo "Transfer list set."
     echo ""

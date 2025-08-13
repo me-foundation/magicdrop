@@ -74,40 +74,16 @@ select_chain() {
     echo "$chain_id:$chain"
 }
 
+# Limit Break CreatorTokenTransferValidator is deployed to the same
+# Address on all of our mainnet production EVM chains
 get_transfer_validator_address() {
-    local network="$1"
-    case $network in
-        "33139"|"1329")
-            echo "$ME_TRANSFER_VALIDATOR_V3"
-            ;;
-        "42161"|"8453"|"1"|"11155111")
-            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
-            ;;
-        "2741")
-            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT"
-            ;;
-        "80094")
-            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN"
-            ;;
-        *)
-            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
-            ;;
-    esac
+    echo "$LIMIT_BREAK_TRANSFER_VALIDATOR_V5"
 }
 
+# The standard Limit Break owned list is 0
+# This should support SeaPort (and thus Magic Eden) by default
 get_transfer_validator_list_id() {
-    local network="$1"
-    case $network in
-        "80094")
-            echo $DEFAULT_LIST_ID
-            ;;
-        "137")
-            echo $MAGIC_EDEN_POLYGON_LIST_ID
-            ;;
-        *)
-            echo $MAGIC_EDEN_DEFAULT_LIST_ID
-            ;;
-    esac
+    echo "$DEFAULT_LIST_ID"
 }
 
 is_number() {
