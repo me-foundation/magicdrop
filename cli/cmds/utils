@@ -85,7 +85,7 @@ format_address() {
 process_stages() {
     output_file_dir="$(dirname "$collection_file")"
     echo "Output file directory: $output_file_dir"
-    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$stages_json" "$output_file_dir" "$token_standard" "$WEB3STORAGE_KEY"
+    npx ts-node "$BASE_DIR/../../scripts/utils/getStagesData.ts" "$stages_file" "$stages_json" "$output_file_dir" "$token_standard" "$WEB3STORAGE_KEY" "$contract_version"
 
     if [[ $? -ne 0 ]]; then
         echo "Error: Failed to get stages data"
@@ -95,6 +95,14 @@ process_stages() {
     if [[ ! -f "$output_file_dir/stagesInput.tmp" ]]; then
         echo "Error: Output file not found: $output_file_dir/stagesInput.tmp"
         exit 1
+    fi
+}
+
+is_legacy_contract() {
+    if [ "$contract_version" = "1.0.0" ] || [ "$contract_version" = "1.0.1" ]; then
+        return 0
+    else
+        return 1
     fi
 }
 

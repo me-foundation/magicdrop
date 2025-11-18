@@ -218,3 +218,51 @@ export const cleanWhitelist = async (whitelistPath: string, writeToFile: boolean
 }
 
 export const ensureArray = (value: any) => Array.isArray(value) ? value : [value];
+
+/**
+ * Compares two semantic version strings (e.g., "1.2.3" vs "1.2.4")
+ * @param version1 - First version string to compare
+ * @param version2 - Second version string to compare
+ * @returns {number}
+ *  1 if version1 is greater than version2
+ *  -1 if version1 is less than version2
+ *  0 if versions are equal
+ */
+export function compareVersions(version1: string, version2: string): number {
+  // Split version strings into arrays of numbers (e.g., "1.2.3" -> [1, 2, 3])
+  const v1Parts = version1.split('.').map(Number);
+  const v2Parts = version2.split('.').map(Number);
+
+  // Compare each part of the version numbers
+  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+    // Use 0 as default if a version part doesn't exist
+    const v1Part = v1Parts[i] || 0;
+    const v2Part = v2Parts[i] || 0;
+
+    // Return early if we find a difference
+    if (v1Part > v2Part) {
+      return 1;
+    }
+    if (v1Part < v2Part) {
+      return -1;
+    }
+  }
+
+  // Versions are equal if we get here
+  return 0;
+}
+
+/**
+ * Checks if version1 is greater than or equal to version2
+ * Handles undefined inputs safely by returning false
+ * @param version1 - First version string to compare
+ * @param version2 - Second version string to compare
+ * @returns {boolean} true if version1 >= version2, false otherwise or if either input is undefined
+ */
+export function isVersionGreaterThanOrEqual(version1?: string, version2?: string): boolean {
+  if (!version1 || !version2) {
+    return false;
+  }
+
+  return compareVersions(version1, version2) >= 0;
+}

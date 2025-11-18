@@ -3,6 +3,7 @@ import { isAddress } from 'ethers/lib/utils';
 import { BigNumber, ethers } from 'ethers';
 import { MerkleTree } from 'merkletreejs';
 import path from 'path';
+import { isVersionGreaterThanOrEqual } from './helper';
 
 type Stage = {
   price: number;
@@ -358,6 +359,7 @@ function verifyStage1155ArrayLengths(stage: Stage1155): void {
  * @returns Formatted stage data string
  */
 const processERC1155Stage = async (
+  version: string,
   stage: Stage1155,
   stageIdx: number,
   outputFileDir: string,
@@ -366,7 +368,7 @@ const processERC1155Stage = async (
 ): Promise<
   | {
       price: string[];
-      mintFee: string[];
+      mintFee?: string[];
       walletLimit: number[];
       merkleRoot: string[];
       maxStageSupply: number[];
@@ -386,12 +388,17 @@ const processERC1155Stage = async (
     stage.maxStageSupply ?? new Array(merkleRoots.length).fill(0);
 
   if (isJsonOutput) {
-    return {
+    const data: {
+      price: string[];
+      mintFee?: string[];
+      walletLimit: number[];
+      merkleRoot: string[];
+      maxStageSupply: number[];
+      startTime: number;
+      endTime: number;
+    } = {
       price: stage.price.map((p) =>
         ethers.utils.parseEther(p.toString()).toString(),
-      ),
-      mintFee: stage.mintFee.map((f) =>
-        ethers.utils.parseEther(f.toString()).toString(),
       ),
       walletLimit: stage.walletLimit,
       merkleRoot: merkleRoots,
@@ -399,11 +406,18 @@ const processERC1155Stage = async (
       startTime: new Date(stage.startTime).getTime() / 1000,
       endTime: new Date(stage.endTime).getTime() / 1000,
     };
+
+    if (isLegacyContract(version)) {
+      data.mintFee = stage.mintFee.map((f) =>
+        ethers.utils.parseEther(f.toString()).toString(),
+      );
+    }
+    return data;
   }
 
   return formatStageData([
     `[${stage.price.map((p) => ethers.utils.parseEther(p.toString())).join(',')}]`,
-    `[${stage.mintFee.map((f) => ethers.utils.parseEther(f.toString())).join(',')}]`,
+    ...(isLegacyContract(version) ? [`[${stage.mintFee.map((f) => ethers.utils.parseEther(f.toString())).join(',')}]`] : []),
     `[${stage.walletLimit.join(',')}]`,
     `[${merkleRoots.join(',')}]`,
     `[${maxStageSupply.join(',')}]`,
@@ -465,6 +479,10 @@ const generateERC1155MerkleRoots = async (
   );
 };
 
+const isLegacyContract = (version: string) => {
+  return !isVersionGreaterThanOrEqual(version, '1.0.2');
+};
+
 /**
  * Processes a single ERC721 stage and returns its formatted data
  * @param stage - The Stage object to process
@@ -472,6 +490,7 @@ const generateERC1155MerkleRoots = async (
  * @returns Formatted stage data string
  */
 const processERC721Stage = async (
+  version: string,
   stage: Stage,
   stageIdx: number,
   outputFileDir: string,
@@ -480,7 +499,7 @@ const processERC721Stage = async (
 ): Promise<
   | {
       price: string;
-      mintFee: string;
+      mintFee?: string;
       walletLimit: number;
       merkleRoot: string;
       maxStageSupply: number;
@@ -496,9 +515,16 @@ const processERC721Stage = async (
     web3StorageKey,
   );
 
-  const data = {
+  const data: {
+    price: string;
+    mintFee?: string;
+    walletLimit: number;
+    merkleRoot: string;
+    maxStageSupply: number;
+    startTime: number;
+    endTime: number;
+  } = {
     price: ethers.utils.parseEther(stage.price.toString()).toString(),
-    mintFee: ethers.utils.parseEther(stage.mintFee.toString()).toString(),
     walletLimit: stage.walletLimit,
     merkleRoot,
     maxStageSupply: stage.maxStageSupply ?? 0,
@@ -506,13 +532,17 @@ const processERC721Stage = async (
     endTime: new Date(stage.endTime).getTime() / 1000,
   };
 
+  if (isLegacyContract(version)) {
+    data.mintFee = ethers.utils.parseEther(stage.mintFee.toString()).toString();
+  }
+
   if (isJsonOutput) {
     return data;
   }
 
   return formatStageData([
     ethers.utils.parseEther(stage.price.toString()),
-    ethers.utils.parseEther(stage.mintFee.toString()),
+    ...(isLegacyContract(version) ? [ethers.utils.parseEther(stage.mintFee.toString())] : []),
     stage.walletLimit,
     merkleRoot,
     stage.maxStageSupply ?? 0,
@@ -580,6 +610,7 @@ const main = async () => {
     isERC1155,
     web3StorageKey,
     stagesJson,
+    version,
     isJsonOutput,
   } = parseAndValidateArgs();
 
@@ -589,6 +620,7 @@ const main = async () => {
     outputFileDir,
     web3StorageKey,
     stagesJson,
+    version,
     isJsonOutput,
   );
 };
@@ -598,7 +630,8 @@ const getStagesData = async (
   isERC1155: boolean,
   outputFileDir: string,
   web3StorageKey: string,
-  stagesJson?: string,
+  stagesJson: string,
+  version: string,
   isJsonOutput: boolean = false,
 ) => {
   const rawStages = loadAndValidateStages(
@@ -615,6 +648,7 @@ const getStagesData = async (
       typedStages.map(async (stage, stageIdx) =>
         isERC1155 && isStage1155(stage)
           ? processERC1155Stage(
+              version,
               stage,
               stageIdx,
               outputFileDir,
@@ -623,6 +657,7 @@ const getStagesData = async (
             )
           : isStage(stage)
             ? processERC721Stage(
+                version,
                 stage,
                 stageIdx,
                 outputFileDir,
@@ -657,7 +692,8 @@ const parseAndValidateArgs = () => {
   const outputFileDir = process.argv[4];
   const tokenStandard = process.argv[5];
   const web3StorageKey = process.argv[6];
-  const isJsonOutput = process.argv[7] === 'true';
+  const version = process.argv[7];
+  const isJsonOutput = process.argv[8] === 'true';
 
   if (!stagesFilePath && !stagesJson) {
     throw new Error(
@@ -672,6 +708,7 @@ const parseAndValidateArgs = () => {
     web3StorageKey,
     stagesJson,
     isJsonOutput,
+    version,
   };
 };
 

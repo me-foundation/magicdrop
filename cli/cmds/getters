@@ -6,7 +6,7 @@ get_numeric_input() {
     local input
     while true; do
         input=$(gum input --placeholder "$prompt (or 'exit' to quit)")
-        
+
         if [[ -z "$input" ]]; then
             echo "Exiting program..."
             kill $$
@@ -54,7 +54,7 @@ get_collection_file() {
         get_collection_file "$prompt" "$file"
     elif file_exists "$file"; then
         echo "$file"
-    else 
+    else
         exit 1
     fi
 }
@@ -89,10 +89,22 @@ get_transfer_validator_address() {
         "80094")
             echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN"
             ;;
+        "143")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V5"
+            ;;
         *)
             echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
             ;;
     esac
+}
+
+is_transfer_validator_v5() {
+    local address="$1"
+    if [[ "$address" == "$LIMITBREAK_TRANSFER_VALIDATOR_V5" ]]; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 get_transfer_validator_list_id() {

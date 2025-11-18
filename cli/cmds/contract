@@ -4,7 +4,7 @@ trap "echo 'Exiting...'; exit 1" SIGINT
 
 deploy_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
-    clear 
+    clear
 
     title="Deploy a new collection"
 
@@ -50,8 +50,12 @@ deploy_contract() {
 
     print_transaction_hash
 
-    sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
+    sig_event=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string,uint256)")
+    sig_event_legacy=$(cast sig-event "NewContractInitialized(address,address,uint32,uint8,string,string)")
     event_data=$(get_contract_address_from_logs "$output" "$sig_event")
+    if [ -z "$event_data" ]; then
+        event_data=$(get_contract_address_from_logs "$output" "$sig_event_legacy")
+    fi
     chunks=($(echo "$event_data" | fold -w64))
     contract_address=$(decode_address "${chunks[0]}")
 
@@ -103,23 +107,29 @@ set_transfer_validator() {
 }
 
 set_transfer_list() {
+    tf_address=$(get_transfer_validator_address $chain_id)
     tf_list_id=$(get_transfer_validator_list_id $chain_id)
     echo "Setting transfer list to list ID $tf_list_id..."
-    output=$(cast send $tf_address "applyListToCollection(address,uint120)" $contract_address $tf_list_id $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    if is_transfer_validator_v5 $tf_address; then
+        output=$(cast send $tf_address "applyListToCollection(address,uint48)" $contract_address $tf_list_id $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    else
+        output=$(cast send $tf_address "applyListToCollection(address,uint120)" $contract_address $tf_list_id $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    fi
     print_transaction_hash $output
+
     echo "Transfer list set."
     echo ""
 }
 
 freeze_thaw_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
-    clear 
+    clear
 
     title="Deploy a new collection"
 
     set_chain
     set_contract_address
-    
+
     print_signer_with_balance $chain_id
 
     choice=$(gum choose "Freeze" "Thaw")
@@ -159,7 +169,7 @@ check_setup_locked() {
 }
 
 setup_contract() {
-    clear 
+    clear
     trap "echo 'Exiting...'; exit 1" SIGINT
 
     title="Setup an existing collection"
@@ -188,6 +198,9 @@ setup_contract() {
     set_fund_receiver
     set_royalties
 
+    contract_name_and_version=$(cast call $contract_address "contractNameAndVersion()(string,string)" $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    contract_version=$(echo $contract_name_and_version | jq -r ".[1]")
+
     print_signer_with_balance $chain_id
     confirm_setup
 
@@ -201,9 +214,17 @@ setup_contract() {
     password=$(get_password_if_set)
 
     if [ "$token_standard" == "ERC1155" ]; then
-        setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
+        if is_legacy_contract; then
+            setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
+        else
+            setup_selector="setup(string,uint256[],uint256[],address,address,(uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[],address,uint96)"
+        fi
     elif [ "$token_standard" == "ERC721" ]; then
-        setup_selector="setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+        if is_legacy_contract; then
+            setup_selector="setup(string,string,uint256,uint256,address,address,(uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+        else
+            setup_selector="setup(string,string,uint256,uint256,address,address,(uint80,uint32,bytes32,uint24,uint256,uint256)[],address,uint96)"
+        fi
     else
         echo "Unknown token standard"
         exit 1
@@ -251,7 +272,7 @@ set_base_uri_contract() {
 
     base_uri_selector="setBaseURI(string)"
     password=$(get_password_if_set)
-    
+
     echo "Setting base URI... this will take a moment."
 
     output=$(cast send $contract_address \
@@ -424,7 +445,7 @@ set_mintable_contract() {
 
 set_stages_contract() {
     trap "echo 'Exiting...'; exit 1" SIGINT
-    clear 
+    clear
 
     title="Set Stages"
 
@@ -438,6 +459,9 @@ set_stages_contract() {
         set_1155_uri
     fi
 
+    contract_name_and_version=$(cast call $contract_address "contractNameAndVersion()(string,string)" $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    contract_version=$(echo $contract_name_and_version | jq -r ".[1]")
+
     print_signer_with_balance $chain_id
 
     process_stages
@@ -448,9 +472,17 @@ set_stages_contract() {
 
     if gum confirm "Do you want to proceed?"; then
         if [ "$token_standard" == "ERC1155" ]; then
-            set_stages_selector="setStages((uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[])"
+            if is_legacy_contract; then
+                set_stages_selector="setStages((uint80[],uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[])"
+            else
+                set_stages_selector="setStages((uint80[],uint32[],bytes32[],uint24[],uint256,uint256)[])"
+            fi
         elif [ "$token_standard" == "ERC721" ]; then
-            set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+            if is_legacy_contract; then
+                set_stages_selector="setStages((uint80,uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+            else
+                set_stages_selector="setStages((uint80,uint32,bytes32,uint24,uint256,uint256)[])"
+            fi
         else
             echo "Unknown token standard"
             exit 1
@@ -467,7 +499,7 @@ set_stages_contract() {
             $(zksync_flag) \
             --rpc-url "$RPC_URL" \
             --json)
-        
+
         print_transaction_hash
     else
         echo "Set stages cancelled."
@@ -572,7 +604,7 @@ transfer_ownership_contract() {
     set_chain
     set_contract_address
     set_new_owner
-    
+
     echo ""
     echo "You are about to transfer ownership of $(format_address $contract_address) to $(format_address $new_owner)"
     echo "This action cannot be undone."
@@ -687,12 +719,11 @@ set_royalties_contract() {
 
     set_chain
     set_contract_address
-    set_receiver_address
-    set_fee_numerator
-    
+    set_royalties
+
     echo ""
-    percentage=$(echo "scale=2; $fee_numerator / 100" | bc)
-    echo "You are about to set the royalties of $(format_address $contract_address) to $(format_address $receiver) with a fee numerator of $fee_numerator ($percentage%)"
+    percentage=$(echo "scale=2; $royalty_fee / 100" | bc)
+    echo "You are about to set the royalties of $(format_address $contract_address) to $(format_address $royalty_receiver) with a fee numerator of $royalty_fee ($percentage%)"
     echo ""
 
     print_signer_with_balance $chain_id
@@ -705,8 +736,8 @@ set_royalties_contract() {
 
         output=$(cast send $contract_address \
             $set_royalties_selector \
-            $receiver \
-            $fee_numerator \
+            $royalty_receiver \
+            $royalty_fee \
             $password \
             $(zksync_flag) \
             --chain-id $chain_id \
