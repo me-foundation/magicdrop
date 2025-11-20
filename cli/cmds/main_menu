@@ -65,6 +65,7 @@ contract_management_menu() {
         "Set Royalties" \
         "Set Global Wallet Limit" \
         "Set Max Mintable Supply" \
+        "Set Mint Fee (Version >= 1.0.2)" \
         "Set Mintable (ERC721 Only)" \
         "Set Cosigner" \
         "Set Token URI Suffix (ERC721 Only)" \
@@ -120,6 +121,9 @@ contract_management_menu() {
             ;;
         "Manage Authorized Minters")
             manage_authorized_minters_contract
+            ;;
+        "Set Mint Fee (Version >= 1.0.2)")
+            set_mint_fee_contract
             ;;
         "Go to Main Menu")
             main_menu

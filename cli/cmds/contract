@@ -977,3 +977,35 @@ withdraw_contract() {
         echo ""
     fi
 }
+
+set_mint_fee_contract() {
+    clear
+    trap "echo 'Exiting...'; exit 1" SIGINT
+
+    title="Set Mint Fee"
+
+    set_chain
+    set_contract_address
+
+    # Get mint fee
+    mint_fee=$(cast call $contract_address "getMintFee()(uint256)" --rpc-url "$RPC_URL")
+
+    echo ""
+    echo "Current mint fee: $mint_fee"
+    echo ""
+
+    # input the new mint fee
+    new_mint_fee=$(get_numeric_input "Enter new mint fee (in wei, e.g. 1000000000000000000 for 1 ETH)")
+    check_input "$new_mint_fee" "new mint fee"
+    clear
+
+    # Set mint fee
+    set_mint_fee_selector="setMintFee(uint256)"
+    password=$(get_password_if_set)
+
+    echo "Setting mint fee to $new_mint_fee... this will take a moment."
+    output=$(cast send $contract_address "setMintFee(uint256)" $new_mint_fee $password $(zksync_flag) --rpc-url "$RPC_URL" --json)
+    print_transaction_hash $output
+    echo "Mint fee set."
+    echo ""
+}
