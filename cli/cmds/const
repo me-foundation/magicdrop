@@ -13,6 +13,7 @@ SUPPORTED_CHAINS=(
     "2741:Abstract"
     "80094:Berachain"
     "10143:MonadTestnet"
+    "143:Monad"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
@@ -23,6 +24,7 @@ ME_TRANSFER_VALIDATOR_V3="0x721C00D4FB075b22a5469e9CF2440697F729aA13"
 LIMITBREAK_TRANSFER_VALIDATOR_V3="0x721C0078c2328597Ca70F5451ffF5A7B38D4E947"
 LIMITBREAK_TRANSFER_VALIDATOR_V3_ABSTRACT="0x3203c3f64312AF9344e42EF8Aa45B97C9DFE4594"
 LIMITBREAK_TRANSFER_VALIDATOR_V3_BERACHAIN="0x721c002b0059009a671d00ad1700c9748146cd1b"
+LIMITBREAK_TRANSFER_VALIDATOR_V5="0x721c008fdff27bf06e7e123956e2fe03b63342e3"
 
 ICREATOR_TOKEN_INTERFACE_ID="0xad0d7f6c" # type(ICreatorToken).interfaceId
 TRUE_HEX="0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -41,17 +43,21 @@ get_factory_address() {
         echo "0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19"
     elif [ "$chain_id" == "43114" ]; then
         echo "0x0b49bDcf2eC9329Fa6F42DCCC66e8906a3E4ACF0"
+    elif [ "$chain_id" == "143" ]; then
+        echo "0x00000000bEa935F8315156894Aa4a45D3c7a0075"
     else # default
         echo "0x000000009e44eBa131196847C685F20Cd4b68aC4"
     fi
 }
 
 get_registry_address() {
-    # abstract registry address 
+    # abstract registry address
     if [ "$chain_id" == "2741" ]; then
         echo "0x9b60ad31F145ec7EE3c559153bB57928B65C0F87"
     elif [ "$chain_id" == "43114" ]; then
         echo "0x09E0135dfBb7528D6eAA5beB69f3C030dF26F57c"
+    elif [ "$chain_id" == "143" ]; then
+        echo "0x000000000e447e71b2EC36CD62048Dd2a1Cd0a57"
     else # default
         echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
     fi
@@ -68,10 +74,12 @@ get_impl_id() {
             echo "10" # ethereum
         elif [ "$chain_id" == "80094" ]; then
             echo "5" # berachain
-        elif [ "$chain_id" == "10143"]; then
+        elif [ "$chain_id" == "10143" ]; then
             echo "5" # monad testnet
         elif [ "$chain_id" == "43114" ]; then
             echo "6" # avalanche
+        elif [ "$chain_id" == "143" ]; then
+            echo "2" # monad
         else
             echo "8" # all other chains
         fi

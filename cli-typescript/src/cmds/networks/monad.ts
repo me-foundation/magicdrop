@@ -5,25 +5,25 @@ import { getSymbolFromChainId } from '../../utils/getters';
 
 // Supported chain names
 export enum MonadChains {
-  TESTNET = 'testnet',
+  MAINNET = 'mainnet',
 }
 
 // Chain ids by the chain names
 export const monadChainIdsByName = new Map([
-  [MonadChains.TESTNET, SUPPORTED_CHAINS.MONAD_TESTNET],
+  [MonadChains.MAINNET, SUPPORTED_CHAINS.MONAD],
 ]);
 
 const monadPlatform = new EvmPlatform(
   'Monad',
-  getSymbolFromChainId(SUPPORTED_CHAINS.MONAD_TESTNET),
+  getSymbolFromChainId(SUPPORTED_CHAINS.MONAD),
   monadChainIdsByName,
-  MonadChains.TESTNET,
+  MonadChains.MAINNET,
 );
 
 export const monad = createEvmCommand({
   platform: monadPlatform,
   commandAliases: [
-    getSymbolFromChainId(SUPPORTED_CHAINS.MONAD_TESTNET).toLowerCase(),
+    getSymbolFromChainId(SUPPORTED_CHAINS.MONAD).toLowerCase(),
     'm',
   ],
 });

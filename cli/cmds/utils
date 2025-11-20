@@ -18,6 +18,7 @@ set_rpc_url() {
         80094) RPC_URL="https://rpc.berachain.com" ;; # Berachain
         10143) RPC_URL="https://testnet-rpc.monad.xyz" ;; # Monad Testnet
         43114) RPC_URL="https://api.avax.network/ext/bc/C/rpc" ;; # Avalanche
+        143) RPC_URL="https://rpc-mainnet.monadinfra.com/rpc/2Q5SCLjNB3YHhToRM1m3Scts6CXxk1Gi" ;; # Monad
         *) echo "Unsupported chain id"; exit 1 ;;
     esac
 
@@ -39,6 +40,7 @@ chain_id_to_symbol() {
         80094) echo "BERA" ;;
         10143) echo "MON" ;;
         43114) echo "AVAX" ;;
+        143) echo "MON" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -58,6 +60,7 @@ chain_id_to_explorer_url() {
         80094) echo "https://berascan.com" ;;
         10143) echo "https://testnet.monadexplorer.com" ;;
         43114) echo "https://snowtrace.io" ;;
+        143) echo "https://monadvision.com" ;;
         *) echo "Unknown" ;;
     esac
 }
@@ -98,7 +101,7 @@ process_stages() {
 get_contract_address_from_logs() {
     local deployment_data="$1"
     local event_sig="$2"
-    
+
     for log in $(echo "$deployment_data" | jq -c '.logs[]'); do
         local topic0=$(echo "$log" | jq -r '.topics[0]')
         if [ "$topic0" == "$event_sig" ]; then
@@ -121,7 +124,7 @@ save_deployment_data() {
     # Get the current timestamp
     timestamp=$(date +%s)
     deployed_at=$(date -u -r $timestamp +"%Y-%m-%d %H:%M:%S")
-    
+
     # Create deployment object
     deployment_data=$(jq -n \
         --arg contract_address "$contract_address" \
@@ -132,7 +135,7 @@ save_deployment_data() {
             initial_owner: $initial_owner,
             deployed_at: $deployed_at
         }')
-    
+
     if [[ ! -f "$collection_file" ]]; then
         echo "Error: Collection file not found: $collection_file"
         return 1
@@ -140,7 +143,7 @@ save_deployment_data() {
 
     # Add deployment data to the existing JSON file
     jq --argjson deployment "$deployment_data" '.deployment = $deployment' "$collection_file" > "$collection_file.tmp" && mv "$collection_file.tmp" "$collection_file"
-    
+
     echo "Deployment details added to $collection_file"
 }
 

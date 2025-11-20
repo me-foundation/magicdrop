@@ -33,7 +33,7 @@ while [[ "$#" -gt 0 ]]; do
         --salt) FACTORY_SALT=$2; shift ;;
         --expected-address) FACTORY_EXPECTED_ADDRESS=$2; shift ;;
         --initial-owner) INITIAL_OWNER=$2; shift ;;
-        --registry) REGISTRY=$2; shift ;;
+        --registry-address) REGISTRY=$2; shift ;;
         --implementation) IMPLEMENTATION=$2; shift ;;
         --resume) RESUME="--resume" ;;
         --zk-sync) ZK_SYNC=true ;;
@@ -81,7 +81,7 @@ fi
 
 read -p "Do you want to proceed? (yes/no) " yn
 
-case $yn in 
+case $yn in
   yes ) echo ok, we will proceed;;
   no ) echo exiting...;
     exit;;

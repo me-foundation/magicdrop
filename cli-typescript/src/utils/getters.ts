@@ -37,6 +37,7 @@ import {
 } from 'viem/chains';
 import { Hex } from 'viem';
 import { setBaseDir } from './setters';
+import { monad } from '../cmds/networks';
 
 /**
  * Retrieves the transfer validator address based on the network (chain ID).
@@ -95,6 +96,8 @@ export const getSymbolFromChainId = (chainId: SUPPORTED_CHAINS): string => {
     case SUPPORTED_CHAINS.ABSTRACT:
       return 'ETH';
     case SUPPORTED_CHAINS.MONAD_TESTNET:
+      return 'MON';
+    case SUPPORTED_CHAINS.MONAD:
       return 'MON';
     case SUPPORTED_CHAINS.AVALANCHE:
       return 'AVAX';
@@ -155,6 +158,8 @@ export const getViemChainByChainId = (chainId: SUPPORTED_CHAINS) => {
       return abstract;
     case SUPPORTED_CHAINS.MONAD_TESTNET:
       return monadTestnet;
+    case SUPPORTED_CHAINS.MONAD:
+      return monad;
     case SUPPORTED_CHAINS.AVALANCHE:
       return avalanche;
     default:

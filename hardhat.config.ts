@@ -143,6 +143,11 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    monad: {
+      url: process.env.MONAD_URL || 'https://rpc-mainnet.monadinfra.com/rpc/2Q5SCLjNB3YHhToRM1m3Scts6CXxk1Gi',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
@@ -173,6 +178,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://api.avax.network/ext/bc/C/rpc',
           browserURL: 'https://snowtrace.io/'
+        },
+      },
+      {
+        network: 'monad',
+        chainId: 143,
+        urls: {
+          apiURL: 'https://sui-mainnet.blockvision.org/v1/355Jy1f4IF9O27RHJOJcg1EUAF3',
+          browserURL: 'https://monadvision.com'
         },
       },
     ]
