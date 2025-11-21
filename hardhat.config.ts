@@ -144,7 +144,7 @@ const config: HardhatUserConfig = {
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
     monad: {
-      url: process.env.MONAD_URL || 'https://rpc-mainnet.monadinfra.com/rpc/2Q5SCLjNB3YHhToRM1m3Scts6CXxk1Gi',
+      url: process.env.MONAD_URL || 'https://evm-router.magiceden.io/monad/mainnet/me2024',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },

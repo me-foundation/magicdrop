@@ -30,7 +30,7 @@ export const getTokenStandardOption = () =>
 export const getChainOption = () =>
   new Option('-c --chain <chain>', 'Specify the chain to deploy to;')
     .choices(Array.from(Object.values(supportedChainNames)))
-    .default(supportedChainNames[SUPPORTED_CHAINS.MONAD_TESTNET]);
+    .default(supportedChainNames[SUPPORTED_CHAINS.MONAD]);
 
 export const getTotalTokensOption = () =>
   new Option(

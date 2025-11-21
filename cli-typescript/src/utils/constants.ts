@@ -76,7 +76,6 @@ export enum SUPPORTED_CHAINS {
   AVALANCHE = 43114,
   ABSTRACT = 2741,
   BERACHAIN = 80094,
-  MONAD_TESTNET = 10143,
   MONAD = 143,
 }
 
@@ -92,7 +91,6 @@ export const supportedChainNames: { [key in SUPPORTED_CHAINS]: string } = {
   [SUPPORTED_CHAINS.AVALANCHE]: 'avalanche',
   [SUPPORTED_CHAINS.ABSTRACT]: 'abstract',
   [SUPPORTED_CHAINS.BERACHAIN]: 'berachain',
-  [SUPPORTED_CHAINS.MONAD_TESTNET]: 'monadTestnet',
   [SUPPORTED_CHAINS.MONAD]: 'monad',
 };
 
@@ -115,10 +113,8 @@ export const rpcUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
     'https://evm-router.magiceden.io/abstract/mainnet/me2024', // Abstract
   [SUPPORTED_CHAINS.BERACHAIN]:
     'https://evm-router.magiceden.io/berachain/mainnet/me2024"', // Berachain
-  [SUPPORTED_CHAINS.MONAD_TESTNET]:
-    'https://evm-router.magiceden.io/monad/testnet/me2024', // Monad Testnet
   [SUPPORTED_CHAINS.MONAD]:
-    'https://rpc-mainnet.monadinfra.com/rpc/2Q5SCLjNB3YHhToRM1m3Scts6CXxk1Gi', // Monad
+    'https://evm-router.magiceden.io/monad/mainnet/me2024', // Monad
   [SUPPORTED_CHAINS.AVALANCHE]:
     'https://evm-router.magiceden.io/avalanche/mainnet/me2024', // Avalanche
 };
@@ -134,7 +130,6 @@ export const explorerUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
   [SUPPORTED_CHAINS.SEPOLIA]: 'https://sepolia.etherscan.io', // Sepolia
   [SUPPORTED_CHAINS.ABSTRACT]: 'https://abscan.org', // Abstract
   [SUPPORTED_CHAINS.BERACHAIN]: 'https://berascan.com', // Berachain
-  [SUPPORTED_CHAINS.MONAD_TESTNET]: 'https://testnet.monadexplorer.com', // Monad Testnet
   [SUPPORTED_CHAINS.MONAD]: 'https://monadvision.com', // Monad
   [SUPPORTED_CHAINS.AVALANCHE]: 'https://snowtrace.io', // Avalanche
 };

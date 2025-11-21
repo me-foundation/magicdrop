@@ -30,7 +30,6 @@ import {
   berachain,
   bsc,
   mainnet,
-  monadTestnet,
   polygon,
   sei,
   sepolia,
@@ -95,8 +94,6 @@ export const getSymbolFromChainId = (chainId: SUPPORTED_CHAINS): string => {
       return 'ARB';
     case SUPPORTED_CHAINS.ABSTRACT:
       return 'ETH';
-    case SUPPORTED_CHAINS.MONAD_TESTNET:
-      return 'MON';
     case SUPPORTED_CHAINS.MONAD:
       return 'MON';
     case SUPPORTED_CHAINS.AVALANCHE:
@@ -156,8 +153,6 @@ export const getViemChainByChainId = (chainId: SUPPORTED_CHAINS) => {
       return arbitrum;
     case SUPPORTED_CHAINS.ABSTRACT:
       return abstract;
-    case SUPPORTED_CHAINS.MONAD_TESTNET:
-      return monadTestnet;
     case SUPPORTED_CHAINS.MONAD:
       return monad;
     case SUPPORTED_CHAINS.AVALANCHE:
@@ -282,8 +277,6 @@ export const getImplId = (
     case SUPPORTED_CHAINS.ETHEREUM:
       return 10;
     case SUPPORTED_CHAINS.BERACHAIN:
-      return 5;
-    case SUPPORTED_CHAINS.MONAD_TESTNET:
       return 5;
     case SUPPORTED_CHAINS.AVALANCHE:
       return 6;
