@@ -5,8 +5,9 @@ import {console} from "forge-std/console.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 import {IERC721A} from "erc721a/contracts/IERC721A.sol";
 import {Test} from "forge-std/Test.sol";
-import {ERC721MInitializableV1_0_2 as ERC721MInitializable} from
-    "../../contracts/nft/erc721m/ERC721MInitializableV1_0_2.sol";
+import {
+    ERC721MInitializableV1_0_2 as ERC721MInitializable
+} from "../../contracts/nft/erc721m/ERC721MInitializableV1_0_2.sol";
 import {IERC721MInitializable} from "../../contracts/nft/erc721m/interfaces/IERC721MInitializable.sol";
 import {MintStageInfo, SetupConfig} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";

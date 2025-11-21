@@ -47,9 +47,7 @@ contract ERC721BatchTransfer {
      * @param to the address that will receive the nfts
      * @param tokenIds the list of tokens that will be transferred
      */
-    function safeBatchTransferToSingleWallet(IERC721 erc721Contract, address to, uint256[] calldata tokenIds)
-        external
-    {
+    function safeBatchTransferToSingleWallet(IERC721 erc721Contract, address to, uint256[] calldata tokenIds) external {
         uint256 length = tokenIds.length;
         for (uint256 i; i < length;) {
             uint256 tokenId = tokenIds[i];

@@ -31,8 +31,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testRegisterImplementation() public {
         vm.prank(owner);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         assertEq(implId, 1);
         address impl = registry.getImplementation(TokenStandard.ERC721, implId);
         uint256 deploymentFee = registry.getDeploymentFee(TokenStandard.ERC721, implId);
@@ -83,8 +84,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testRegisterImplementationAsManager() public {
         vm.prank(manager);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         assertEq(implId, 1);
         address impl = registry.getImplementation(TokenStandard.ERC721, implId);
         assertEq(impl, address(mockERC721));
@@ -96,8 +98,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testUnregisterImplementation() public {
         vm.startPrank(owner);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         registry.unregisterImplementation(TokenStandard.ERC721, implId);
         vm.stopPrank();
 
@@ -119,8 +122,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testUnregisterImplementationAsManager() public {
         vm.startPrank(manager);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         registry.unregisterImplementation(TokenStandard.ERC721, implId);
         vm.stopPrank();
 
@@ -134,8 +138,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testGetImplementation() public {
         vm.prank(owner);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         address impl = registry.getImplementation(TokenStandard.ERC721, implId);
         assertEq(impl, address(mockERC721));
     }
@@ -176,8 +181,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testGetDeploymentFee() public {
         vm.prank(owner);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         uint256 deploymentFee = registry.getDeploymentFee(TokenStandard.ERC721, implId);
         assertEq(deploymentFee, 0.01 ether);
     }
@@ -191,8 +197,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testUpdateDeploymentFeeAsManager() public {
         vm.startPrank(manager);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         registry.setDeploymentFee(TokenStandard.ERC721, implId, 0.02 ether);
         vm.stopPrank();
 
@@ -206,8 +213,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testGetMintFee() public {
         vm.prank(owner);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         uint256 mintFee = registry.getMintFee(TokenStandard.ERC721, implId);
         assertEq(mintFee, 0.00001 ether);
     }
@@ -221,8 +229,9 @@ contract MagicDropTokenImplRegistryTest is Test {
 
     function testUpdateMintFeeAsManager() public {
         vm.startPrank(manager);
-        uint32 implId =
-            registry.registerImplementation(TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether);
+        uint32 implId = registry.registerImplementation(
+            TokenStandard.ERC721, address(mockERC721), false, 0.01 ether, 0.00001 ether
+        );
         registry.setMintFee(TokenStandard.ERC721, implId, 0.00002 ether);
         vm.stopPrank();
 

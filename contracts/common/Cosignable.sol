@@ -106,19 +106,15 @@ abstract contract Cosignable {
     ) public view returns (bool) {
         CosignerStorage storage $ = _loadCosignerStorage();
 
-        if (
-            SignatureCheckerLib.isValidSignatureNow(
+        if (SignatureCheckerLib.isValidSignatureNow(
                 $.cosigner, getCosignDigest(minter, qty, true, timestamp, cosignNonce), signature
-            )
-        ) {
+            )) {
             return true;
         }
 
-        if (
-            SignatureCheckerLib.isValidSignatureNow(
+        if (SignatureCheckerLib.isValidSignatureNow(
                 $.cosigner, getCosignDigest(minter, qty, false, timestamp, cosignNonce), signature
-            )
-        ) {
+            )) {
             return false;
         }
 

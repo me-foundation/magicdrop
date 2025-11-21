@@ -4,8 +4,9 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std/Test.sol";
 import {LibClone} from "solady/src/utils/LibClone.sol";
 
-import {ERC1155MInitializableV1_0_2 as ERC1155MInitializable} from
-    "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_2.sol";
+import {
+    ERC1155MInitializableV1_0_2 as ERC1155MInitializable
+} from "../../contracts/nft/erc1155m/ERC1155MInitializableV1_0_2.sol";
 import {MintStageInfo1155} from "../../contracts/common/Structs.sol";
 import {ErrorsAndEvents} from "../../contracts/common/ErrorsAndEvents.sol";
 import {LAUNCHPAD_MINT_FEE_RECEIVER} from "contracts/utils/Constants.sol";

@@ -127,9 +127,8 @@ contract MagicDropTokenImplRegistryUpgradeTest is Test {
 
     function test_MultipleUpgrades() public {
         // --- Initial state (V1) ---
-        uint32 implIdV1 = MagicDropTokenImplRegistry(payable(registryProxy)).registerImplementation(
-            TokenStandard.ERC721, erc721, true, 0.01 ether, 0.01 ether
-        );
+        uint32 implIdV1 = MagicDropTokenImplRegistry(payable(registryProxy))
+            .registerImplementation(TokenStandard.ERC721, erc721, true, 0.01 ether, 0.01 ether);
         assertEq(
             MagicDropTokenImplRegistry(payable(registryProxy)).getDefaultImplementationID(TokenStandard.ERC721),
             implIdV1

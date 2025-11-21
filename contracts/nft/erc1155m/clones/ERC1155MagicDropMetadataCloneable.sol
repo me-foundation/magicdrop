@@ -151,7 +151,14 @@ contract ERC1155MagicDropMetadataCloneable is
     /// @notice Returns the URI for a given token ID.
     /// @dev This returns the base URI for all tokens.
     /// @return The URI for the token.
-    function uri(uint256 /* tokenId */ ) public view override returns (string memory) {
+    function uri(
+        uint256 /* tokenId */
+    )
+        public
+        view
+        override
+        returns (string memory)
+    {
         return _baseURI;
     }
 

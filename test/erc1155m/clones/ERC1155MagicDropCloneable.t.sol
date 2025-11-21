@@ -409,7 +409,9 @@ contract ERC1155MagicDropCloneableTest is Test {
                 walletLimit: 0,
                 baseURI: "",
                 contractURI: "",
-                allowlistStage: AllowlistStage({startTime: uint64(0), endTime: uint64(0), price: 0, merkleRoot: bytes32(0)}),
+                allowlistStage: AllowlistStage({
+                    startTime: uint64(0), endTime: uint64(0), price: 0, merkleRoot: bytes32(0)
+                }),
                 publicStage: PublicStage({startTime: uint64(0), endTime: uint64(0), price: 0}),
                 payoutRecipient: address(0),
                 royaltyBps: 0,
@@ -463,9 +465,7 @@ contract ERC1155MagicDropCloneableTest is Test {
         // Current allowlist starts at publicEnd+100
         // Try to set public stage that ends after that
         PublicStage memory overlappingStage = PublicStage({
-            startTime: uint64(block.timestamp + 10),
-            endTime: uint64(allowlistEnd + 150),
-            price: 0.01 ether
+            startTime: uint64(block.timestamp + 10), endTime: uint64(allowlistEnd + 150), price: 0.01 ether
         });
 
         vm.prank(owner);

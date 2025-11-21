@@ -378,9 +378,7 @@ contract ERC721MagicDropCloneableTest is Test {
         // Current allowlist starts at publicEnd+100
         // Try to set public stage that ends after that
         PublicStage memory overlappingStage = PublicStage({
-            startTime: uint64(block.timestamp + 10),
-            endTime: uint64(allowlistEnd + 150),
-            price: 0.01 ether
+            startTime: uint64(block.timestamp + 10), endTime: uint64(allowlistEnd + 150), price: 0.01 ether
         });
 
         vm.prank(owner);

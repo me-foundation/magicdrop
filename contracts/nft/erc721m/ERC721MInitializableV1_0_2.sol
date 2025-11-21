@@ -9,7 +9,10 @@ import {ReentrancyGuard} from "solady/src/utils/ReentrancyGuard.sol";
 import {SafeTransferLib} from "solady/src/utils/SafeTransferLib.sol";
 
 import {
-    IERC721A, ERC721A, ERC721AQueryable, IERC721AQueryable
+    IERC721A,
+    ERC721A,
+    ERC721AQueryable,
+    IERC721AQueryable
 } from "erc721a/contracts/extensions/ERC721AQueryable.sol";
 import {ERC721AConduitPreapprovedCloneable} from "contracts/nft/erc721m/clones/ERC721AConduitPreapprovedCloneable.sol";
 import {ERC721ACloneable} from "contracts/nft/erc721m/clones/ERC721ACloneable.sol";

@@ -64,9 +64,8 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
         MagicDropCloneFactory(payable(factoryProxy)).initialize(owner, registryProxy);
 
         // register erc721
-        MagicDropTokenImplRegistry(payable(registryProxy)).registerImplementation(
-            TokenStandard.ERC721, erc721, true, 0.01 ether, 0.01 ether
-        );
+        MagicDropTokenImplRegistry(payable(registryProxy))
+            .registerImplementation(TokenStandard.ERC721, erc721, true, 0.01 ether, 0.01 ether);
 
         // Deploy V2 implementation (but don't upgrade yet)
         factoryV2 = new MagicDropCloneFactoryV2();
@@ -146,9 +145,8 @@ contract MagicDropCloneFactoryUpgradeTest is Test {
     function test_MultipleUpgrades() public {
         // --- Upgrade from V1 to V2 ---
         // Deploy a collection before any upgrades
-        address collectionV1 = MagicDropCloneFactory(payable(factoryProxy)).createContract(
-            "Test", "TEST", TokenStandard.ERC721, payable(owner), 0
-        );
+        address collectionV1 = MagicDropCloneFactory(payable(factoryProxy))
+            .createContract("Test", "TEST", TokenStandard.ERC721, payable(owner), 0);
         assertTrue(collectionV1 != address(0));
 
         // Upgrade to V2 implementation
