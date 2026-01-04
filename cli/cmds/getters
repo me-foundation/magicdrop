@@ -92,6 +92,9 @@ get_transfer_validator_address() {
         "143")
             echo "$LIMITBREAK_TRANSFER_VALIDATOR_V5"
             ;;
+        "4326")
+            echo "$LIMITBREAK_TRANSFER_VALIDATOR_V5"
+            ;;
         *)
             echo "$LIMITBREAK_TRANSFER_VALIDATOR_V3"
             ;;
