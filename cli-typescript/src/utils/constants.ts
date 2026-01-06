@@ -146,7 +146,7 @@ export const explorerUrls: { [chainId in SUPPORTED_CHAINS]: string } = {
   [SUPPORTED_CHAINS.BERACHAIN]: 'https://berascan.com', // Berachain
   [SUPPORTED_CHAINS.MONAD]: 'https://monadvision.com', // Monad
   [SUPPORTED_CHAINS.AVALANCHE]: 'https://snowtrace.io', // Avalanche
-  [SUPPORTED_CHAINS.MEGAETH]: 'https://TBD', // MegaETH
+  [SUPPORTED_CHAINS.MEGAETH]: 'https://megaeth.blockscout.com', // MegaETH
 };
 
 export const DEFAULT_TOKEN_URI_SUFFIX = '.json';

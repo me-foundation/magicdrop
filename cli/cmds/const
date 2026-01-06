@@ -14,6 +14,7 @@ SUPPORTED_CHAINS=(
     "80094:Berachain"
     "10143:MonadTestnet"
     "143:Monad"
+    "4326:MegaETH"
 )
 
 MAGIC_DROP_KEYSTORE="MAGIC_DROP_KEYSTORE"
@@ -43,7 +44,7 @@ get_factory_address() {
         echo "0x4a08d3F6881c4843232EFdE05baCfb5eAaB35d19"
     elif [ "$chain_id" == "43114" ]; then
         echo "0x0b49bDcf2eC9329Fa6F42DCCC66e8906a3E4ACF0"
-    elif [ "$chain_id" == "143" ]; then
+    elif [ "$chain_id" == "143" ] || [ "$chain_id" == "4326" ]; then
         echo "0x00000000bEa935F8315156894Aa4a45D3c7a0075"
     else # default
         echo "0x000000009e44eBa131196847C685F20Cd4b68aC4"
@@ -56,7 +57,7 @@ get_registry_address() {
         echo "0x9b60ad31F145ec7EE3c559153bB57928B65C0F87"
     elif [ "$chain_id" == "43114" ]; then
         echo "0x09E0135dfBb7528D6eAA5beB69f3C030dF26F57c"
-    elif [ "$chain_id" == "143" ]; then
+    elif [ "$chain_id" == "143" ] || [ "$chain_id" == "4326" ]; then
         echo "0x000000000e447e71b2EC36CD62048Dd2a1Cd0a57"
     else # default
         echo "0x00000000caF1E3978e291c5Fb53FeedB957eC146"
@@ -80,6 +81,8 @@ get_impl_id() {
             echo "6" # avalanche
         elif [ "$chain_id" == "143" ]; then
             echo "2" # monad
+        elif [ "$chain_id" == "4326" ]; then
+            echo "2" # megaeth
         else
             echo "8" # all other chains
         fi

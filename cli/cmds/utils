@@ -62,7 +62,7 @@ chain_id_to_explorer_url() {
         10143) echo "https://testnet.monadexplorer.com" ;;
         43114) echo "https://snowtrace.io" ;;
         143) echo "https://monadvision.com" ;;
-        4326) echo "https://TBD" ;;
+        4326) echo "https://megaeth.blockscout.com" ;;
         *) echo "Unknown" ;;
     esac
 }

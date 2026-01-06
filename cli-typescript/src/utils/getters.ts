@@ -54,7 +54,10 @@ export const megaeth = defineChain({
     },
   },
   blockExplorers: {
-    default: { name: 'MegaETH Explorer', url: 'https://TBD' },
+    default: {
+      name: 'MegaETH Explorer',
+      url: 'https://megaeth.blockscout.com',
+    },
   },
 });
 
