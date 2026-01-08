@@ -64,6 +64,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
+    except: ['ERC1155CMInitializableV1_0_2'],
   },
   paths: {
     artifacts: './artifacts',
