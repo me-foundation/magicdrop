@@ -1,15 +1,16 @@
 import { ERC721CM, ERC721M } from '../../typechain-types';
-import { Contract, Signer } from 'ethers';
+import { Contract } from 'ethers';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe('ERC721M: Mint Currency', () => {
   let erc721M: ERC721M;
   let contract: ERC721M;
   let erc20: Contract;
-  let owner: Signer;
-  let fundReceiver: Signer;
-  let minter: Signer;
+  let owner: SignerWithAddress;
+  let fundReceiver: SignerWithAddress;
+  let minter: SignerWithAddress;
   const mintPrice = 50;
   const mintFee = 10;
   const mintQty = 3;
@@ -216,9 +217,9 @@ describe('ERC721CM: Mint Currency', () => {
   let erc721CM: ERC721CM;
   let contract: ERC721CM;
   let erc20: Contract;
-  let owner: Signer;
-  let fundReceiver: Signer;
-  let minter: Signer;
+  let owner: SignerWithAddress;
+  let fundReceiver: SignerWithAddress;
+  let minter: SignerWithAddress;
   const mintPrice = 50;
   const mintFee = 10;
   const mintQty = 3;
@@ -246,6 +247,7 @@ describe('ERC721CM: Mint Currency', () => {
         erc20.address,
         fundReceiver.getAddress(),
         mintFee,
+        owner.address,
       );
       await erc721CM.deployed();
 
@@ -395,6 +397,7 @@ describe('ERC721CM: Mint Currency', () => {
         ethers.constants.AddressZero,
         fundReceiver.getAddress(),
         mintFee,
+        owner.address,
       );
       await erc721CM.deployed();
 
